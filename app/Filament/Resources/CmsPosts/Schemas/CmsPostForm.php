@@ -5,6 +5,7 @@ namespace App\Filament\Resources\CmsPosts\Schemas;
 use App\Models\CmsCategory;
 use App\Models\CmsPost;
 use App\Models\User;
+use App\Services\CustomBlockDiscoveryService;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
@@ -65,11 +66,7 @@ class CmsPostForm
                                         'post_title',
                                         'post_author',
                                     ])
-                                    ->customBlocks([
-                                        \App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\HeroBlock::class,
-                                        \App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\CallToActionBlock::class,
-                                        \App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\ImageGalleryBlock::class,
-                                    ])
+                                    ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
                                     ->extraInputAttributes([
                                         'style' => 'min-height: 40rem;',
                                     ])

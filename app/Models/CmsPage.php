@@ -23,6 +23,7 @@ class CmsPage extends Model
         'meta_description',
         'featured_image',
         'status',
+        'is_homepage',
         'published_at',
         'parent_id',
         'sort_order',
@@ -32,6 +33,7 @@ class CmsPage extends Model
     protected $casts = [
         'content' => 'array',
         'published_at' => 'datetime',
+        'is_homepage' => 'boolean',
     ];
     
     protected static function boot()
@@ -47,6 +49,18 @@ class CmsPage extends Model
         static::updating(function ($page) {
             if ($page->isDirty('title') && empty($page->slug)) {
                 $page->slug = Str::slug($page->title);
+            }
+            
+            // Ensure only one page can be marked as homepage
+            if ($page->is_homepage && $page->isDirty('is_homepage')) {
+                static::where('id', '!=', $page->id)->update(['is_homepage' => false]);
+            }
+        });
+        
+        static::creating(function ($page) {
+            // Ensure only one page can be marked as homepage
+            if ($page->is_homepage) {
+                static::where('is_homepage', true)->update(['is_homepage' => false]);
             }
         });
     }
@@ -81,5 +95,15 @@ class CmsPage extends Model
     public function isPublished(): bool
     {
         return $this->status === 'published' && $this->published_at?->isPast();
+    }
+    
+    public function scopeHomepage($query)
+    {
+        return $query->where('is_homepage', true);
+    }
+    
+    public static function getHomepage(): ?self
+    {
+        return static::homepage()->published()->first();
     }
 }

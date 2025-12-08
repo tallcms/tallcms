@@ -53,29 +53,18 @@ class CallToActionBlock extends RichContentCustomBlock
                         'danger' => 'Danger (Red)',
                     ])
                     ->default('primary'),
-            ]);
+            ])->slideOver();
     }
 
     public static function toPreviewHtml(array $config): string
     {
-        $title = $config['title'] ?? 'Call to Action Title';
-        $description = $config['description'] ?? 'Compelling description text';
-        $buttonText = $config['button_text'] ?? 'Get Started';
-        $style = $config['style'] ?? 'primary';
-        
-        $colors = [
-            'primary' => 'background: #3b82f6; color: white;',
-            'secondary' => 'background: #6b7280; color: white;',
-            'success' => 'background: #10b981; color: white;',
-            'warning' => 'background: #f59e0b; color: white;',
-            'danger' => 'background: #ef4444; color: white;',
-        ];
-        
-        return '<div style="background: #f8fafc; padding: 2rem; border-radius: 0.5rem; text-align: center; border: 2px dashed #e2e8f0;">' .
-               '<h3 style="font-size: 1.5rem; font-weight: bold; margin: 0 0 1rem 0; color: #1f2937;">' . htmlspecialchars($title) . '</h3>' .
-               '<p style="font-size: 1rem; margin: 0 0 1.5rem 0; color: #6b7280;">' . htmlspecialchars($description) . '</p>' .
-               '<span style="' . ($colors[$style] ?? $colors['primary']) . ' padding: 0.75rem 2rem; border-radius: 0.5rem; font-weight: 600; display: inline-block;">' . htmlspecialchars($buttonText) . '</span>' .
-               '</div>';
+        return view('cms.blocks.call-to-action', [
+            'title' => $config['title'] ?? 'Call to Action Title',
+            'description' => $config['description'] ?? 'Compelling description text',
+            'button_text' => $config['button_text'] ?? 'Get Started',
+            'button_url' => $config['button_url'] ?? '#',
+            'style' => $config['style'] ?? 'primary',
+        ])->render();
     }
 
     public static function toHtml(array $config, array $data): string
