@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\CmsPages\Schemas;
 
 use App\Models\CmsPage;
+use App\Services\CustomBlockDiscoveryService;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
@@ -11,6 +12,7 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
 
@@ -54,11 +56,7 @@ class CmsPageForm
                                         'current_year',
                                         'page_title',
                                     ])
-                                    ->customBlocks([
-                                        \App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\HeroBlock::class,
-                                        \App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\CallToActionBlock::class,
-                                        \App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\ImageGalleryBlock::class,
-                                    ])
+                                    ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
                                     ->extraInputAttributes([
                                         'style' => 'min-height: 40rem;',
                                     ])
@@ -83,6 +81,11 @@ class CmsPageForm
                                             ->label('Publish Date')
                                             ->nullable()
                                             ->default(now()),
+                                            
+                                        Toggle::make('is_homepage')
+                                            ->label('Set as Homepage')
+                                            ->helperText('Only one page can be set as homepage. This will override any existing homepage setting.')
+                                            ->columnSpan(2),
                                             
                                         Select::make('parent_id')
                                             ->label('Parent Page')

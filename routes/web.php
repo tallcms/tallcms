@@ -1,19 +1,16 @@
 <?php
 
 use App\Http\Controllers\CmsPageController;
-use App\Http\Controllers\CmsPostController;
+use App\Livewire\CmsPageRenderer;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-// CMS Pages Routes
+// CMS Pages Routes - All content is handled as pages
 Route::get('/pages', [CmsPageController::class, 'index'])->name('cms.pages.index');
-Route::get('/page/{slug}', [CmsPageController::class, 'show'])->name('cms.page');
+Route::get('/page/{slug}', CmsPageRenderer::class)->name('cms.page');
 
-// CMS Posts Routes
-Route::get('/blog', [CmsPostController::class, 'index'])->name('cms.posts.index');
-Route::get('/blog/featured', [CmsPostController::class, 'featured'])->name('cms.posts.featured');
-Route::get('/blog/category/{slug}', [CmsPostController::class, 'category'])->name('cms.posts.category');
-Route::get('/blog/{slug}', [CmsPostController::class, 'show'])->name('cms.post');
+// Catch-all route for any slug (blog posts, articles, etc.)
+Route::get('/{slug}', CmsPageRenderer::class)->name('cms.dynamic-page');
