@@ -2,6 +2,27 @@
 
 use App\Models\TallcmsMenu;
 
+if (!function_exists('buildMenuItemArray')) {
+    /**
+     * Recursively build menu item array with children
+     */
+    function buildMenuItemArray($item): array
+    {
+        return [
+            'id' => $item->id,
+            'label' => $item->label,
+            'url' => $item->getResolvedUrl(),
+            'type' => $item->type,
+            'target' => app('menu.url.resolver')->getTargetAttribute($item),
+            'icon' => $item->icon,
+            'css_class' => $item->css_class,
+            'children' => $item->children->map(function ($child) {
+                return buildMenuItemArray($child);
+            })->toArray(),
+        ];
+    }
+}
+
 if (!function_exists('menu')) {
     /**
      * Get a menu by location with resolved URLs
@@ -14,29 +35,16 @@ if (!function_exists('menu')) {
             return null;
         }
 
-        $items = $menu->activeItems()->with(['page', 'activeChildren.page'])->get();
+        // Get all menu items for this menu and build the tree structure
+        $items = $menu->allItems()
+                     ->where('is_active', true)
+                     ->with('page')
+                     ->defaultOrder()
+                     ->get()
+                     ->toTree();
         
         return $items->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'label' => $item->label,
-                'url' => $item->getResolvedUrl(),
-                'type' => $item->type,
-                'target' => app('menu.url.resolver')->getTargetAttribute($item),
-                'icon' => $item->icon,
-                'css_class' => $item->css_class,
-                'children' => $item->activeChildren->map(function ($child) {
-                    return [
-                        'id' => $child->id,
-                        'label' => $child->label,
-                        'url' => $child->getResolvedUrl(),
-                        'type' => $child->type,
-                        'target' => app('menu.url.resolver')->getTargetAttribute($child),
-                        'icon' => $child->icon,
-                        'css_class' => $child->css_class,
-                    ];
-                })->toArray(),
-            ];
+            return buildMenuItemArray($item);
         })->toArray();
     }
 }

@@ -31,25 +31,67 @@
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
+    <style>[x-cloak] { display: none !important; }</style>
 </head>
 <body class="font-sans antialiased bg-gray-50">
     <div class="min-h-screen">
         <!-- Navigation -->
-        <nav class="bg-white shadow-sm border-b">
+        <nav x-data="{ open: false }" class="bg-white shadow">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
+                    
+                    <!-- Logo -->
                     <div class="flex items-center">
                         <a href="{{ url('/') }}" class="text-xl font-bold text-gray-900">
                             {{ config('app.name') }}
                         </a>
                     </div>
-                    
-                    <div class="flex items-center space-x-6">
-                        <a href="{{ route('cms.pages.index') }}" class="text-gray-700 hover:text-gray-900 transition-colors">
-                            Pages
-                        </a>
-                        {{-- Blog/Posts will be displayed via custom blocks within pages --}}
+
+                    <!-- Desktop Menu -->
+                    <div class="hidden md:flex items-center space-x-8">
+                        @php $headerMenu = menu('header'); @endphp
+                        @if($headerMenu)
+                            @foreach($headerMenu as $item)
+                                @if($item['url'] && !in_array($item['type'], ['header', 'separator']))
+                                    <a href="{{ $item['url'] }}" 
+                                       class="text-gray-700 hover:text-gray-900"
+                                       @if($item['target'] === '_blank') target="_blank" rel="noopener" @endif>
+                                        {{ $item['label'] }}
+                                    </a>
+                                @endif
+                            @endforeach
+                        @endif
                     </div>
+
+                    <!-- Mobile Menu Button -->
+                    <div class="md:hidden flex items-center">
+                        <button @click="open = !open" class="text-gray-700 p-2">
+                            <svg x-show="!open" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                            </svg>
+                            <svg x-show="open" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Menu -->
+            <div x-show="open" x-cloak class="md:hidden border-t">
+                <div class="px-4 py-3 space-y-3">
+                    @php $headerMenu = menu('header'); @endphp
+                    @if($headerMenu)
+                        @foreach($headerMenu as $item)
+                            @if($item['url'] && !in_array($item['type'], ['header', 'separator']))
+                                <a href="{{ $item['url'] }}" 
+                                   class="block text-gray-700 hover:text-gray-900"
+                                   @if($item['target'] === '_blank') target="_blank" rel="noopener" @endif>
+                                    {{ $item['label'] }}
+                                </a>
+                            @endif
+                        @endforeach
+                    @endif
                 </div>
             </div>
         </nav>
@@ -62,9 +104,26 @@
         <!-- Footer -->
         <footer class="bg-white border-t mt-16">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div class="text-center text-gray-600">
-                    <p>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
-                    <p class="text-sm mt-2">Powered by TallCMS</p>
+                <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                    <div class="text-gray-600">
+                        <p>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+                        <p class="text-sm mt-1">Powered by TallCMS</p>
+                    </div>
+                    
+                    <div class="flex items-center space-x-6">
+                        @php $footerMenu = menu('footer'); @endphp
+                        @if($footerMenu)
+                            @foreach($footerMenu as $item)
+                                @if($item['url'] && !in_array($item['type'], ['header', 'separator']))
+                                    <a href="{{ $item['url'] }}" 
+                                       class="text-sm text-gray-500 hover:text-gray-700"
+                                       @if($item['target'] === '_blank') target="_blank" rel="noopener" @endif>
+                                        {{ $item['label'] }}
+                                    </a>
+                                @endif
+                            @endforeach
+                        @endif
+                    </div>
                 </div>
             </div>
         </footer>
