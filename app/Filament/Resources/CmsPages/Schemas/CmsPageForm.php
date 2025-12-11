@@ -47,10 +47,13 @@ class CmsPageForm
                                             ->helperText('Used in the URL. Keep it simple and SEO-friendly.')
                                             ->columnSpan(1),
                                     ]),
-                                    
                                 RichEditor::make('content')
                                     ->columnSpanFull()
                                     ->fileAttachmentsDirectory('cms/attachments')
+                                    ->toolbarButtons([
+                                        ['grid','gridDelete','table', 'attachFiles','customBlocks','mergeTags'], // The `customBlocks` and `mergeTags` tools are also added here if those features are used.
+                                    ])
+                                     ->activePanel('customBlocks')
                                     ->mergeTags([
                                         'site_name',
                                         'current_year',

@@ -13,8 +13,8 @@
 <li class="{{ $itemClasses }}">
     @if($item['url'] && !in_array($item['type'], ['header', 'separator']))
         <a href="{{ $item['url'] }}" 
-           class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 
-                  {{ $level === 0 ? 'text-gray-700 hover:text-gray-900 hover:bg-gray-100' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50' }}"
+           class="flex items-center px-3 py-2 rounded-md font-medium transition-colors duration-200 
+                  {{ $level === 0 ? 'text-gray-700 hover:text-gray-900' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50' }}"
            @if($item['target'] === '_blank') target="_blank" rel="noopener" @endif>
            
             @if($item['icon'])
