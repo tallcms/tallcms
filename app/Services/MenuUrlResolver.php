@@ -33,7 +33,7 @@ class MenuUrlResolver
         }
 
         // Multi-page mode
-        return $page->is_homepage ? '/' : '/' . $page->slug;
+        return $page->slug === '/' ? '/' : '/' . $page->slug;
     }
 
     public function shouldOpenInNewTab(TallcmsMenuItem $item): bool
