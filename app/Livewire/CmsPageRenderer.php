@@ -13,11 +13,24 @@ class CmsPageRenderer extends Component
     public CmsPage $page;
     public string $renderedContent;
     
-    public function mount(string $slug)
+    public function mount(string $slug = '/')
     {
-        $this->page = CmsPage::withSlug($slug)
-            ->published()
-            ->firstOrFail();
+        // Handle root URL - find homepage
+        if ($slug === '/') {
+            $this->page = CmsPage::where('is_homepage', true)
+                ->published()
+                ->firstOrFail();
+        } else {
+            // Try to find page by slug, also handle /page/slug format
+            $cleanSlug = ltrim($slug, '/');
+            if (str_starts_with($cleanSlug, 'page/')) {
+                $cleanSlug = str_replace('page/', '', $cleanSlug);
+            }
+            
+            $this->page = CmsPage::withSlug($cleanSlug)
+                ->published()
+                ->firstOrFail();
+        }
             
         $this->renderPageContent();
     }
