@@ -37,9 +37,9 @@
             </p>
         @endif
         
-        @if($button_text && $button_url)
+        @if($button_text && $button_url && $button_url !== '#')
             <div class="mt-10" style="margin-top: 2.5rem;">
-                <a href="{{ $button_url }}" 
+                <a href="{{ e($button_url) }}" 
                    class="inline-block rounded-lg {{ $buttonClass }} px-8 py-4 text-lg font-semibold shadow-lg transition hover:shadow-xl"
                    style="display: inline-block; border-radius: 0.5rem; {{ $buttonStyle }} padding: 1rem 2rem; font-size: 1.125rem; font-weight: 600; box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1); text-decoration: none; transition: all 0.3s ease;">
                     {{ $button_text }}

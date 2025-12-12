@@ -23,7 +23,7 @@
          style="position: relative; overflow: hidden; display: flex; align-items: center;">
     
     {{-- Background Image or Gradient --}}
-    @if($background_image)
+    @if($background_image && Storage::disk('public')->exists($background_image))
         <div class="absolute inset-0 z-0" 
              style="position: absolute; inset: 0; z-index: 0; 
              background-image: url('{{ Storage::url($background_image) }}'); 
@@ -69,7 +69,7 @@
             @endif
             
             {{-- Call to Action Buttons --}}
-            @if($button_text)
+            @if($button_text && $button_url && $button_url !== '#')
                 <div class="flex flex-col sm:flex-row gap-4 {{ $text_alignment === 'center' ? 'justify-center' : ($text_alignment === 'right' ? 'justify-end' : 'justify-start') }}" 
                      style="display: flex; gap: 1rem; 
                      @if($text_alignment === 'center')
@@ -81,7 +81,7 @@
                      @endif">
                     
                     {{-- Primary Button --}}
-                    <a href="{{ $button_url ?? '#' }}" 
+                    <a href="{{ e($button_url) }}" 
                        class="inline-flex justify-center items-center bg-white text-gray-900 px-8 py-4 lg:px-10 lg:py-5 rounded-xl font-semibold text-lg hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
                        style="display: inline-flex; justify-content: center; align-items: center; background-color: white; color: #111827; padding: 1rem 2rem; border-radius: 0.75rem; font-weight: 600; font-size: clamp(1rem, 2vw, 1.125rem); text-decoration: none; transition: all 0.3s ease; box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);">
                         {{ $button_text }}
@@ -91,8 +91,8 @@
                     </a>
                     
                     {{-- Secondary Button (if secondary text exists) --}}
-                    @if($secondary_button_text ?? null)
-                        <a href="{{ $secondary_button_url ?? '#' }}" 
+                    @if($secondary_button_text && $secondary_button_url && $secondary_button_url !== '#')
+                        <a href="{{ e($secondary_button_url) }}" 
                            class="inline-flex justify-center items-center border-2 border-white text-white px-8 py-4 lg:px-10 lg:py-5 rounded-xl font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-300"
                            style="display: inline-flex; justify-content: center; align-items: center; border: 2px solid white; color: white; padding: 1rem 2rem; border-radius: 0.75rem; font-weight: 600; font-size: clamp(1rem, 2vw, 1.125rem); text-decoration: none; transition: all 0.3s ease;">
                             {{ $secondary_button_text }}

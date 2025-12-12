@@ -2,6 +2,8 @@
 
 A modern Content Management System built on the **TALL stack** (Tailwind CSS, Alpine.js, Laravel, Livewire) with Filament v4 admin panel.
 
+Built by Vibe Coding, co-developed with Claude.ai, and code reviewed by Codex.
+
 ## ✨ Features
 
 - **Rich Content Editor** with custom blocks and merge tags

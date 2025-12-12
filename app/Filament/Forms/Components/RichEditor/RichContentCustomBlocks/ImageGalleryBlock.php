@@ -32,6 +32,8 @@ class ImageGalleryBlock extends RichContentCustomBlock
                     
                 FileUpload::make('images')
                     ->image()
+                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                    ->maxSize(5120)
                     ->multiple()
                     ->directory('cms/galleries')
                     ->maxFiles(12)
@@ -44,7 +46,7 @@ class ImageGalleryBlock extends RichContentCustomBlock
                         '1:1',
                     ])
                     ->required()
-                    ->helperText('Upload up to 12 images. Drag to reorder.'),
+                    ->helperText('Upload up to 12 images (max 5MB each). Accepted formats: JPEG, PNG, WebP. Drag to reorder.'),
                     
                 Select::make('layout')
                     ->options([

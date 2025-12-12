@@ -1,4 +1,6 @@
 @php
+    use App\Services\HtmlSanitizerService;
+    
     $sectionClasses = collect([
         'w-full',
         'px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16',
@@ -39,7 +41,7 @@
                 prose-ol:my-6 prose-ol:text-gray-600 prose-ol:text-lg
                 prose-li:my-2 prose-li:leading-relaxed"
                  style="max-width: none; font-size: 1.125rem; line-height: 1.75; color: #4b5563;">
-                {!! $body !!}
+                {!! HtmlSanitizerService::sanitizeTipTapContent($body) !!}
             </article>
         @endif
         

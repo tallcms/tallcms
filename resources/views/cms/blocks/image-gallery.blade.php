@@ -30,6 +30,7 @@
         <div class="{{ $gridClass }} gap-4 space-y-4" 
              style="columns: 3; column-gap: 1rem; row-gap: 1rem;">
             @foreach($images as $image)
+                @if(Storage::disk('public')->exists($image))
                 <div class="break-inside-avoid" style="break-inside: avoid; margin-bottom: 1rem;">
                     <img src="{{ Storage::url($image) }}" 
                          alt="Gallery image" 
@@ -37,6 +38,7 @@
                          style="width: 100%; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); cursor: pointer; transition: box-shadow 0.3s ease;"
                          onclick="openLightbox(this)">
                 </div>
+                @endif
             @endforeach
         </div>
     @elseif($layout === 'carousel')
@@ -44,6 +46,7 @@
             <div class="{{ $gridClass }} pb-4" 
                  style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem; scroll-snap-type: x mandatory;">
                 @foreach($images as $image)
+                    @if(Storage::disk('public')->exists($image))
                     <div class="flex-none w-80" 
                          style="flex: none; width: 20rem; scroll-snap-align: start;">
                         <img src="{{ Storage::url($image) }}" 
@@ -52,6 +55,7 @@
                              style="width: 100%; height: 16rem; object-fit: cover; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); cursor: pointer; transition: box-shadow 0.3s ease;"
                              onclick="openLightbox(this)">
                     </div>
+                    @endif
                 @endforeach
             </div>
         </div>
@@ -59,6 +63,7 @@
         <div class="grid {{ $gridClass }} gap-6" 
              style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
             @foreach($images as $image)
+                @if(Storage::disk('public')->exists($image))
                 <div class="group" style="position: relative;">
                     <img src="{{ Storage::url($image) }}" 
                          alt="Gallery image" 
@@ -66,6 +71,7 @@
                          style="width: 100%; height: 16rem; object-fit: cover; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); cursor: pointer; transition: box-shadow 0.3s ease;"
                          onclick="openLightbox(this)">
                 </div>
+                @endif
             @endforeach
         </div>
     @endif
