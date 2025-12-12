@@ -2,6 +2,8 @@
 
 namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
+use App\Models\CmsPage;
+use App\Services\BlockLinkResolver;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
@@ -11,6 +13,7 @@ use Filament\Forms\Components\Slider\Enums\PipsMode;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
 
 class HeroBlock extends RichContentCustomBlock
 {
@@ -42,16 +45,38 @@ class HeroBlock extends RichContentCustomBlock
                     ->maxLength(100)
                     ->placeholder('Call to action button text'),
                     
+                Select::make('button_link_type')
+                    ->label('Button Link Type')
+                    ->options([
+                        'page' => 'Page',
+                        'external' => 'External URL',
+                        'custom' => 'Custom URL',
+                    ])
+                    ->default('page')
+                    ->live()
+                    ->afterStateUpdated(fn (callable $set) => $set('button_page_id', null))
+                    ->afterStateUpdated(fn (callable $set) => $set('button_url', null)),
+                    
+                Select::make('button_page_id')
+                    ->label('Select Page')
+                    ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
+                    ->searchable()
+                    ->visible(fn (Get $get): bool => $get('button_link_type') === 'page'),
+                    
                 TextInput::make('button_url')
-                    ->url()
-                    ->placeholder('https://example.com'),
+                    ->label('URL')
+                    ->placeholder('https://example.com or /contact or #section')
+                    ->visible(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom'])),
                     
                 FileUpload::make('background_image')
                     ->image()
+                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                    ->maxSize(5120)
                     ->directory('cms/hero-blocks')
                     ->disk('public')
                     ->visibility('public')
-                    ->nullable(),
+                    ->nullable()
+                    ->helperText('Maximum file size: 5MB. Accepted formats: JPEG, PNG, WebP'),
                     
                 Toggle::make('parallax_effect')
                     ->label('Enable Parallax Effect')
@@ -77,6 +102,34 @@ class HeroBlock extends RichContentCustomBlock
                     ])
                     ->default('center'),
                     
+                TextInput::make('secondary_button_text')
+                    ->maxLength(100)
+                    ->placeholder('Secondary button text (optional)'),
+                    
+                Select::make('secondary_button_link_type')
+                    ->label('Secondary Button Link Type')
+                    ->options([
+                        'page' => 'Page',
+                        'external' => 'External URL',
+                        'custom' => 'Custom URL',
+                    ])
+                    ->default('page')
+                    ->live()
+                    ->visible(fn (Get $get): bool => filled($get('secondary_button_text')))
+                    ->afterStateUpdated(fn (callable $set) => $set('secondary_button_page_id', null))
+                    ->afterStateUpdated(fn (callable $set) => $set('secondary_button_url', null)),
+                    
+                Select::make('secondary_button_page_id')
+                    ->label('Select Page')
+                    ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
+                    ->searchable()
+                    ->visible(fn (Get $get): bool => $get('secondary_button_link_type') === 'page' && filled($get('secondary_button_text'))),
+                    
+                TextInput::make('secondary_button_url')
+                    ->label('Secondary URL')
+                    ->placeholder('https://example.com or /contact or #section')
+                    ->visible(fn (Get $get): bool => in_array($get('secondary_button_link_type'), ['external', 'custom']) && filled($get('secondary_button_text'))),
+                    
                 Select::make('height')
                     ->label('Section Height')
                     ->options([
@@ -91,31 +144,43 @@ class HeroBlock extends RichContentCustomBlock
 
     public static function toPreviewHtml(array $config): string
     {
-        return view('cms.blocks.hero', [
+        // Pre-resolve URLs to avoid DB hits in view
+        $buttonUrl = BlockLinkResolver::resolveButtonUrl($config, 'button');
+        $secondaryButtonUrl = BlockLinkResolver::resolveButtonUrl($config, 'secondary_button');
+        
+        return view('cms.blocks.hero', array_merge($config, [
             'heading' => $config['heading'] ?? 'Hero Heading',
             'subheading' => $config['subheading'] ?? 'Hero subheading text',
             'button_text' => $config['button_text'] ?? null,
-            'button_url' => $config['button_url'] ?? null,
+            'button_url' => $buttonUrl,
+            'secondary_button_text' => $config['secondary_button_text'] ?? null,
+            'secondary_button_url' => $secondaryButtonUrl,
             'background_image' => $config['background_image'] ?? null,
             'parallax_effect' => $config['parallax_effect'] ?? true,
             'overlay_opacity' => $config['overlay_opacity'] ?? '40',
             'text_alignment' => $config['text_alignment'] ?? 'center',
             'height' => $config['height'] ?? 'medium',
-        ])->render();
+        ]))->render();
     }
 
     public static function toHtml(array $config, array $data): string
     {
-        return view('cms.blocks.hero', [
+        // Pre-resolve URLs to avoid DB hits in view
+        $buttonUrl = BlockLinkResolver::resolveButtonUrl($config, 'button');
+        $secondaryButtonUrl = BlockLinkResolver::resolveButtonUrl($config, 'secondary_button');
+        
+        return view('cms.blocks.hero', array_merge($config, [
             'heading' => $config['heading'] ?? '',
             'subheading' => $config['subheading'] ?? '',
             'button_text' => $config['button_text'] ?? null,
-            'button_url' => $config['button_url'] ?? null,
+            'button_url' => $buttonUrl,
+            'secondary_button_text' => $config['secondary_button_text'] ?? null,
+            'secondary_button_url' => $secondaryButtonUrl,
             'background_image' => $config['background_image'] ?? null,
             'parallax_effect' => $config['parallax_effect'] ?? true,
             'overlay_opacity' => $config['overlay_opacity'] ?? '40',
             'text_alignment' => $config['text_alignment'] ?? 'center',
             'height' => $config['height'] ?? 'medium',
-        ])->render();
+        ]))->render();
     }
 }
