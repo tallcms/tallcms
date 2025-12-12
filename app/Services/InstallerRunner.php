@@ -129,14 +129,20 @@ class InstallerRunner
     public function testDatabaseConnection(array $dbConfig): array
     {
         try {
-            // Debug: Log what we received
-            \Log::info('Database test config received:', $dbConfig);
+            // Validate required keys exist
+            $requiredKeys = ['host', 'port', 'username', 'password', 'database'];
+            foreach ($requiredKeys as $key) {
+                if (!array_key_exists($key, $dbConfig)) {
+                    throw new \Exception("Missing required database configuration key: {$key}");
+                }
+            }
 
-            // First connect without selecting the database to avoid failing when DB is absent.
+            // First connect to MySQL server (use 'mysql' system database to avoid dependency on user database)
             $serverConnection = [
                 'driver' => 'mysql',
                 'host' => $dbConfig['host'],
                 'port' => $dbConfig['port'],
+                'database' => 'mysql', // Use system database to test connection
                 'username' => $dbConfig['username'],
                 'password' => $dbConfig['password'],
                 'charset' => 'utf8mb4',
@@ -147,9 +153,9 @@ class InstallerRunner
             DB::purge('test_server');
             DB::connection('test_server')->getPdo();
 
-            // Check if the target database exists.
+            // Check if the target database exists
             $dbName = $dbConfig['database'];
-            $result = DB::connection('test_server')->select("SHOW DATABASES LIKE ?", [$dbName]);
+            $result = DB::connection('test_server')->select("SHOW DATABASES LIKE '" . $dbName . "'");
             $databaseExists = !empty($result);
 
             if (!$databaseExists) {
@@ -159,7 +165,7 @@ class InstallerRunner
                 ];
             }
 
-            // Now connect with the database selected.
+            // Now connect with the database selected
             $fullConnection = array_merge($serverConnection, ['database' => $dbName]);
             config(['database.connections.test' => $fullConnection]);
             DB::purge('test');
@@ -171,11 +177,6 @@ class InstallerRunner
             ];
 
         } catch (\Exception $e) {
-            \Log::error('Database connection failed', [
-                'error' => $e->getMessage(),
-                'config' => $dbConfig ?? 'null'
-            ]);
-
             return [
                 'success' => false,
                 'message' => 'Database connection failed: ' . $e->getMessage()

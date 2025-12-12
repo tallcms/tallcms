@@ -59,8 +59,13 @@ class TallCmsSetup extends Command
 
     protected function isAlreadySetup(): bool
     {
-        return Role::where('name', 'super_admin')->exists() && 
-               User::role('super_admin')->exists();
+        try {
+            return Role::where('name', 'super_admin')->exists() && 
+                   User::role('super_admin')->exists();
+        } catch (\Exception $e) {
+            // Tables don't exist yet, so setup is not complete
+            return false;
+        }
     }
 
     protected function createRolesAndPermissions(): void
