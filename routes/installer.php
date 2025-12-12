@@ -30,7 +30,7 @@ Route::prefix('install')->name('installer.')->group(function () {
         ->name('configuration');
         
     Route::post('/configuration', [InstallerController::class, 'install'])
-        ->middleware(['installer.gate', 'throttle:20,1'])
+        ->middleware(['installer.gate'])
         ->name('install');
     
     // Database test (AJAX) - throttle by IP only (no user lookup)
