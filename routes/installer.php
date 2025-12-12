@@ -33,9 +33,9 @@ Route::prefix('install')->name('installer.')->group(function () {
         ->middleware(['installer.gate', 'throttle:20,1'])
         ->name('install');
     
-    // Database test (AJAX) - add throttling
+    // Database test (AJAX) - throttle by IP only (no user lookup)
     Route::post('/test-database', [InstallerController::class, 'testDatabase'])
-        ->middleware(['installer.gate', 'throttle:60,1'])
+        ->middleware(['installer.gate'])
         ->name('test-database');
     
     // Installation complete - minimal middleware
