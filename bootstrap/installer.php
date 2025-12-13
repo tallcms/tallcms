@@ -144,7 +144,7 @@ $isInstallerRequest = str_starts_with($requestUri, '/install');
 // Path to .env file
 $envPath = __DIR__ . '/../.env';
 $envExamplePath = __DIR__ . '/../.env.example';
-$lockPath = __DIR__ . '/../storage/installer.lock';
+$lockPath = __DIR__ . '/../installer.lock';
 
 // Check if installation is complete
 $installationComplete = file_exists($lockPath);
