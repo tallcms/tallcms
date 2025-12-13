@@ -262,11 +262,11 @@ class InstallerController extends Controller
      */
     private function lockInstaller(): void
     {
-        $lockPath = storage_path('installer.lock');
+        $lockPath = base_path('installer.lock');
         
-        // Check if storage directory is writable
-        if (!is_writable(storage_path())) {
-            throw new \Exception('Storage directory is not writable. Cannot create installer lock file.');
+        // Check if base directory is writable
+        if (!is_writable(base_path())) {
+            throw new \Exception('Base directory is not writable. Cannot create installer lock file.');
         }
         
         // Create lock file with timestamp

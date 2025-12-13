@@ -29,7 +29,7 @@ class InstallerGate
     private function shouldAllowInstaller(): bool
     {
         // Block if installation is complete (lock file exists)
-        if (File::exists(storage_path('installer.lock'))) {
+        if (File::exists(base_path('installer.lock'))) {
             // Allow if explicitly enabled in .env
             return env('INSTALLER_ENABLED', false);
         }

@@ -19,7 +19,7 @@
 /storage/*.key
 /storage/pail
 # Installer lock
-storage/installer.lock
+installer.lock
 /vendor
 Homestead.json
 Homestead.yaml
