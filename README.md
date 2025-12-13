@@ -6,6 +6,7 @@ Built by Vibe Coding, co-developed with Claude.ai, and code reviewed by Codex.
 
 ## ✨ Features
 
+- **🌐 Web Installer** with WordPress-style setup wizard
 - **Rich Content Editor** with custom blocks and merge tags
 - **Hierarchical Pages & Posts** with SEO optimization
 - **Drag & Drop Menu Builder** with nested navigation
@@ -17,47 +18,91 @@ Built by Vibe Coding, co-developed with Claude.ai, and code reviewed by Codex.
 
 ## 🚀 Installation
 
-### 1. Clone and Install Dependencies
+TallCMS offers **two installation methods** to suit different workflows:
+
+### 🌐 Option 1: Web Installer (Recommended)
+
+**Perfect for:** Production deployments, shared hosting, quick setup
+
+1. **Clone and Install Dependencies**
+   ```bash
+   git clone <repository> <folder>
+   cd <folder>
+   composer install
+   npm install
+   npm run build
+   ```
+
+2. **Launch Web Installer**
+   ```bash
+   php artisan serve
+   ```
+   Then visit: **http://localhost:8000** 
+   
+   The installer will automatically redirect you to `/install` if setup is needed.
+
+3. **Follow the Setup Wizard**
+   - ✅ **Environment Check**: Verifies PHP extensions and permissions
+   - ✅ **Database Configuration**: Test connection and configure settings
+   - ✅ **Admin User Creation**: Set up your first super admin
+   - ✅ **Permissions & Roles**: Automatically configures the entire permission system
+
+4. **Access Your CMS**
+   - **Frontend**: http://your-domain.com
+   - **Admin Panel**: http://your-domain.com/admin
+
+---
+
+### ⚡ Option 2: Command Line (Developer)
+
+**Perfect for:** Local development, automated deployments, advanced users
+
+1. **Clone and Install Dependencies**
+   ```bash
+   git clone <repository> <folder>
+   cd <folder>
+   composer install
+   npm install
+   ```
+
+2. **Environment Configuration**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+
+3. **Database Setup**
+   ```bash
+   # Configure your database in .env
+   php artisan migrate
+   ```
+
+4. **Build Assets**
+   ```bash
+   npm run build
+   ```
+
+5. **TallCMS Setup**
+   ```bash
+   php artisan tallcms:setup
+   ```
+
+6. **Access Your CMS**
+   - **Frontend**: http://your-domain.com
+   - **Admin Panel**: http://your-domain.com/admin
+
+### 🔧 Advanced Setup Options
+
 ```bash
-git clone <repository> <folder>
-cd <folder>
-composer install
-npm install
+# Force re-run setup (useful for development)
+php artisan tallcms:setup --force
+
+# Non-interactive setup (for automation)
+php artisan tallcms:setup --force --name="Admin" --email="admin@example.com" --password="password123" --no-interaction
+
+# Generate only permissions (if needed)
+php artisan shield:generate --all --panel=admin --option=policies_and_permissions
 ```
-
-### 2. Environment Configuration
-```bash
-cp .env.example .env
-php artisan key:generate
-```
-
-### 3. Database Setup
-```bash
-# Configure your database in .env
-php artisan migrate
-```
-
-### 4. Build Assets
-```bash
-npm run build
-```
-
-### 5. **TallCMS Setup (Required)**
-```bash
-php artisan tallcms:setup
-```
-
-This command will:
-- ✅ Create all necessary roles and permissions
-- ✅ Generate Filament Shield permissions for all resources  
-- ✅ Create your first super admin user
-- ✅ Configure the complete permission system
-
-**Follow the interactive prompts to create your admin user.**
-
-### 6. Access Your CMS
-- **Frontend**: http://your-domain.com
-- **Admin Panel**: http://your-domain.com/admin
 
 ---
 
@@ -108,16 +153,42 @@ php artisan make:tallcms-block BlockName
 
 ## 🚨 Troubleshooting
 
-### "Cannot access admin panel"
-- Run `php artisan tallcms:setup` if you haven't already
+### Web Installer Issues
+
+**"Installation is already complete" error**
+- Check if `installer.lock` file exists in project root - delete if needed
+- Verify `INSTALLER_ENABLED=false` in `.env` - change to `true` if needed
+- Clear cache: `php artisan config:clear`
+
+**"Database connection failed"**
+- Test connection manually in web installer before proceeding
+- Verify database credentials and ensure database exists
+- Check database server is running and accessible
+
+**"Required field validation errors"**
+- Ensure passwords match in admin user section
+- Test database connection successfully before installation
+- All required fields must be filled
+
+### General Issues
+
+**"Cannot access admin panel"**
+- Complete installation via web installer at `/install`
+- Or run `php artisan tallcms:setup` via command line
 - Check that your user has an active role
 
-### "No permissions showing"  
-- Run `php artisan shield:generate --all`
-- Use `php artisan tallcms:setup --force` to re-run setup
+**"No permissions showing"**  
+- Re-run web installer or use `php artisan tallcms:setup --force`
+- Generate permissions: `php artisan shield:generate --all --panel=admin --option=policies_and_permissions`
 
-### "Setup already completed"
-- Use `php artisan tallcms:setup --force` to force re-setup
+**"Permission denied" errors**
+- Ensure web server has write permissions to project root (for installer.lock)
+- Fallback: installer can use `.env` file if root directory not writable
+- Check storage and cache directory permissions
+
+**"Setup already completed"**
+- Use `php artisan tallcms:setup --force` to force re-setup via command line
+- Or temporarily set `INSTALLER_ENABLED=true` in `.env` to access web installer
 
 ## 🙏 Credits & Attribution
 
