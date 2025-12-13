@@ -4,6 +4,15 @@ A modern Content Management System built on the **TALL stack** (Tailwind CSS, Al
 
 Built by Vibe Coding, co-developed with Claude.ai, and code reviewed by Codex.
 
+## 📋 System Requirements
+
+- **PHP**: 8.2 or higher
+- **Database**: MySQL 8.0+ or MariaDB 10.3+
+- **Web Server**: Apache 2.4+ or Nginx 1.18+
+- **Extensions**: OpenSSL, PDO, Mbstring, Tokenizer, XML, Ctype, JSON, BCMath, Fileinfo, GD
+- **Composer**: Only required for dependency updates (pre-included in CodeCanyon version)
+- **Node.js**: Only required for asset compilation (pre-compiled in CodeCanyon version)
+
 ## ✨ Features
 
 - **🌐 Web Installer** with WordPress-style setup wizard
@@ -23,6 +32,22 @@ TallCMS offers **two installation methods** to suit different workflows:
 ### 🌐 Option 1: Web Installer (Recommended)
 
 **Perfect for:** Production deployments, shared hosting, quick setup
+
+#### 📦 CodeCanyon Version (Ready to Use)
+If you downloaded from CodeCanyon, dependencies are pre-included:
+
+1. **Extract and Launch**
+   ```bash
+   # Extract the downloaded zip file
+   cd tallcms/
+   php artisan serve
+   ```
+   Then visit: **http://localhost:8000** 
+   
+   The installer will automatically redirect you to `/install` if setup is needed.
+
+#### 🛠️ GitHub/Development Version
+If you cloned from GitHub or want fresh dependencies:
 
 1. **Clone and Install Dependencies**
    ```bash
@@ -104,6 +129,25 @@ php artisan tallcms:setup --force --name="Admin" --email="admin@example.com" --p
 php artisan shield:generate --all --panel=admin --option=policies_and_permissions
 ```
 
+### 🔄 Updating Dependencies (CodeCanyon Version)
+
+If you want to update to the latest package versions:
+
+```bash
+# Update PHP packages
+composer update
+
+# Update Node packages and rebuild assets
+npm update
+npm run build
+
+# Clear caches after updates
+php artisan config:clear
+php artisan view:clear
+```
+
+**Note:** The CodeCanyon version includes tested dependency versions. Updates should be done carefully in a staging environment first.
+
 ---
 
 ## 👥 User Roles & Permissions
@@ -159,6 +203,11 @@ php artisan make:tallcms-block BlockName
 - Check if `installer.lock` file exists in project root - delete if needed
 - Verify `INSTALLER_ENABLED=false` in `.env` - change to `true` if needed
 - Clear cache: `php artisan config:clear`
+
+**CodeCanyon Version: Missing dependencies error**
+- Dependencies are pre-included; if missing, re-extract the original zip file
+- For fresh dependencies, run: `composer install && npm install && npm run build`
+- Ensure proper file permissions after extraction
 
 **"Database connection failed"**
 - Test connection manually in web installer before proceeding
