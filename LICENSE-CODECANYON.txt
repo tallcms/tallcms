@@ -28,7 +28,7 @@ All third-party components are compatible with commercial use.
 See vendor/ directory for individual package licenses.
 
 COPYRIGHT:
-© 2024 Vibe Coding. All rights reserved.
+© 2025 TallCMS. All rights reserved.
 
 For support and documentation, visit:
 https://codecanyon.net/item/tallcms/[item-id]
