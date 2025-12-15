@@ -1,49 +1,180 @@
 @php
     use App\Services\HtmlSanitizerService;
     
+    // Get current theme presets that work in both admin and frontend
+    $textPresets = theme_text_presets();
+    
+    // Resolve text colors from theme system with fallbacks
+    $textPreset = $textPresets['primary'] ?? [
+        'heading' => '#111827',
+        'description' => '#374151'
+    ];
+    
+    // Content width classes
+    $contentWidthClasses = match($content_width) {
+        'narrow' => 'max-w-2xl mx-auto',
+        'normal' => 'max-w-4xl mx-auto', 
+        'wide' => 'max-w-6xl mx-auto',
+        default => 'max-w-4xl mx-auto'
+    };
+    
+    // Simple spacing system using Tailwind classes
     $sectionClasses = collect([
         'w-full',
         'px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16',
-        'py-16 sm:py-24',
-        $first_section ? 'pt-32 sm:pt-36' : 'py-16 sm:py-24'
+        $first_section ? 'pt-32 sm:pt-36 pb-12 sm:pb-16' : 'py-12 sm:py-16'
     ])->filter()->join(' ');
+    
+    // Generate unique ID for scoped styling
+    $blockId = 'content-block-' . uniqid();
 @endphp
 
-<section class="{{ $sectionClasses }}" 
-         style="width: 100%; padding-left: clamp(1rem, 5vw, 4rem); padding-right: clamp(1rem, 5vw, 4rem); {{ $first_section ? 'padding-top: 8rem;' : 'padding-top: 4rem; padding-bottom: 4rem;' }}">
+<article class="{{ $sectionClasses }}" id="{{ $blockId }}">
     
-    <div class="max-w-4xl mx-auto" 
-         style="max-width: 56rem; margin: 0 auto;">
+    <div class="{{ $contentWidthClasses }}">
         
-        @if($title)
-            <header class="mb-12 text-center" style="margin-bottom: 3rem; text-align: center;">
-                <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 leading-tight" 
-                    style="font-size: clamp(2.25rem, 6vw, 4.5rem); font-weight: bold; line-height: 1.1; color: #111827;">
-                    {{ $title }}
-                </h1>
+        @if($title || $subtitle)
+            <header class="mb-8 sm:mb-10">
+                @if($title)
+                    <{{ $heading_level }} class="text-3xl sm:text-4xl font-bold leading-tight mb-4" 
+                        style="color: {{ $textPreset['heading'] }} !important; font-size: clamp(1.875rem, 4vw, 2.25rem) !important; font-weight: bold !important; line-height: 1.2 !important;">
+                        {{ $title }}
+                    </{{ $heading_level }}>
+                @endif
+                
+                @if($subtitle)
+                    @php
+                        $subtitleLevel = match($heading_level) {
+                            'h2' => 'h3',
+                            'h3' => 'h4', 
+                            'h4' => 'h5',
+                            default => 'h3'
+                        };
+                    @endphp
+                    <{{ $subtitleLevel }} class="text-lg sm:text-xl mt-2" 
+                        style="color: {{ $textPreset['description'] }} !important; font-size: 1.25rem !important; font-weight: normal !important; line-height: 1.4 !important; margin-top: 0.75rem !important;">
+                        {{ $subtitle }}
+                    </{{ $subtitleLevel }}>
+                @endif
             </header>
         @endif
         
         @if($body)
-            <article class="prose prose-lg prose-gray max-w-none
-                prose-headings:font-semibold prose-headings:text-gray-900
-                prose-h1:text-3xl prose-h1:lg:text-4xl prose-h1:leading-tight prose-h1:mb-8
-                prose-h2:text-2xl prose-h2:lg:text-3xl prose-h2:mt-12 prose-h2:mb-6
-                prose-h3:text-xl prose-h3:lg:text-2xl prose-h3:mt-8 prose-h3:mb-4
-                prose-p:text-gray-600 prose-p:leading-relaxed prose-p:mb-6 prose-p:text-lg
-                prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
-                prose-strong:text-gray-900 prose-strong:font-semibold
-                prose-em:text-gray-700
-                prose-blockquote:border-l-4 prose-blockquote:border-blue-500
-                prose-blockquote:bg-blue-50 prose-blockquote:py-4 prose-blockquote:px-6
-                prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:my-8
-                prose-ul:my-6 prose-ul:text-gray-600 prose-ul:text-lg
-                prose-ol:my-6 prose-ol:text-gray-600 prose-ol:text-lg
-                prose-li:my-2 prose-li:leading-relaxed"
-                 style="max-width: none; font-size: 1.125rem; line-height: 1.75; color: #4b5563;">
+            <div class="content-block-body">
                 {!! HtmlSanitizerService::sanitizeTipTapContent($body) !!}
-            </article>
+            </div>
+            
+            <style>
+                /* Standalone styling that works without Tailwind prose - with !important for admin override */
+                .content-block-body {
+                    font-size: 1rem !important;
+                    line-height: 1.7 !important;
+                    color: {{ $textPreset['description'] }} !important;
+                }
+                
+                .content-block-body p {
+                    margin: 0 0 1rem 0 !important;
+                    line-height: 1.7 !important;
+                    color: {{ $textPreset['description'] }} !important;
+                }
+                
+                .content-block-body h1, .content-block-body h2, .content-block-body h3, 
+                .content-block-body h4, .content-block-body h5, .content-block-body h6 {
+                    color: {{ $textPreset['heading'] }} !important;
+                    font-weight: 600 !important;
+                    margin: 1.5rem 0 0.75rem 0 !important;
+                    line-height: 1.3 !important;
+                }
+                
+                .content-block-body h1 { font-size: 2rem !important; }
+                .content-block-body h2 { font-size: 1.75rem !important; }
+                .content-block-body h3 { font-size: 1.5rem !important; }
+                .content-block-body h4 { font-size: 1.25rem !important; }
+                .content-block-body h5 { font-size: 1.125rem !important; }
+                .content-block-body h6 { font-size: 1rem !important; }
+                
+                .content-block-body ul, .content-block-body ol {
+                    margin: 1rem 0;
+                    padding-left: 1.5rem;
+                    color: {{ $textPreset['description'] }};
+                }
+                
+                .content-block-body li {
+                    margin: 0.25rem 0;
+                    line-height: 1.6;
+                }
+                
+                .content-block-body blockquote {
+                    margin: 1.5rem 0;
+                    padding: 0.75rem 1rem;
+                    border-left: 4px solid {{ $textPreset['link'] ?? '#2563eb' }};
+                    background-color: #f9fafb;
+                    border-radius: 0 0.375rem 0.375rem 0;
+                    font-style: normal;
+                    color: {{ $textPreset['description'] }};
+                }
+                
+                .content-block-body strong {
+                    font-weight: 600;
+                    color: {{ $textPreset['heading'] }};
+                }
+                
+                .content-block-body em {
+                    font-style: italic;
+                }
+                
+                .content-block-body a {
+                    color: {{ $textPreset['link'] ?? '#2563eb' }};
+                    text-decoration: none;
+                }
+                
+                .content-block-body a:hover {
+                    color: {{ $textPreset['link_hover'] ?? '#1d4ed8' }};
+                    text-decoration: underline;
+                }
+                
+                .content-block-body table {
+                    width: 100%;
+                    margin: 1rem 0;
+                    border-collapse: collapse;
+                }
+                
+                .content-block-body th, .content-block-body td {
+                    padding: 0.5rem;
+                    border: 1px solid #e5e7eb;
+                    text-align: left;
+                }
+                
+                .content-block-body th {
+                    background-color: #f9fafb;
+                    font-weight: 600;
+                    color: {{ $textPreset['heading'] }};
+                }
+                
+                .content-block-body code {
+                    background-color: #f1f5f9;
+                    padding: 0.125rem 0.25rem;
+                    border-radius: 0.25rem;
+                    font-size: 0.875rem;
+                    color: #334155;
+                }
+                
+                .content-block-body pre {
+                    background-color: #1e293b;
+                    color: #f1f5f9;
+                    padding: 1rem;
+                    border-radius: 0.5rem;
+                    margin: 1rem 0;
+                    overflow-x: auto;
+                }
+                
+                .content-block-body pre code {
+                    background-color: transparent;
+                    padding: 0;
+                    color: inherit;
+                }
+            </style>
         @endif
         
     </div>
-</section>
+</article>
