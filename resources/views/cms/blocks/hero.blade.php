@@ -1,4 +1,6 @@
 @php
+    use App\Services\BlockLinkResolver;
+    
     // Height mapping
     $heightClasses = [
         'small' => 'min-h-[50vh]',
@@ -14,30 +16,19 @@
         'right' => 'text-right'
     ];
     
-    // Primary button color presets
-    $primaryButtonPresets = [
-        'white' => ['bg' => '#ffffff', 'text' => '#111827'],
-        'primary' => ['bg' => '#3b82f6', 'text' => '#ffffff'],
-        'success' => ['bg' => '#10b981', 'text' => '#ffffff'],
-        'warning' => ['bg' => '#f59e0b', 'text' => '#111827'],
-        'danger' => ['bg' => '#ef4444', 'text' => '#ffffff'],
-        'dark' => ['bg' => '#111827', 'text' => '#ffffff'],
-    ];
+    // Get current theme presets
+    $primaryButtonPresets = theme_button_presets();
+    $secondaryButtonPresets = theme_button_presets();
+    $themeColors = theme_colors();
     
-    // Secondary button color presets
-    $secondaryButtonPresets = [
-        'outline-white' => ['bg' => '#ffffff00', 'text' => '#ffffff', 'border' => '#ffffff'],
-        'outline-primary' => ['bg' => '#ffffff00', 'text' => '#3b82f6', 'border' => '#3b82f6'],
-        'outline-success' => ['bg' => '#ffffff00', 'text' => '#10b981', 'border' => '#10b981'],
-        'outline-warning' => ['bg' => '#ffffff00', 'text' => '#f59e0b', 'border' => '#f59e0b'],
-        'outline-danger' => ['bg' => '#ffffff00', 'text' => '#ef4444', 'border' => '#ef4444'],
-        'filled-white' => ['bg' => '#ffffff', 'text' => '#111827', 'border' => '#ffffff'],
-        'filled-primary' => ['bg' => '#3b82f6', 'text' => '#ffffff', 'border' => '#3b82f6'],
-    ];
-    
-    // Resolve primary button colors
+    // Resolve primary button colors with fallbacks for custom themes
     if (($primary_button_style ?? 'preset') === 'preset') {
-        $primaryPreset = $primaryButtonPresets[$primary_button_preset ?? 'white'] ?? $primaryButtonPresets['white'];
+        $requestedPreset = $primary_button_preset ?? 'white';
+        $primaryPreset = $primaryButtonPresets[$requestedPreset] 
+            ?? $primaryButtonPresets['white'] 
+            ?? $primaryButtonPresets['primary'] 
+            ?? ['bg' => '#ffffff', 'text' => '#111827', 'hover' => '#f9fafb', 'border' => '#ffffff'];
+        
         $primaryBgColor = $primaryPreset['bg'];
         $primaryTextColor = $primaryPreset['text'];
     } else {
@@ -45,12 +36,17 @@
         $primaryTextColor = $primary_button_text_color ?? '#111827';
     }
     
-    // Resolve secondary button colors
+    // Resolve secondary button colors with fallbacks for custom themes
     if (($secondary_button_style ?? 'preset') === 'preset') {
-        $secondaryPreset = $secondaryButtonPresets[$secondary_button_preset ?? 'outline-white'] ?? $secondaryButtonPresets['outline-white'];
+        $requestedSecondary = $secondary_button_preset ?? 'outline-white';
+        $secondaryPreset = $secondaryButtonPresets[$requestedSecondary]
+            ?? $secondaryButtonPresets['outline-white']
+            ?? $secondaryButtonPresets['secondary']
+            ?? ['bg' => 'rgba(255, 255, 255, 0)', 'text' => '#ffffff', 'hover' => 'rgba(255, 255, 255, 0.1)', 'border' => '#ffffff'];
+        
         $secondaryBgColor = $secondaryPreset['bg'];
         $secondaryTextColor = $secondaryPreset['text'];
-        $secondaryBorderColor = $secondaryPreset['border'];
+        $secondaryBorderColor = $secondaryPreset['border'] ?? $secondaryPreset['bg'] ?? '#ffffff';
     } else {
         $secondaryBgColor = $secondary_button_bg_color ?? '#ffffff00';
         $secondaryTextColor = $secondary_button_text_color ?? '#ffffff';
@@ -77,8 +73,8 @@
                  style="position: absolute; inset: 0; background-color: rgba(0, 0, 0, {{ $overlayOpacity }});"></div>
         </div>
     @else
-        <div class="absolute inset-0 z-0 bg-gradient-to-br from-blue-600 to-purple-600" 
-             style="position: absolute; inset: 0; z-index: 0; background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);"></div>
+        <div class="absolute inset-0 z-0 bg-gradient-to-br from-primary-600 to-primary-700" 
+             style="position: absolute; inset: 0; z-index: 0; background: linear-gradient(135deg, {{ $themeColors['primary'][600] }} 0%, {{ $themeColors['primary'][700] }} 100%);"></div>
     @endif
     
     {{-- Content Container --}}
@@ -112,7 +108,7 @@
             @endif
             
             {{-- Call to Action Buttons --}}
-            @if($button_text && $button_url && $button_url !== '#')
+            @if(BlockLinkResolver::shouldRenderButton(get_defined_vars()))
                 <div class="flex flex-col sm:flex-row gap-4 {{ $text_alignment === 'center' ? 'justify-center' : ($text_alignment === 'right' ? 'justify-end' : 'justify-start') }}" 
                      style="display: flex; gap: 1rem; 
                      @if($text_alignment === 'center')
@@ -134,7 +130,7 @@
                     </a>
                     
                     {{-- Secondary Button (if secondary text exists) --}}
-                    @if($secondary_button_text && $secondary_button_url && $secondary_button_url !== '#')
+                    @if(BlockLinkResolver::shouldRenderButton(get_defined_vars(), 'secondary_button'))
                         <a href="{{ e($secondary_button_url) }}" 
                            class="inline-flex justify-center items-center border-2 px-8 py-4 lg:px-10 lg:py-5 rounded-xl font-semibold text-lg hover:opacity-80 transition-all duration-300"
                            style="display: inline-flex; justify-content: center; align-items: center; background-color: {{ $secondaryBgColor }}; color: {{ $secondaryTextColor }}; border: 2px solid {{ $secondaryBorderColor }}; padding: 1rem 2rem; border-radius: 0.75rem; font-weight: 600; font-size: clamp(1rem, 2vw, 1.125rem); text-decoration: none; transition: all 0.3s ease;">

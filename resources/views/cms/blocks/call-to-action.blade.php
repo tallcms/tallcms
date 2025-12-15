@@ -1,20 +1,23 @@
 @php
-    use App\Support\ThemeColors;
+    // Get current theme presets that work in both admin and frontend
+    $buttonPresets = theme_button_presets();
+    $textPresets = theme_text_presets();
+    $paddingPresets = theme_padding_presets();
     
-    // Get unified presets that work in both admin and frontend
-    $buttonPresets = ThemeColors::getStaticButtonPresets();
-    $textPresets = ThemeColors::getStaticTextPresets();
-    $paddingPresets = ThemeColors::getStaticPaddingPresets();
-    
-    // Resolve button colors
+    // Resolve button colors with fallbacks for custom themes
     if (($button_style ?? 'preset') === 'preset') {
-        $buttonPreset = $buttonPresets[$button_preset ?? 'primary'] ?? $buttonPresets['primary'];
+        $requestedPreset = $button_preset ?? 'primary';
+        $buttonPreset = $buttonPresets[$requestedPreset] 
+            ?? $buttonPresets['primary'] 
+            ?? ['bg' => '#3b82f6', 'text' => '#ffffff', 'hover' => '#2563eb', 'border' => '#3b82f6'];
+            
         $buttonBgColor = $buttonPreset['bg'];
         $buttonTextColor = $buttonPreset['text'];
         $buttonHoverColor = $buttonPreset['hover'];
     } else {
-        $buttonBgColor = $button_bg_color ?? $buttonPresets['primary']['bg'];
-        $buttonTextColor = $button_text_color ?? $buttonPresets['primary']['text'];
+        $fallbackPreset = $buttonPresets['primary'] ?? ['bg' => '#3b82f6', 'text' => '#ffffff'];
+        $buttonBgColor = $button_bg_color ?? $fallbackPreset['bg'];
+        $buttonTextColor = $button_text_color ?? $fallbackPreset['text'];
         $buttonHoverColor = $buttonBgColor; // Use same as bg for custom colors
     }
     
@@ -44,7 +47,7 @@
     $alignmentClass = $alignmentClasses[$text_alignment] ?? 'text-center';
     
     // Background styling with theme colors
-    $themeColors = ThemeColors::getColors();
+    $themeColors = theme_colors();
     if (($background_style ?? 'color') === 'gradient') {
         $gradientFrom = $gradient_from ?? $themeColors['primary'][500];
         $gradientTo = $gradient_to ?? $themeColors['primary'][700];
