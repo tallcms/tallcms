@@ -155,6 +155,7 @@ This is a Laravel 12 application with a complete TallCMS implementation using Fi
 
 ### Custom Blocks for Rich Editor
 - **ContentBlock** - Article/blog content with subtitle, content width options, and heading levels
+- **PricingBlock** - Comprehensive pricing tables with plans, features, and CTA buttons
 - **HeroBlock** - Hero sections with background images and CTAs
 - **CallToActionBlock** - Styled promotional sections with buttons  
 - **ImageGalleryBlock** - Professional galleries with lightbox functionality
