@@ -88,17 +88,17 @@ class ThemeColors implements ThemeInterface
                 950 => 'rgb(5, 46, 22)',
             ],
             'warning' => [
-                50 => 'rgb(255, 251, 235)',
-                100 => 'rgb(254, 243, 199)',
-                200 => 'rgb(253, 230, 138)',
-                300 => 'rgb(252, 211, 77)',
-                400 => 'rgb(251, 191, 36)',
-                500 => 'rgb(245, 158, 11)',
-                600 => 'rgb(217, 119, 6)',
-                700 => 'rgb(180, 83, 9)',
-                800 => 'rgb(146, 64, 14)',
-                900 => 'rgb(120, 53, 15)',
-                950 => 'rgb(69, 26, 3)',
+                50 => 'rgb(255, 247, 237)',
+                100 => 'rgb(255, 237, 213)',
+                200 => 'rgb(254, 215, 170)',
+                300 => 'rgb(253, 186, 116)',
+                400 => 'rgb(251, 146, 60)',
+                500 => 'rgb(249, 115, 22)',
+                600 => 'rgb(234, 88, 12)',
+                700 => 'rgb(194, 65, 12)',
+                800 => 'rgb(154, 52, 18)',
+                900 => 'rgb(124, 45, 18)',
+                950 => 'rgb(67, 20, 7)',
             ],
             'danger' => [
                 50 => 'rgb(254, 242, 242)',
@@ -221,35 +221,96 @@ class ThemeColors implements ThemeInterface
     public static function getStaticButtonPresets(): array
     {
         return [
+            'white' => [
+                'bg' => 'rgb(255, 255, 255)',
+                'text' => 'rgb(17, 24, 39)',
+                'hover' => 'rgba(255, 255, 255, 0.9)',
+                'border' => 'rgb(255, 255, 255)',
+            ],
             'primary' => [
                 'bg' => self::getColors()['primary'][600],
                 'text' => 'rgb(255, 255, 255)',
                 'hover' => self::getColors()['primary'][700],
+                'border' => self::getColors()['primary'][600],
             ],
             'secondary' => [
                 'bg' => self::getColors()['secondary'][600],
                 'text' => 'rgb(255, 255, 255)',
                 'hover' => self::getColors()['secondary'][700],
+                'border' => self::getColors()['secondary'][600],
             ],
             'success' => [
                 'bg' => self::getColors()['success'][600],
                 'text' => 'rgb(255, 255, 255)',
                 'hover' => self::getColors()['success'][700],
+                'border' => self::getColors()['success'][600],
             ],
             'warning' => [
                 'bg' => self::getColors()['warning'][600],
                 'text' => 'rgb(0, 0, 0)',
                 'hover' => self::getColors()['warning'][700],
+                'border' => self::getColors()['warning'][600],
             ],
             'danger' => [
                 'bg' => self::getColors()['danger'][600],
                 'text' => 'rgb(255, 255, 255)',
                 'hover' => self::getColors()['danger'][700],
+                'border' => self::getColors()['danger'][600],
             ],
             'neutral' => [
                 'bg' => self::getColors()['neutral'][600],
                 'text' => 'rgb(255, 255, 255)',
                 'hover' => self::getColors()['neutral'][700],
+                'border' => self::getColors()['neutral'][600],
+            ],
+            'dark' => [
+                'bg' => 'rgb(17, 24, 39)',
+                'text' => 'rgb(255, 255, 255)',
+                'hover' => 'rgb(31, 41, 55)',
+                'border' => 'rgb(17, 24, 39)',
+            ],
+            // Outline variants for hero secondary buttons
+            'outline-white' => [
+                'bg' => 'rgba(255, 255, 255, 0)',
+                'text' => 'rgb(255, 255, 255)',
+                'hover' => 'rgba(255, 255, 255, 0.1)',
+                'border' => 'rgb(255, 255, 255)',
+            ],
+            'outline-primary' => [
+                'bg' => 'rgba(217, 119, 6, 0)',
+                'text' => self::getColors()['primary'][600],
+                'hover' => 'rgba(217, 119, 6, 0.1)',
+                'border' => self::getColors()['primary'][600],
+            ],
+            'outline-success' => [
+                'bg' => 'rgba(34, 197, 94, 0)',
+                'text' => self::getColors()['success'][600],
+                'hover' => 'rgba(34, 197, 94, 0.1)',
+                'border' => self::getColors()['success'][600],
+            ],
+            'outline-warning' => [
+                'bg' => 'rgba(234, 88, 12, 0)',
+                'text' => self::getColors()['warning'][600],
+                'hover' => 'rgba(234, 88, 12, 0.1)',
+                'border' => self::getColors()['warning'][600],
+            ],
+            'outline-danger' => [
+                'bg' => 'rgba(239, 68, 68, 0)',
+                'text' => self::getColors()['danger'][600],
+                'hover' => 'rgba(239, 68, 68, 0.1)',
+                'border' => self::getColors()['danger'][600],
+            ],
+            'filled-white' => [
+                'bg' => 'rgb(255, 255, 255)',
+                'text' => 'rgb(17, 24, 39)',
+                'hover' => 'rgba(255, 255, 255, 0.9)',
+                'border' => 'rgb(255, 255, 255)',
+            ],
+            'filled-primary' => [
+                'bg' => self::getColors()['primary'][600],
+                'text' => 'rgb(255, 255, 255)',
+                'hover' => self::getColors()['primary'][700],
+                'border' => self::getColors()['primary'][600],
             ],
         ];
     }

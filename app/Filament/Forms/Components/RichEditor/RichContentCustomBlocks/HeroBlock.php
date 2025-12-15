@@ -52,7 +52,8 @@ class HeroBlock extends RichContentCustomBlock
                                     
                                 TextInput::make('button_text')
                                     ->maxLength(100)
-                                    ->placeholder('Call to action button text'),
+                                    ->placeholder('Call to action button text')
+                                    ->live(),
                                     
                                 Select::make('button_link_type')
                                     ->label('Button Link Type')
@@ -63,6 +64,8 @@ class HeroBlock extends RichContentCustomBlock
                                     ])
                                     ->default('page')
                                     ->live()
+                                    ->visible(fn (Get $get): bool => filled($get('button_text')))
+                                    ->required(fn (Get $get): bool => filled($get('button_text')))
                                     ->afterStateUpdated(fn (callable $set) => $set('button_page_id', null))
                                     ->afterStateUpdated(fn (callable $set) => $set('button_url', null)),
                                     
@@ -70,16 +73,19 @@ class HeroBlock extends RichContentCustomBlock
                                     ->label('Select Page')
                                     ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
                                     ->searchable()
-                                    ->visible(fn (Get $get): bool => $get('button_link_type') === 'page'),
+                                    ->visible(fn (Get $get): bool => $get('button_link_type') === 'page' && filled($get('button_text')))
+                                    ->required(fn (Get $get): bool => $get('button_link_type') === 'page' && filled($get('button_text'))),
                                     
                                 TextInput::make('button_url')
                                     ->label('URL')
                                     ->placeholder('https://example.com or /contact or #section')
-                                    ->visible(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom'])),
+                                    ->visible(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom']) && filled($get('button_text')))
+                                    ->required(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom']) && filled($get('button_text'))),
                                     
                                 TextInput::make('secondary_button_text')
                                     ->maxLength(100)
-                                    ->placeholder('Secondary button text (optional)'),
+                                    ->placeholder('Secondary button text (optional)')
+                                    ->live(),
                                     
                                 Select::make('secondary_button_link_type')
                                     ->label('Secondary Button Link Type')
@@ -91,6 +97,7 @@ class HeroBlock extends RichContentCustomBlock
                                     ->default('page')
                                     ->live()
                                     ->visible(fn (Get $get): bool => filled($get('secondary_button_text')))
+                                    ->required(fn (Get $get): bool => filled($get('secondary_button_text')))
                                     ->afterStateUpdated(fn (callable $set) => $set('secondary_button_page_id', null))
                                     ->afterStateUpdated(fn (callable $set) => $set('secondary_button_url', null)),
                                     
@@ -98,12 +105,14 @@ class HeroBlock extends RichContentCustomBlock
                                     ->label('Select Page')
                                     ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
                                     ->searchable()
-                                    ->visible(fn (Get $get): bool => $get('secondary_button_link_type') === 'page' && filled($get('secondary_button_text'))),
+                                    ->visible(fn (Get $get): bool => $get('secondary_button_link_type') === 'page' && filled($get('secondary_button_text')))
+                                    ->required(fn (Get $get): bool => $get('secondary_button_link_type') === 'page' && filled($get('secondary_button_text'))),
                                     
                                 TextInput::make('secondary_button_url')
                                     ->label('Secondary URL')
                                     ->placeholder('https://example.com or /contact or #section')
-                                    ->visible(fn (Get $get): bool => in_array($get('secondary_button_link_type'), ['external', 'custom']) && filled($get('secondary_button_text'))),
+                                    ->visible(fn (Get $get): bool => in_array($get('secondary_button_link_type'), ['external', 'custom']) && filled($get('secondary_button_text')))
+                                    ->required(fn (Get $get): bool => in_array($get('secondary_button_link_type'), ['external', 'custom']) && filled($get('secondary_button_text'))),
                             ]),
                             
                         Tab::make('Button Styling')
@@ -250,6 +259,7 @@ class HeroBlock extends RichContentCustomBlock
         $secondaryButtonUrl = BlockLinkResolver::resolveButtonUrl($config, 'secondary_button');
         
         return view('cms.blocks.hero', array_merge($config, [
+            'id' => static::getId(),
             'heading' => $config['heading'] ?? 'Hero Heading',
             'subheading' => $config['subheading'] ?? 'Hero subheading text',
             'button_text' => $config['button_text'] ?? null,
@@ -282,6 +292,7 @@ class HeroBlock extends RichContentCustomBlock
         $secondaryButtonUrl = BlockLinkResolver::resolveButtonUrl($config, 'secondary_button');
         
         return view('cms.blocks.hero', array_merge($config, [
+            'id' => static::getId(),
             'heading' => $config['heading'] ?? '',
             'subheading' => $config['subheading'] ?? '',
             'button_text' => $config['button_text'] ?? null,

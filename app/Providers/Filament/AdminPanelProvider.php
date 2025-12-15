@@ -12,7 +12,7 @@ use Filament\Navigation\MenuItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
-use App\Support\ThemeColors;
+use App\Services\ThemeResolver;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
@@ -38,11 +38,11 @@ class AdminPanelProvider extends PanelProvider
                 AppAuthentication::make(),
             ])
             ->colors([
-                'primary' => ThemeColors::getPrimaryColor(),
-                'secondary' => ThemeColors::getFilamentColors()['secondary'],
-                'success' => ThemeColors::getFilamentColors()['success'],
-                'warning' => ThemeColors::getFilamentColors()['warning'],
-                'danger' => ThemeColors::getFilamentColors()['danger'],
+                'primary' => ThemeResolver::getCurrentTheme()->getColorPalette()['primary'],
+                'secondary' => ThemeResolver::getCurrentTheme()->getColorPalette()['secondary'],
+                'success' => ThemeResolver::getCurrentTheme()->getColorPalette()['success'],
+                'warning' => ThemeResolver::getCurrentTheme()->getColorPalette()['warning'],
+                'danger' => ThemeResolver::getCurrentTheme()->getColorPalette()['danger'],
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

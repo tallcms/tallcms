@@ -49,7 +49,8 @@ class CallToActionBlock extends RichContentCustomBlock
                                 TextInput::make('button_text')
                                     ->required()
                                     ->maxLength(100)
-                                    ->placeholder('Get Started'),
+                                    ->placeholder('Get Started')
+                                    ->live(),
                                     
                                 Select::make('button_link_type')
                                     ->label('Button Link Type')
@@ -67,14 +68,14 @@ class CallToActionBlock extends RichContentCustomBlock
                                     ->label('Select Page')
                                     ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
                                     ->searchable()
-                                    ->required()
-                                    ->visible(fn (Get $get): bool => $get('button_link_type') === 'page'),
+                                    ->visible(fn (Get $get): bool => $get('button_link_type') === 'page')
+                                    ->required(fn (Get $get): bool => $get('button_link_type') === 'page'),
                                     
                                 TextInput::make('button_url')
                                     ->label('URL')
-                                    ->required()
                                     ->placeholder('https://example.com or /contact or #section')
-                                    ->visible(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom'])),
+                                    ->visible(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom']))
+                                    ->required(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom'])),
                             ]),
                             
                         Tab::make('Button Styling')
@@ -219,6 +220,7 @@ class CallToActionBlock extends RichContentCustomBlock
         $buttonUrl = BlockLinkResolver::resolveButtonUrl($config, 'button');
         
         return view('cms.blocks.call-to-action', array_merge($config, [
+            'id' => static::getId(),
             'title' => $config['title'] ?? 'Call to Action Title',
             'description' => $config['description'] ?? 'Compelling description text',
             'button_text' => $config['button_text'] ?? 'Get Started',
@@ -249,6 +251,7 @@ class CallToActionBlock extends RichContentCustomBlock
         $buttonUrl = BlockLinkResolver::resolveButtonUrl($config, 'button');
         
         return view('cms.blocks.call-to-action', array_merge($config, [
+            'id' => static::getId(),
             'title' => $config['title'] ?? '',
             'description' => $config['description'] ?? '',
             'button_text' => $config['button_text'] ?? '',

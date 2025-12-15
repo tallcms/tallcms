@@ -31,7 +31,8 @@
         },
         "files": [
             "app/Helpers/SiteSettings.php",
-            "app/Helpers/MenuHelpers.php"
+            "app/Helpers/MenuHelpers.php",
+            "app/helpers.php"
         ]
     },
     "autoload-dev": {

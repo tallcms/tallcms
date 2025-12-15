@@ -31,13 +31,25 @@ interface ThemeInterface
     /**
      * Get preset button colors for rich editor components
      * 
+     * All presets must include bg, text, hover, and border properties.
+     * Must include basic semantic colors and hero-specific variants.
+     * 
      * @return array{
-     *     primary: array{bg: string, text: string, hover: string},
-     *     secondary: array{bg: string, text: string, hover: string},
-     *     success: array{bg: string, text: string, hover: string},
-     *     warning: array{bg: string, text: string, hover: string},
-     *     danger: array{bg: string, text: string, hover: string},
-     *     neutral: array{bg: string, text: string, hover: string}
+     *     white: array{bg: string, text: string, hover: string, border: string},
+     *     primary: array{bg: string, text: string, hover: string, border: string},
+     *     secondary: array{bg: string, text: string, hover: string, border: string},
+     *     success: array{bg: string, text: string, hover: string, border: string},
+     *     warning: array{bg: string, text: string, hover: string, border: string},
+     *     danger: array{bg: string, text: string, hover: string, border: string},
+     *     neutral: array{bg: string, text: string, hover: string, border: string},
+     *     dark: array{bg: string, text: string, hover: string, border: string},
+     *     outline-white: array{bg: string, text: string, hover: string, border: string},
+     *     outline-primary: array{bg: string, text: string, hover: string, border: string},
+     *     outline-success: array{bg: string, text: string, hover: string, border: string},
+     *     outline-warning: array{bg: string, text: string, hover: string, border: string},
+     *     outline-danger: array{bg: string, text: string, hover: string, border: string},
+     *     filled-white: array{bg: string, text: string, hover: string, border: string},
+     *     filled-primary: array{bg: string, text: string, hover: string, border: string}
      * }
      */
     public function getButtonPresets(): array;
