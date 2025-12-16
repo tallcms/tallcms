@@ -96,6 +96,10 @@ class ThemeManager
      */
     public function setActiveTheme(string $slug): bool
     {
+        // Refresh theme cache to ensure we have the latest themes
+        // This prevents issues when a new theme was just added
+        $this->refreshCache();
+        
         $theme = Theme::find($slug);
         
         if (!$theme) {
@@ -459,7 +463,13 @@ class ThemeManager
             
             // If not found in any theme manifest, try main app fallback
             if (!$assetFound) {
+                $beforeCount = count($assets);
                 $this->tryMainAppFallback($assets, $entry);
+                
+                // If main app fallback also failed and this is CSS, use static fallback as last resort
+                if (count($assets) === $beforeCount && str_ends_with($entry, '.css')) {
+                    $this->addStaticCssFallback($assets, "no manifest found for {$entry}");
+                }
             }
         }
         
@@ -706,7 +716,7 @@ class ThemeManager
     }
 
     /**
-     * Deduplicate assets by URL and type to prevent double-injection
+     * Deduplicate assets by URL and type while preserving metadata
      */
     protected function deduplicateAssets(array $assets): array
     {
@@ -717,8 +727,50 @@ class ThemeManager
             $key = $asset['url'] . '|' . $asset['type'];
             
             if (!isset($seen[$key])) {
-                $seen[$key] = true;
+                $seen[$key] = $asset; // Store the full asset, not just a boolean
                 $deduplicated[] = $asset;
+            } else {
+                // Merge metadata from duplicate assets to preserve entry/import information
+                $existing = &$seen[$key];
+                
+                // Merge entries if both have entry information
+                if (isset($asset['entry']) && isset($existing['entry'])) {
+                    if (!is_array($existing['entry'])) {
+                        $existing['entry'] = [$existing['entry']];
+                    }
+                    if (!in_array($asset['entry'], $existing['entry'])) {
+                        $existing['entry'][] = $asset['entry'];
+                    }
+                }
+                
+                // Preserve import flag if either asset is an import
+                if (isset($asset['import']) && $asset['import']) {
+                    $existing['import'] = true;
+                }
+                
+                // Prefer non-fallback sources but preserve fallback info
+                if (isset($existing['fallback']) && isset($asset['fallback'])) {
+                    $existing['fallback'] = $existing['fallback'] && $asset['fallback'];
+                } elseif (isset($asset['fallback'])) {
+                    $existing['fallback'] = $asset['fallback'];
+                }
+                
+                // Combine notes for debugging
+                if (isset($asset['note']) && isset($existing['note'])) {
+                    if ($asset['note'] !== $existing['note']) {
+                        $existing['note'] = $existing['note'] . '; ' . $asset['note'];
+                    }
+                } elseif (isset($asset['note'])) {
+                    $existing['note'] = $asset['note'];
+                }
+                
+                // Update the deduplicated array with merged metadata
+                foreach ($deduplicated as &$deduped) {
+                    if ($deduped['url'] === $asset['url'] && $deduped['type'] === $asset['type']) {
+                        $deduped = $existing;
+                        break;
+                    }
+                }
             }
         }
         
