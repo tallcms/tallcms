@@ -28,6 +28,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'maintenance.mode' => \App\Http\Middleware\MaintenanceModeMiddleware::class,
             'installer.gate' => \App\Http\Middleware\InstallerGate::class,
+            'theme.preview' => \App\Http\Middleware\ThemePreviewMiddleware::class,
+        ]);
+
+        // Add theme preview middleware to web group
+        $middleware->web(append: [
+            \App\Http\Middleware\ThemePreviewMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

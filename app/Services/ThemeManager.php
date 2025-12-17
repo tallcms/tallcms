@@ -109,6 +109,9 @@ class ThemeManager
         // Get previous theme for events
         $previousTheme = $this->activeTheme;
 
+        // Publish theme assets if not already published (create symlinks)
+        $this->publishThemeAssets($theme);
+
         // Dispatch theme activating event
         Event::dispatch(new ThemeActivating($theme, $previousTheme));
 
@@ -116,12 +119,20 @@ class ThemeManager
         $configPath = config_path('theme.php');
         $config = File::exists($configPath) ? include $configPath : [];
         $config['active'] = $slug;
-        
+
         File::put($configPath, "<?php\n\nreturn " . var_export($config, true) . ";\n");
+
+        // Clear PHP file stat cache to ensure fresh reads
+        clearstatcache(true, $configPath);
+
+        // Invalidate opcache for this file if opcache is enabled
+        if (function_exists('opcache_invalidate')) {
+            opcache_invalidate($configPath, true);
+        }
 
         // Update in-memory config immediately
         Config::set('theme.active', $slug);
-        
+
         // Clear config cache if it exists
         if (app()->configurationIsCached()) {
             \Illuminate\Support\Facades\Artisan::call('config:clear');
@@ -129,13 +140,25 @@ class ThemeManager
 
         // Clear cached theme instance
         $this->activeTheme = null;
-        
+
         // Bind file-based theme to ThemeInterface for color/text/padding presets
         $this->bindFileBasedTheme($theme);
-        
+
         // Reset and refresh view paths with new theme
         $this->resetViewPaths();
         $this->registerThemeViewPaths();
+
+        // Flush view finder cache to ensure fresh template resolution
+        View::flushFinderCache();
+
+        // Clear compiled views cache to prevent stale theme references
+        // This must happen on every theme switch regardless of environment
+        $compiledViewPath = config('view.compiled');
+        if ($compiledViewPath && File::isDirectory($compiledViewPath)) {
+            foreach (File::glob($compiledViewPath . '/*.php') as $view) {
+                File::delete($view);
+            }
+        }
 
         // Dispatch theme activated event
         Event::dispatch(new ThemeActivated($theme, $previousTheme));
@@ -149,18 +172,106 @@ class ThemeManager
     protected function bindFileBasedTheme(Theme $theme): void
     {
         $fileBasedTheme = new \App\Services\FileBasedTheme($theme);
-        
+
         // Rebind the ThemeInterface to use our file-based theme
         app()->bind(\App\Contracts\ThemeInterface::class, function () use ($fileBasedTheme) {
             return $fileBasedTheme;
         });
-        
+
         // Update ThemeResolver to use the new theme
         app()->when(\App\Services\ThemeResolver::class)
             ->needs(\App\Contracts\ThemeInterface::class)
             ->give(function () use ($fileBasedTheme) {
                 return $fileBasedTheme;
             });
+    }
+
+    /**
+     * Activate theme with rollback support
+     * Stores the previous theme slug for potential rollback
+     */
+    public function activateWithRollback(string $slug): bool
+    {
+        // Store current theme for potential rollback
+        $currentTheme = $this->getActiveTheme();
+        $previousSlug = $currentTheme->slug;
+
+        // Attempt to activate new theme
+        $success = $this->setActiveTheme($slug);
+
+        if ($success) {
+            // Store rollback info in cache (24 hour expiration)
+            $rollbackDuration = Config::get('theme.rollback_duration', 24);
+            Cache::put('theme.rollback_slug', $previousSlug, now()->addHours($rollbackDuration));
+            Cache::put('theme.rollback_timestamp', now(), now()->addHours($rollbackDuration));
+        }
+
+        return $success;
+    }
+
+    /**
+     * Rollback to the previous theme
+     */
+    public function rollbackToPrevious(): bool
+    {
+        $previousSlug = Cache::get('theme.rollback_slug');
+
+        if (!$previousSlug) {
+            return false;
+        }
+
+        // Verify the previous theme still exists
+        $previousTheme = Theme::find($previousSlug);
+        if (!$previousTheme) {
+            Cache::forget('theme.rollback_slug');
+            Cache::forget('theme.rollback_timestamp');
+            return false;
+        }
+
+        // Activate the previous theme (without storing another rollback)
+        $success = $this->setActiveTheme($previousSlug);
+
+        if ($success) {
+            // Clear rollback info
+            Cache::forget('theme.rollback_slug');
+            Cache::forget('theme.rollback_timestamp');
+
+            // Dispatch rollback event
+            Event::dispatch(new \App\Events\ThemeRollback($previousTheme));
+        }
+
+        return $success;
+    }
+
+    /**
+     * Get the slug of the theme that can be rolled back to
+     */
+    public function getRollbackSlug(): ?string
+    {
+        return Cache::get('theme.rollback_slug');
+    }
+
+    /**
+     * Check if rollback is available
+     */
+    public function canRollback(): bool
+    {
+        $rollbackSlug = $this->getRollbackSlug();
+
+        if (!$rollbackSlug) {
+            return false;
+        }
+
+        // Verify the theme still exists
+        return Theme::find($rollbackSlug) !== null;
+    }
+
+    /**
+     * Get rollback timestamp
+     */
+    public function getRollbackTimestamp(): ?\Carbon\Carbon
+    {
+        return Cache::get('theme.rollback_timestamp');
     }
 
     /**
@@ -302,17 +413,20 @@ class ThemeManager
     public function registerThemeViewPaths(): void
     {
         $activeTheme = $this->getActiveTheme();
-        
+
         // Get theme hierarchy (child to parent)
         $hierarchy = $activeTheme->getHierarchy();
-        
+
+        // Get the view finder from the View factory (not app('view.finder') which may be a different instance)
+        $viewFinder = View::getFinder();
+
         // Register view paths in reverse order (parents first, then children)
         // This ensures child themes override parent templates
         foreach (array_reverse($hierarchy) as $theme) {
             $themeViewsPath = $theme->getViewPath();
             if (File::exists($themeViewsPath)) {
-                View::prependLocation($themeViewsPath);
-                
+                $viewFinder->prependLocation($themeViewsPath);
+
                 // Also register view namespace for explicit theme loading
                 $this->registerThemeNamespace($theme);
             }
