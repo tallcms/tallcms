@@ -261,9 +261,21 @@ The multi-theme system uses a distributed configuration approach where each them
 #### Global Configuration (`config/theme.php`)
 ```php
 return [
-    // Only contains the active theme slug
-    // Automatically managed by ThemeManager
-    'active' => 'current-theme-slug',
+    'active' => 'current-theme-slug',  // Managed by ThemeManager
+    'cache_enabled' => false,           // Theme discovery caching
+    'cache_ttl' => 3600,               // Cache duration in seconds
+    'preview_duration' => 30,          // Preview session duration (minutes)
+    'rollback_duration' => 24,         // Rollback availability (hours)
+    'allow_uploads' => false,          // Enable theme uploads (Phase 2)
+];
+```
+
+#### TallCMS Version (`config/tallcms.php`)
+```php
+return [
+    'version' => '1.0.0',  // Single source of truth for compatibility checks
+    'contact_email' => env('TALLCMS_CONTACT_EMAIL'),
+    'company_name' => env('TALLCMS_COMPANY_NAME'),
 ];
 ```
 
@@ -300,9 +312,69 @@ return [
 
 **Configuration Source of Truth:**
 - **Active Theme**: `config/theme.php['active']` (managed by ThemeManager)
+- **TallCMS Version**: `config/tallcms.php['version']` (used by Theme and ThemeValidator)
 - **Theme Discovery**: Automatic scanning of `themes/` directory
 - **Theme Metadata**: Individual `theme.json` files in each theme
 - **No Central Registry**: Themes are discovered dynamically, no need to register them manually
+
+### Theme Management Admin UI
+
+The admin panel includes a WordPress-like theme management interface at **Appearance > Themes**.
+
+#### Admin Page (`app/Filament/Pages/ThemeManager.php`)
+- Visual theme gallery with screenshots and metadata
+- One-click theme activation with preflight validation
+- Live preview in new tab (30-minute session)
+- One-click rollback to previous theme (24-hour window)
+- Shield permission: `View:ThemeManager`
+
+#### Theme Validation (`app/Services/ThemeValidator.php`)
+Validates themes before activation with comprehensive checks:
+- **Required files**: `theme.json` must exist
+- **Required fields**: `name`, `slug`, `version`, `description`, `author`
+- **Forbidden files**: PHP files (except `.blade.php`), `.htaccess`, `.env`
+- **PHP detection**: Catches double extensions like `foo.php.txt`
+- **Path traversal**: Blocks `..`, encoded traversal, absolute paths
+- **Compatibility**: PHP version, extensions, TallCMS version
+- **Build state**: Verifies manifest exists and referenced files exist
+- **ZIP validation**: Size limits (100MB), file count (5000), traversal protection
+
+#### Theme Preview Middleware (`app/Http/Middleware/ThemePreviewMiddleware.php`)
+Handles temporary theme previews via `?theme_preview={slug}`:
+- Session-based preview with configurable expiration
+- Validates theme is built and meets requirements before preview
+- Overrides view paths, namespaces, and ThemeInterface binding
+- Stores preview errors in session for user feedback
+- Skips admin routes automatically
+
+#### Theme Compatibility (`theme.json`)
+```json
+{
+    "compatibility": {
+        "tallcms": "^1.0",      // TallCMS version requirement (enforced)
+        "php": "^8.2",          // PHP version requirement (enforced)
+        "extensions": ["gd"],   // Required PHP extensions (enforced)
+        "prebuilt": true        // Source themes blocked in production
+    }
+}
+```
+
+#### Screenshots
+Theme screenshots must be placed in `public/` directory to be web-accessible:
+- Primary: `public/screenshot.png` or configured in `theme.json`
+- Gallery: `screenshots.gallery` array in `theme.json` (paths relative to `public/`)
+
+#### Key Services
+- **ThemeManager** (`app/Services/ThemeManager.php`): Theme discovery, activation, rollback, asset management
+- **ThemeValidator** (`app/Services/ThemeValidator.php`): Preflight validation, ZIP scanning, compatibility checks
+- **Theme** (`app/Models/Theme.php`): Theme data model with compatibility/requirements methods
+- **FileBasedTheme** (`app/Services/FileBasedTheme.php`): Adapts file themes to ThemeInterface
+
+#### Implementation Notes
+- **View Finder**: Always use `View::getFinder()` not `app('view.finder')` - Laravel has two different instances
+- **Theme Activation**: Clears opcache, file stat cache, view cache, and compiled views for immediate effect
+- **Rollback**: Stored in cache with configurable TTL; validates theme still exists before rollback
+- **Preview**: Uses reflection to override ThemeManager singleton; clears namespaces to prevent accumulation
 
 ### Template Override System
 Themes can override any template by creating files in the same relative path structure:

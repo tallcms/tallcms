@@ -30,8 +30,29 @@ class Theme
         $this->supports = $data['supports'] ?? [];
         $this->build = $data['build'] ?? [];
         $this->parent = $data['parent'] ?? null;
-        $this->extras = $data['extras'] ?? [];
         $this->path = $path;
+
+        // Parse extras including compatibility and screenshots
+        $this->extras = $data['extras'] ?? [];
+
+        // Store compatibility info in extras
+        $this->extras['compatibility'] = $data['compatibility'] ?? [
+            'tallcms' => '*',
+            'php' => '^8.2',
+            'extensions' => [],
+            'prebuilt' => true,
+        ];
+
+        // Store screenshots info in extras
+        $this->extras['screenshots'] = $data['screenshots'] ?? [
+            'primary' => null,
+            'gallery' => [],
+        ];
+
+        // Store additional metadata
+        $this->extras['author_url'] = $data['author_url'] ?? null;
+        $this->extras['license'] = $data['license'] ?? null;
+        $this->extras['homepage'] = $data['homepage'] ?? null;
     }
 
     /**
@@ -234,5 +255,259 @@ class Theme
     public function hasViewOverride(string $viewPath): bool
     {
         return $this->findView($viewPath) !== null;
+    }
+
+    /**
+     * Get the primary screenshot URL for the theme
+     * Screenshots must be in the public/ directory to be web-accessible
+     */
+    public function getScreenshotUrl(): ?string
+    {
+        // Check for configured screenshot in theme.json
+        $primaryScreenshot = $this->extras['screenshots']['primary'] ?? null;
+        if ($primaryScreenshot) {
+            // Screenshot path must be relative to public/
+            $screenshotPath = $this->path . '/public/' . $primaryScreenshot;
+            if (File::exists($screenshotPath)) {
+                return asset("themes/{$this->slug}/{$primaryScreenshot}");
+            }
+
+            // Also check if the path already includes public/
+            if (str_starts_with($primaryScreenshot, 'public/')) {
+                $assetPath = substr($primaryScreenshot, 7);
+                $fullPath = $this->path . '/' . $primaryScreenshot;
+                if (File::exists($fullPath)) {
+                    return asset("themes/{$this->slug}/{$assetPath}");
+                }
+            }
+        }
+
+        // Look for common screenshot filenames (only in public/ directory)
+        $possibleNames = [
+            'screenshot.png',
+            'screenshot.jpg',
+            'screenshot.jpeg',
+            'preview.png',
+            'preview.jpg',
+            'preview.jpeg',
+        ];
+
+        foreach ($possibleNames as $filename) {
+            $fullPath = $this->path . '/public/' . $filename;
+            if (File::exists($fullPath)) {
+                return asset("themes/{$this->slug}/{$filename}");
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get gallery screenshots
+     * Screenshots must be in the public/ directory to be web-accessible
+     */
+    public function getGalleryScreenshots(): array
+    {
+        $gallery = $this->extras['screenshots']['gallery'] ?? [];
+        $urls = [];
+
+        foreach ($gallery as $screenshot) {
+            // Screenshots must be in public/ directory
+            $fullPath = $this->path . '/public/' . $screenshot;
+            if (File::exists($fullPath)) {
+                $urls[] = asset("themes/{$this->slug}/{$screenshot}");
+            }
+        }
+
+        return $urls;
+    }
+
+    /**
+     * Check if theme is prebuilt (no Node.js build required)
+     */
+    public function isPrebuilt(): bool
+    {
+        return $this->extras['compatibility']['prebuilt'] ?? true;
+    }
+
+    /**
+     * Check if theme has been built (manifest exists)
+     */
+    public function isBuilt(): bool
+    {
+        $manifestPath = $this->path . '/public/build/manifest.json';
+        return File::exists($manifestPath);
+    }
+
+    /**
+     * Get compatibility requirements
+     */
+    public function getCompatibility(): array
+    {
+        return $this->extras['compatibility'] ?? [];
+    }
+
+    /**
+     * Get TallCMS version from config (single source of truth)
+     */
+    public static function getTallcmsVersion(): string
+    {
+        return config('tallcms.version', '1.0.0');
+    }
+
+    /**
+     * Check if theme meets all system requirements
+     */
+    public function meetsRequirements(): bool
+    {
+        $compatibility = $this->getCompatibility();
+
+        // Check PHP version
+        if (!empty($compatibility['php'])) {
+            $requiredPhp = $compatibility['php'];
+            if (!$this->versionSatisfies(PHP_VERSION, $requiredPhp)) {
+                return false;
+            }
+        }
+
+        // Check PHP extensions
+        if (!empty($compatibility['extensions'])) {
+            foreach ($compatibility['extensions'] as $extension) {
+                if (!extension_loaded($extension)) {
+                    return false;
+                }
+            }
+        }
+
+        // Check TallCMS version
+        if (!empty($compatibility['tallcms']) && $compatibility['tallcms'] !== '*') {
+            if (!$this->versionSatisfies(self::getTallcmsVersion(), $compatibility['tallcms'])) {
+                return false;
+            }
+        }
+
+        // Check prebuilt requirement in production
+        if (!$this->isPrebuilt() && app()->environment('production')) {
+            return false;
+        }
+
+        // Check if theme is built when prebuilt is expected
+        if ($this->isPrebuilt() && !$this->isBuilt()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get list of unmet requirements
+     */
+    public function getUnmetRequirements(): array
+    {
+        $unmet = [];
+        $compatibility = $this->getCompatibility();
+
+        // Check PHP version
+        if (!empty($compatibility['php'])) {
+            $requiredPhp = $compatibility['php'];
+            if (!$this->versionSatisfies(PHP_VERSION, $requiredPhp)) {
+                $unmet[] = "Requires PHP {$requiredPhp}, current is " . PHP_VERSION;
+            }
+        }
+
+        // Check PHP extensions
+        if (!empty($compatibility['extensions'])) {
+            foreach ($compatibility['extensions'] as $extension) {
+                if (!extension_loaded($extension)) {
+                    $unmet[] = "Requires PHP extension: {$extension}";
+                }
+            }
+        }
+
+        // Check TallCMS version
+        if (!empty($compatibility['tallcms']) && $compatibility['tallcms'] !== '*') {
+            $currentTallcms = self::getTallcmsVersion();
+            if (!$this->versionSatisfies($currentTallcms, $compatibility['tallcms'])) {
+                $unmet[] = "Requires TallCMS {$compatibility['tallcms']}, current is {$currentTallcms}";
+            }
+        }
+
+        // Check prebuilt requirement in production
+        if (!$this->isPrebuilt() && app()->environment('production')) {
+            $unmet[] = 'Source themes cannot be used in production';
+        }
+
+        // Check if theme is built
+        if ($this->isPrebuilt() && !$this->isBuilt()) {
+            $unmet[] = 'Theme assets have not been built';
+        }
+
+        return $unmet;
+    }
+
+    /**
+     * Get author URL
+     */
+    public function getAuthorUrl(): ?string
+    {
+        return $this->extras['author_url'] ?? null;
+    }
+
+    /**
+     * Get theme license
+     */
+    public function getLicense(): ?string
+    {
+        return $this->extras['license'] ?? null;
+    }
+
+    /**
+     * Get theme homepage URL
+     */
+    public function getHomepage(): ?string
+    {
+        return $this->extras['homepage'] ?? null;
+    }
+
+    /**
+     * Check if current version satisfies requirement
+     */
+    protected function versionSatisfies(string $current, string $requirement): bool
+    {
+        // Handle caret (^) version constraints
+        if (str_starts_with($requirement, '^')) {
+            $minVersion = substr($requirement, 1);
+            $parts = explode('.', $minVersion);
+            $major = $parts[0];
+
+            return version_compare($current, $minVersion, '>=')
+                && version_compare($current, ($major + 1) . '.0.0', '<');
+        }
+
+        // Handle tilde (~) version constraints
+        if (str_starts_with($requirement, '~')) {
+            $minVersion = substr($requirement, 1);
+            $parts = explode('.', $minVersion);
+
+            if (count($parts) >= 2) {
+                $major = $parts[0];
+                $minor = $parts[1];
+                return version_compare($current, $minVersion, '>=')
+                    && version_compare($current, "{$major}." . ($minor + 1) . '.0', '<');
+            }
+        }
+
+        // Handle greater than or equal (>=)
+        if (str_starts_with($requirement, '>=')) {
+            return version_compare($current, substr($requirement, 2), '>=');
+        }
+
+        // Handle wildcard (*)
+        if ($requirement === '*') {
+            return true;
+        }
+
+        // Default to exact or >= comparison
+        return version_compare($current, $requirement, '>=');
     }
 }
