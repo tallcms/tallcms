@@ -266,7 +266,7 @@ return [
     'cache_ttl' => 3600,               // Cache duration in seconds
     'preview_duration' => 30,          // Preview session duration (minutes)
     'rollback_duration' => 24,         // Rollback availability (hours)
-    'allow_uploads' => false,          // Enable theme uploads (Phase 2)
+    'allow_uploads' => true,           // Enable ZIP-based theme uploads
 ];
 ```
 
@@ -326,6 +326,8 @@ The admin panel includes a WordPress-like theme management interface at **Appear
 - One-click theme activation with preflight validation
 - Live preview in new tab (30-minute session)
 - One-click rollback to previous theme (24-hour window)
+- ZIP-based theme upload (when `allow_uploads` enabled)
+- Delete themes with Filament confirmation modal
 - Shield permission: `View:ThemeManager`
 
 #### Theme Validation (`app/Services/ThemeValidator.php`)
@@ -338,6 +340,16 @@ Validates themes before activation with comprehensive checks:
 - **Compatibility**: PHP version, extensions, TallCMS version
 - **Build state**: Verifies manifest exists and referenced files exist
 - **ZIP validation**: Size limits (100MB), file count (5000), traversal protection
+- **Slug validation**: Lowercase alphanumeric + hyphens only, max 64 characters
+
+#### Theme Upload Security
+The theme upload system includes multiple security layers:
+- **Server-side config guard**: Verifies `allow_uploads` config before processing
+- **Slug sanitization**: Prevents path traversal via malicious slugs in theme.json
+- **Pre-built themes**: Skips npm build if `public/build/manifest.json` exists
+- **Cleanup on failure**: Removes both `themes/{slug}` and `public/themes/{slug}` on any error
+- **Graceful error handling**: Logs full stack trace, shows user-friendly message
+- **50MB upload limit**: Configured in `config/livewire.php`
 
 #### Theme Preview Middleware (`app/Http/Middleware/ThemePreviewMiddleware.php`)
 Handles temporary theme previews via `?theme_preview={slug}`:
@@ -365,8 +377,8 @@ Theme screenshots must be placed in `public/` directory to be web-accessible:
 - Gallery: `screenshots.gallery` array in `theme.json` (paths relative to `public/`)
 
 #### Key Services
-- **ThemeManager** (`app/Services/ThemeManager.php`): Theme discovery, activation, rollback, asset management
-- **ThemeValidator** (`app/Services/ThemeValidator.php`): Preflight validation, ZIP scanning, compatibility checks
+- **ThemeManager** (`app/Services/ThemeManager.php`): Theme discovery, activation, rollback, asset management, ZIP extraction, theme deletion
+- **ThemeValidator** (`app/Services/ThemeValidator.php`): Preflight validation, ZIP scanning, slug validation, compatibility checks
 - **Theme** (`app/Models/Theme.php`): Theme data model with compatibility/requirements methods
 - **FileBasedTheme** (`app/Services/FileBasedTheme.php`): Adapts file themes to ThemeInterface
 
