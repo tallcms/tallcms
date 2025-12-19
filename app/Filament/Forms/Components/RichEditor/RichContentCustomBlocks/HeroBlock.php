@@ -264,8 +264,8 @@ class HeroBlock extends RichContentCustomBlock
         
         return view('cms.blocks.hero', array_merge($config, [
             'id' => static::getId(),
-            'heading' => $config['heading'] ?? 'Hero Heading',
-            'subheading' => $config['subheading'] ?? 'Hero subheading text',
+            'heading' => $config['heading'] ?? '',
+            'subheading' => $config['subheading'] ?? '',
             'button_text' => $config['button_text'] ?? null,
             'button_url' => $buttonUrl,
             'secondary_button_text' => $config['secondary_button_text'] ?? null,
