@@ -73,14 +73,13 @@ class MakeTheme extends Command
         $this->line("📁 Location: themes/{$slug}");
         $this->newLine();
         $this->comment("Next steps:");
-        $this->line("1. cd themes/{$slug} && npm install && npm run build");
-        $this->line("2. cd ../../  # Back to project root");
-        $this->line("3. php artisan theme:install {$slug}");
+        $this->line("1. Add a screenshot: themes/{$slug}/public/screenshot.png (1200×900px recommended)");
+        $this->line("2. cd themes/{$slug} && npm install && npm run build");
+        $this->line("3. cd ../../  # Back to project root");
         $this->line("4. php artisan theme:activate {$slug}");
         $this->newLine();
         $this->comment("Or run everything from project root:");
         $this->line("• cd themes/{$slug} && npm install && npm run build && cd ../../");
-        $this->line("• php artisan theme:install {$slug}");
         $this->line("• php artisan theme:activate {$slug}");
         
         return 0;
@@ -227,6 +226,9 @@ class MakeTheme extends Command
                 'colors' => [
                     'primary' => $primaryColors
                 ]
+            ],
+            'screenshots' => [
+                'primary' => 'screenshot.png',
             ],
             'supports' => [
                 'dark_mode' => true,

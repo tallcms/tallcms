@@ -263,22 +263,26 @@ class Theme
      */
     public function getScreenshotUrl(): ?string
     {
+        $candidatePaths = [];
+
         // Check for configured screenshot in theme.json
         $primaryScreenshot = $this->extras['screenshots']['primary'] ?? null;
         if ($primaryScreenshot) {
             // Screenshot path must be relative to public/
             $screenshotPath = $this->path . '/public/' . $primaryScreenshot;
-            if (File::exists($screenshotPath)) {
-                return asset("themes/{$this->slug}/{$primaryScreenshot}");
-            }
+            $candidatePaths[] = [
+                'asset' => $primaryScreenshot,
+                'source' => $screenshotPath,
+            ];
 
             // Also check if the path already includes public/
             if (str_starts_with($primaryScreenshot, 'public/')) {
                 $assetPath = substr($primaryScreenshot, 7);
                 $fullPath = $this->path . '/' . $primaryScreenshot;
-                if (File::exists($fullPath)) {
-                    return asset("themes/{$this->slug}/{$assetPath}");
-                }
+                $candidatePaths[] = [
+                    'asset' => $assetPath,
+                    'source' => $fullPath,
+                ];
             }
         }
 
@@ -293,9 +297,34 @@ class Theme
         ];
 
         foreach ($possibleNames as $filename) {
-            $fullPath = $this->path . '/public/' . $filename;
-            if (File::exists($fullPath)) {
-                return asset("themes/{$this->slug}/{$filename}");
+            $candidatePaths[] = [
+                'asset' => $filename,
+                'source' => $this->path . '/public/' . $filename,
+            ];
+        }
+
+        foreach ($candidatePaths as $paths) {
+            $sourcePath = $paths['source'];
+            $assetPath = ltrim($paths['asset'], '/');
+
+            if (!File::exists($sourcePath)) {
+                continue;
+            }
+
+            $this->ensureThemeAssetsPublished($assetPath);
+
+            $publicAssetPath = public_path("themes/{$this->slug}/{$assetPath}");
+            if (File::exists($publicAssetPath)) {
+                return asset("themes/{$this->slug}/{$assetPath}");
+            }
+
+            // Fallback to data URI if publish failed
+            try {
+                $mime = File::mimeType($sourcePath) ?: 'image/png';
+                $data = base64_encode(File::get($sourcePath));
+                return "data:{$mime};base64,{$data}";
+            } catch (\Throwable $e) {
+                continue;
             }
         }
 
@@ -320,6 +349,26 @@ class Theme
         }
 
         return $urls;
+    }
+
+    /**
+     * Ensure theme assets are published so screenshots resolve from /public/themes
+     */
+    protected function ensureThemeAssetsPublished(string $assetPath): void
+    {
+        $publicAsset = public_path("themes/{$this->slug}/{$assetPath}");
+
+        if (File::exists($publicAsset)) {
+            return;
+        }
+
+        try {
+            if (app()->bound(\App\Services\ThemeManager::class)) {
+                app(\App\Services\ThemeManager::class)->publishThemeAssets($this);
+            }
+        } catch (\Throwable $e) {
+            // Silently continue; we'll fallback to data URI if needed
+        }
     }
 
     /**
