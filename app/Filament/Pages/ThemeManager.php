@@ -264,6 +264,8 @@ class ThemeManager extends Page implements HasForms
         }
 
         $this->selectedTheme = $slug;
+        $activeTheme = $this->getThemeManager()->getActiveTheme();
+
         $this->themeDetails = [
             'name' => $theme->name,
             'slug' => $theme->slug,
@@ -280,6 +282,7 @@ class ThemeManager extends Page implements HasForms
             'compatibility' => $theme->getCompatibility(),
             'isBuilt' => $theme->isBuilt(),
             'isPrebuilt' => $theme->isPrebuilt(),
+            'isActive' => $activeTheme && $activeTheme->slug === $theme->slug,
             'meetsRequirements' => $theme->meetsRequirements(),
             'unmetRequirements' => $theme->getUnmetRequirements(),
             'screenshot' => $theme->getScreenshotUrl(),

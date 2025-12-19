@@ -4,6 +4,9 @@
     "version": "1.0.0",
     "description": "A beautiful and modern theme for TallCMS",
     "author": "Theme Developer",
+    "screenshots": {
+        "primary": "img/screenshot.png"
+    },
     "tailwind": {
         "colors": {
             "primary": {
