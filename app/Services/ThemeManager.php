@@ -524,6 +524,15 @@ class ThemeManager
      */
     public function deleteTheme(string $slug): array
     {
+        // Validate slug format to prevent path traversal
+        if (!preg_match('/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/', $slug) || strlen($slug) > 64) {
+            Log::warning("deleteTheme: Invalid slug format rejected", ['slug' => $slug]);
+            return [
+                'success' => false,
+                'error' => 'Invalid theme slug format.',
+            ];
+        }
+
         $themePath = base_path("themes/{$slug}");
         $publicPath = public_path("themes/{$slug}");
 
