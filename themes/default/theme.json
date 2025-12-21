@@ -1,9 +1,9 @@
 {
-    "name": "blue",
-    "slug": "blue",
+    "name": "Default",
+    "slug": "default",
     "version": "1.0.0",
-    "description": "A beautiful and modern theme for TallCMS",
-    "author": "Theme Developer",
+    "description": "The default TallCMS theme - clean, professional, and fully responsive",
+    "author": "TallCMS",
     "screenshots": {
         "primary": "img/screenshot.png"
     },
