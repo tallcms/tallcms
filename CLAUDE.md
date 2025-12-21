@@ -459,7 +459,16 @@ Each menu item has these properties:
 - `target` - Link target (`_self`, `_blank`)
 - `icon` - Icon class (e.g., Heroicon class)
 - `css_class` - Custom CSS classes
+- `is_active` - Boolean, true if this item matches the current URL
+- `has_active_child` - Boolean, true if any child item is active
 - `children` - Nested menu items (array)
+
+#### Active State Styling
+Menu components automatically detect and highlight active items:
+- Active items receive `text-primary-600` color and `bg-primary-50` background
+- Parent items with active children are highlighted with `text-primary-600`
+- Sidebar sections auto-expand when they contain the active page
+- All active links include `aria-current="page"` for accessibility
 
 ### Asset Management
 

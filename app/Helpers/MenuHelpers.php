@@ -2,23 +2,72 @@
 
 use App\Models\TallcmsMenu;
 
+if (!function_exists('isMenuItemActive')) {
+    /**
+     * Check if a menu item URL matches the current request
+     */
+    function isMenuItemActive(?string $itemUrl): bool
+    {
+        if (empty($itemUrl)) {
+            return false;
+        }
+
+        $currentUrl = request()->url();
+        $currentPath = request()->path();
+
+        // Normalize the item URL
+        $itemUrl = rtrim($itemUrl, '/');
+        $itemPath = parse_url($itemUrl, PHP_URL_PATH) ?? '/';
+        $itemPath = rtrim($itemPath, '/') ?: '/';
+
+        // Normalize current path
+        $currentPath = '/' . ltrim($currentPath, '/');
+        $currentPath = rtrim($currentPath, '/') ?: '/';
+
+        // Exact match
+        if ($currentUrl === $itemUrl || $currentPath === $itemPath) {
+            return true;
+        }
+
+        // Homepage special case
+        if ($itemPath === '/' || $itemPath === '/home') {
+            return $currentPath === '/' || $currentPath === '/home';
+        }
+
+        return false;
+    }
+}
+
 if (!function_exists('buildMenuItemArray')) {
     /**
      * Recursively build menu item array with children
      */
     function buildMenuItemArray($item): array
     {
+        $url = $item->getResolvedUrl();
+        $children = $item->children->map(function ($child) {
+            return buildMenuItemArray($child);
+        })->toArray();
+
+        // Check if this item is active
+        $isActive = isMenuItemActive($url);
+
+        // Check if any child is active (for parent highlighting)
+        $hasActiveChild = collect($children)->contains(function ($child) {
+            return $child['is_active'] || $child['has_active_child'];
+        });
+
         return [
             'id' => $item->id,
             'label' => $item->label,
-            'url' => $item->getResolvedUrl(),
+            'url' => $url,
             'type' => $item->type,
             'target' => app('menu.url.resolver')->getTargetAttribute($item),
             'icon' => $item->icon,
             'css_class' => $item->css_class,
-            'children' => $item->children->map(function ($child) {
-                return buildMenuItemArray($child);
-            })->toArray(),
+            'is_active' => $isActive,
+            'has_active_child' => $hasActiveChild,
+            'children' => $children,
         ];
     }
 }
