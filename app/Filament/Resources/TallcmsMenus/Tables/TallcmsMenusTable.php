@@ -23,9 +23,9 @@ class TallcmsMenusTable
                     ->searchable()
                     ->badge()
                     ->color('gray'),
-                TextColumn::make('allItems_count')
+                TextColumn::make('items_count')
                     ->label('Menu Items')
-                    ->counts('allItems')
+                    ->state(fn ($record) => $record->allItems()->count())
                     ->badge()
                     ->color('primary')
                     ->formatStateUsing(fn ($state) => $state . ' items'),
