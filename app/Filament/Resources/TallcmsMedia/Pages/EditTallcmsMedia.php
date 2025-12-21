@@ -29,30 +29,35 @@ class EditTallcmsMedia extends EditRecord
         if (!empty($data['new_file'])) {
             $newFilePath = $data['new_file'];
             $oldPath = $record->path;
-            
+            $disk = cms_media_disk();
+
             // Delete the old file if it exists
             if ($oldPath && Storage::disk($record->disk)->exists($oldPath)) {
                 Storage::disk($record->disk)->delete($oldPath);
             }
-            
+
             // Get new file info
-            $fullPath = Storage::disk('public')->path($newFilePath);
             $originalName = pathinfo($newFilePath, PATHINFO_BASENAME);
-            $mimeType = Storage::disk('public')->mimeType($newFilePath);
-            $size = Storage::disk('public')->size($newFilePath);
-            
+            $mimeType = Storage::disk($disk)->mimeType($newFilePath);
+            $size = Storage::disk($disk)->size($newFilePath);
+
             // Get image dimensions if it's an image
+            // Note: For S3, we can't use getimagesize directly, so we skip dimensions for remote storage
             $meta = $record->meta ?? [];
-            if (str_starts_with($mimeType, 'image/') && file_exists($fullPath)) {
-                [$width, $height] = getimagesize($fullPath);
-                $meta = array_merge($meta, ['width' => $width, 'height' => $height]);
+            if (str_starts_with($mimeType, 'image/') && $disk === 'public') {
+                $fullPath = Storage::disk($disk)->path($newFilePath);
+                if (file_exists($fullPath)) {
+                    [$width, $height] = getimagesize($fullPath);
+                    $meta = array_merge($meta, ['width' => $width, 'height' => $height]);
+                }
             }
-            
+
             // Update file metadata
             $data = array_merge($data, [
                 'file_name' => $originalName,
                 'mime_type' => $mimeType,
                 'path' => $newFilePath,
+                'disk' => $disk,
                 'size' => $size,
                 'meta' => $meta,
             ]);

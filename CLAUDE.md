@@ -125,7 +125,8 @@ TallCMS includes a user-friendly web installer for non-technical users:
 - System requirements check (PHP version, extensions, permissions)
 - Database configuration and testing
 - Admin user creation
-- Mail settings (optional)
+- Mail settings (SMTP, SES, PHP Mail, Sendmail)
+- Cloud storage (S3-compatible: AWS, DigitalOcean, Cloudflare R2, etc.)
 - Automatic .env generation
 - Security lockdown after completion
 
@@ -593,7 +594,7 @@ $colorPalette = theme_color_palette();
 $paddingPresets = theme_padding_presets();
 ```
 
-### Merge Tags  
+### Merge Tags
 Use `{{tag_name}}` syntax for dynamic content:
 ```php
 // Available merge tags
@@ -602,3 +603,154 @@ Use `{{tag_name}}` syntax for dynamic content:
 {{post_author}}, {{post_categories}}, {{post_reading_time}}
 {{contact_email}}, {{company_name}}, {{social_facebook}}
 ```
+
+### AWS / Storage Functions
+```php
+// Get the configured media storage disk ('s3' or 'public')
+$disk = cms_media_disk();
+
+// Get visibility setting for media uploads
+$visibility = cms_media_visibility();
+
+// Check if S3 storage is configured
+if (cms_uses_s3()) {
+    // Handle S3-specific logic
+}
+```
+
+## Cloud Storage Integration
+
+TallCMS supports S3-compatible cloud storage for file uploads. This works with multiple providers:
+- **Amazon S3** - AWS's object storage service
+- **DigitalOcean Spaces** - S3-compatible object storage
+- **Cloudflare R2** - Zero egress fee storage
+- **Backblaze B2** - Affordable cloud storage
+- **Wasabi** - Hot cloud storage
+- **MinIO** - Self-hosted S3-compatible storage
+- **Any S3-compatible provider**
+
+### Configuration via Web Installer
+
+The web installer includes a Cloud Storage section where users can configure:
+- **Storage Provider** - Select from common providers or "Other S3-Compatible"
+- **Access Key ID** - Your provider's access key
+- **Secret Access Key** - Your provider's secret key
+- **Region** - Storage region (e.g., `us-east-1`, `nyc3`, `auto`)
+- **Bucket Name** - Your storage bucket name
+- **Endpoint URL** - Required for non-AWS providers
+
+When a bucket is provided, the installer automatically sets `FILESYSTEM_DISK=s3`.
+
+### Manual Configuration
+
+Add these environment variables to your `.env` file:
+
+```env
+# S3-Compatible Storage Credentials
+AWS_ACCESS_KEY_ID=your-access-key-id
+AWS_SECRET_ACCESS_KEY=your-secret-access-key
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=your-bucket-name
+FILESYSTEM_DISK=s3
+
+# For non-AWS providers, add endpoint:
+AWS_ENDPOINT=https://nyc3.digitaloceanspaces.com
+# AWS_USE_PATH_STYLE_ENDPOINT=true  # For MinIO or path-style APIs
+```
+
+### Provider-Specific Examples
+
+**DigitalOcean Spaces:**
+```env
+AWS_ACCESS_KEY_ID=your-spaces-key
+AWS_SECRET_ACCESS_KEY=your-spaces-secret
+AWS_DEFAULT_REGION=nyc3
+AWS_BUCKET=my-space-name
+AWS_ENDPOINT=https://nyc3.digitaloceanspaces.com
+FILESYSTEM_DISK=s3
+```
+
+**Cloudflare R2:**
+```env
+AWS_ACCESS_KEY_ID=your-r2-access-key
+AWS_SECRET_ACCESS_KEY=your-r2-secret-key
+AWS_DEFAULT_REGION=auto
+AWS_BUCKET=my-bucket
+AWS_ENDPOINT=https://YOUR_ACCOUNT_ID.r2.cloudflarestorage.com
+FILESYSTEM_DISK=s3
+```
+
+**MinIO (Self-Hosted):**
+```env
+AWS_ACCESS_KEY_ID=minioadmin
+AWS_SECRET_ACCESS_KEY=minioadmin
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=my-bucket
+AWS_ENDPOINT=http://localhost:9000
+AWS_USE_PATH_STYLE_ENDPOINT=true
+FILESYSTEM_DISK=s3
+```
+
+### What Uses Cloud Storage
+
+When configured, all CMS file uploads automatically use cloud storage:
+- Media library uploads
+- Featured images for pages and posts
+- Hero block background images
+- Image gallery images
+- Site logo and favicon
+
+### Amazon SES Email
+
+For AWS users, TallCMS also supports Amazon SES for email delivery:
+1. Select "Amazon SES" as the mailer in the installer
+2. Configure AWS credentials (same as S3)
+3. Verify your domain/email in SES console
+4. Request production access (SES starts in sandbox mode)
+
+```env
+MAIL_MAILER=ses
+MAIL_FROM_ADDRESS=noreply@yourdomain.com
+MAIL_FROM_NAME="Your Site Name"
+```
+
+### Fallback Behavior
+
+If cloud storage is not configured:
+- File storage defaults to local `public` disk
+- All functionality remains fully operational
+- No code changes required
+
+### Helper Functions
+
+```php
+// Determine which disk to use for media uploads
+$disk = cms_media_disk();  // Returns 's3' or 'public'
+
+// Check if using cloud storage
+if (cms_uses_s3()) {
+    // Cloud storage-specific handling
+}
+
+// Use in Blade templates
+@if(Storage::disk(cms_media_disk())->exists($path))
+    <img src="{{ Storage::disk(cms_media_disk())->url($path) }}">
+@endif
+```
+
+### Bucket Configuration Tips
+
+**Public Access:** Ensure your bucket allows public read access for uploaded files.
+
+**CORS Configuration:** For direct uploads, configure CORS on your bucket:
+```json
+[
+    {
+        "AllowedOrigins": ["*"],
+        "AllowedMethods": ["GET", "PUT", "POST"],
+        "AllowedHeaders": ["*"]
+    }
+]
+```
+
+**CDN:** For better performance, consider using a CDN (CloudFront, Cloudflare, etc.) in front of your storage.

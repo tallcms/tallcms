@@ -123,7 +123,7 @@ class InstallerController extends Controller
             'admin_password_confirmation' => 'required|same:admin_password',
             
             // Mail settings (optional)
-            'mail_mailer' => 'nullable|in:smtp,mail,sendmail',
+            'mail_mailer' => 'nullable|in:smtp,ses,mail,sendmail',
             'mail_host' => 'nullable|string|max:255',
             'mail_port' => 'nullable|integer|min:1|max:65535',
             'mail_username' => 'nullable|string|max:255',
@@ -131,6 +131,28 @@ class InstallerController extends Controller
             'mail_encryption' => 'nullable|in:tls,ssl',
             'mail_from_address' => 'nullable|email|max:255',
             'mail_from_name' => 'nullable|string|max:255',
+
+            // Cloud storage settings (optional, S3-compatible)
+            's3_provider' => 'nullable|string|in:aws,digitalocean,minio,backblaze,cloudflare,wasabi,custom',
+            'aws_access_key_id' => 'nullable|string|max:255',
+            'aws_secret_access_key' => 'nullable|string|max:255',
+            'aws_region' => 'nullable|string|max:50',
+            'aws_bucket' => 'nullable|string|max:255',
+            // Endpoint required for non-AWS providers when bucket is specified
+            'aws_endpoint' => [
+                'nullable',
+                'url',
+                'max:255',
+                function ($attribute, $value, $fail) use ($request) {
+                    $provider = $request->input('s3_provider', 'aws');
+                    $bucket = $request->input('aws_bucket');
+                    $needsEndpoint = !in_array($provider, ['aws', '', null]);
+
+                    if ($needsEndpoint && !empty($bucket) && empty($value)) {
+                        $fail('Endpoint URL is required for ' . ucfirst($provider) . ' when a bucket is specified.');
+                    }
+                },
+            ],
         ]);
 
         if ($validator->fails()) {
@@ -162,16 +184,48 @@ class InstallerController extends Controller
 
             // Set mail configuration if provided
             if ($request->filled('mail_mailer')) {
-                $this->envWriter->setMailConfig([
-                    'mailer' => $request->input('mail_mailer'),
-                    'host' => $request->input('mail_host'),
-                    'port' => $request->input('mail_port'),
-                    'username' => $request->input('mail_username'),
-                    'password' => $request->input('mail_password'),
-                    'encryption' => $request->input('mail_encryption'),
-                    'from_address' => $request->input('mail_from_address'),
-                    'from_name' => $request->input('mail_from_name'),
+                if ($request->input('mail_mailer') === 'ses') {
+                    // SES uses AWS credentials, not SMTP settings
+                    $this->envWriter->setSesMailConfig([
+                        'from_address' => $request->input('mail_from_address'),
+                        'from_name' => $request->input('mail_from_name'),
+                    ]);
+                } else {
+                    $this->envWriter->setMailConfig([
+                        'mailer' => $request->input('mail_mailer'),
+                        'host' => $request->input('mail_host'),
+                        'port' => $request->input('mail_port'),
+                        'username' => $request->input('mail_username'),
+                        'password' => $request->input('mail_password'),
+                        'encryption' => $request->input('mail_encryption'),
+                        'from_address' => $request->input('mail_from_address'),
+                        'from_name' => $request->input('mail_from_name'),
+                    ]);
+                }
+            }
+
+            // Handle cloud storage configuration
+            // Supports: static credentials, IAM roles (no keys), or pre-configured environments
+            $hasCloudStorage = $request->filled('aws_bucket') || $request->filled('aws_access_key_id');
+
+            if ($hasCloudStorage) {
+                $provider = $request->input('s3_provider', 'aws');
+                $needsEndpoint = !in_array($provider, ['aws', '', null]);
+                $usePathStyle = in_array($provider, ['minio', 'custom']);
+
+                $this->envWriter->setS3Config([
+                    'access_key_id' => $request->input('aws_access_key_id'),
+                    'secret_access_key' => $request->input('aws_secret_access_key'),
+                    'region' => $request->input('aws_region'),
+                    'bucket' => $request->input('aws_bucket'),
+                    // Only set endpoint for non-AWS providers, explicitly clear for AWS
+                    'endpoint' => $needsEndpoint ? $request->input('aws_endpoint') : null,
+                    'use_path_style' => $usePathStyle,
                 ]);
+            } else {
+                // Clear any existing S3 config and revert to local storage
+                // This handles the case where user previously had S3 configured but now wants local
+                $this->envWriter->clearS3Config();
             }
 
             // Save .env file

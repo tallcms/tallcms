@@ -91,12 +91,26 @@ class EnvWriter
     }
 
     /**
+     * Remove an environment variable
+     */
+    public function unset(string $key): self
+    {
+        unset($this->envData[$key]);
+        return $this;
+    }
+
+    /**
      * Set multiple environment variables
+     * Pass null as value to remove a variable
      */
     public function setMany(array $variables): self
     {
         foreach ($variables as $key => $value) {
-            $this->set($key, $value);
+            if ($value === null) {
+                $this->unset($key);
+            } else {
+                $this->set($key, $value);
+            }
         }
         return $this;
     }
@@ -173,6 +187,101 @@ class EnvWriter
     }
 
     /**
+     * Set S3-compatible storage configuration
+     * Works with AWS S3, DigitalOcean Spaces, MinIO, Backblaze B2, Cloudflare R2, Wasabi, etc.
+     *
+     * Note: Explicitly removes endpoint/path-style when not provided to allow
+     * switching between providers (e.g., MinIO -> AWS) without stale config.
+     * Pass null values to remove variables from .env file.
+     */
+    public function setS3Config(array $config): self
+    {
+        $variables = [];
+
+        // Credentials (optional - supports IAM roles without static keys)
+        // Empty string keeps the key but clears the value; null would remove it
+        if (array_key_exists('access_key_id', $config)) {
+            $variables['AWS_ACCESS_KEY_ID'] = $config['access_key_id'] ?? '';
+        }
+        if (array_key_exists('secret_access_key', $config)) {
+            $variables['AWS_SECRET_ACCESS_KEY'] = $config['secret_access_key'] ?? '';
+        }
+
+        // Region
+        if (array_key_exists('region', $config)) {
+            $variables['AWS_DEFAULT_REGION'] = $config['region'] ?: 'us-east-1';
+        }
+
+        // S3 bucket configuration
+        if (!empty($config['bucket'])) {
+            $variables['AWS_BUCKET'] = $config['bucket'];
+            $variables['FILESYSTEM_DISK'] = 's3';
+        }
+
+        // Custom endpoint for non-AWS providers (DigitalOcean, MinIO, etc.)
+        // Use null to remove from .env when switching to AWS (which doesn't need endpoint)
+        if (array_key_exists('endpoint', $config)) {
+            $endpoint = $config['endpoint'] ?? null;
+            $variables['AWS_ENDPOINT'] = !empty($endpoint) ? $endpoint : null;
+        }
+
+        // Path-style endpoints (required for MinIO and some other providers)
+        // Remove entirely when not needed rather than setting to false
+        if (array_key_exists('use_path_style', $config)) {
+            $variables['AWS_USE_PATH_STYLE_ENDPOINT'] = !empty($config['use_path_style']) ? 'true' : null;
+        }
+
+        // Custom URL for CDN/domain prefixes (e.g., CloudFront)
+        // Clear stale values when switching providers unless explicitly provided
+        if (array_key_exists('url', $config)) {
+            $url = $config['url'] ?? null;
+            $variables['AWS_URL'] = !empty($url) ? $url : null;
+        } else {
+            // Clear any existing AWS_URL when reconfiguring storage
+            $variables['AWS_URL'] = null;
+        }
+
+        return $this->setMany($variables);
+    }
+
+    /**
+     * Clear S3/cloud storage configuration and revert to local storage
+     */
+    public function clearS3Config(): self
+    {
+        return $this->setMany([
+            'AWS_ACCESS_KEY_ID' => null,
+            'AWS_SECRET_ACCESS_KEY' => null,
+            'AWS_DEFAULT_REGION' => null,
+            'AWS_BUCKET' => null,
+            'AWS_ENDPOINT' => null,
+            'AWS_URL' => null,
+            'AWS_USE_PATH_STYLE_ENDPOINT' => null,
+            'FILESYSTEM_DISK' => 'public',
+        ]);
+    }
+
+    /**
+     * @deprecated Use setS3Config() instead
+     */
+    public function setAwsConfig(array $config): self
+    {
+        return $this->setS3Config($config);
+    }
+
+    /**
+     * Set SES mail configuration
+     */
+    public function setSesMailConfig(array $config): self
+    {
+        return $this->setMany([
+            'MAIL_MAILER' => 'ses',
+            'MAIL_FROM_ADDRESS' => '"' . ($config['from_address'] ?? 'noreply@example.com') . '"',
+            'MAIL_FROM_NAME' => '"' . ($config['from_name'] ?? 'TallCMS') . '"',
+        ]);
+    }
+
+    /**
      * Disable installer after successful installation
      */
     public function disableInstaller(): self
@@ -228,9 +337,11 @@ class EnvWriter
         $sections = [
             'Application' => ['APP_NAME', 'APP_ENV', 'APP_KEY', 'APP_DEBUG', 'APP_TIMEZONE', 'APP_URL'],
             'Database' => ['DB_CONNECTION', 'DB_HOST', 'DB_PORT', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD'],
+            'Filesystem' => ['FILESYSTEM_DISK'],
             'Cache & Sessions' => ['CACHE_STORE', 'SESSION_DRIVER', 'SESSION_LIFETIME'],
             'Queue' => ['QUEUE_CONNECTION'],
             'Mail' => ['MAIL_MAILER', 'MAIL_HOST', 'MAIL_PORT', 'MAIL_USERNAME', 'MAIL_PASSWORD', 'MAIL_ENCRYPTION', 'MAIL_FROM_ADDRESS', 'MAIL_FROM_NAME'],
+            'AWS' => ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_DEFAULT_REGION', 'AWS_BUCKET', 'AWS_ENDPOINT', 'AWS_USE_PATH_STYLE_ENDPOINT', 'AWS_URL'],
             'Installer' => ['INSTALLER_ENABLED'],
         ];
         

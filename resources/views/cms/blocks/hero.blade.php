@@ -62,10 +62,10 @@
          style="position: relative; overflow: hidden; display: flex; align-items: center;">
     
     {{-- Background Image or Gradient --}}
-    @if($background_image && Storage::disk('public')->exists($background_image))
-        <div class="absolute inset-0 z-0" 
-             style="position: absolute; inset: 0; z-index: 0; 
-             background-image: url('{{ Storage::url($background_image) }}'); 
+    @if($background_image && Storage::disk(cms_media_disk())->exists($background_image))
+        <div class="absolute inset-0 z-0"
+             style="position: absolute; inset: 0; z-index: 0;
+             background-image: url('{{ Storage::disk(cms_media_disk())->url($background_image) }}'); 
              background-size: cover; 
              background-position: center;
              @if($parallax_effect ?? true) background-attachment: fixed; @endif">

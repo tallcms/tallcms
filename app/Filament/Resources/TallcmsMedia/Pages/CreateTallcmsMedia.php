@@ -25,17 +25,22 @@ class CreateTallcmsMedia extends CreateRecord
         $files = is_array($uploadedFiles) ? $uploadedFiles : [$uploadedFiles];
         $createdRecords = [];
 
+        $disk = cms_media_disk();
+
         foreach ($files as $filePath) {
-            $fullPath = Storage::disk('public')->path($filePath);
             $originalName = pathinfo($filePath, PATHINFO_BASENAME);
-            $mimeType = Storage::disk('public')->mimeType($filePath);
-            $size = Storage::disk('public')->size($filePath);
+            $mimeType = Storage::disk($disk)->mimeType($filePath);
+            $size = Storage::disk($disk)->size($filePath);
 
             // Get image dimensions if it's an image
+            // Note: For S3, we can't use getimagesize directly, so we skip dimensions for remote storage
             $meta = [];
-            if (str_starts_with($mimeType, 'image/') && file_exists($fullPath)) {
-                [$width, $height] = getimagesize($fullPath);
-                $meta = ['width' => $width, 'height' => $height];
+            if (str_starts_with($mimeType, 'image/') && $disk === 'public') {
+                $fullPath = Storage::disk($disk)->path($filePath);
+                if (file_exists($fullPath)) {
+                    [$width, $height] = getimagesize($fullPath);
+                    $meta = ['width' => $width, 'height' => $height];
+                }
             }
 
             $record = TallcmsMedia::create(array_merge($data, [
@@ -43,7 +48,7 @@ class CreateTallcmsMedia extends CreateRecord
                 'file_name' => $originalName,
                 'mime_type' => $mimeType,
                 'path' => $filePath,
-                'disk' => 'public',
+                'disk' => $disk,
                 'size' => $size,
                 'meta' => $meta,
             ]));
