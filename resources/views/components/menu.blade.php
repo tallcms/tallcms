@@ -7,8 +7,7 @@
         return;
     }
     
-    // Future: Theme override system will check themes/{$theme}/views/components/menu/{$style}.blade.php
-    // For now, we'll use a simple view structure that can be easily moved to themes later
+    // Themes can override menu styles by creating: themes/{slug}/resources/views/components/menu/{$style}.blade.php
     $themeView = "components.menu.{$style}";
     
     // Fallback to horizontal if style doesn't exist
