@@ -3,18 +3,30 @@
 @php
     $hasChildren = !empty($item['children']);
     $isDropdown = $hasChildren && $level === 0;
+    $isActive = $item['is_active'] ?? false;
+    $hasActiveChild = $item['has_active_child'] ?? false;
+
     $itemClasses = collect([
         'relative',
         'group' => $isDropdown,
         $item['css_class'] ?? null,
     ])->filter()->join(' ');
+
+    // Active state classes
+    $linkClasses = $level === 0
+        ? ($isActive
+            ? 'text-primary-600 font-semibold'
+            : ($hasActiveChild ? 'text-primary-600' : 'text-gray-700 hover:text-gray-900'))
+        : ($isActive
+            ? 'text-primary-600 bg-primary-50 font-medium'
+            : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50');
 @endphp
 
 <li class="{{ $itemClasses }}">
     @if($item['url'] && !in_array($item['type'], ['header', 'separator']))
-        <a href="{{ $item['url'] }}" 
-           class="flex items-center px-3 py-2 rounded-md font-medium transition-colors duration-200 
-                  {{ $level === 0 ? 'text-gray-700 hover:text-gray-900' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50' }}"
+        <a href="{{ $item['url'] }}"
+           class="flex items-center px-3 py-2 rounded-md font-medium transition-colors duration-200 {{ $linkClasses }}"
+           @if($isActive) aria-current="page" @endif
            @if($item['target'] === '_blank') target="_blank" rel="noopener" @endif>
            
             @if($item['icon'])

@@ -1,10 +1,12 @@
 {{-- Footer Menu Style (minimal, compact) --}}
-<ul class="flex flex-wrap items-center space-x-6 text-sm text-gray-500">
+<ul class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-500">
     @foreach($items as $item)
+        @php $isActive = $item['is_active'] ?? false; @endphp
         @if($item['url'] && !in_array($item['type'], ['header', 'separator']))
             <li>
-                <a href="{{ $item['url'] }}" 
-                   class="hover:text-gray-700 transition-colors duration-200"
+                <a href="{{ $item['url'] }}"
+                   class="transition-colors duration-200 {{ $isActive ? 'text-primary-600 font-medium' : 'hover:text-gray-700' }}"
+                   @if($isActive) aria-current="page" @endif
                    @if($item['target'] === '_blank') target="_blank" rel="noopener" @endif>
                     {{ $item['label'] }}
                 </a>
