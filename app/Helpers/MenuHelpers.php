@@ -12,6 +12,12 @@ if (!function_exists('isMenuItemActive')) {
             return false;
         }
 
+        // Check if item URL is external (different host)
+        $itemHost = parse_url($itemUrl, PHP_URL_HOST);
+        if ($itemHost && $itemHost !== request()->getHost()) {
+            return false;
+        }
+
         $currentUrl = request()->url();
         $currentPath = request()->path();
 
