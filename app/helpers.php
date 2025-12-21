@@ -102,3 +102,54 @@ if (!function_exists('has_theme_override')) {
         return active_theme()->hasViewOverride($viewPath);
     }
 }
+
+// AWS / Storage Helper Functions
+
+if (!function_exists('cms_media_disk')) {
+    /**
+     * Get the disk name for CMS media uploads
+     * Returns 's3' if S3-compatible storage is configured, otherwise 'public'
+     *
+     * Supports multiple configuration scenarios:
+     * - Explicit FILESYSTEM_DISK=s3 in environment
+     * - AWS S3 with static credentials
+     * - IAM roles / instance profiles (no static keys)
+     * - S3-compatible providers with custom endpoints
+     */
+    function cms_media_disk(): string
+    {
+        // First, check if FILESYSTEM_DISK is explicitly set to s3
+        $defaultDisk = config('filesystems.default');
+        if ($defaultDisk === 's3') {
+            return 's3';
+        }
+
+        // Fallback: check if S3 bucket is configured (supports IAM roles without static keys)
+        $bucket = config('filesystems.disks.s3.bucket');
+        if (!empty($bucket)) {
+            return 's3';
+        }
+
+        return 'public';
+    }
+}
+
+if (!function_exists('cms_media_visibility')) {
+    /**
+     * Get the visibility setting for CMS media uploads
+     */
+    function cms_media_visibility(): string
+    {
+        return 'public';
+    }
+}
+
+if (!function_exists('cms_uses_s3')) {
+    /**
+     * Check if CMS is configured to use S3 for media storage
+     */
+    function cms_uses_s3(): bool
+    {
+        return cms_media_disk() === 's3';
+    }
+}

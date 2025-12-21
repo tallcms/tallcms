@@ -36,6 +36,8 @@ class ImageGalleryBlock extends RichContentCustomBlock
                     ->maxSize(5120)
                     ->multiple()
                     ->directory('cms/galleries')
+                    ->disk(cms_media_disk())
+                    ->visibility(cms_media_visibility())
                     ->maxFiles(12)
                     ->reorderable()
                     ->imageEditor()

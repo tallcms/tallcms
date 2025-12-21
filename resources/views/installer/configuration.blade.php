@@ -243,11 +243,12 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label for="mail_mailer" class="block text-sm font-medium text-gray-700 mb-2">Mailer</label>
-                                <select id="mail_mailer" 
+                                <select id="mail_mailer"
                                         name="mail_mailer"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                     <option value="">Select Mailer</option>
                                     <option value="smtp" {{ old('mail_mailer') === 'smtp' ? 'selected' : '' }}>SMTP</option>
+                                    <option value="ses" {{ old('mail_mailer') === 'ses' ? 'selected' : '' }}>Amazon SES</option>
                                     <option value="mail" {{ old('mail_mailer') === 'mail' ? 'selected' : '' }}>PHP Mail</option>
                                     <option value="sendmail" {{ old('mail_mailer') === 'sendmail' ? 'selected' : '' }}>Sendmail</option>
                                 </select>
@@ -321,6 +322,104 @@
                                     </select>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cloud Storage Settings (Optional) -->
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <svg class="w-5 h-5 text-orange-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>
+                            </svg>
+                            Cloud Storage
+                            <span class="ml-2 text-sm text-gray-500 font-normal">(Optional)</span>
+                        </h3>
+                        <button type="button" id="toggle-aws-settings" class="text-blue-600 hover:text-blue-800 text-sm">
+                            Configure Cloud Storage
+                        </button>
+                    </div>
+
+                    <p class="text-sm text-gray-500 mb-4">Use S3-compatible cloud storage for files. Works with AWS S3, DigitalOcean Spaces, MinIO, Backblaze B2, Cloudflare R2, and more.</p>
+
+                    <div id="aws-settings" class="hidden">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="md:col-span-2">
+                                <label for="s3_provider" class="block text-sm font-medium text-gray-700 mb-2">Storage Provider</label>
+                                <select id="s3_provider"
+                                        name="s3_provider"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="aws" {{ old('s3_provider', 'aws') === 'aws' ? 'selected' : '' }}>Amazon S3</option>
+                                    <option value="digitalocean" {{ old('s3_provider') === 'digitalocean' ? 'selected' : '' }}>DigitalOcean Spaces</option>
+                                    <option value="minio" {{ old('s3_provider') === 'minio' ? 'selected' : '' }}>MinIO</option>
+                                    <option value="backblaze" {{ old('s3_provider') === 'backblaze' ? 'selected' : '' }}>Backblaze B2</option>
+                                    <option value="cloudflare" {{ old('s3_provider') === 'cloudflare' ? 'selected' : '' }}>Cloudflare R2</option>
+                                    <option value="wasabi" {{ old('s3_provider') === 'wasabi' ? 'selected' : '' }}>Wasabi</option>
+                                    <option value="custom" {{ old('s3_provider') === 'custom' ? 'selected' : '' }}>Other S3-Compatible</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="aws_access_key_id" class="block text-sm font-medium text-gray-700 mb-2">Access Key ID</label>
+                                <input type="text"
+                                       id="aws_access_key_id"
+                                       name="aws_access_key_id"
+                                       value="{{ old('aws_access_key_id') }}"
+                                       placeholder="Your access key"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+
+                            <div>
+                                <label for="aws_secret_access_key" class="block text-sm font-medium text-gray-700 mb-2">Secret Access Key</label>
+                                <input type="password"
+                                       id="aws_secret_access_key"
+                                       name="aws_secret_access_key"
+                                       value="{{ old('aws_secret_access_key') }}"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+
+                            <div>
+                                <label for="aws_region" class="block text-sm font-medium text-gray-700 mb-2">Region</label>
+                                <input type="text"
+                                       id="aws_region"
+                                       name="aws_region"
+                                       value="{{ old('aws_region', 'us-east-1') }}"
+                                       placeholder="us-east-1, nyc3, auto, etc."
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <p class="mt-1 text-xs text-gray-500">e.g., us-east-1 (AWS), nyc3 (DO), auto (R2)</p>
+                            </div>
+
+                            <div>
+                                <label for="aws_bucket" class="block text-sm font-medium text-gray-700 mb-2">Bucket Name</label>
+                                <input type="text"
+                                       id="aws_bucket"
+                                       name="aws_bucket"
+                                       value="{{ old('aws_bucket') }}"
+                                       placeholder="my-bucket"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <p class="mt-1 text-xs text-gray-500">Leave empty to use local storage</p>
+                            </div>
+
+                            <div id="endpoint-field" class="md:col-span-2 hidden">
+                                <label for="aws_endpoint" class="block text-sm font-medium text-gray-700 mb-2">Custom Endpoint URL</label>
+                                <input type="url"
+                                       id="aws_endpoint"
+                                       name="aws_endpoint"
+                                       value="{{ old('aws_endpoint') }}"
+                                       placeholder="https://nyc3.digitaloceanspaces.com"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <p class="mt-1 text-xs text-gray-500">Required for non-AWS providers</p>
+                            </div>
+                        </div>
+
+                        <div id="ses-tip" class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-blue-800 text-sm">
+                            <strong>Tip:</strong> If you selected "Amazon SES" as your mailer above, these credentials will be used for email delivery.
+                            Make sure your SES account is out of sandbox mode for production use.
+                        </div>
+
+                        <div id="provider-tip" class="mt-4 p-3 bg-gray-50 border border-gray-200 rounded text-gray-700 text-sm hidden">
+                            <strong>Note:</strong> <span id="provider-tip-text"></span>
                         </div>
                     </div>
                 </div>
@@ -511,6 +610,105 @@ document.addEventListener('DOMContentLoaded', function() {
             smtpSettings.classList.remove('hidden');
         } else {
             smtpSettings.classList.add('hidden');
+        }
+
+        // If SES is selected, expand cloud storage settings and set provider to AWS
+        if (this.value === 'ses') {
+            awsSettings.classList.remove('hidden');
+            toggleAwsButton.textContent = 'Hide Cloud Storage';
+            s3Provider.value = 'aws';
+            updateProviderUI('aws');
+        }
+    });
+
+    // Toggle cloud storage settings
+    const toggleAwsButton = document.getElementById('toggle-aws-settings');
+    const awsSettings = document.getElementById('aws-settings');
+    const s3Provider = document.getElementById('s3_provider');
+    const endpointField = document.getElementById('endpoint-field');
+    const sesTip = document.getElementById('ses-tip');
+    const providerTip = document.getElementById('provider-tip');
+    const providerTipText = document.getElementById('provider-tip-text');
+
+    // Provider configurations
+    const providerConfig = {
+        aws: {
+            needsEndpoint: false,
+            showSesTip: true,
+            tip: null
+        },
+        digitalocean: {
+            needsEndpoint: true,
+            showSesTip: false,
+            tip: 'DigitalOcean Spaces endpoint format: https://{region}.digitaloceanspaces.com (e.g., https://nyc3.digitaloceanspaces.com)'
+        },
+        minio: {
+            needsEndpoint: true,
+            showSesTip: false,
+            tip: 'Enter your MinIO server endpoint URL (e.g., https://minio.example.com:9000)'
+        },
+        backblaze: {
+            needsEndpoint: true,
+            showSesTip: false,
+            tip: 'Backblaze B2 S3-compatible endpoint format: https://s3.{region}.backblazeb2.com'
+        },
+        cloudflare: {
+            needsEndpoint: true,
+            showSesTip: false,
+            tip: 'Cloudflare R2 endpoint format: https://{account_id}.r2.cloudflarestorage.com. Use "auto" as the region.'
+        },
+        wasabi: {
+            needsEndpoint: true,
+            showSesTip: false,
+            tip: 'Wasabi endpoint format: https://s3.{region}.wasabisys.com (e.g., https://s3.us-east-1.wasabisys.com)'
+        },
+        custom: {
+            needsEndpoint: true,
+            showSesTip: false,
+            tip: 'Enter the S3-compatible endpoint URL for your storage provider.'
+        }
+    };
+
+    function updateProviderUI(provider) {
+        const config = providerConfig[provider] || providerConfig.custom;
+
+        // Show/hide endpoint field
+        if (config.needsEndpoint) {
+            endpointField.classList.remove('hidden');
+        } else {
+            endpointField.classList.add('hidden');
+        }
+
+        // Show/hide SES tip
+        if (config.showSesTip) {
+            sesTip.classList.remove('hidden');
+        } else {
+            sesTip.classList.add('hidden');
+        }
+
+        // Show/hide provider-specific tip
+        if (config.tip) {
+            providerTipText.textContent = config.tip;
+            providerTip.classList.remove('hidden');
+        } else {
+            providerTip.classList.add('hidden');
+        }
+    }
+
+    // Handle provider change
+    s3Provider.addEventListener('change', function() {
+        updateProviderUI(this.value);
+    });
+
+    // Initialize provider UI
+    updateProviderUI(s3Provider.value);
+
+    toggleAwsButton.addEventListener('click', function() {
+        awsSettings.classList.toggle('hidden');
+        if (awsSettings.classList.contains('hidden')) {
+            toggleAwsButton.textContent = 'Configure Cloud Storage';
+        } else {
+            toggleAwsButton.textContent = 'Hide Cloud Storage';
         }
     });
 

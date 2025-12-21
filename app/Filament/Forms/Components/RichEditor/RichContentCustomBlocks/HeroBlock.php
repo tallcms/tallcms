@@ -219,8 +219,8 @@ class HeroBlock extends RichContentCustomBlock
                                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                                     ->maxSize(5120)
                                     ->directory('cms/hero-blocks')
-                                    ->disk('public')
-                                    ->visibility('public')
+                                    ->disk(cms_media_disk())
+                                    ->visibility(cms_media_visibility())
                                     ->nullable()
                                     ->helperText(fn (Get $get): string => match($get('height')) {
                                         'small' => 'Recommended: 2560×800px (21:9 panoramic). Keep focal point centered. Max 5MB.',
