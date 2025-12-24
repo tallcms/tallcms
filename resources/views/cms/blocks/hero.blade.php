@@ -56,9 +56,10 @@
     $heightClass = $heightClasses[$height] ?? 'min-h-[70vh]';
     $alignmentClass = $alignmentClasses[$text_alignment] ?? 'text-center';
     $overlayOpacity = ($overlay_opacity ?? 40) / 100;
+    $isPreview = $isPreview ?? false;
 @endphp
 
-<section class="relative overflow-hidden {{ $heightClass }} flex items-center -mt-20 isolate"
+<section class="relative overflow-hidden {{ $heightClass }} flex items-center isolate {{ $isPreview ? '' : '-mt-20' }}"
          style="position: relative; overflow: hidden; display: flex; align-items: center; isolation: isolate;">
     
     {{-- Background Image or Gradient --}}

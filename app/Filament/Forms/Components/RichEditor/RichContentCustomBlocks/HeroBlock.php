@@ -256,14 +256,14 @@ class HeroBlock extends RichContentCustomBlock
             ])->slideOver();
     }
 
-    public static function toPreviewHtml(array $config): string
+    private static function buildViewData(array $config, bool $isPreview = false): array
     {
-        // Pre-resolve URLs to avoid DB hits in view
         $buttonUrl = BlockLinkResolver::resolveButtonUrl($config, 'button');
         $secondaryButtonUrl = BlockLinkResolver::resolveButtonUrl($config, 'secondary_button');
-        
-        return view('cms.blocks.hero', array_merge($config, [
+
+        return array_merge($config, [
             'id' => static::getId(),
+            'isPreview' => $isPreview,
             'heading' => $config['heading'] ?? '',
             'subheading' => $config['subheading'] ?? '',
             'button_text' => $config['button_text'] ?? null,
@@ -286,39 +286,16 @@ class HeroBlock extends RichContentCustomBlock
             'secondary_button_bg_color' => $config['secondary_button_bg_color'] ?? '#ffffff00',
             'secondary_button_text_color' => $config['secondary_button_text_color'] ?? '#ffffff',
             'secondary_button_border_color' => $config['secondary_button_border_color'] ?? '#ffffff',
-        ]))->render();
+        ]);
+    }
+
+    public static function toPreviewHtml(array $config): string
+    {
+        return view('cms.blocks.hero', self::buildViewData($config, true))->render();
     }
 
     public static function toHtml(array $config, array $data): string
     {
-        // Pre-resolve URLs to avoid DB hits in view
-        $buttonUrl = BlockLinkResolver::resolveButtonUrl($config, 'button');
-        $secondaryButtonUrl = BlockLinkResolver::resolveButtonUrl($config, 'secondary_button');
-        
-        return view('cms.blocks.hero', array_merge($config, [
-            'id' => static::getId(),
-            'heading' => $config['heading'] ?? '',
-            'subheading' => $config['subheading'] ?? '',
-            'button_text' => $config['button_text'] ?? null,
-            'button_url' => $buttonUrl,
-            'secondary_button_text' => $config['secondary_button_text'] ?? null,
-            'secondary_button_url' => $secondaryButtonUrl,
-            'background_image' => $config['background_image'] ?? null,
-            'parallax_effect' => $config['parallax_effect'] ?? true,
-            'overlay_opacity' => $config['overlay_opacity'] ?? '40',
-            'text_alignment' => $config['text_alignment'] ?? 'center',
-            'height' => $config['height'] ?? 'medium',
-            // Primary button styling
-            'primary_button_style' => $config['primary_button_style'] ?? 'preset',
-            'primary_button_preset' => $config['primary_button_preset'] ?? 'white',
-            'primary_button_bg_color' => $config['primary_button_bg_color'] ?? '#ffffff',
-            'primary_button_text_color' => $config['primary_button_text_color'] ?? '#111827',
-            // Secondary button styling
-            'secondary_button_style' => $config['secondary_button_style'] ?? 'preset',
-            'secondary_button_preset' => $config['secondary_button_preset'] ?? 'outline-white',
-            'secondary_button_bg_color' => $config['secondary_button_bg_color'] ?? '#ffffff00',
-            'secondary_button_text_color' => $config['secondary_button_text_color'] ?? '#ffffff',
-            'secondary_button_border_color' => $config['secondary_button_border_color'] ?? '#ffffff',
-        ]))->render();
+        return view('cms.blocks.hero', self::buildViewData($config, false))->render();
     }
 }
