@@ -53,34 +53,7 @@
             {{-- Static Preview for Admin Editor --}}
             <div class="flex flex-col gap-4">
                 @foreach($fields as $field)
-                    <div>
-                        <x-form.label :required="$field['required'] ?? false" class="text-gray-700 mb-1">
-                            {{ $field['label'] }}
-                        </x-form.label>
-
-                        @if($field['type'] === 'textarea')
-                            <div class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-400 text-sm min-h-[80px]">
-                                Text area input...
-                            </div>
-                        @elseif($field['type'] === 'select')
-                            <div class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-400 text-sm flex justify-between items-center">
-                                <span>Select {{ strtolower($field['label']) }}...</span>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </div>
-                        @else
-                            <div class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-400 text-sm">
-                                @if($field['type'] === 'email')
-                                    email@example.com
-                                @elseif($field['type'] === 'tel')
-                                    (555) 123-4567
-                                @else
-                                    Enter {{ strtolower($field['label']) }}...
-                                @endif
-                            </div>
-                        @endif
-                    </div>
+                    <x-form.dynamic-field :field="$field" :form-id="$formId" :preview="true" />
                 @endforeach
 
                 <div class="pt-2">
@@ -126,42 +99,7 @@
 
                 <form x-show="!submitted" x-on:submit.prevent="submit" class="space-y-6">
                     @foreach($fields as $field)
-                        <div>
-                            <x-form.label
-                                :for="$formId . '-' . $field['name']"
-                                :required="$field['required'] ?? false"
-                                style="color: var(--block-text-color, #374151);"
-                            >
-                                {{ $field['label'] }}
-                            </x-form.label>
-
-                            @if($field['type'] === 'textarea')
-                                <x-form.textarea
-                                    :id="$formId . '-' . $field['name']"
-                                    x-model="formData.{{ $field['name'] }}"
-                                    x-bind:class="errors.{{ $field['name'] }} ? 'border-red-500' : 'border-gray-300'"
-                                    :required="$field['required'] ?? false"
-                                />
-                            @elseif($field['type'] === 'select')
-                                <x-form.select
-                                    :id="$formId . '-' . $field['name']"
-                                    :options="$field['options'] ?? []"
-                                    x-model="formData.{{ $field['name'] }}"
-                                    x-bind:class="errors.{{ $field['name'] }} ? 'border-red-500' : 'border-gray-300'"
-                                    :required="$field['required'] ?? false"
-                                />
-                            @else
-                                <x-form.input
-                                    :type="$field['type']"
-                                    :id="$formId . '-' . $field['name']"
-                                    x-model="formData.{{ $field['name'] }}"
-                                    x-bind:class="errors.{{ $field['name'] }} ? 'border-red-500' : 'border-gray-300'"
-                                    :required="$field['required'] ?? false"
-                                />
-                            @endif
-
-                            <x-form.error :field="$field['name']" />
-                        </div>
+                        <x-form.dynamic-field :field="$field" :form-id="$formId" />
                     @endforeach
 
                     <div class="hidden" aria-hidden="true">
