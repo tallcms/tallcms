@@ -9,13 +9,11 @@
         'description' => '#374151'
     ];
 
-    // Get primary button preset for the submit button
     $primaryButton = $buttonPresets['primary'] ?? [
         'bg' => $themeColors['primary'][600] ?? '#2563eb',
         'text' => '#ffffff'
     ];
 
-    // Build CSS custom properties for this block instance
     $customProperties = collect([
         '--block-heading-color: ' . $textPreset['heading'],
         '--block-text-color: ' . $textPreset['description'],
@@ -23,16 +21,24 @@
         '--block-button-text: ' . $primaryButton['text'],
     ])->join('; ') . ';';
 
-    // Normalize fields
     $fields = $config['fields'] ?? [];
     $submitButtonText = $config['submit_button_text'] ?? 'Send Message';
     $successMessage = $config['success_message'] ?? 'Thank you for your message! We\'ll be in touch soon.';
-
-    // Generate a unique ID for this form instance
     $formId = 'contact-form-' . uniqid();
 
-    // Check if this is a preview render (admin editor) or frontend
-    $isPreview = $isPreview ?? false;
+    // Generate signature for security
+    $pageUrl = request()->url();
+    $signature = \App\Http\Controllers\ContactFormController::signConfig($config, $pageUrl);
+
+    $jsConfig = [
+        'formId' => $formId,
+        'submitUrl' => route('contact.submit'),
+        'successMessage' => $successMessage,
+        'config' => $config,
+        'signature' => $signature,
+        'pageUrl' => $pageUrl,
+        'fieldNames' => array_column($fields, 'name'),
+    ];
 @endphp
 
 <section class="py-12 sm:py-16 px-4 sm:px-6 lg:px-8" style="{{ $customProperties }}">
@@ -49,84 +55,49 @@
             </p>
         @endif
 
-        @if($isPreview)
-            {{-- Static Preview for Admin Editor --}}
-            <div class="flex flex-col gap-4">
+        <div
+            id="{{ $formId }}"
+            x-data="contactForm"
+            data-contact-form-config='@json($jsConfig)'
+            x-cloak
+        >
+            <div x-show="formError" x-cloak class="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-700" role="alert" x-text="formError"></div>
+
+            <div x-show="submitted" x-cloak class="rounded-lg bg-green-50 p-6 text-center">
+                <svg class="mx-auto mb-4 h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-lg font-medium text-green-800" x-text="successMessage"></p>
+            </div>
+
+            <form x-show="!submitted" x-on:submit.prevent="submit" class="space-y-6">
                 @foreach($fields as $field)
-                    <x-form.dynamic-field :field="$field" :form-id="$formId" :preview="true" />
+                    <x-form.dynamic-field :field="$field" :form-id="$formId" />
                 @endforeach
 
-                <div class="pt-2">
-                    <span class="inline-block px-6 py-2.5 rounded-lg font-medium text-sm bg-primary-600 text-white">
-                        {{ $submitButtonText }}
-                    </span>
-                </div>
-            </div>
-        @else
-            {{-- Interactive Form for Frontend --}}
-            @php
-                // Get current page URL for signature salt (prevents replay across pages)
-                $pageUrl = request()->url();
-
-                // Generate signature with page URL to prevent config tampering and replay attacks
-                $signature = \App\Http\Controllers\ContactFormController::signConfig($config, $pageUrl);
-
-                $jsConfig = [
-                    'formId' => $formId,
-                    'submitUrl' => route('contact.submit'),
-                    'successMessage' => $successMessage,
-                    'config' => $config,
-                    'signature' => $signature,
-                    'pageUrl' => $pageUrl,
-                    'fieldNames' => array_column($fields, 'name'),
-                ];
-            @endphp
-
-            <div
-                id="{{ $formId }}"
-                x-data="contactForm"
-                data-contact-form-config='@json($jsConfig)'
-                x-cloak
-            >
-                <div x-show="formError" x-cloak class="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-700" role="alert" x-text="formError"></div>
-
-                <div x-show="submitted" x-cloak class="rounded-lg bg-green-50 p-6 text-center">
-                    <svg class="mx-auto mb-4 h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <p class="text-lg font-medium text-green-800" x-text="successMessage"></p>
+                <div class="hidden" aria-hidden="true">
+                    <label for="{{ $formId }}-website">Website</label>
+                    <input type="text" id="{{ $formId }}-website" x-model="formData._honeypot" tabindex="-1" autocomplete="off">
                 </div>
 
-                <form x-show="!submitted" x-on:submit.prevent="submit" class="space-y-6">
-                    @foreach($fields as $field)
-                        <x-form.dynamic-field :field="$field" :form-id="$formId" />
-                    @endforeach
-
-                    <div class="hidden" aria-hidden="true">
-                        <label for="{{ $formId }}-website">Website</label>
-                        <input type="text" id="{{ $formId }}-website" x-model="formData._honeypot" tabindex="-1" autocomplete="off">
-                    </div>
-
-                    <div>
-                        <button
-                            type="submit"
-                            class="inline-flex w-full items-center justify-center rounded-lg px-6 py-3 text-base font-semibold text-white transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                            style="background-color: var(--block-button-bg, #2563eb); color: var(--block-button-text, white);"
-                            x-bind:disabled="submitting"
-                        >
-                            <span x-show="!submitting">{{ $submitButtonText }}</span>
-                            <span x-show="submitting" x-cloak class="inline-flex items-center">
-                                <svg class="-ml-1 mr-2 h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Sending...
-                            </span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-        @endif
+                <div>
+                    <button
+                        type="submit"
+                        class="inline-flex w-full items-center justify-center rounded-lg px-6 py-3 text-base font-semibold text-white transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                        style="background-color: var(--block-button-bg, #2563eb); color: var(--block-button-text, white);"
+                        x-bind:disabled="submitting"
+                    >
+                        <span x-show="!submitting">{{ $submitButtonText }}</span>
+                        <span x-show="submitting" x-cloak class="inline-flex items-center">
+                            <svg class="-ml-1 mr-2 h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Sending...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </section>
