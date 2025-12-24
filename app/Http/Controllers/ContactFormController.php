@@ -40,11 +40,6 @@ class ContactFormController extends Controller
      */
     private const ALLOWED_TYPES = ['text', 'email', 'tel', 'textarea', 'select'];
 
-    /**
-     * Required base fields that must exist in every form
-     */
-    private const REQUIRED_BASE_FIELDS = ['name', 'email'];
-
     public function submit(Request $request): JsonResponse
     {
         // Rate limiting check
@@ -126,40 +121,65 @@ class ContactFormController extends Controller
 
         // Build form_data array with field metadata
         $formDataWithMeta = [];
+        $submitterName = null;
+        $submitterEmail = null;
+        $hasAnyValue = false;
+
         foreach ($fields as $field) {
+            $value = $request->input($field['name'], '');
+            $trimmedValue = is_string($value) ? trim($value) : $value;
+
             $formDataWithMeta[] = [
                 'name' => $field['name'],
                 'label' => $field['label'],
                 'type' => $field['type'],
-                'value' => $request->input($field['name'], ''),
+                'value' => $value,
             ];
+
+            // Track if any field has a non-empty value
+            if (! empty($trimmedValue)) {
+                $hasAnyValue = true;
+            }
+
+            // Extract name from field explicitly named 'name' (not label heuristics)
+            if ($submitterName === null && $field['name'] === 'name' && ! empty($trimmedValue)) {
+                $submitterName = $trimmedValue;
+            }
+
+            // Extract email from first email-type field with a value
+            if ($submitterEmail === null && $field['type'] === 'email' && ! empty($trimmedValue)) {
+                $submitterEmail = $trimmedValue;
+            }
         }
 
-        // Extract name and email for core columns (guaranteed to exist due to validation)
-        $name = $request->input('name');
-        $email = $request->input('email');
+        // Reject completely empty submissions
+        if (! $hasAnyValue) {
+            return response()->json([
+                'message' => 'Please fill in at least one field.',
+            ], 422);
+        }
 
         // Store submission
         $submission = TallcmsContactSubmission::create([
-            'name' => $name,
-            'email' => $email,
+            'name' => $submitterName,
+            'email' => $submitterEmail,
             'form_data' => $formDataWithMeta,
             'page_url' => $request->header('Referer', $request->url()),
         ]);
 
-        // Queue admin notification
-        $adminEmail = config('tallcms.contact_email');
+        // Queue admin notification (uses site settings with fallback to mail config)
+        $adminEmail = settings('contact_email');
         if ($adminEmail) {
             Mail::to($adminEmail)->queue(new ContactFormAdminNotification($submission));
         } else {
-            Log::warning('Contact form submission received but no admin email configured', [
+            Log::warning('Contact form submission received but no admin email configured in Site Settings', [
                 'submission_id' => $submission->id,
             ]);
         }
 
-        // Queue auto-reply (email is guaranteed to be valid due to validation)
-        if ($email) {
-            Mail::to($email)->queue(new ContactFormAutoReply($submission));
+        // Queue auto-reply only if submitter provided a valid email
+        if ($submitterEmail) {
+            Mail::to($submitterEmail)->queue(new ContactFormAutoReply($submission));
         }
 
         return response()->json(['success' => true]);
@@ -220,12 +240,6 @@ class ContactFormController extends Controller
 
         // Track field names for uniqueness check
         $fieldNames = [];
-
-        // Check required base fields exist
-        $hasRequiredFields = [];
-        foreach (self::REQUIRED_BASE_FIELDS as $requiredField) {
-            $hasRequiredFields[$requiredField] = false;
-        }
 
         foreach ($fields as $index => $field) {
             // Validate field structure
@@ -291,28 +305,6 @@ class ContactFormController extends Controller
             // Validate label length
             if (strlen($field['label']) > 255) {
                 return "Invalid form configuration: field label too long.";
-            }
-
-            // Track required base fields
-            if (in_array($name, self::REQUIRED_BASE_FIELDS, true)) {
-                $hasRequiredFields[$name] = true;
-
-                // Ensure required base fields are actually required
-                if (! ($field['required'] ?? false)) {
-                    return "Invalid form configuration: '{$name}' field must be required.";
-                }
-
-                // Ensure email field has correct type
-                if ($name === 'email' && $type !== 'email') {
-                    return "Invalid form configuration: 'email' field must have type 'email'.";
-                }
-            }
-        }
-
-        // Verify all required base fields exist
-        foreach ($hasRequiredFields as $fieldName => $exists) {
-            if (! $exists) {
-                return "Invalid form configuration: required field '{$fieldName}' is missing.";
             }
         }
 
