@@ -58,8 +58,8 @@
     $overlayOpacity = ($overlay_opacity ?? 40) / 100;
 @endphp
 
-<section class="relative overflow-hidden {{ $heightClass }} flex items-center -mt-20" 
-         style="position: relative; overflow: hidden; display: flex; align-items: center;">
+<section class="relative overflow-hidden {{ $heightClass }} flex items-center -mt-20 isolate"
+         style="position: relative; overflow: hidden; display: flex; align-items: center; isolation: isolate;">
     
     {{-- Background Image or Gradient --}}
     @if($background_image && Storage::disk(cms_media_disk())->exists($background_image))
