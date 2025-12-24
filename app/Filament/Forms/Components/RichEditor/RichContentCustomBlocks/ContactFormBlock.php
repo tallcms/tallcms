@@ -134,43 +134,32 @@ class ContactFormBlock extends RichContentCustomBlock
             ->slideOver();
     }
 
-    public static function toPreviewHtml(array $config): string
+    private static function normalizeConfig(array $config): array
     {
-        // Normalize fields array (Filament repeater uses UUID keys)
         $fields = isset($config['fields']) && is_array($config['fields'])
             ? array_values($config['fields'])
             : self::getDefaultFields();
 
-        // Return static preview for admin editor (no Alpine.js)
-        return view('cms.blocks.contact-form', [
-            'config' => array_merge([
-                'title' => '',
-                'description' => '',
-                'fields' => self::getDefaultFields(),
-                'submit_button_text' => 'Send Message',
-                'success_message' => 'Thank you for your message! We\'ll be in touch soon.',
-            ], $config, ['fields' => $fields]),
-            'isPreview' => true,
+        return array_merge([
+            'title' => '',
+            'description' => '',
+            'fields' => self::getDefaultFields(),
+            'submit_button_text' => 'Send Message',
+            'success_message' => 'Thank you for your message! We\'ll be in touch soon.',
+        ], $config, ['fields' => $fields]);
+    }
+
+    public static function toPreviewHtml(array $config): string
+    {
+        return view('cms.blocks.contact-form-preview', [
+            'config' => self::normalizeConfig($config),
         ])->render();
     }
 
     public static function toHtml(array $config, array $data): string
     {
-        // Normalize fields array (Filament repeater uses UUID keys)
-        $fields = isset($config['fields']) && is_array($config['fields'])
-            ? array_values($config['fields'])
-            : self::getDefaultFields();
-
-        // Return full interactive form for frontend
         return view('cms.blocks.contact-form', [
-            'config' => array_merge([
-                'title' => '',
-                'description' => '',
-                'fields' => self::getDefaultFields(),
-                'submit_button_text' => 'Send Message',
-                'success_message' => 'Thank you for your message! We\'ll be in touch soon.',
-            ], $config, ['fields' => $fields]),
-            'isPreview' => false,
+            'config' => self::normalizeConfig($config),
         ])->render();
     }
 }
