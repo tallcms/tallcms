@@ -68,8 +68,7 @@ class ContactFormBlock extends RichContentCustomBlock
                                         'select' => 'Dropdown',
                                     ])
                                     ->required()
-                                    ->live()
-                                    ->columnSpan(1),
+                                    ->live(),
 
                                 TextInput::make('name')
                                     ->label('Field Name')
@@ -77,77 +76,43 @@ class ContactFormBlock extends RichContentCustomBlock
                                     ->alphaNum()
                                     ->maxLength(50)
                                     ->distinct()
-                                    ->helperText('Unique identifier (no spaces)')
-                                    ->columnSpan(1),
+                                    ->helperText('Unique identifier (no spaces)'),
 
                                 TextInput::make('label')
                                     ->label('Display Label')
                                     ->required()
-                                    ->maxLength(255)
-                                    ->columnSpan(1),
+                                    ->maxLength(255),
 
                                 Toggle::make('required')
                                     ->label('Required')
                                     ->default(false)
-                                    ->columnSpan(1),
+                                    ->inline(false),
 
                                 TagsInput::make('options')
                                     ->label('Dropdown Options')
                                     ->visible(fn (Get $get): bool => $get('type') === 'select')
                                     ->helperText('Press Enter after each option (max 50 options, 100 chars each)')
-                                    ->maxItems(50)
                                     ->nestedRecursiveRules([
                                         'string',
                                         'max:100',
                                     ])
+                                    ->rules(['array', 'max:50'])
                                     ->dehydrateStateUsing(fn (?array $state): ?array => $state
                                         ? array_values(array_filter(array_map('trim', $state), fn ($v) => $v !== ''))
                                         : null
                                     )
                                     ->columnSpanFull(),
                             ])
-                            ->columns(4)
+                            ->columns(2)
                             ->defaultItems(0)
                             ->default(self::getDefaultFields())
-                            ->minItems(2)
+                            ->minItems(1)
                             ->maxItems(20)
                             ->reorderable()
                             ->reorderableWithDragAndDrop()
                             ->collapsible()
                             ->itemLabel(fn (array $state): ?string => ($state['label'] ?? 'Field') . ' (' . ($state['type'] ?? 'text') . ')')
-                            ->addActionLabel('Add Field')
-                            ->rules([
-                                fn (): \Closure => function (string $_attribute, $value, \Closure $fail) {
-                                    if (! is_array($value)) {
-                                        return;
-                                    }
-
-                                    $fields = array_values($value);
-                                    $fieldNames = array_column($fields, 'name');
-
-                                    // Check for required 'name' field
-                                    if (! in_array('name', $fieldNames, true)) {
-                                        $fail('A "name" field is required.');
-                                    }
-
-                                    // Check for required 'email' field
-                                    if (! in_array('email', $fieldNames, true)) {
-                                        $fail('An "email" field is required.');
-                                    }
-
-                                    // Verify email field has correct type
-                                    foreach ($fields as $field) {
-                                        if (($field['name'] ?? '') === 'email' && ($field['type'] ?? '') !== 'email') {
-                                            $fail('The "email" field must have type "Email".');
-                                        }
-
-                                        // Verify name and email are required
-                                        if (in_array($field['name'] ?? '', ['name', 'email'], true) && ! ($field['required'] ?? false)) {
-                                            $fail("The \"{$field['name']}\" field must be marked as required.");
-                                        }
-                                    }
-                                },
-                            ]),
+                            ->addActionLabel('Add Field'),
                     ]),
 
                 Section::make('Form Settings')
