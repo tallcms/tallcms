@@ -306,22 +306,219 @@
     .content-block h4 { font-size: 1.125rem; }
     .content-block h5 { font-size: 1rem; }
     .content-block h6 { font-size: 0.875rem; }
-    
+
     /* Pricing block responsive adjustments */
     .pricing-block .text-3xl {
         font-size: 1.875rem;
     }
-    
+
     .pricing-block .text-4xl {
         font-size: 2.25rem;
     }
-    
+
     .pricing-card {
         padding: 1.25rem;
     }
-    
+
     .pricing-popular-badge {
         font-size: 0.75rem;
         padding: 0.375rem 0.75rem;
+    }
+}
+
+/* ==========================================================================
+   Posts Block Styles
+   ========================================================================== */
+
+.posts-block {
+    /* Container styles handled by utility classes */
+}
+
+/* Grid Layout */
+.posts-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+    .posts-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .posts-grid--cols-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .posts-grid--cols-3 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .posts-grid--cols-4 {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* List Layout */
+.posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Compact List Variant */
+.posts-list--compact {
+    gap: 0;
+}
+
+.posts-list--compact .post-card:last-child {
+    border-bottom: none;
+}
+
+/* Post Card */
+.post-card {
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.post-card:hover {
+    transform: translateY(-2px);
+}
+
+.post-card__image {
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.post-card:hover .post-card__image {
+    transform: scale(1.02);
+}
+
+.post-card__image-wrapper {
+    overflow: hidden;
+}
+
+.post-card__title a {
+    transition: color 0.2s ease;
+}
+
+.post-card__title a:hover {
+    color: var(--block-link-color) !important;
+}
+
+.post-card__excerpt {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.post-card__read-more {
+    transition: color 0.2s ease;
+}
+
+.post-card__read-more:hover {
+    color: var(--block-link-hover-color) !important;
+}
+
+.post-card__read-more svg {
+    transition: transform 0.2s ease;
+}
+
+.post-card__read-more:hover svg {
+    transform: translateX(4px);
+}
+
+/* List layout specific */
+.post-card--list .post-card__image {
+    aspect-ratio: 4 / 3;
+}
+
+/* Empty State */
+.posts-empty {
+    background-color: var(--block-background-light, #f9fafb);
+    border-radius: 0.5rem;
+    padding: 3rem 1.5rem;
+}
+
+.posts-empty svg {
+    opacity: 0.5;
+}
+
+/* ==========================================================================
+   Post Detail Styles
+   ========================================================================== */
+
+.post-detail {
+    /* Container for individual post view */
+}
+
+.post-detail__hero img {
+    transition: transform 0.3s ease;
+}
+
+.post-detail__title {
+    letter-spacing: -0.025em;
+}
+
+.post-detail__excerpt {
+    font-size: 1.125rem;
+}
+
+.post-detail__meta {
+    font-size: 0.875rem;
+}
+
+.post-detail__categories a {
+    transition: opacity 0.2s ease;
+}
+
+.post-detail__categories a:hover {
+    opacity: 0.8;
+}
+
+.post-detail__footer a {
+    transition: color 0.2s ease;
+}
+
+.post-detail__footer a:hover {
+    color: var(--block-link-hover-color) !important;
+}
+
+.post-detail__footer a:hover svg {
+    transform: translateX(-4px);
+}
+
+.post-detail__footer svg {
+    transition: transform 0.2s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .posts-grid {
+        gap: 1rem;
+    }
+
+    .post-card__content {
+        padding: 1rem;
+    }
+
+    .post-card--list {
+        flex-direction: column;
+    }
+
+    .post-card--list .post-card__image {
+        width: 100%;
+        height: auto;
+    }
+
+    .post-detail__title {
+        font-size: 1.875rem;
+    }
+
+    .post-detail__hero {
+        height: 12rem;
     }
 }

@@ -19,7 +19,10 @@ Route::middleware(['auth'])->group(function () {
 // Clean CMS routing - all pages handled by one route with maintenance mode check
 // Maintenance middleware now handles installation checks internally
 Route::middleware('maintenance.mode')->group(function () {
-    Route::get('/', CmsPageRenderer::class)->defaults('slug', '/');
+    Route::get('/', CmsPageRenderer::class)->defaults('slug', '/')->name('cms.home');
     // Exclude preview, admin, livewire, storage, api, and install routes
-    Route::get('/{slug}', CmsPageRenderer::class)->where('slug', '^(?!preview|admin|livewire|storage|api|install).*');
+    // Supports nested slugs for posts (e.g., /blog/my-post)
+    Route::get('/{slug}', CmsPageRenderer::class)
+        ->where('slug', '^(?!preview|admin|livewire|storage|api|install).*')
+        ->name('cms.page');
 });

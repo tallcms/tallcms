@@ -153,3 +153,21 @@ if (!function_exists('cms_uses_s3')) {
         return cms_media_disk() === 's3';
     }
 }
+
+// CMS Content Helper Functions
+
+if (!function_exists('cms_post_url')) {
+    /**
+     * Generate URL for a post within a parent page context
+     *
+     * @param \App\Models\CmsPost $post The post to generate URL for
+     * @param string $parentSlug The parent page slug (e.g., 'blog')
+     * @return string The full URL to the post
+     */
+    function cms_post_url(\App\Models\CmsPost $post, string $parentSlug): string
+    {
+        $slug = trim($parentSlug, '/') . '/' . $post->slug;
+
+        return route('cms.page', ['slug' => $slug]);
+    }
+}
