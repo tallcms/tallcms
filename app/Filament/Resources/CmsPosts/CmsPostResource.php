@@ -59,7 +59,7 @@ class CmsPostResource extends Resource
     
     public static function getNavigationLabel(): string
     {
-        return 'Articles';
+        return 'Posts';
     }
     
     public static function getNavigationSort(): ?int
