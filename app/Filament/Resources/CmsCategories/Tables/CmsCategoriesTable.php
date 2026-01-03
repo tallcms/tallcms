@@ -38,7 +38,7 @@ class CmsCategoriesTable
                     ->limit(20),
                     
                 TextColumn::make('posts_count')
-                    ->label('Articles')
+                    ->label('Posts')
                     ->counts('posts')
                     ->badge(),
                     

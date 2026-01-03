@@ -24,7 +24,7 @@ class CmsPostForm
     {
         return $schema
             ->components([
-                Tabs::make('Article Management')
+                Tabs::make('Post Management')
                     ->tabs([
                         Tabs\Tab::make('Content')
                             ->icon('heroicon-o-document-text')
@@ -54,7 +54,7 @@ class CmsPostForm
                                     ->label('Excerpt')
                                     ->maxLength(500)
                                     ->rows(3)
-                                    ->helperText('Brief description shown in article listings')
+                                    ->helperText('Brief description shown in post listings')
                                     ->columnSpanFull(),
                                     
                                 RichEditor::make('content')
@@ -70,13 +70,13 @@ class CmsPostForm
                                     ->extraInputAttributes([
                                         'style' => 'min-height: 40rem;',
                                     ])
-                                    ->helperText('Create rich article content with custom blocks, merge tags, and advanced formatting. Use merge tags to insert dynamic content like {{post_author}} or {{post_title}}.'),
+                                    ->helperText('Create rich post content with custom blocks, merge tags, and advanced formatting. Use merge tags to insert dynamic content like {{post_author}} or {{post_title}}.'),
                             ]),
                             
                         Tabs\Tab::make('Settings')
                             ->icon('heroicon-o-cog-6-tooth')
                             ->schema([
-                                Section::make('Article Settings')
+                                Section::make('Post Settings')
                                     ->columns(2)
                                     ->schema([
                                         Select::make('status')
@@ -99,8 +99,8 @@ class CmsPostForm
                                             ->required(),
                                             
                                         Toggle::make('is_featured')
-                                            ->label('Featured Article')
-                                            ->helperText('Featured articles appear prominently'),
+                                            ->label('Featured Post')
+                                            ->helperText('Featured posts appear prominently'),
                                     ]),
                                     
                                 Section::make('Categories')
@@ -124,7 +124,7 @@ class CmsPostForm
                                                 Textarea::make('description')
                                                     ->rows(2),
                                             ])
-                                            ->helperText('Select existing categories or create new ones for this article'),
+                                            ->helperText('Select existing categories or create new ones for this post'),
                                     ]),
                             ]),
                             
@@ -132,12 +132,12 @@ class CmsPostForm
                             ->icon('heroicon-o-magnifying-glass')
                             ->schema([
                                 Section::make('Search Engine Optimization')
-                                    ->description('Optimize your article for search engines and social media sharing')
+                                    ->description('Optimize your post for search engines and social media sharing')
                                     ->schema([
                                         TextInput::make('meta_title')
                                             ->label('Meta Title')
                                             ->maxLength(60)
-                                            ->helperText('Recommended: 50-60 characters. If empty, article title will be used.'),
+                                            ->helperText('Recommended: 50-60 characters. If empty, post title will be used.'),
                                             
                                         Textarea::make('meta_description')
                                             ->label('Meta Description')
@@ -159,7 +159,7 @@ class CmsPostForm
                                                 '1.91:1', // Facebook recommended
                                                 '2:1',    // Twitter header
                                             ])
-                                            ->helperText('Used for social media sharing and article headers. Recommended: 1200x630px for best compatibility.'),
+                                            ->helperText('Used for social media sharing and post headers. Recommended: 1200x630px for best compatibility.'),
                                     ]),
                             ]),
                     ])

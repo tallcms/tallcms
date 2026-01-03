@@ -115,17 +115,18 @@
     </header>
 
     {{-- Post Content --}}
-    <div class="post-detail__content">
-        @if($renderedContent)
-            {!! $renderedContent !!}
-        @else
-            {{-- Fallback for posts without block content --}}
-            <div class="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-12">
-                <div class="max-w-4xl mx-auto content-block">
-                    <p style="color: var(--block-text-color);">This post has no content yet.</p>
+    <div class="post-detail__content w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-8 sm:py-12">
+        <div class="max-w-4xl mx-auto">
+            @if($renderedContent)
+                <div class="post-content-body" style="color: var(--block-text-color);">
+                    {!! $renderedContent !!}
                 </div>
-            </div>
-        @endif
+            @else
+                <p class="text-center py-8" style="color: var(--block-text-color);">
+                    This post has no content yet.
+                </p>
+            @endif
+        </div>
     </div>
 
     {{-- Back Link --}}
