@@ -6,6 +6,7 @@ use App\Models\CmsRevision;
 use App\Services\ContentDiffService;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Livewire\Component;
 
 class RevisionHistory extends Component
@@ -19,21 +20,44 @@ class RevisionHistory extends Component
 
     public ?array $diff = null;
 
+    // Cached revisions collection
+    protected ?Collection $revisionsCache = null;
+
     public function mount(Model $record): void
     {
         $this->record = $record;
     }
 
-    public function getRevisionsProperty()
+    /**
+     * Get revisions for this record (cached)
+     */
+    public function getRevisionsProperty(): Collection
     {
-        return $this->record->revisions()
-            ->with('user')
-            ->orderByDesc('revision_number')
-            ->get();
+        if ($this->revisionsCache === null) {
+            $this->revisionsCache = $this->record->revisions()
+                ->with('user')
+                ->orderByDesc('revision_number')
+                ->get();
+        }
+
+        return $this->revisionsCache;
+    }
+
+    /**
+     * Find a revision that belongs to this record (security: scoped lookup)
+     */
+    protected function findRevision(int $id): ?CmsRevision
+    {
+        return $this->revisions->firstWhere('id', $id);
     }
 
     public function selectRevision(string|int $revisionId): void
     {
+        // Validate revision belongs to this record
+        if ($revisionId !== 'current' && ! $this->findRevision($revisionId)) {
+            return;
+        }
+
         // Toggle off if clicking same one
         if ($this->selectedRevision === $revisionId) {
             $this->selectedRevision = null;
@@ -53,6 +77,10 @@ class RevisionHistory extends Component
 
     public function compareToCurrent(int $revisionId): void
     {
+        if (! $this->findRevision($revisionId)) {
+            return;
+        }
+
         $this->selectedRevision = $revisionId;
         $this->compareRevision = 'current';
         $this->calculateDiff();
@@ -60,15 +88,15 @@ class RevisionHistory extends Component
 
     public function compareToPrevious(int $revisionId): void
     {
-        $revision = CmsRevision::find($revisionId);
+        $revision = $this->findRevision($revisionId);
         if (! $revision) {
             return;
         }
 
-        // Find the previous revision
-        $previous = $this->record->revisions()
+        // Find the previous revision from cached collection
+        $previous = $this->revisions
             ->where('revision_number', '<', $revision->revision_number)
-            ->orderByDesc('revision_number')
+            ->sortByDesc('revision_number')
             ->first();
 
         if ($previous) {
@@ -113,11 +141,14 @@ class RevisionHistory extends Component
         if ($this->shouldSwap()) {
             [$olderContent, $newerContent] = [$newerContent, $olderContent];
             [$olderLabel, $newerLabel] = [$newerLabel, $olderLabel];
+            [$this->selectedRevision, $this->compareRevision] = [$this->compareRevision, $this->selectedRevision];
         }
 
         $this->diff = [
             'older_label' => $olderLabel,
             'newer_label' => $newerLabel,
+            'older_id' => $this->selectedRevision,
+            'newer_id' => $this->compareRevision,
             'title' => $this->diffField('title', $olderContent, $newerContent),
             'excerpt' => $this->diffField('excerpt', $olderContent, $newerContent),
             'meta_title' => $this->diffField('meta_title', $olderContent, $newerContent),
@@ -139,9 +170,9 @@ class RevisionHistory extends Component
             return false;
         }
 
-        // Compare revision numbers
-        $rev1 = CmsRevision::find($this->selectedRevision);
-        $rev2 = CmsRevision::find($this->compareRevision);
+        // Compare revision numbers from cached collection
+        $rev1 = $this->findRevision($this->selectedRevision);
+        $rev2 = $this->findRevision($this->compareRevision);
 
         if (! $rev1 || ! $rev2) {
             return false;
@@ -162,7 +193,7 @@ class RevisionHistory extends Component
             ];
         }
 
-        $revision = CmsRevision::find($selection);
+        $revision = $this->findRevision($selection);
         if (! $revision) {
             return null;
         }
@@ -182,7 +213,7 @@ class RevisionHistory extends Component
             return 'Current Version';
         }
 
-        $revision = CmsRevision::find($selection);
+        $revision = $this->findRevision($selection);
 
         return $revision ? "Revision #{$revision->revision_number}" : 'Unknown';
     }
@@ -204,6 +235,18 @@ class RevisionHistory extends Component
 
     public function restoreRevision(int $revisionId): void
     {
+        // Security: verify revision belongs to this record
+        $revision = $this->findRevision($revisionId);
+        if (! $revision) {
+            Notification::make()
+                ->danger()
+                ->title('Error')
+                ->body('Revision not found or does not belong to this record.')
+                ->send();
+
+            return;
+        }
+
         $permissionName = $this->record instanceof \App\Models\CmsPost
             ? 'RestoreRevision:CmsPost'
             : 'RestoreRevision:CmsPage';
@@ -218,18 +261,6 @@ class RevisionHistory extends Component
             return;
         }
 
-        $revision = CmsRevision::find($revisionId);
-
-        if (! $revision) {
-            Notification::make()
-                ->danger()
-                ->title('Error')
-                ->body('Revision not found.')
-                ->send();
-
-            return;
-        }
-
         $this->record->restoreRevision($revision);
 
         Notification::make()
@@ -239,6 +270,7 @@ class RevisionHistory extends Component
             ->send();
 
         $this->clearSelection();
+        $this->revisionsCache = null; // Clear cache to refresh
         $this->dispatch('revision-restored');
     }
 

@@ -2,7 +2,8 @@
 
 namespace App\Services;
 
-use Tiptap\Editor;
+use App\Services\CustomBlockDiscoveryService;
+use Filament\Forms\Components\RichEditor\RichContentRenderer;
 
 class ContentDiffService
 {
@@ -22,7 +23,7 @@ class ContentDiffService
     }
 
     /**
-     * Convert content to HTML
+     * Convert content to HTML using the same renderer as the CMS
      */
     protected function contentToHtml($content): string
     {
@@ -30,40 +31,30 @@ class ContentDiffService
             return '';
         }
 
-        // String (HTML or JSON)
-        if (is_string($content)) {
-            // Try to decode as tiptap JSON
-            $decoded = json_decode($content, true);
-            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                return $this->tiptapToHtml($decoded);
-            }
-            // Already HTML
+        // Convert to JSON string if array
+        if (is_array($content)) {
+            $content = json_encode($content);
+        }
+
+        if (! is_string($content)) {
+            return '';
+        }
+
+        // Check if it's valid JSON (tiptap format)
+        json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            // Already HTML string
             return $content;
         }
 
-        // Array (tiptap format)
-        if (is_array($content)) {
-            return $this->tiptapToHtml($content);
+        // Use the same renderer as the CMS frontend
+        try {
+            return RichContentRenderer::make($content)
+                ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
+                ->toHtml();
+        } catch (\Exception) {
+            // Fallback to raw content on error
+            return $content;
         }
-
-        return '';
-    }
-
-    /**
-     * Convert tiptap document to HTML
-     */
-    protected function tiptapToHtml(array $content): string
-    {
-        if (isset($content['type']) && $content['type'] === 'doc') {
-            try {
-                $editor = new Editor;
-                $editor->setContent($content);
-                return $editor->getHTML();
-            } catch (\Exception) {
-                return '';
-            }
-        }
-
-        return '';
     }
 }

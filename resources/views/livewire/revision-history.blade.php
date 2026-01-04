@@ -8,10 +8,15 @@
     @else
         {{-- Selection info --}}
         @if($selectedRevision || $compareRevision)
+            @php
+                $selectedLabel = $selectedRevision === 'current'
+                    ? 'Current Version'
+                    : 'Revision #' . ($this->revisions->firstWhere('id', $selectedRevision)?->revision_number ?? '?');
+            @endphp
             <div class="flex items-center justify-between bg-primary-50 dark:bg-primary-900/20 rounded-lg p-3">
                 <div class="text-sm text-primary-700 dark:text-primary-300">
                     @if($selectedRevision && !$compareRevision)
-                        <span class="font-medium">{{ $selectedRevision === 'current' ? 'Current Version' : 'Revision #' . \App\Models\CmsRevision::find($selectedRevision)?->revision_number }}</span>
+                        <span class="font-medium">{{ $selectedLabel }}</span>
                         <span class="text-primary-500"> — select another to compare</span>
                     @elseif($selectedRevision && $compareRevision)
                         <span>Comparing versions</span>
@@ -135,17 +140,9 @@
                             Comparing: <span class="text-red-600 dark:text-red-400">{{ $diff['older_label'] }}</span>
                             → <span class="text-green-600 dark:text-green-400">{{ $diff['newer_label'] }}</span>
                         </h3>
-                        @if($selectedRevision !== 'current' && $compareRevision !== 'current')
-                            @php
-                                $restoreId = $compareRevision;
-                                if (is_int($selectedRevision) && is_int($compareRevision)) {
-                                    $rev1 = \App\Models\CmsRevision::find($selectedRevision);
-                                    $rev2 = \App\Models\CmsRevision::find($compareRevision);
-                                    $restoreId = ($rev1 && $rev2 && $rev1->revision_number > $rev2->revision_number) ? $selectedRevision : $compareRevision;
-                                }
-                            @endphp
+                        @if($diff['newer_id'] !== 'current')
                             <button
-                                wire:click="restoreRevision({{ $restoreId }})"
+                                wire:click="restoreRevision({{ $diff['newer_id'] }})"
                                 wire:confirm="Are you sure you want to restore this revision? This will overwrite the current content."
                                 class="text-sm px-3 py-1 rounded bg-amber-100 hover:bg-amber-200 text-amber-800 dark:bg-amber-900/50 dark:hover:bg-amber-900 dark:text-amber-200"
                             >
