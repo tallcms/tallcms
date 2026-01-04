@@ -41,15 +41,15 @@ class ContentDiffService
         }
 
         // Check if it's valid JSON (tiptap format)
-        json_decode($content, true);
+        $decoded = json_decode($content, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             // Already HTML string
             return $content;
         }
 
-        // Use the same renderer as the CMS frontend
+        // Use the same renderer as the CMS frontend with decoded array
         try {
-            return RichContentRenderer::make($content)
+            return RichContentRenderer::make($decoded)
                 ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
                 ->toHtml();
         } catch (\Exception) {
