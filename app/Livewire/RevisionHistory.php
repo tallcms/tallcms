@@ -12,9 +12,10 @@ class RevisionHistory extends Component
 {
     public Model $record;
 
-    public ?int $selectedRevision = null;
+    // Selection can be revision ID or 'current' for current content
+    public string|int|null $selectedRevision = null;
 
-    public ?int $compareRevision = null;
+    public string|int|null $compareRevision = null;
 
     public ?array $diff = null;
 
@@ -31,8 +32,9 @@ class RevisionHistory extends Component
             ->get();
     }
 
-    public function selectRevision(int $revisionId): void
+    public function selectRevision(string|int $revisionId): void
     {
+        // Toggle off if clicking same one
         if ($this->selectedRevision === $revisionId) {
             $this->selectedRevision = null;
             $this->compareRevision = null;
@@ -49,6 +51,33 @@ class RevisionHistory extends Component
         }
     }
 
+    public function compareToCurrent(int $revisionId): void
+    {
+        $this->selectedRevision = $revisionId;
+        $this->compareRevision = 'current';
+        $this->calculateDiff();
+    }
+
+    public function compareToPrevious(int $revisionId): void
+    {
+        $revision = CmsRevision::find($revisionId);
+        if (! $revision) {
+            return;
+        }
+
+        // Find the previous revision
+        $previous = $this->record->revisions()
+            ->where('revision_number', '<', $revision->revision_number)
+            ->orderByDesc('revision_number')
+            ->first();
+
+        if ($previous) {
+            $this->selectedRevision = $previous->id;
+            $this->compareRevision = $revisionId;
+            $this->calculateDiff();
+        }
+    }
+
     public function clearSelection(): void
     {
         $this->selectedRevision = null;
@@ -58,32 +87,123 @@ class RevisionHistory extends Component
 
     protected function calculateDiff(): void
     {
-        if (! $this->selectedRevision || ! $this->compareRevision) {
+        if ($this->selectedRevision === null || $this->compareRevision === null) {
             $this->diff = null;
 
             return;
         }
 
-        $revision1 = CmsRevision::find($this->selectedRevision);
-        $revision2 = CmsRevision::find($this->compareRevision);
+        $diffService = app(ContentDiffService::class);
 
-        if (! $revision1 || ! $revision2) {
+        // Get content for both sides
+        $olderContent = $this->getContentForSelection($this->selectedRevision);
+        $newerContent = $this->getContentForSelection($this->compareRevision);
+
+        if ($olderContent === null && $newerContent === null) {
             $this->diff = null;
 
             return;
         }
 
-        // Always compare older to newer
-        if ($revision1->revision_number > $revision2->revision_number) {
-            [$revision1, $revision2] = [$revision2, $revision1];
+        // Determine which is older based on revision number or current
+        $olderLabel = $this->getLabelForSelection($this->selectedRevision);
+        $newerLabel = $this->getLabelForSelection($this->compareRevision);
+
+        // Swap if needed (current is always newest, otherwise compare revision numbers)
+        if ($this->shouldSwap()) {
+            [$olderContent, $newerContent] = [$newerContent, $olderContent];
+            [$olderLabel, $newerLabel] = [$newerLabel, $olderLabel];
         }
 
-        $this->diff = $revision2->diffWith($revision1);
+        $this->diff = [
+            'older_label' => $olderLabel,
+            'newer_label' => $newerLabel,
+            'title' => $this->diffField('title', $olderContent, $newerContent),
+            'excerpt' => $this->diffField('excerpt', $olderContent, $newerContent),
+            'meta_title' => $this->diffField('meta_title', $olderContent, $newerContent),
+            'meta_description' => $this->diffField('meta_description', $olderContent, $newerContent),
+            'content' => $diffService->diff(
+                $olderContent['content'] ?? null,
+                $newerContent['content'] ?? null
+            ),
+        ];
+    }
+
+    protected function shouldSwap(): bool
+    {
+        // Current is always newest
+        if ($this->selectedRevision === 'current') {
+            return true;
+        }
+        if ($this->compareRevision === 'current') {
+            return false;
+        }
+
+        // Compare revision numbers
+        $rev1 = CmsRevision::find($this->selectedRevision);
+        $rev2 = CmsRevision::find($this->compareRevision);
+
+        if (! $rev1 || ! $rev2) {
+            return false;
+        }
+
+        return $rev1->revision_number > $rev2->revision_number;
+    }
+
+    protected function getContentForSelection(string|int $selection): ?array
+    {
+        if ($selection === 'current') {
+            return [
+                'title' => $this->record->title,
+                'excerpt' => $this->record->excerpt,
+                'content' => $this->record->content,
+                'meta_title' => $this->record->meta_title,
+                'meta_description' => $this->record->meta_description,
+            ];
+        }
+
+        $revision = CmsRevision::find($selection);
+        if (! $revision) {
+            return null;
+        }
+
+        return [
+            'title' => $revision->title,
+            'excerpt' => $revision->excerpt,
+            'content' => $revision->content,
+            'meta_title' => $revision->meta_title,
+            'meta_description' => $revision->meta_description,
+        ];
+    }
+
+    protected function getLabelForSelection(string|int $selection): string
+    {
+        if ($selection === 'current') {
+            return 'Current Version';
+        }
+
+        $revision = CmsRevision::find($selection);
+
+        return $revision ? "Revision #{$revision->revision_number}" : 'Unknown';
+    }
+
+    protected function diffField(string $field, ?array $older, ?array $newer): ?array
+    {
+        $oldValue = $older[$field] ?? null;
+        $newValue = $newer[$field] ?? null;
+
+        if ($oldValue === $newValue) {
+            return null;
+        }
+
+        return [
+            'old' => $oldValue,
+            'new' => $newValue,
+        ];
     }
 
     public function restoreRevision(int $revisionId): void
     {
-        // Check permission
         $permissionName = $this->record instanceof \App\Models\CmsPost
             ? 'RestoreRevision:CmsPost'
             : 'RestoreRevision:CmsPage';
@@ -110,7 +230,6 @@ class RevisionHistory extends Component
             return;
         }
 
-        // Restore the revision
         $this->record->restoreRevision($revision);
 
         Notification::make()
@@ -119,10 +238,7 @@ class RevisionHistory extends Component
             ->body("Content restored to revision #{$revision->revision_number}")
             ->send();
 
-        // Clear selection and refresh
         $this->clearSelection();
-
-        // Dispatch event to refresh the form
         $this->dispatch('revision-restored');
     }
 
