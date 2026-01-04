@@ -10,6 +10,11 @@ Route::post('/api/contact', [ContactFormController::class, 'submit'])->name('con
 
 // Normal application routes
 
+// Token-based preview route (public, for sharing with external users) - MUST be before catch-all
+Route::get('/preview/share/{token}', [PreviewController::class, 'tokenPreview'])
+    ->middleware('throttle:60,1')
+    ->name('preview.token');
+
 // Preview routes (admin only, can view drafts) - MUST be defined before catch-all route
 Route::middleware(['auth'])->group(function () {
     Route::get('/preview/page/{page}', [PreviewController::class, 'page'])->name('preview.page');

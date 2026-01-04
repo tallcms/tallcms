@@ -2,19 +2,20 @@
 
 namespace App\Filament\Resources\CmsPosts\Schemas;
 
+use App\Enums\ContentStatus;
 use App\Models\CmsCategory;
 use App\Models\CmsPost;
 use App\Models\User;
-use App\Services\CustomBlockDiscoveryService;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Tabs;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Livewire;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
 
@@ -36,11 +37,10 @@ class CmsPostForm
                                             ->required()
                                             ->maxLength(255)
                                             ->live(onBlur: true)
-                                            ->afterStateUpdated(fn (string $state, callable $set) => 
-                                                $set('slug', Str::slug($state))
+                                            ->afterStateUpdated(fn (string $state, callable $set) => $set('slug', Str::slug($state))
                                             )
                                             ->columnSpan(1),
-                                            
+
                                         TextInput::make('slug')
                                             ->required()
                                             ->maxLength(255)
@@ -49,30 +49,23 @@ class CmsPostForm
                                             ->helperText('Used in the URL')
                                             ->columnSpan(1),
                                     ]),
-                                    
+
                                 Textarea::make('excerpt')
                                     ->label('Excerpt')
                                     ->maxLength(500)
                                     ->rows(3)
                                     ->helperText('Brief description shown in post listings')
                                     ->columnSpanFull(),
-                                    
+
                                 RichEditor::make('content')
                                     ->columnSpanFull()
                                     ->fileAttachmentsDirectory('cms/posts/attachments')
-                                    ->mergeTags([
-                                        'site_name',
-                                        'current_year',
-                                        'post_title',
-                                        'post_author',
-                                    ])
-                                    ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
                                     ->extraInputAttributes([
                                         'style' => 'min-height: 40rem;',
                                     ])
-                                    ->helperText('Create rich post content with custom blocks, merge tags, and advanced formatting. Use merge tags to insert dynamic content like {{post_author}} or {{post_title}}.'),
+                                    ->helperText('Create rich post content using the editor toolbar.'),
                             ]),
-                            
+
                         Tabs\Tab::make('Settings')
                             ->icon('heroicon-o-cog-6-tooth')
                             ->schema([
@@ -80,29 +73,52 @@ class CmsPostForm
                                     ->columns(2)
                                     ->schema([
                                         Select::make('status')
-                                            ->options([
-                                                'draft' => 'Draft',
-                                                'published' => 'Published',
-                                            ])
+                                            ->options(function () {
+                                                // Authors can only set draft/pending, approvers can set all
+                                                if (auth()->user()?->can('Approve:CmsPost')) {
+                                                    return ContentStatus::editorOptions();
+                                                }
+
+                                                return ContentStatus::authorOptions();
+                                            })
                                             ->required()
-                                            ->default('draft'),
-                                            
+                                            ->default(ContentStatus::Draft->value)
+                                            ->disabled(function (?CmsPost $record) {
+                                                // Disable status change when pending and user can't approve
+                                                if ($record?->isPending() && ! auth()->user()?->can('Approve:CmsPost')) {
+                                                    return true;
+                                                }
+
+                                                return false;
+                                            })
+                                            ->helperText(function (?CmsPost $record) {
+                                                if ($record?->wasRejected()) {
+                                                    return 'This content was rejected. Reason: '.$record->getRejectionReason();
+                                                }
+                                                if ($record?->isPending()) {
+                                                    return 'This content is pending review.';
+                                                }
+
+                                                return null;
+                                            }),
+
                                         DateTimePicker::make('published_at')
                                             ->label('Publish Date')
                                             ->nullable()
-                                            ->default(now()),
-                                            
+                                            ->helperText('Leave empty to publish immediately when approved, or set a future date to schedule.')
+                                            ->visible(fn () => auth()->user()?->can('Approve:CmsPost')),
+
                                         Select::make('author_id')
                                             ->label('Author')
                                             ->options(User::query()->pluck('name', 'id'))
                                             ->default(auth()->id())
                                             ->required(),
-                                            
+
                                         Toggle::make('is_featured')
                                             ->label('Featured Post')
                                             ->helperText('Featured posts appear prominently'),
                                     ]),
-                                    
+
                                 Section::make('Categories')
                                     ->schema([
                                         Select::make('categories')
@@ -115,8 +131,7 @@ class CmsPostForm
                                                 TextInput::make('name')
                                                     ->required()
                                                     ->live(onBlur: true)
-                                                    ->afterStateUpdated(fn (string $state, callable $set) => 
-                                                        $set('slug', Str::slug($state))
+                                                    ->afterStateUpdated(fn (string $state, callable $set) => $set('slug', Str::slug($state))
                                                     ),
                                                 TextInput::make('slug')
                                                     ->required()
@@ -127,7 +142,7 @@ class CmsPostForm
                                             ->helperText('Select existing categories or create new ones for this post'),
                                     ]),
                             ]),
-                            
+
                         Tabs\Tab::make('SEO')
                             ->icon('heroicon-o-magnifying-glass')
                             ->schema([
@@ -138,13 +153,13 @@ class CmsPostForm
                                             ->label('Meta Title')
                                             ->maxLength(60)
                                             ->helperText('Recommended: 50-60 characters. If empty, post title will be used.'),
-                                            
+
                                         Textarea::make('meta_description')
                                             ->label('Meta Description')
                                             ->maxLength(160)
                                             ->rows(3)
                                             ->helperText('Recommended: 150-160 characters. If empty, excerpt will be used.'),
-                                            
+
                                         FileUpload::make('featured_image')
                                             ->label('Featured Image')
                                             ->image()
@@ -154,13 +169,22 @@ class CmsPostForm
                                             ->imageEditor()
                                             ->imageEditorAspectRatios([
                                                 '16:9',
-                                                '4:3', 
+                                                '4:3',
                                                 '1:1',
                                                 '1.91:1', // Facebook recommended
                                                 '2:1',    // Twitter header
                                             ])
                                             ->helperText('Used for social media sharing and post headers. Recommended: 1200x630px for best compatibility.'),
                                     ]),
+                            ]),
+
+                        Tabs\Tab::make('Revisions')
+                            ->icon('heroicon-o-clock')
+                            ->visible(fn (?CmsPost $record) => $record !== null && auth()->user()?->can('ViewRevisions:CmsPost'))
+                            ->schema([
+                                Livewire::make(\App\Livewire\RevisionHistory::class)
+                                    ->lazy()
+                                    ->data(fn (?CmsPost $record) => ['record' => $record]),
                             ]),
                     ])
                     ->persistTabInQueryString()

@@ -2,13 +2,13 @@
 
 namespace App\Filament\Resources\CmsPosts\Tables;
 
+use App\Enums\ContentStatus;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\ImageColumn;
-use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Columns\TagsColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
@@ -26,48 +26,47 @@ class CmsPostsTable
                     ->label('Image')
                     ->square()
                     ->size(50),
-                    
+
                 TextColumn::make('title')
                     ->searchable()
                     ->sortable()
                     ->limit(50),
-                    
+
                 TextColumn::make('excerpt')
                     ->searchable()
                     ->limit(60)
                     ->toggleable()
                     ->color('gray'),
-                    
-                SelectColumn::make('status')
-                    ->options([
-                        'draft' => 'Draft',
-                        'published' => 'Published',
-                    ])
-                    ->selectablePlaceholder(false),
-                    
+
+                TextColumn::make('status')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => ContentStatus::from($state)->getLabel())
+                    ->color(fn (string $state): string => ContentStatus::from($state)->getColor())
+                    ->icon(fn (string $state): string => ContentStatus::from($state)->getIcon()),
+
                 ToggleColumn::make('is_featured')
                     ->label('Featured'),
-                    
+
                 TagsColumn::make('categories.name')
                     ->label('Categories')
                     ->limit(3),
-                    
+
                 TextColumn::make('author.name')
                     ->label('Author')
                     ->sortable()
                     ->searchable(),
-                    
+
                 TextColumn::make('views')
                     ->label('Views')
                     ->numeric()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                    
+
                 TextColumn::make('published_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(),
-                    
+
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -76,24 +75,25 @@ class CmsPostsTable
             ->filters([
                 SelectFilter::make('status')
                     ->options([
-                        'draft' => 'Draft',
-                        'published' => 'Published',
+                        ContentStatus::Draft->value => ContentStatus::Draft->getLabel(),
+                        ContentStatus::Pending->value => ContentStatus::Pending->getLabel(),
+                        ContentStatus::Published->value => ContentStatus::Published->getLabel(),
                     ]),
-                    
+
                 SelectFilter::make('is_featured')
                     ->label('Featured')
                     ->options([
                         '1' => 'Featured',
                         '0' => 'Not Featured',
                     ]),
-                    
+
                 SelectFilter::make('categories')
                     ->relationship('categories', 'name')
                     ->multiple(),
-                    
+
                 SelectFilter::make('author')
                     ->relationship('author', 'name'),
-                    
+
                 TrashedFilter::make(),
             ])
             ->recordActions([
