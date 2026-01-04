@@ -122,6 +122,16 @@
                                                 vs Prev
                                             </button>
                                         @endif
+                                        @can($this->record instanceof \App\Models\CmsPost ? 'RestoreRevision:CmsPost' : 'RestoreRevision:CmsPage')
+                                            <button
+                                                wire:click.stop="restoreRevision({{ $revision->id }})"
+                                                wire:confirm="Are you sure you want to restore Revision #{{ $revision->revision_number }}? This will overwrite the current content."
+                                                class="px-2 py-1 text-xs rounded bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/50 dark:hover:bg-amber-900 text-amber-800 dark:text-amber-200"
+                                                title="Restore this revision"
+                                            >
+                                                Restore
+                                            </button>
+                                        @endcan
                                     </div>
                                 </div>
                             </div>

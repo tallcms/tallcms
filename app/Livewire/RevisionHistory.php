@@ -290,6 +290,9 @@ class RevisionHistory extends Component
 
         $this->record->restoreRevision($revision);
 
+        // Refresh the record to get updated data
+        $this->record->refresh();
+
         Notification::make()
             ->success()
             ->title('Revision Restored')
@@ -298,6 +301,8 @@ class RevisionHistory extends Component
 
         $this->clearSelection();
         $this->revisionsCache = null; // Clear cache to refresh
+
+        // Dispatch event for parent Filament page to refresh form
         $this->dispatch('revision-restored');
     }
 
