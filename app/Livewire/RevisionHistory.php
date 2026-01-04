@@ -123,32 +123,56 @@ class RevisionHistory extends Component
 
         $diffService = app(ContentDiffService::class);
 
-        // Get content for both sides
-        $olderContent = $this->getContentForSelection($this->selectedRevision);
-        $newerContent = $this->getContentForSelection($this->compareRevision);
+        // Get content for both sides - don't mutate selections, compute locally
+        $firstContent = $this->getContentForSelection($this->selectedRevision);
+        $secondContent = $this->getContentForSelection($this->compareRevision);
 
-        if ($olderContent === null && $newerContent === null) {
+        if ($firstContent === null && $secondContent === null) {
             $this->diff = null;
 
             return;
         }
 
-        // Determine which is older based on revision number or current
-        $olderLabel = $this->getLabelForSelection($this->selectedRevision);
-        $newerLabel = $this->getLabelForSelection($this->compareRevision);
+        // Determine older/newer without mutating user selections
+        $firstId = $this->selectedRevision;
+        $secondId = $this->compareRevision;
+        $firstLabel = $this->getLabelForSelection($firstId);
+        $secondLabel = $this->getLabelForSelection($secondId);
 
-        // Swap if needed (current is always newest, otherwise compare revision numbers)
-        if ($this->shouldSwap()) {
-            [$olderContent, $newerContent] = [$newerContent, $olderContent];
-            [$olderLabel, $newerLabel] = [$newerLabel, $olderLabel];
-            [$this->selectedRevision, $this->compareRevision] = [$this->compareRevision, $this->selectedRevision];
+        // Determine which is older (for display order only)
+        $shouldSwap = $this->isNewer($firstId, $secondId);
+
+        if ($shouldSwap) {
+            $olderId = $secondId;
+            $newerId = $firstId;
+            $olderLabel = $secondLabel;
+            $newerLabel = $firstLabel;
+            $olderContent = $secondContent;
+            $newerContent = $firstContent;
+        } else {
+            $olderId = $firstId;
+            $newerId = $secondId;
+            $olderLabel = $firstLabel;
+            $newerLabel = $secondLabel;
+            $olderContent = $firstContent;
+            $newerContent = $secondContent;
+        }
+
+        // Find restorable revision (any non-current revision in the comparison)
+        $restorableId = null;
+        if (is_int($newerId)) {
+            $restorableId = $newerId;
+        } elseif (is_int($olderId)) {
+            $restorableId = $olderId;
         }
 
         $this->diff = [
             'older_label' => $olderLabel,
             'newer_label' => $newerLabel,
-            'older_id' => $this->selectedRevision,
-            'newer_id' => $this->compareRevision,
+            'older_id' => $olderId,
+            'newer_id' => $newerId,
+            'restorable_id' => $restorableId,
+            'restorable_label' => $restorableId ? $this->getLabelForSelection($restorableId) : null,
             'title' => $this->diffField('title', $olderContent, $newerContent),
             'excerpt' => $this->diffField('excerpt', $olderContent, $newerContent),
             'meta_title' => $this->diffField('meta_title', $olderContent, $newerContent),
@@ -160,19 +184,22 @@ class RevisionHistory extends Component
         ];
     }
 
-    protected function shouldSwap(): bool
+    /**
+     * Check if first selection is newer than second (for ordering display)
+     */
+    protected function isNewer(string|int $first, string|int $second): bool
     {
         // Current is always newest
-        if ($this->selectedRevision === 'current') {
+        if ($first === 'current') {
             return true;
         }
-        if ($this->compareRevision === 'current') {
+        if ($second === 'current') {
             return false;
         }
 
         // Compare revision numbers from cached collection
-        $rev1 = $this->findRevision($this->selectedRevision);
-        $rev2 = $this->findRevision($this->compareRevision);
+        $rev1 = $this->findRevision($first);
+        $rev2 = $this->findRevision($second);
 
         if (! $rev1 || ! $rev2) {
             return false;

@@ -140,13 +140,13 @@
                             Comparing: <span class="text-red-600 dark:text-red-400">{{ $diff['older_label'] }}</span>
                             → <span class="text-green-600 dark:text-green-400">{{ $diff['newer_label'] }}</span>
                         </h3>
-                        @if($diff['newer_id'] !== 'current')
+                        @if($diff['restorable_id'])
                             <button
-                                wire:click="restoreRevision({{ $diff['newer_id'] }})"
+                                wire:click="restoreRevision({{ $diff['restorable_id'] }})"
                                 wire:confirm="Are you sure you want to restore this revision? This will overwrite the current content."
                                 class="text-sm px-3 py-1 rounded bg-amber-100 hover:bg-amber-200 text-amber-800 dark:bg-amber-900/50 dark:hover:bg-amber-900 dark:text-amber-200"
                             >
-                                Restore {{ $diff['newer_label'] }}
+                                Restore {{ $diff['restorable_label'] }}
                             </button>
                         @endif
                     </div>
