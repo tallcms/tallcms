@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\CmsPage;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class CmsPagePolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:CmsPage');
@@ -67,4 +67,43 @@ class CmsPagePolicy
         return $authUser->can('Reorder:CmsPage');
     }
 
+    /**
+     * Determine if the user can approve the page (publish pending content)
+     */
+    public function approve(AuthUser $authUser, CmsPage $cmsPage): bool
+    {
+        return $authUser->can('Approve:CmsPage') && $cmsPage->canBeApproved();
+    }
+
+    /**
+     * Determine if the user can submit the page for review
+     */
+    public function submitForReview(AuthUser $authUser, CmsPage $cmsPage): bool
+    {
+        return $authUser->can('SubmitForReview:CmsPage') && $cmsPage->canSubmitForReview();
+    }
+
+    /**
+     * Determine if the user can view revisions
+     */
+    public function viewRevisions(AuthUser $authUser, CmsPage $cmsPage): bool
+    {
+        return $authUser->can('ViewRevisions:CmsPage');
+    }
+
+    /**
+     * Determine if the user can restore a revision
+     */
+    public function restoreRevision(AuthUser $authUser, CmsPage $cmsPage): bool
+    {
+        return $authUser->can('RestoreRevision:CmsPage');
+    }
+
+    /**
+     * Determine if the user can generate preview links
+     */
+    public function generatePreviewLink(AuthUser $authUser, CmsPage $cmsPage): bool
+    {
+        return $authUser->can('GeneratePreviewLink:CmsPage');
+    }
 }

@@ -2,13 +2,13 @@
 
 namespace App\Filament\Resources\CmsPages\Tables;
 
+use App\Enums\ContentStatus;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\ImageColumn;
-use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -24,38 +24,36 @@ class CmsPagesTable
                     ->label('Image')
                     ->square()
                     ->size(50),
-                    
+
                 TextColumn::make('title')
                     ->searchable()
                     ->sortable(),
-                    
+
                 TextColumn::make('slug')
                     ->searchable()
                     ->copyable()
                     ->limit(30),
-                    
-                SelectColumn::make('status')
-                    ->options([
-                        'draft' => 'Draft',
-                        'published' => 'Published',
-                    ])
-                    ->selectablePlaceholder(false),
-                    
-                    
+
+                TextColumn::make('status')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => ContentStatus::from($state)->getLabel())
+                    ->color(fn (string $state): string => ContentStatus::from($state)->getColor())
+                    ->icon(fn (string $state): string => ContentStatus::from($state)->getIcon()),
+
                 TextColumn::make('parent.title')
                     ->label('Parent')
                     ->limit(20),
-                    
+
                 TextColumn::make('published_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(),
-                    
+
                 TextColumn::make('sort_order')
                     ->numeric()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                    
+
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -64,11 +62,11 @@ class CmsPagesTable
             ->filters([
                 SelectFilter::make('status')
                     ->options([
-                        'draft' => 'Draft',
-                        'published' => 'Published',
+                        ContentStatus::Draft->value => ContentStatus::Draft->getLabel(),
+                        ContentStatus::Pending->value => ContentStatus::Pending->getLabel(),
+                        ContentStatus::Published->value => ContentStatus::Published->getLabel(),
                     ]),
-                    
-                    
+
                 TrashedFilter::make(),
             ])
             ->recordActions([

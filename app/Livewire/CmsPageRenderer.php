@@ -156,17 +156,53 @@ class CmsPageRenderer extends Component
 
         $content = $page->content;
 
-        // Handle array format (structured blocks)
-        if (is_array($content)) {
-            return collect($content)->contains(function ($block) {
-                return ($block['type'] ?? '') === 'posts';
-            });
+        // Content is stored as JSON string (not cast to array)
+        if (is_string($content)) {
+            // Check for JSON format with customBlock type=posts
+            if (str_contains($content, '"id":"posts"') || str_contains($content, "'id':'posts'")) {
+                return true;
+            }
+
+            // Also check HTML format (legacy or rendered content)
+            if (str_contains($content, 'data-id="posts"') || str_contains($content, "data-id='posts'")) {
+                return true;
+            }
+
+            // Try to decode and check structured content
+            $decoded = json_decode($content, true);
+            if (is_array($decoded)) {
+                return $this->searchForPostsBlock($decoded);
+            }
         }
 
-        // Handle string format (HTML with data attributes)
-        if (is_string($content)) {
-            return str_contains($content, 'data-id="posts"') ||
-                   str_contains($content, "data-id='posts'");
+        // Handle array format (shouldn't happen but be safe)
+        if (is_array($content)) {
+            return $this->searchForPostsBlock($content);
+        }
+
+        return false;
+    }
+
+    /**
+     * Recursively search for posts block in content structure
+     */
+    protected function searchForPostsBlock(array $content): bool
+    {
+        foreach ($content as $key => $value) {
+            // Direct check for block type
+            if ($key === 'type' && $value === 'customBlock') {
+                continue; // Check id in same array
+            }
+            if ($key === 'id' && $value === 'posts') {
+                return true;
+            }
+
+            // Check nested arrays
+            if (is_array($value)) {
+                if ($this->searchForPostsBlock($value)) {
+                    return true;
+                }
+            }
         }
 
         return false;
