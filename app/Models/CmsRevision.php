@@ -27,7 +27,8 @@ class CmsRevision extends Model
     ];
 
     protected $casts = [
-        'content' => 'array',
+        // Note: 'content' is NOT cast - it stores raw value from parent model
+        // (could be JSON string for tiptap or HTML string for legacy content)
         'additional_data' => 'array',
     ];
 

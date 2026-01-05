@@ -74,7 +74,8 @@ trait HasRevisions
             'user_id' => auth()->id(),
             'title' => $this->getOriginal('title') ?? $this->title,
             'excerpt' => $this->getOriginal('excerpt'),
-            'content' => $this->getOriginal('content'),
+            // Use getRawOriginal to store exact database value (JSON string, not decoded array)
+            'content' => $this->getRawOriginal('content'),
             'meta_title' => $this->getOriginal('meta_title'),
             'meta_description' => $this->getOriginal('meta_description'),
             'featured_image' => $this->getOriginal('featured_image'),
@@ -99,10 +100,20 @@ trait HasRevisions
      */
     public function restoreRevision(CmsRevision $revision): void
     {
+        // Content is stored as raw string in revision, decode for models with array cast
+        $content = $revision->content;
+        if (is_string($content)) {
+            $decoded = json_decode($content, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $content = $decoded;
+            }
+            // If not valid JSON, keep as string (legacy HTML content)
+        }
+
         $this->update([
             'title' => $revision->title,
             'excerpt' => $revision->excerpt,
-            'content' => $revision->content,
+            'content' => $content,
             'meta_title' => $revision->meta_title,
             'meta_description' => $revision->meta_description,
             'featured_image' => $revision->featured_image,
