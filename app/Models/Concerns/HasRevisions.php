@@ -110,14 +110,15 @@ trait HasRevisions
             // If not valid JSON, keep as string (legacy HTML content)
         }
 
-        $this->update([
+        // Use forceFill to bypass guarded/cast issues
+        $this->forceFill([
             'title' => $revision->title,
             'excerpt' => $revision->excerpt,
             'content' => $content,
             'meta_title' => $revision->meta_title,
             'meta_description' => $revision->meta_description,
             'featured_image' => $revision->featured_image,
-        ]);
+        ])->save();
     }
 
     /**
