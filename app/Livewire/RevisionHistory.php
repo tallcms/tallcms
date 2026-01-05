@@ -302,9 +302,12 @@ class RevisionHistory extends Component
         $this->clearSelection();
         $this->revisionsCache = null; // Clear cache to refresh
 
-        // Redirect to refresh the entire page with restored content
-        // This is more reliable than events for nested Filament components
-        $this->redirect(request()->header('Referer', request()->url()), navigate: true);
+        // Redirect to the edit page to refresh the form with restored content
+        $routeName = $this->record instanceof \App\Models\CmsPost
+            ? 'filament.admin.resources.cms-posts.edit'
+            : 'filament.admin.resources.cms-pages.edit';
+
+        $this->redirect(route($routeName, ['record' => $this->record]), navigate: true);
     }
 
     public function render()
