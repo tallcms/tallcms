@@ -14,21 +14,10 @@ use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
-use Livewire\Attributes\On;
 
 class EditCmsPost extends EditRecord
 {
     protected static string $resource = CmsPostResource::class;
-
-    #[On('revision-restored')]
-    public function refreshAfterRevisionRestore(): void
-    {
-        // Refresh the record from the database
-        $this->record->refresh();
-
-        // Refresh all form fields with the updated data
-        $this->fillForm();
-    }
 
     protected function getHeaderActions(): array
     {

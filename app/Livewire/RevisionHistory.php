@@ -302,8 +302,9 @@ class RevisionHistory extends Component
         $this->clearSelection();
         $this->revisionsCache = null; // Clear cache to refresh
 
-        // Dispatch event for parent Filament page to refresh form
-        $this->dispatch('revision-restored');
+        // Redirect to refresh the entire page with restored content
+        // This is more reliable than events for nested Filament components
+        $this->redirect(request()->header('Referer', request()->url()), navigate: true);
     }
 
     public function render()
