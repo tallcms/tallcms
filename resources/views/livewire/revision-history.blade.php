@@ -105,18 +105,20 @@
                                     </div>
 
                                     {{-- Quick actions --}}
-                                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div style="display: flex; align-items: center; gap: 4px;">
                                         <button
+                                            type="button"
                                             wire:click.stop="compareToCurrent({{ $revision->id }})"
-                                            class="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
+                                            style="padding: 4px 8px; font-size: 12px; border-radius: 4px; background: #f3f4f6; color: #374151; cursor: pointer;"
                                             title="Compare to current"
                                         >
                                             vs Current
                                         </button>
                                         @if($hasPrevious)
                                             <button
+                                                type="button"
                                                 wire:click.stop="compareToPrevious({{ $revision->id }})"
-                                                class="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
+                                                style="padding: 4px 8px; font-size: 12px; border-radius: 4px; background: #f3f4f6; color: #374151; cursor: pointer;"
                                                 title="Compare to previous revision"
                                             >
                                                 vs Prev
@@ -124,9 +126,10 @@
                                         @endif
                                         @can($this->record instanceof \App\Models\CmsPost ? 'RestoreRevision:CmsPost' : 'RestoreRevision:CmsPage')
                                             <button
+                                                type="button"
                                                 wire:click.stop="restoreRevision({{ $revision->id }})"
                                                 wire:confirm="Are you sure you want to restore Revision #{{ $revision->revision_number }}? This will overwrite the current content."
-                                                class="px-2 py-1 text-xs rounded bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/50 dark:hover:bg-amber-900 text-amber-800 dark:text-amber-200"
+                                                style="padding: 4px 8px; font-size: 12px; border-radius: 4px; background: #fef3c7; color: #92400e; cursor: pointer; font-weight: 500;"
                                                 title="Restore this revision"
                                             >
                                                 Restore
