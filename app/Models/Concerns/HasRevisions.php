@@ -82,11 +82,20 @@ trait HasRevisions
      */
     public function createInitialRevision(): CmsRevision
     {
+        // For newly created records, get the raw database value
+        // Use getAttributes to get the value as it will be stored in DB
+        $content = $this->getAttributes()['content'] ?? null;
+
+        // If content is an array (from cast), encode it as JSON string
+        if (is_array($content)) {
+            $content = json_encode($content);
+        }
+
         return $this->revisions()->create([
             'user_id' => auth()->id(),
             'title' => $this->title,
             'excerpt' => $this->excerpt,
-            'content' => $this->getRawOriginal('content') ?? (is_array($this->content) ? json_encode($this->content) : $this->content),
+            'content' => $content,
             'meta_title' => $this->meta_title,
             'meta_description' => $this->meta_description,
             'featured_image' => $this->featured_image,
