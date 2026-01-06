@@ -20,6 +20,8 @@ class CmsCategoryResource extends Resource
 {
     protected static ?string $model = CmsCategory::class;
 
+     protected static ?string $pluralModelLabel = 'Categories';
+
 
     public static function form(Schema $schema): Schema
     {

@@ -262,52 +262,67 @@ class RevisionHistory extends Component
 
     public function restoreRevision(int $revisionId): void
     {
-        // Security: verify revision belongs to this record
-        $revision = $this->findRevision($revisionId);
-        if (! $revision) {
+        try {
+            \Log::info('Restore: Start', ['revisionId' => $revisionId, 'recordId' => $this->record?->id]);
+
+            // Security: verify revision belongs to this record
+            $revision = $this->findRevision($revisionId);
+            if (! $revision) {
+                \Log::warning('Restore: Revision not found', ['revisionId' => $revisionId]);
+                Notification::make()
+                    ->danger()
+                    ->title('Error')
+                    ->body('Revision not found or does not belong to this record.')
+                    ->send();
+
+                return;
+            }
+
+            $permissionName = $this->record instanceof \App\Models\CmsPost
+                ? 'RestoreRevision:CmsPost'
+                : 'RestoreRevision:CmsPage';
+
+            if (! auth()->user()?->can($permissionName)) {
+                \Log::warning('Restore: Permission denied');
+                Notification::make()
+                    ->danger()
+                    ->title('Permission Denied')
+                    ->body('You do not have permission to restore revisions.')
+                    ->send();
+
+                return;
+            }
+
+            \Log::info('Restore: Executing', ['revisionTitle' => $revision->title]);
+            $this->record->restoreRevision($revision);
+
+            // Refresh the record to get updated data
+            $this->record->refresh();
+            \Log::info('Restore: Success', ['newTitle' => $this->record->title]);
+
+            Notification::make()
+                ->success()
+                ->title('Revision Restored')
+                ->body("Content restored to revision #{$revision->revision_number}")
+                ->send();
+
+            $this->clearSelection();
+            $this->revisionsCache = null; // Clear cache to refresh
+
+            // Redirect to the edit page to refresh the form with restored content
+            $routeName = $this->record instanceof \App\Models\CmsPost
+                ? 'filament.admin.resources.cms-posts.edit'
+                : 'filament.admin.resources.cms-pages.edit';
+
+            $this->redirect(route($routeName, ['record' => $this->record]), navigate: true);
+        } catch (\Exception $e) {
+            \Log::error('Restore: Exception', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             Notification::make()
                 ->danger()
                 ->title('Error')
-                ->body('Revision not found or does not belong to this record.')
+                ->body('Failed to restore revision: ' . $e->getMessage())
                 ->send();
-
-            return;
         }
-
-        $permissionName = $this->record instanceof \App\Models\CmsPost
-            ? 'RestoreRevision:CmsPost'
-            : 'RestoreRevision:CmsPage';
-
-        if (! auth()->user()?->can($permissionName)) {
-            Notification::make()
-                ->danger()
-                ->title('Permission Denied')
-                ->body('You do not have permission to restore revisions.')
-                ->send();
-
-            return;
-        }
-
-        $this->record->restoreRevision($revision);
-
-        // Refresh the record to get updated data
-        $this->record->refresh();
-
-        Notification::make()
-            ->success()
-            ->title('Revision Restored')
-            ->body("Content restored to revision #{$revision->revision_number}")
-            ->send();
-
-        $this->clearSelection();
-        $this->revisionsCache = null; // Clear cache to refresh
-
-        // Redirect to the edit page to refresh the form with restored content
-        $routeName = $this->record instanceof \App\Models\CmsPost
-            ? 'filament.admin.resources.cms-posts.edit'
-            : 'filament.admin.resources.cms-pages.edit';
-
-        $this->redirect(route($routeName, ['record' => $this->record]), navigate: true);
     }
 
     public function render()
