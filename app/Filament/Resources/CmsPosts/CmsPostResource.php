@@ -20,6 +20,8 @@ class CmsPostResource extends Resource
 {
     protected static ?string $model = CmsPost::class;
 
+     protected static ?string $pluralModelLabel = 'Posts';
+
 
     public static function form(Schema $schema): Schema
     {

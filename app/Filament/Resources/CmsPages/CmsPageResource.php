@@ -20,6 +20,8 @@ class CmsPageResource extends Resource
 {
     protected static ?string $model = CmsPage::class;
 
+     protected static ?string $pluralModelLabel = 'Pages';
+
 
     public static function form(Schema $schema): Schema
     {
