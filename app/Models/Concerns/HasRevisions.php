@@ -17,7 +17,14 @@ trait HasRevisions
      */
     public static function bootHasRevisions(): void
     {
-        // Only create revision on updating, not creating
+        // Create initial revision when record is first created
+        static::created(function ($model) {
+            if (! $model->skipRevisionCreation) {
+                $model->createInitialRevision();
+            }
+        });
+
+        // Create revision before updating (captures pre-update state)
         static::updating(function ($model) {
             if (! $model->skipRevisionCreation && $model->shouldCreateRevision()) {
                 $model->createRevision();
@@ -71,7 +78,26 @@ trait HasRevisions
     }
 
     /**
-     * Create a new revision from the current (original) state
+     * Create initial revision when record is first created
+     */
+    public function createInitialRevision(): CmsRevision
+    {
+        return $this->revisions()->create([
+            'user_id' => auth()->id(),
+            'title' => $this->title,
+            'excerpt' => $this->excerpt,
+            'content' => $this->getRawOriginal('content') ?? (is_array($this->content) ? json_encode($this->content) : $this->content),
+            'meta_title' => $this->meta_title,
+            'meta_description' => $this->meta_description,
+            'featured_image' => $this->featured_image,
+            'additional_data' => $this->getAdditionalRevisionData(),
+            'revision_number' => 1,
+            'notes' => 'Initial version',
+        ]);
+    }
+
+    /**
+     * Create a new revision from the current (original) state before update
      */
     public function createRevision(?string $notes = null): CmsRevision
     {
