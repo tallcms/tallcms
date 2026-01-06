@@ -105,35 +105,32 @@
                                     </div>
 
                                     {{-- Quick actions --}}
-                                    <div style="display: flex; align-items: center; gap: 4px;">
-                                        <button
-                                            type="button"
+                                    <div class="flex items-center gap-1">
+                                        <x-filament::button
+                                            size="xs"
+                                            color="gray"
                                             wire:click.stop="compareToCurrent({{ $revision->id }})"
-                                            style="padding: 4px 8px; font-size: 12px; border-radius: 4px; background: #f3f4f6; color: #374151; cursor: pointer;"
-                                            title="Compare to current"
                                         >
                                             vs Current
-                                        </button>
+                                        </x-filament::button>
                                         @if($hasPrevious)
-                                            <button
-                                                type="button"
+                                            <x-filament::button
+                                                size="xs"
+                                                color="gray"
                                                 wire:click.stop="compareToPrevious({{ $revision->id }})"
-                                                style="padding: 4px 8px; font-size: 12px; border-radius: 4px; background: #f3f4f6; color: #374151; cursor: pointer;"
-                                                title="Compare to previous revision"
                                             >
                                                 vs Prev
-                                            </button>
+                                            </x-filament::button>
                                         @endif
                                         @can($this->record instanceof \App\Models\CmsPost ? 'RestoreRevision:CmsPost' : 'RestoreRevision:CmsPage')
-                                            <button
-                                                type="button"
+                                            <x-filament::button
+                                                size="xs"
+                                                color="warning"
                                                 wire:click.stop="restoreRevision({{ $revision->id }})"
                                                 wire:confirm="Are you sure you want to restore Revision #{{ $revision->revision_number }}? This will overwrite the current content."
-                                                style="padding: 4px 8px; font-size: 12px; border-radius: 4px; background: #fef3c7; color: #92400e; cursor: pointer; font-weight: 500;"
-                                                title="Restore this revision"
                                             >
                                                 Restore
-                                            </button>
+                                            </x-filament::button>
                                         @endcan
                                     </div>
                                 </div>
