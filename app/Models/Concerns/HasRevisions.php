@@ -8,13 +8,18 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 trait HasRevisions
 {
     /**
+     * Flag to skip revision creation (used during restore)
+     */
+    protected bool $skipRevisionCreation = false;
+
+    /**
      * Boot the trait - register model event listeners
      */
     public static function bootHasRevisions(): void
     {
         // Only create revision on updating, not creating
         static::updating(function ($model) {
-            if ($model->shouldCreateRevision()) {
+            if (! $model->skipRevisionCreation && $model->shouldCreateRevision()) {
                 $model->createRevision();
             }
         });
@@ -22,6 +27,8 @@ trait HasRevisions
         // Prune old revisions after saving
         static::saved(function ($model) {
             $model->pruneOldRevisions();
+            // Reset flag after save
+            $model->skipRevisionCreation = false;
         });
     }
 
@@ -109,6 +116,9 @@ trait HasRevisions
             }
             // If not valid JSON, keep as string (legacy HTML content)
         }
+
+        // Skip revision creation during restore (we don't want to create a revision of the pre-restore state)
+        $this->skipRevisionCreation = true;
 
         // Use forceFill to bypass guarded/cast issues
         $this->forceFill([
