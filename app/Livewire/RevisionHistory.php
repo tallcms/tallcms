@@ -263,12 +263,9 @@ class RevisionHistory extends Component
     public function restoreRevision(int $revisionId): void
     {
         try {
-            \Log::info('Restore: Start', ['revisionId' => $revisionId, 'recordId' => $this->record?->id]);
-
             // Security: verify revision belongs to this record
             $revision = $this->findRevision($revisionId);
             if (! $revision) {
-                \Log::warning('Restore: Revision not found', ['revisionId' => $revisionId]);
                 Notification::make()
                     ->danger()
                     ->title('Error')
@@ -283,7 +280,6 @@ class RevisionHistory extends Component
                 : 'RestoreRevision:CmsPage';
 
             if (! auth()->user()?->can($permissionName)) {
-                \Log::warning('Restore: Permission denied');
                 Notification::make()
                     ->danger()
                     ->title('Permission Denied')
@@ -293,12 +289,10 @@ class RevisionHistory extends Component
                 return;
             }
 
-            \Log::info('Restore: Executing', ['revisionTitle' => $revision->title]);
             $this->record->restoreRevision($revision);
 
             // Refresh the record to get updated data
             $this->record->refresh();
-            \Log::info('Restore: Success', ['newTitle' => $this->record->title]);
 
             Notification::make()
                 ->success()
@@ -316,7 +310,6 @@ class RevisionHistory extends Component
 
             $this->redirect(route($routeName, ['record' => $this->record]), navigate: true);
         } catch (\Exception $e) {
-            \Log::error('Restore: Exception', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             Notification::make()
                 ->danger()
                 ->title('Error')

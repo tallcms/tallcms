@@ -33,28 +33,39 @@ class ContentDiffService
 
         // Convert to JSON string if array
         if (is_array($content)) {
-            $content = json_encode($content);
-        }
-
-        if (! is_string($content)) {
+            $decoded = $content;
+        } elseif (is_string($content)) {
+            // Try to decode JSON
+            $decoded = json_decode($content, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                // Already HTML string, return as-is
+                return $content;
+            }
+        } else {
             return '';
         }
 
-        // Check if it's valid JSON (tiptap format)
-        $decoded = json_decode($content, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            // Already HTML string
-            return $content;
+        // Verify it's a valid tiptap document shape (must have type === 'doc')
+        if (! is_array($decoded) || ($decoded['type'] ?? null) !== 'doc') {
+            // Not a tiptap document, return as raw HTML/text
+            return is_string($content) ? $content : json_encode($content);
         }
 
-        // Use the same renderer as the CMS frontend with decoded array
+        // Use the same renderer as the CMS frontend
         try {
-            return RichContentRenderer::make($decoded)
+            $html = RichContentRenderer::make($decoded)
                 ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
                 ->toHtml();
+
+            // If renderer returns empty but content exists, fall back to raw
+            if (empty($html) && ! empty($decoded['content'])) {
+                return json_encode($content);
+            }
+
+            return $html;
         } catch (\Exception) {
             // Fallback to raw content on error
-            return $content;
+            return is_string($content) ? $content : json_encode($content);
         }
     }
 }
