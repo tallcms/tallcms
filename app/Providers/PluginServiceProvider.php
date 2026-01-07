@@ -116,7 +116,7 @@ class PluginServiceProvider extends ServiceProvider
     }
 
     /**
-     * Check if a plugin's provider contains Route:: calls
+     * Check if a plugin's provider contains route registration patterns
      */
     protected function providerRegistersRoutes(Plugin $plugin): bool
     {
@@ -140,13 +140,44 @@ class PluginServiceProvider extends ServiceProvider
 
         $content = File::get($providerPath);
 
-        // Check for Route:: facade calls (excluding comments)
-        // Remove single-line comments first
+        // Remove comments before checking for route registration patterns
         $contentWithoutComments = preg_replace('#//.*$#m', '', $content);
-        // Remove multi-line comments
         $contentWithoutComments = preg_replace('#/\*.*?\*/#s', '', $contentWithoutComments);
 
-        return (bool) preg_match('/\bRoute::/', $contentWithoutComments);
+        // Check for direct Route:: calls
+        if (preg_match('/\bRoute::/', $contentWithoutComments)) {
+            return true;
+        }
+
+        // Check for aliased Route facade (e.g., "use ... Route as R;" then "R::get")
+        if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/', $contentWithoutComments, $matches)) {
+            $alias = $matches[1];
+            if (preg_match('/\b'.preg_quote($alias, '/').'::/', $contentWithoutComments)) {
+                return true;
+            }
+        }
+
+        // Check for router instance via app() helper
+        if (preg_match('/\bapp\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+            return true;
+        }
+
+        // Check for router instance via resolve() helper
+        if (preg_match('/\bresolve\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+            return true;
+        }
+
+        // Check for router instance via $this->app container access
+        if (preg_match('/\$this\s*->\s*app\s*\[\s*[\'"]router[\'"]\s*\]/', $contentWithoutComments)) {
+            return true;
+        }
+
+        // Check for direct Router class usage
+        if (preg_match('/\\\\Illuminate\\\\Routing\\\\Router\b/', $contentWithoutComments)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -345,7 +376,7 @@ class PluginServiceProvider extends ServiceProvider
 
         // Check for forbidden Route methods that could bypass guardrails
         foreach (self::FORBIDDEN_ROUTE_METHODS as $method) {
-            if (preg_match('/\bRoute::' . $method . '\s*\(/i', $contentWithoutComments)) {
+            if (preg_match('/\bRoute::'.$method.'\s*\(/i', $contentWithoutComments)) {
                 return [
                     'routes' => [],
                     'valid' => false,
@@ -367,7 +398,7 @@ class PluginServiceProvider extends ServiceProvider
         // Parse allowed route methods
         $routes = [];
         $allowedMethodsPattern = implode('|', self::ALLOWED_ROUTE_METHODS);
-        $pattern = '/Route::(' . $allowedMethodsPattern . ')\s*\(\s*[\'"]([^\'"]+)[\'"]/i';
+        $pattern = '/Route::('.$allowedMethodsPattern.')\s*\(\s*[\'"]([^\'"]+)[\'"]/i';
 
         if (preg_match_all($pattern, $contentWithoutComments, $matches)) {
             $routes = array_unique($matches[2]);
