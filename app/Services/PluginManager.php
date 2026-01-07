@@ -250,11 +250,14 @@ class PluginManager
      */
     public function isComposerManaged(string $namespace): bool
     {
-        $checkNamespace = rtrim($namespace, '\\');
+        $checkNamespace = $this->normalizeNamespace($namespace);
 
         // Check against blocked namespace prefixes (security: prevent class shadowing)
+        // Case-insensitive comparison to catch App\, app\, APP\, etc.
         foreach (self::BLOCKED_NAMESPACE_PREFIXES as $blocked) {
-            if ($checkNamespace === $blocked || str_starts_with($checkNamespace, $blocked.'\\')) {
+            $blockedLower = strtolower($blocked);
+            $checkLower = strtolower($checkNamespace);
+            if ($checkLower === $blockedLower || str_starts_with($checkLower, $blockedLower.'\\')) {
                 return true;
             }
         }
@@ -270,6 +273,20 @@ class PluginManager
         }
 
         return false;
+    }
+
+    /**
+     * Normalize a namespace for comparison
+     * Removes leading backslash and trailing backslash
+     */
+    protected function normalizeNamespace(string $namespace): string
+    {
+        // Remove leading backslash
+        $namespace = ltrim($namespace, '\\');
+        // Remove trailing backslash
+        $namespace = rtrim($namespace, '\\');
+
+        return $namespace;
     }
 
     /**
@@ -290,6 +307,9 @@ class PluginManager
                 return false;
             }
 
+            // Normalize input namespace for case-insensitive comparison
+            $namespaceLower = strtolower($this->normalizeNamespace($namespace));
+
             // Check autoload and autoload-dev sections
             $autoloadSections = [
                 $composerData['autoload'] ?? [],
@@ -299,16 +319,16 @@ class PluginManager
             foreach ($autoloadSections as $autoload) {
                 // Check PSR-4
                 foreach ($autoload['psr-4'] ?? [] as $prefix => $path) {
-                    $prefix = rtrim($prefix, '\\');
-                    if ($prefix === $namespace || str_starts_with($namespace, $prefix.'\\')) {
+                    $prefixLower = strtolower($this->normalizeNamespace($prefix));
+                    if ($prefixLower === $namespaceLower || str_starts_with($namespaceLower, $prefixLower.'\\')) {
                         return true;
                     }
                 }
 
                 // Check PSR-0
                 foreach ($autoload['psr-0'] ?? [] as $prefix => $path) {
-                    $prefix = rtrim($prefix, '\\');
-                    if ($prefix === $namespace || str_starts_with($namespace, $prefix.'\\')) {
+                    $prefixLower = strtolower($this->normalizeNamespace($prefix));
+                    if ($prefixLower === $namespaceLower || str_starts_with($namespaceLower, $prefixLower.'\\')) {
                         return true;
                     }
                 }
@@ -343,6 +363,9 @@ class PluginManager
                 return false;
             }
 
+            // Normalize input namespace for case-insensitive comparison
+            $namespaceLower = strtolower($this->normalizeNamespace($namespace));
+
             // Check both packages and packages-dev
             $packages = array_merge(
                 $lockData['packages'] ?? [],
@@ -354,16 +377,16 @@ class PluginManager
 
                 // Check PSR-4 autoload entries
                 foreach ($autoload['psr-4'] ?? [] as $prefix => $path) {
-                    $prefix = rtrim($prefix, '\\');
-                    if ($prefix === $namespace || str_starts_with($namespace, $prefix.'\\')) {
+                    $prefixLower = strtolower($this->normalizeNamespace($prefix));
+                    if ($prefixLower === $namespaceLower || str_starts_with($namespaceLower, $prefixLower.'\\')) {
                         return true;
                     }
                 }
 
                 // Check PSR-0 autoload entries
                 foreach ($autoload['psr-0'] ?? [] as $prefix => $path) {
-                    $prefix = rtrim($prefix, '\\');
-                    if ($prefix === $namespace || str_starts_with($namespace, $prefix.'\\')) {
+                    $prefixLower = strtolower($this->normalizeNamespace($prefix));
+                    if ($prefixLower === $namespaceLower || str_starts_with($namespaceLower, $prefixLower.'\\')) {
                         return true;
                     }
                 }

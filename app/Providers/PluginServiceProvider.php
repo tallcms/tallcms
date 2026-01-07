@@ -193,6 +193,21 @@ class PluginServiceProvider extends ServiceProvider
             return true;
         }
 
+        // Check for Route::class constant (enables dynamic dispatch)
+        if (preg_match('/\bRoute::class\b/', $contentWithoutComments)) {
+            return true;
+        }
+
+        // Check for Route facade class string
+        if (preg_match('/[\'"]\\\\?Illuminate\\\\Support\\\\Facades\\\\Route[\'"]/', $contentWithoutComments)) {
+            return true;
+        }
+
+        // Check for call_user_func patterns (dynamic dispatch)
+        if (preg_match('/\bcall_user_func(_array)?\s*\([^)]*Route/', $contentWithoutComments)) {
+            return true;
+        }
+
         return false;
     }
 
@@ -462,6 +477,53 @@ class PluginServiceProvider extends ServiceProvider
                 'routes' => [],
                 'valid' => false,
                 'error' => 'Router class import detected. Only Route:: facade calls are allowed.',
+            ];
+        }
+
+        // === DYNAMIC CALL BYPASS DETECTION ===
+
+        // Block Route::class constant (enables dynamic dispatch: $r = Route::class; $r::get())
+        if (preg_match('/\bRoute::class\b/', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'Route::class constant detected. Dynamic route dispatch is not allowed.',
+            ];
+        }
+
+        // Block Illuminate\Support\Facades\Route as string (for call_user_func, etc.)
+        if (preg_match('/[\'"]\\\\?Illuminate\\\\Support\\\\Facades\\\\Route[\'"]/', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'Route facade class string detected. Dynamic route dispatch is not allowed.',
+            ];
+        }
+
+        // Block call_user_func / call_user_func_array with any Route-related patterns
+        if (preg_match('/\bcall_user_func(_array)?\s*\(/', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'call_user_func detected. Dynamic function calls are not allowed in route files.',
+            ];
+        }
+
+        // Block variable-based class dispatch ($class::method pattern where $class could be Route)
+        if (preg_match('/\$\w+::(get|post|put|patch|delete|any|match|group)\s*\(/i', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'Variable-based static method call detected. Only literal Route:: calls are allowed.',
+            ];
+        }
+
+        // Block forward_static_call patterns
+        if (preg_match('/\bforward_static_call(_array)?\s*\(/', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'forward_static_call detected. Dynamic calls are not allowed in route files.',
             ];
         }
 
