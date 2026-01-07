@@ -406,7 +406,7 @@ class PluginValidator
     /**
      * Scan plugin's service provider for Route:: calls
      */
-    protected function scanProviderForRoutes(Plugin $plugin): array
+    public function scanProviderForRoutes(Plugin $plugin): array
     {
         $errors = [];
 

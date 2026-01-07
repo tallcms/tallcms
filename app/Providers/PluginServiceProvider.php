@@ -226,7 +226,18 @@ class PluginServiceProvider extends ServiceProvider
         }
 
         // Parse the route file and extract actual routes
-        $actualRoutes = $this->parseRouteFile($publicRoutesPath);
+        $parseResult = $this->parseRouteFile($publicRoutesPath);
+
+        // Check if parsing detected forbidden patterns
+        if (! $parseResult['valid']) {
+            Log::warning("Plugin public.php blocked: {$parseResult['error']}", [
+                'plugin' => $plugin->getFullSlug(),
+            ]);
+
+            return;
+        }
+
+        $actualRoutes = $parseResult['routes'];
 
         // Verify every route in the file is declared in the whitelist
         foreach ($actualRoutes as $route) {
@@ -248,22 +259,79 @@ class PluginServiceProvider extends ServiceProvider
     }
 
     /**
+     * Allowed Route methods that we can safely parse
+     */
+    protected const ALLOWED_ROUTE_METHODS = [
+        'get', 'post', 'put', 'patch', 'delete', 'options',
+    ];
+
+    /**
+     * Forbidden Route methods that could bypass guardrails
+     */
+    protected const FORBIDDEN_ROUTE_METHODS = [
+        'any', 'match', 'view', 'redirect', 'resource', 'resources',
+        'apiResource', 'apiResources', 'singleton', 'controller',
+        'group', 'middleware', 'prefix', 'name', 'domain',
+        'fallback', 'permanentRedirect',
+    ];
+
+    /**
      * Parse a route file and extract route paths
+     * Returns ['routes' => [...], 'valid' => bool, 'error' => string|null]
      */
     protected function parseRouteFile(string $path): array
     {
         $content = File::get($path);
+
+        // Remove comments to avoid false positives
+        $contentWithoutComments = preg_replace('#//.*$#m', '', $content);
+        $contentWithoutComments = preg_replace('#/\*.*?\*/#s', '', $contentWithoutComments);
+
+        // Check for forbidden Route methods that could bypass guardrails
+        foreach (self::FORBIDDEN_ROUTE_METHODS as $method) {
+            if (preg_match('/\bRoute::' . $method . '\s*\(/i', $contentWithoutComments)) {
+                return [
+                    'routes' => [],
+                    'valid' => false,
+                    'error' => "Forbidden route method detected: Route::{$method}(). Only basic HTTP methods are allowed.",
+                ];
+            }
+        }
+
+        // Check for chained route definitions (e.g., Route::get()->name()->middleware())
+        // These are fine, but Route::middleware()->group() is not
+        if (preg_match('/\bRoute::(middleware|prefix|name|domain)\s*\([^)]*\)\s*->\s*(group|get|post)/i', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'Route grouping/chaining detected. Only simple route definitions are allowed.',
+            ];
+        }
+
+        // Parse allowed route methods
         $routes = [];
+        $allowedMethodsPattern = implode('|', self::ALLOWED_ROUTE_METHODS);
+        $pattern = '/Route::(' . $allowedMethodsPattern . ')\s*\(\s*[\'"]([^\'"]+)[\'"]/i';
 
-        // Match Route::get('/path', ...), Route::post('/path', ...), etc.
-        // Supports both single and double quotes
-        $pattern = '/Route::(get|post|put|patch|delete|options|any|match)\s*\(\s*[\'"]([^\'"]+)[\'"]/i';
-
-        if (preg_match_all($pattern, $content, $matches)) {
+        if (preg_match_all($pattern, $contentWithoutComments, $matches)) {
             $routes = array_unique($matches[2]);
         }
 
-        return array_values($routes);
+        // Count total Route:: calls vs parsed routes to detect unparseable patterns
+        $totalRouteCalls = preg_match_all('/\bRoute::[a-zA-Z]+\s*\(/', $contentWithoutComments);
+        if ($totalRouteCalls > count($routes)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'Detected Route:: calls that could not be parsed. All routes must use simple Route::method(\'/path\', ...) format.',
+            ];
+        }
+
+        return [
+            'routes' => array_values($routes),
+            'valid' => true,
+            'error' => null,
+        ];
     }
 
     /**
