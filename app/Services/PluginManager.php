@@ -1,0 +1,995 @@
+<?php
+
+namespace App\Services;
+
+use App\Events\PluginInstalled;
+use App\Events\PluginInstalling;
+use App\Events\PluginUninstalled;
+use App\Events\PluginUninstalling;
+use App\Models\Plugin;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
+use ZipArchive;
+
+class PluginManager
+{
+    protected ?Collection $discoveredPlugins = null;
+
+    protected array $bootedProviders = [];
+
+    /**
+     * Get the plugins directory path
+     */
+    public function getPluginsPath(): string
+    {
+        return config('plugin.path', base_path('plugins'));
+    }
+
+    /**
+     * Get the path for a specific plugin
+     */
+    public function getPluginPath(string $vendor, string $slug): string
+    {
+        return $this->getPluginsPath()."/{$vendor}/{$slug}";
+    }
+
+    /**
+     * Get all installed plugins
+     */
+    public function getInstalledPlugins(): Collection
+    {
+        if ($this->discoveredPlugins !== null) {
+            return $this->discoveredPlugins;
+        }
+
+        if ($this->isCacheEnabled()) {
+            $cached = Cache::get($this->getCacheKey());
+            if ($cached !== null) {
+                $this->discoveredPlugins = $this->pruneMissingPlugins($cached);
+
+                return $this->discoveredPlugins;
+            }
+        }
+
+        $this->discoveredPlugins = $this->discover();
+
+        if ($this->isCacheEnabled()) {
+            Cache::put(
+                $this->getCacheKey(),
+                $this->discoveredPlugins,
+                config('plugin.cache_ttl', 3600)
+            );
+        }
+
+        return $this->discoveredPlugins;
+    }
+
+    /**
+     * Discover all plugins from the filesystem
+     */
+    public function discover(): Collection
+    {
+        $pluginsPath = $this->getPluginsPath();
+
+        if (! File::exists($pluginsPath)) {
+            return collect();
+        }
+
+        $plugins = collect();
+
+        // Scan vendor directories
+        foreach (File::directories($pluginsPath) as $vendorDir) {
+            $vendor = basename($vendorDir);
+
+            // Skip hidden directories
+            if (str_starts_with($vendor, '.')) {
+                continue;
+            }
+
+            // Scan plugin directories within each vendor
+            foreach (File::directories($vendorDir) as $pluginDir) {
+                $plugin = Plugin::fromDirectory($pluginDir);
+                if ($plugin) {
+                    $plugins->push($plugin);
+                }
+            }
+        }
+
+        return $plugins->sortBy(fn ($plugin) => $plugin->getFullSlug());
+    }
+
+    /**
+     * Prune plugins that no longer exist on disk
+     */
+    protected function pruneMissingPlugins(Collection $plugins): Collection
+    {
+        return $plugins->filter(function ($plugin) {
+            return File::exists($plugin->path) && File::exists($plugin->path.'/plugin.json');
+        })->values();
+    }
+
+    /**
+     * Find a plugin by vendor and slug
+     */
+    public function find(string $vendor, string $slug): ?Plugin
+    {
+        return $this->getInstalledPlugins()->first(function ($plugin) use ($vendor, $slug) {
+            return $plugin->vendor === $vendor && $plugin->slug === $slug;
+        });
+    }
+
+    /**
+     * Find a plugin by full slug (vendor/slug)
+     */
+    public function findByFullSlug(string $fullSlug): ?Plugin
+    {
+        $parts = explode('/', $fullSlug, 2);
+        if (count($parts) !== 2) {
+            return null;
+        }
+
+        return $this->find($parts[0], $parts[1]);
+    }
+
+    /**
+     * Check if a plugin is installed
+     */
+    public function isInstalled(string $vendor, string $slug): bool
+    {
+        return $this->find($vendor, $slug) !== null;
+    }
+
+    /**
+     * Refresh the plugin cache
+     */
+    public function refreshCache(): Collection
+    {
+        $this->clearCache();
+        $this->discoveredPlugins = null;
+
+        return $this->getInstalledPlugins();
+    }
+
+    /**
+     * Clear the plugin cache
+     */
+    public function clearCache(): bool
+    {
+        $this->discoveredPlugins = null;
+
+        return Cache::forget($this->getCacheKey());
+    }
+
+    /**
+     * Check if caching is enabled
+     */
+    protected function isCacheEnabled(): bool
+    {
+        return config('plugin.cache_enabled', true);
+    }
+
+    /**
+     * Get the cache key for discovered plugins
+     */
+    protected function getCacheKey(): string
+    {
+        return 'plugins.discovered';
+    }
+
+    /**
+     * Ensure the plugins directory exists
+     */
+    public function ensurePluginsDirectoryExists(): void
+    {
+        $path = $this->getPluginsPath();
+
+        if (! File::exists($path)) {
+            File::makeDirectory($path, 0755, true);
+        }
+    }
+
+    /**
+     * Get plugins grouped by vendor
+     */
+    public function getPluginsGroupedByVendor(): Collection
+    {
+        return $this->getInstalledPlugins()->groupBy('vendor');
+    }
+
+    /**
+     * Get plugins by tag
+     */
+    public function getPluginsByTag(string $tag): Collection
+    {
+        return $this->getInstalledPlugins()->filter(function ($plugin) use ($tag) {
+            return in_array($tag, $plugin->tags);
+        });
+    }
+
+    /**
+     * Register PSR-4 autoloading for a plugin
+     */
+    public function registerAutoload(Plugin $plugin): void
+    {
+        if (empty($plugin->namespace)) {
+            return;
+        }
+
+        $srcPath = $plugin->getSrcPath();
+
+        if (! File::exists($srcPath)) {
+            return;
+        }
+
+        $loader = require base_path('vendor/autoload.php');
+        $loader->addPsr4($plugin->namespace.'\\', $srcPath);
+    }
+
+    /**
+     * Boot a plugin's service provider
+     */
+    public function bootPlugin(Plugin $plugin): void
+    {
+        $fullSlug = $plugin->getFullSlug();
+
+        // Don't boot twice
+        if (isset($this->bootedProviders[$fullSlug])) {
+            return;
+        }
+
+        if (empty($plugin->provider)) {
+            return;
+        }
+
+        if (! class_exists($plugin->provider)) {
+            Log::warning("Plugin provider class not found: {$plugin->provider}", [
+                'plugin' => $fullSlug,
+            ]);
+
+            return;
+        }
+
+        try {
+            $provider = app()->register($plugin->provider);
+            $this->bootedProviders[$fullSlug] = $provider;
+        } catch (\Throwable $e) {
+            Log::error("Failed to boot plugin provider: {$plugin->provider}", [
+                'plugin' => $fullSlug,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Get all booted providers
+     */
+    public function getBootedProviders(): array
+    {
+        return $this->bootedProviders;
+    }
+
+    /**
+     * Get Filament plugin instances from installed plugins
+     */
+    public function getFilamentPlugins(): array
+    {
+        $filamentPlugins = [];
+
+        foreach ($this->getInstalledPlugins() as $plugin) {
+            if (! $plugin->hasFilamentPlugin()) {
+                continue;
+            }
+
+            if (! class_exists($plugin->filamentPlugin)) {
+                Log::warning("Filament plugin class not found: {$plugin->filamentPlugin}", [
+                    'plugin' => $plugin->getFullSlug(),
+                ]);
+
+                continue;
+            }
+
+            try {
+                $filamentPlugins[] = app($plugin->filamentPlugin);
+            } catch (\Throwable $e) {
+                Log::error("Failed to instantiate Filament plugin: {$plugin->filamentPlugin}", [
+                    'plugin' => $plugin->getFullSlug(),
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $filamentPlugins;
+    }
+
+    /**
+     * Check if uploads are allowed
+     */
+    public function uploadsAllowed(): bool
+    {
+        return config('plugin.allow_uploads', true);
+    }
+
+    /**
+     * Get maximum upload size in bytes
+     */
+    public function getMaxUploadSize(): int
+    {
+        return config('plugin.max_upload_size', 50 * 1024 * 1024);
+    }
+
+    /**
+     * Install a plugin from a ZIP file
+     */
+    public function installFromZip(string $zipPath): PluginInstallResult
+    {
+        $validator = app(PluginValidator::class);
+
+        // Validate the ZIP file
+        $validationResult = $validator->validateZip($zipPath);
+
+        if (! $validationResult->isValid) {
+            return PluginInstallResult::failed($validationResult->errors);
+        }
+
+        $pluginData = $validationResult->pluginData;
+        $vendor = $pluginData['vendor'];
+        $slug = $pluginData['slug'];
+
+        // Check if plugin already exists
+        if ($this->isInstalled($vendor, $slug)) {
+            return PluginInstallResult::failed(["Plugin {$vendor}/{$slug} is already installed. Use update to replace it."]);
+        }
+
+        // Extract to temp directory first
+        $tempPath = storage_path("app/plugin-temp/{$vendor}-{$slug}-".uniqid());
+
+        try {
+            $this->extractZip($zipPath, $tempPath, $pluginData);
+
+            // Validate extracted directory
+            $dirValidation = $validator->validateDirectory($tempPath);
+            if (! $dirValidation->isValid) {
+                File::deleteDirectory($tempPath);
+
+                return PluginInstallResult::failed($dirValidation->errors);
+            }
+
+            // Atomic move to final location
+            $finalPath = $this->getPluginPath($vendor, $slug);
+
+            // Ensure vendor directory exists
+            File::ensureDirectoryExists(dirname($finalPath), 0755);
+
+            // Move from temp to final location
+            File::moveDirectory($tempPath, $finalPath);
+
+            // Load the plugin
+            $plugin = Plugin::fromDirectory($finalPath);
+
+            if (! $plugin) {
+                File::deleteDirectory($finalPath);
+
+                return PluginInstallResult::failed(['Failed to load plugin after extraction']);
+            }
+
+            // Fire installing event
+            event(new PluginInstalling($plugin, 'upload'));
+
+            // Register autoloader
+            $this->registerAutoload($plugin);
+
+            // Validate classes exist
+            $classValidation = $validator->validateClassesExist($plugin);
+            if (! $classValidation->isValid) {
+                File::deleteDirectory($finalPath);
+
+                return PluginInstallResult::failed($classValidation->errors);
+            }
+
+            // Run migrations if auto_migrate is enabled
+            $migrationsRan = [];
+            if (config('plugin.auto_migrate', true)) {
+                $migrator = app(PluginMigrator::class);
+                $migrationResult = $migrator->migrate($plugin);
+
+                if (! $migrationResult->success) {
+                    // Rollback: delete plugin directory
+                    File::deleteDirectory($finalPath);
+
+                    return PluginInstallResult::failed(
+                        array_merge(['Migration failed:'], $migrationResult->errors)
+                    );
+                }
+
+                $migrationsRan = $migrationResult->migrations;
+            }
+
+            // Clear all caches
+            $this->clearAllCaches();
+
+            // Fire installed event
+            event(new PluginInstalled($plugin, $migrationsRan, 'upload'));
+
+            Log::info("Plugin installed: {$plugin->getFullSlug()}", [
+                'version' => $plugin->version,
+                'migrations' => $migrationsRan,
+            ]);
+
+            return PluginInstallResult::success(
+                $plugin,
+                $migrationsRan,
+                $validationResult->warnings
+            );
+
+        } catch (\Throwable $e) {
+            // Cleanup
+            if (File::exists($tempPath)) {
+                File::deleteDirectory($tempPath);
+            }
+
+            $finalPath = $this->getPluginPath($vendor, $slug);
+            if (File::exists($finalPath)) {
+                File::deleteDirectory($finalPath);
+            }
+
+            Log::error("Plugin installation failed: {$vendor}/{$slug}", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return PluginInstallResult::failed([$e->getMessage()]);
+        }
+    }
+
+    /**
+     * Uninstall a plugin
+     */
+    public function uninstall(string $vendor, string $slug): PluginInstallResult
+    {
+        $plugin = $this->find($vendor, $slug);
+
+        if (! $plugin) {
+            return PluginInstallResult::failed(["Plugin {$vendor}/{$slug} is not installed"]);
+        }
+
+        try {
+            // Fire uninstalling event
+            event(new PluginUninstalling($plugin));
+
+            // Rollback migrations
+            $migrationsRolledBack = [];
+            $migrator = app(PluginMigrator::class);
+            $rollbackResult = $migrator->rollback($plugin);
+
+            if (! $rollbackResult->success) {
+                Log::warning("Plugin migration rollback had errors: {$vendor}/{$slug}", [
+                    'errors' => $rollbackResult->errors,
+                ]);
+            }
+
+            $migrationsRolledBack = $rollbackResult->migrations;
+
+            // Delete plugin directory
+            File::deleteDirectory($plugin->path);
+
+            // Clear all caches
+            $this->clearAllCaches();
+
+            // Fire uninstalled event
+            event(new PluginUninstalled($plugin, $migrationsRolledBack));
+
+            Log::info("Plugin uninstalled: {$plugin->getFullSlug()}", [
+                'migrations_rolled_back' => $migrationsRolledBack,
+            ]);
+
+            return PluginInstallResult::success(
+                $plugin,
+                $migrationsRolledBack,
+                [],
+                'Plugin uninstalled successfully'
+            );
+
+        } catch (\Throwable $e) {
+            Log::error("Plugin uninstallation failed: {$vendor}/{$slug}", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return PluginInstallResult::failed([$e->getMessage()]);
+        }
+    }
+
+    /**
+     * Update a plugin from a ZIP file (in-place update)
+     */
+    public function update(string $zipPath): PluginInstallResult
+    {
+        $validator = app(PluginValidator::class);
+
+        // Validate the ZIP file
+        $validationResult = $validator->validateZip($zipPath);
+
+        if (! $validationResult->isValid) {
+            return PluginInstallResult::failed($validationResult->errors);
+        }
+
+        $pluginData = $validationResult->pluginData;
+        $vendor = $pluginData['vendor'];
+        $slug = $pluginData['slug'];
+
+        // Check if plugin exists
+        $existingPlugin = $this->find($vendor, $slug);
+        if (! $existingPlugin) {
+            return PluginInstallResult::failed([
+                "Plugin {$vendor}/{$slug} is not installed. Use install for new plugins.",
+            ]);
+        }
+
+        // Create backup
+        $backupPath = $this->createBackup($existingPlugin);
+
+        // Extract to temp directory
+        $tempPath = storage_path("app/plugin-temp/{$vendor}-{$slug}-".uniqid());
+
+        try {
+            $this->extractZip($zipPath, $tempPath, $pluginData);
+
+            // Validate extracted directory
+            $dirValidation = $validator->validateDirectory($tempPath);
+            if (! $dirValidation->isValid) {
+                File::deleteDirectory($tempPath);
+                $this->deleteBackup($backupPath);
+
+                return PluginInstallResult::failed($dirValidation->errors);
+            }
+
+            // Delete existing plugin directory
+            $finalPath = $existingPlugin->path;
+            File::deleteDirectory($finalPath);
+
+            // Move new version to final location
+            File::moveDirectory($tempPath, $finalPath);
+
+            // Load the updated plugin
+            $plugin = Plugin::fromDirectory($finalPath);
+
+            if (! $plugin) {
+                // Restore from backup
+                $this->restoreFromBackup($backupPath, $finalPath);
+                $this->deleteBackup($backupPath);
+
+                return PluginInstallResult::failed(['Failed to load plugin after update']);
+            }
+
+            // Register autoloader with new files
+            $this->registerAutoload($plugin);
+
+            // Validate classes exist
+            $classValidation = $validator->validateClassesExist($plugin);
+            if (! $classValidation->isValid) {
+                // Restore from backup
+                File::deleteDirectory($finalPath);
+                $this->restoreFromBackup($backupPath, $finalPath);
+                $this->deleteBackup($backupPath);
+
+                return PluginInstallResult::failed($classValidation->errors);
+            }
+
+            // Run any new migrations
+            $migrationsRan = [];
+            if (config('plugin.auto_migrate', true)) {
+                $migrator = app(PluginMigrator::class);
+                $migrationResult = $migrator->migrate($plugin);
+
+                if (! $migrationResult->success) {
+                    // Restore from backup
+                    File::deleteDirectory($finalPath);
+                    $this->restoreFromBackup($backupPath, $finalPath);
+                    $this->deleteBackup($backupPath);
+
+                    return PluginInstallResult::failed(
+                        array_merge(['Migration failed during update:'], $migrationResult->errors)
+                    );
+                }
+
+                $migrationsRan = $migrationResult->migrations;
+            }
+
+            // Clear all caches
+            $this->clearAllCaches();
+
+            // Keep backup for rollback (with timestamp)
+            $this->archiveBackup($backupPath, $vendor, $slug, $existingPlugin->version);
+
+            Log::info("Plugin updated: {$plugin->getFullSlug()}", [
+                'old_version' => $existingPlugin->version,
+                'new_version' => $plugin->version,
+                'migrations' => $migrationsRan,
+            ]);
+
+            return PluginInstallResult::success(
+                $plugin,
+                $migrationsRan,
+                $validationResult->warnings,
+                "Updated from {$existingPlugin->version} to {$plugin->version}"
+            );
+
+        } catch (\Throwable $e) {
+            // Cleanup temp directory
+            if (File::exists($tempPath)) {
+                File::deleteDirectory($tempPath);
+            }
+
+            // Try to restore from backup if plugin directory was deleted
+            $finalPath = $this->getPluginPath($vendor, $slug);
+            if (! File::exists($finalPath) && File::exists($backupPath)) {
+                $this->restoreFromBackup($backupPath, $finalPath);
+            }
+
+            $this->deleteBackup($backupPath);
+
+            Log::error("Plugin update failed: {$vendor}/{$slug}", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return PluginInstallResult::failed([$e->getMessage()]);
+        }
+    }
+
+    /**
+     * Create a backup of a plugin
+     */
+    protected function createBackup(Plugin $plugin): string
+    {
+        $backupPath = storage_path("app/plugin-temp/backup-{$plugin->vendor}-{$plugin->slug}-".uniqid());
+
+        File::copyDirectory($plugin->path, $backupPath);
+
+        return $backupPath;
+    }
+
+    /**
+     * Restore a plugin from backup
+     */
+    protected function restoreFromBackup(string $backupPath, string $targetPath): void
+    {
+        if (File::exists($targetPath)) {
+            File::deleteDirectory($targetPath);
+        }
+
+        File::ensureDirectoryExists(dirname($targetPath), 0755);
+        File::moveDirectory($backupPath, $targetPath);
+    }
+
+    /**
+     * Delete a backup directory
+     */
+    protected function deleteBackup(string $backupPath): void
+    {
+        if (File::exists($backupPath)) {
+            File::deleteDirectory($backupPath);
+        }
+    }
+
+    /**
+     * Archive a backup for potential rollback
+     */
+    protected function archiveBackup(string $backupPath, string $vendor, string $slug, string $version): void
+    {
+        $archivePath = $this->getBackupPath($vendor, $slug);
+        $versionPath = "{$archivePath}/{$version}_".date('Y-m-d_His');
+
+        File::ensureDirectoryExists($archivePath, 0755);
+
+        if (File::exists($backupPath)) {
+            File::moveDirectory($backupPath, $versionPath);
+        }
+
+        // Clean old backups (keep last 3)
+        $this->cleanOldBackups($archivePath, 3);
+    }
+
+    /**
+     * Clean old backups, keeping the most recent ones
+     */
+    protected function cleanOldBackups(string $archivePath, int $keep = 3): void
+    {
+        if (! File::exists($archivePath)) {
+            return;
+        }
+
+        $backups = collect(File::directories($archivePath))
+            ->sortByDesc(fn ($path) => File::lastModified($path))
+            ->values();
+
+        foreach ($backups->skip($keep) as $oldBackup) {
+            File::deleteDirectory($oldBackup);
+        }
+    }
+
+    /**
+     * Rollback a plugin to a previous version
+     */
+    public function rollback(string $vendor, string $slug, ?string $version = null): PluginInstallResult
+    {
+        $plugin = $this->find($vendor, $slug);
+
+        if (! $plugin) {
+            return PluginInstallResult::failed(["Plugin {$vendor}/{$slug} is not installed"]);
+        }
+
+        $archivePath = $this->getBackupPath($vendor, $slug);
+
+        if (! File::exists($archivePath)) {
+            return PluginInstallResult::failed(['No backups available for rollback']);
+        }
+
+        $backups = collect(File::directories($archivePath))
+            ->sortByDesc(fn ($path) => File::lastModified($path))
+            ->values();
+
+        if ($backups->isEmpty()) {
+            return PluginInstallResult::failed(['No backups available for rollback']);
+        }
+
+        // Find the backup to restore
+        $backupToRestore = null;
+
+        if ($version) {
+            // Find specific version
+            $backupToRestore = $backups->first(fn ($path) => str_starts_with(basename($path), "{$version}_"));
+
+            if (! $backupToRestore) {
+                return PluginInstallResult::failed(["Backup for version {$version} not found"]);
+            }
+        } else {
+            // Use most recent backup
+            $backupToRestore = $backups->first();
+        }
+
+        try {
+            $currentVersion = $plugin->version;
+
+            // Create backup of current version first
+            $currentBackup = $this->createBackup($plugin);
+
+            // Delete current plugin
+            File::deleteDirectory($plugin->path);
+
+            // Restore from backup
+            File::copyDirectory($backupToRestore, $plugin->path);
+
+            // Reload plugin
+            $restoredPlugin = Plugin::fromDirectory($plugin->path);
+
+            if (! $restoredPlugin) {
+                // Restore current version
+                $this->restoreFromBackup($currentBackup, $plugin->path);
+
+                return PluginInstallResult::failed(['Failed to load plugin after rollback']);
+            }
+
+            // Register autoloader
+            $this->registerAutoload($restoredPlugin);
+
+            // Note: We don't run migration rollback automatically
+            // The user should handle any data migration manually
+
+            // Clear caches
+            $this->clearAllCaches();
+
+            // Archive the current version backup
+            $this->archiveBackup($currentBackup, $vendor, $slug, $currentVersion);
+
+            Log::info("Plugin rolled back: {$restoredPlugin->getFullSlug()}", [
+                'from_version' => $currentVersion,
+                'to_version' => $restoredPlugin->version,
+            ]);
+
+            return PluginInstallResult::success(
+                $restoredPlugin,
+                [],
+                [],
+                "Rolled back from {$currentVersion} to {$restoredPlugin->version}"
+            );
+
+        } catch (\Throwable $e) {
+            Log::error("Plugin rollback failed: {$vendor}/{$slug}", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return PluginInstallResult::failed([$e->getMessage()]);
+        }
+    }
+
+    /**
+     * Get available backup versions for a plugin
+     */
+    public function getAvailableBackups(string $vendor, string $slug): array
+    {
+        $archivePath = $this->getBackupPath($vendor, $slug);
+
+        if (! File::exists($archivePath)) {
+            return [];
+        }
+
+        return collect(File::directories($archivePath))
+            ->map(function ($path) {
+                $name = basename($path);
+                $parts = explode('_', $name, 2);
+
+                return [
+                    'version' => $parts[0] ?? 'unknown',
+                    'date' => isset($parts[1]) ? str_replace('_', ' ', $parts[1]) : 'unknown',
+                    'path' => $path,
+                ];
+            })
+            ->sortByDesc('date')
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * Extract a ZIP file to a directory
+     */
+    protected function extractZip(string $zipPath, string $targetPath, array $pluginData): void
+    {
+        $zip = new ZipArchive;
+        $result = $zip->open($zipPath);
+
+        if ($result !== true) {
+            throw new \RuntimeException("Failed to open ZIP file: error code {$result}");
+        }
+
+        try {
+            // Create temp extraction directory
+            File::ensureDirectoryExists($targetPath, 0755);
+
+            // Determine if ZIP has a wrapper directory
+            $hasWrapper = $this->zipHasWrapperDirectory($zip);
+
+            if ($hasWrapper) {
+                // Extract to temp, then move contents up
+                $extractTemp = "{$targetPath}_extract";
+                $zip->extractTo($extractTemp);
+                $zip->close();
+
+                // Find the wrapper directory
+                $dirs = File::directories($extractTemp);
+                if (count($dirs) === 1) {
+                    // Move contents from wrapper to target
+                    File::moveDirectory($dirs[0], $targetPath);
+                    File::deleteDirectory($extractTemp);
+                } else {
+                    // Multiple directories, just move everything
+                    foreach (File::directories($extractTemp) as $dir) {
+                        File::moveDirectory($dir, "{$targetPath}/".basename($dir));
+                    }
+                    foreach (File::files($extractTemp) as $file) {
+                        File::move($file, "{$targetPath}/".basename($file));
+                    }
+                    File::deleteDirectory($extractTemp);
+                }
+            } else {
+                // No wrapper, extract directly
+                $zip->extractTo($targetPath);
+                $zip->close();
+            }
+        } catch (\Throwable $e) {
+            if ($zip->status === ZipArchive::ER_OK) {
+                $zip->close();
+            }
+            throw $e;
+        }
+    }
+
+    /**
+     * Check if ZIP has a wrapper directory
+     */
+    protected function zipHasWrapperDirectory(ZipArchive $zip): bool
+    {
+        // Check if all files are under a single directory
+        $firstDir = null;
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $name = $zip->getNameIndex($i);
+            $parts = explode('/', $name);
+
+            if (count($parts) > 1) {
+                if ($firstDir === null) {
+                    $firstDir = $parts[0];
+                } elseif ($parts[0] !== $firstDir) {
+                    return false;
+                }
+            }
+        }
+
+        // Check if plugin.json is directly in the wrapper
+        return $zip->locateName("{$firstDir}/plugin.json") !== false;
+    }
+
+    /**
+     * Clear all caches after plugin operations
+     */
+    public function clearAllCaches(): void
+    {
+        // Clear plugin discovery cache
+        $this->clearCache();
+
+        // Clear config cache
+        try {
+            Artisan::call('config:clear');
+        } catch (\Throwable $e) {
+            Log::debug('Could not clear config cache: '.$e->getMessage());
+        }
+
+        // Clear view cache
+        try {
+            Artisan::call('view:clear');
+        } catch (\Throwable $e) {
+            Log::debug('Could not clear view cache: '.$e->getMessage());
+        }
+
+        // Clear route cache
+        try {
+            Artisan::call('route:clear');
+        } catch (\Throwable $e) {
+            Log::debug('Could not clear route cache: '.$e->getMessage());
+        }
+
+        // Clear opcache if available
+        if (function_exists('opcache_reset')) {
+            opcache_reset();
+        }
+
+        // Clear file stat cache
+        clearstatcache(true);
+    }
+
+    /**
+     * Get the backup path for a plugin
+     */
+    public function getBackupPath(string $vendor, string $slug): string
+    {
+        return storage_path("app/plugin-backups/{$vendor}/{$slug}");
+    }
+}
+
+/**
+ * Plugin install/uninstall result value object
+ */
+class PluginInstallResult
+{
+    public function __construct(
+        public bool $success,
+        public ?Plugin $plugin,
+        public array $migrations,
+        public array $errors,
+        public array $warnings,
+        public string $message
+    ) {}
+
+    public static function failed(array $errors, string $message = 'Operation failed'): self
+    {
+        return new self(false, null, [], $errors, [], $message);
+    }
+
+    public static function success(
+        Plugin $plugin,
+        array $migrations = [],
+        array $warnings = [],
+        string $message = 'Operation successful'
+    ): self {
+        return new self(true, $plugin, $migrations, [], $warnings, $message);
+    }
+
+    public function hasWarnings(): bool
+    {
+        return ! empty($this->warnings);
+    }
+}

@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Services\PluginManager;
 use App\Services\ThemeResolver;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
@@ -67,10 +68,7 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            ->plugins([
-                FilamentShieldPlugin::make()
-                    ->navigationGroup('User Management'),
-            ])
+            ->plugins($this->getFilamentPlugins())
             ->authMiddleware([
                 Authenticate::class,
             ])
@@ -80,5 +78,31 @@ class AdminPanelProvider extends PanelProvider
                     ->url('/', shouldOpenInNewTab: true)
                     ->icon('heroicon-o-globe-alt'),
             ]);
+    }
+
+    /**
+     * Get all Filament plugins including those from installed plugins
+     */
+    protected function getFilamentPlugins(): array
+    {
+        // Core plugins
+        $plugins = [
+            FilamentShieldPlugin::make()
+                ->navigationGroup('User Management'),
+        ];
+
+        // Add plugins from installed TallCMS plugins
+        try {
+            $pluginManager = app(PluginManager::class);
+            $pluginPlugins = $pluginManager->getFilamentPlugins();
+            $plugins = array_merge($plugins, $pluginPlugins);
+        } catch (\Throwable $e) {
+            // Log but don't fail if plugin loading fails
+            \Illuminate\Support\Facades\Log::warning('Failed to load Filament plugins from installed plugins', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return $plugins;
     }
 }
