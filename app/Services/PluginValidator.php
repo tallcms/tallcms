@@ -429,8 +429,12 @@ class PluginValidator
 
         $content = File::get($providerPath);
 
-        // Check for Route:: calls (excluding comments)
-        if (preg_match('/(?<!\/\/\s*)Route::/m', $content)) {
+        // Remove comments before checking for Route:: calls
+        $contentWithoutComments = preg_replace('#//.*$#m', '', $content);
+        $contentWithoutComments = preg_replace('#/\*.*?\*/#s', '', $contentWithoutComments);
+
+        // Check for Route:: calls
+        if (preg_match('/\bRoute::/', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Use routes/public.php or routes/web.php instead. Found Route:: call in provider.';
         }
 
