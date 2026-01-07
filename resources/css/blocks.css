@@ -370,6 +370,84 @@
 }
 
 /* ==========================================================================
+   Timeline Block Styles
+   ========================================================================== */
+
+.timeline-block {
+    /* Timeline block container */
+}
+
+.timeline-block h2 {
+    color: var(--block-heading-color);
+}
+
+.timeline-block .timeline-node {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.timeline-block .timeline-node:hover {
+    transform: scale(1.1);
+}
+
+.timeline-block .timeline-content {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.timeline-block .timeline-content:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-block .timeline-title {
+    color: var(--block-heading-color);
+}
+
+.timeline-block .timeline-description {
+    color: var(--block-text-color);
+}
+
+/* ==========================================================================
+   Parallax Block Styles
+   ========================================================================== */
+
+.parallax-block {
+    /* Parallax block container */
+}
+
+.parallax-block .parallax-heading {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.parallax-block .parallax-subheading {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.parallax-block .parallax-cta {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.parallax-block .parallax-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   Divider Block Styles
+   ========================================================================== */
+
+.divider-block {
+    /* Divider block container */
+}
+
+.divider-block .divider-line {
+    border-color: var(--block-border-color, #e5e7eb);
+}
+
+.divider-block .divider-icon {
+    color: var(--block-text-color, #6b7280);
+}
+
+/* ==========================================================================
    Pricing Block Styles
    ========================================================================== */
 
