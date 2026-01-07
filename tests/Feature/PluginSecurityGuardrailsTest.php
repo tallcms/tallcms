@@ -6,6 +6,7 @@ use App\Models\Plugin;
 use App\Providers\PluginServiceProvider;
 use App\Services\PluginValidator;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
@@ -28,7 +29,8 @@ class PluginSecurityGuardrailsTest extends TestCase
 
         $this->serviceProvider = new PluginServiceProvider($this->app);
         $this->validator = new PluginValidator;
-        $this->tempDir = storage_path('framework/testing/plugin-guardrails');
+        // Use unique directory per test to prevent parallel test collisions
+        $this->tempDir = storage_path('framework/testing/plugin-guardrails-'.Str::uuid());
 
         if (! File::exists($this->tempDir)) {
             File::makeDirectory($this->tempDir, 0755, true);
@@ -652,5 +654,287 @@ Route::someCustomMethod('/unknown');
 
         $this->assertTrue($result['valid']);
         $this->assertEmpty($result['routes']);
+    }
+
+    // =========================================================================
+    // PROVIDER SCANNING TESTS (scanProviderForRoutes / providerRegistersRoutes)
+    // =========================================================================
+
+    /**
+     * Helper to create a mock plugin with provider for testing
+     */
+    protected function createMockPluginWithProvider(string $providerContent): Plugin
+    {
+        $pluginPath = $this->tempDir.'/test-plugin';
+        $srcPath = $pluginPath.'/src/Providers';
+
+        if (! File::exists($srcPath)) {
+            File::makeDirectory($srcPath, 0755, true);
+        }
+
+        File::put($srcPath.'/TestServiceProvider.php', $providerContent);
+
+        // Create a mock Plugin instance (constructor requires data array and path)
+        return new Plugin([
+            'slug' => 'test-plugin',
+            'vendor' => 'test-vendor',
+            'name' => 'Test Plugin',
+            'version' => '1.0.0',
+            'namespace' => 'TestVendor\\TestPlugin',
+            'provider' => 'TestVendor\\TestPlugin\\Providers\\TestServiceProvider',
+        ], $pluginPath);
+    }
+
+    public function test_provider_scan_blocks_route_facade(): void
+    {
+        $plugin = $this->createMockPluginWithProvider("<?php
+namespace TestVendor\\TestPlugin\\Providers;
+
+use Illuminate\\Support\\ServiceProvider;
+use Illuminate\\Support\\Facades\\Route;
+
+class TestServiceProvider extends ServiceProvider
+{
+    public function boot()
+    {
+        Route::get('/bypass', fn() => 'bad');
+    }
+}
+");
+
+        $errors = $this->validator->scanProviderForRoutes($plugin);
+
+        $this->assertNotEmpty($errors);
+        $this->assertStringContainsString('Route::', $errors[0]);
+    }
+
+    public function test_provider_scan_blocks_lowercase_route(): void
+    {
+        $plugin = $this->createMockPluginWithProvider("<?php
+namespace TestVendor\\TestPlugin\\Providers;
+
+class TestServiceProvider
+{
+    public function boot()
+    {
+        route::get('/bypass', fn() => 'bad');
+    }
+}
+");
+
+        $errors = $this->validator->scanProviderForRoutes($plugin);
+
+        $this->assertNotEmpty($errors);
+    }
+
+    public function test_provider_scan_blocks_aliased_route(): void
+    {
+        $plugin = $this->createMockPluginWithProvider("<?php
+namespace TestVendor\\TestPlugin\\Providers;
+
+use Illuminate\\Support\\Facades\\Route as R;
+
+class TestServiceProvider
+{
+    public function boot()
+    {
+        R::get('/bypass', fn() => 'bad');
+    }
+}
+");
+
+        $errors = $this->validator->scanProviderForRoutes($plugin);
+
+        $this->assertNotEmpty($errors);
+        $this->assertStringContainsString('alias', strtolower($errors[0]));
+    }
+
+    public function test_provider_scan_blocks_aliased_route_lowercase_usage(): void
+    {
+        $plugin = $this->createMockPluginWithProvider("<?php
+namespace TestVendor\\TestPlugin\\Providers;
+
+use Illuminate\\Support\\Facades\\Route as R;
+
+class TestServiceProvider
+{
+    public function boot()
+    {
+        r::get('/bypass', fn() => 'bad');
+    }
+}
+");
+
+        $errors = $this->validator->scanProviderForRoutes($plugin);
+
+        $this->assertNotEmpty($errors);
+    }
+
+    public function test_provider_scan_blocks_app_router(): void
+    {
+        $plugin = $this->createMockPluginWithProvider("<?php
+namespace TestVendor\\TestPlugin\\Providers;
+
+class TestServiceProvider
+{
+    public function boot()
+    {
+        \$router = app('router');
+        \$router->get('/bypass', fn() => 'bad');
+    }
+}
+");
+
+        $errors = $this->validator->scanProviderForRoutes($plugin);
+
+        $this->assertNotEmpty($errors);
+        $this->assertStringContainsString('router', strtolower($errors[0]));
+    }
+
+    public function test_provider_scan_blocks_app_router_uppercase(): void
+    {
+        $plugin = $this->createMockPluginWithProvider("<?php
+namespace TestVendor\\TestPlugin\\Providers;
+
+class TestServiceProvider
+{
+    public function boot()
+    {
+        \$router = APP('router');
+    }
+}
+");
+
+        $errors = $this->validator->scanProviderForRoutes($plugin);
+
+        $this->assertNotEmpty($errors);
+    }
+
+    public function test_provider_scan_blocks_resolve_router(): void
+    {
+        $plugin = $this->createMockPluginWithProvider("<?php
+namespace TestVendor\\TestPlugin\\Providers;
+
+class TestServiceProvider
+{
+    public function boot()
+    {
+        \$router = resolve('router');
+    }
+}
+");
+
+        $errors = $this->validator->scanProviderForRoutes($plugin);
+
+        $this->assertNotEmpty($errors);
+    }
+
+    public function test_provider_scan_blocks_this_app_array_access(): void
+    {
+        $plugin = $this->createMockPluginWithProvider("<?php
+namespace TestVendor\\TestPlugin\\Providers;
+
+class TestServiceProvider
+{
+    public function boot()
+    {
+        \$router = \$this->app['router'];
+    }
+}
+");
+
+        $errors = $this->validator->scanProviderForRoutes($plugin);
+
+        $this->assertNotEmpty($errors);
+    }
+
+    public function test_provider_scan_blocks_router_class_import(): void
+    {
+        $plugin = $this->createMockPluginWithProvider("<?php
+namespace TestVendor\\TestPlugin\\Providers;
+
+use Illuminate\\Routing\\Router;
+
+class TestServiceProvider
+{
+    public function boot(Router \$router)
+    {
+        \$router->get('/bypass', fn() => 'bad');
+    }
+}
+");
+
+        $errors = $this->validator->scanProviderForRoutes($plugin);
+
+        $this->assertNotEmpty($errors);
+    }
+
+    public function test_provider_scan_allows_legitimate_provider(): void
+    {
+        $plugin = $this->createMockPluginWithProvider("<?php
+namespace TestVendor\\TestPlugin\\Providers;
+
+use Illuminate\\Support\\ServiceProvider;
+
+class TestServiceProvider extends ServiceProvider
+{
+    public function register()
+    {
+        \$this->mergeConfigFrom(__DIR__.'/../config/plugin.php', 'my-plugin');
+    }
+
+    public function boot()
+    {
+        \$this->loadViewsFrom(__DIR__.'/../resources/views', 'my-plugin');
+        \$this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+    }
+}
+");
+
+        $errors = $this->validator->scanProviderForRoutes($plugin);
+
+        $this->assertEmpty($errors);
+    }
+
+    public function test_provider_scan_ignores_route_in_comments(): void
+    {
+        $plugin = $this->createMockPluginWithProvider("<?php
+namespace TestVendor\\TestPlugin\\Providers;
+
+/**
+ * This provider does NOT register routes.
+ * Route registration is done in routes/public.php
+ * Don't use Route::get() or app('router') here.
+ */
+class TestServiceProvider
+{
+    // Route::get is blocked
+    /* Route::post is also blocked */
+    public function boot()
+    {
+        // Valid provider with no route registration
+    }
+}
+");
+
+        $errors = $this->validator->scanProviderForRoutes($plugin);
+
+        $this->assertEmpty($errors);
+    }
+
+    public function test_provider_scan_returns_empty_for_missing_provider(): void
+    {
+        $plugin = new Plugin([
+            'slug' => 'test-plugin',
+            'vendor' => 'test-vendor',
+            'name' => 'Test Plugin',
+            'version' => '1.0.0',
+            'namespace' => 'TestVendor\\TestPlugin',
+            'provider' => '', // No provider
+        ], $this->tempDir.'/nonexistent');
+
+        $errors = $this->validator->scanProviderForRoutes($plugin);
+
+        $this->assertEmpty($errors);
     }
 }
