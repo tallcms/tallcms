@@ -70,6 +70,24 @@ class Plugin
             'primary' => null,
             'gallery' => [],
         ];
+
+        // Store view namespace (defaults to vendor-slug format)
+        $this->extras['view_namespace'] = $data['view_namespace'] ?? null;
+    }
+
+    /**
+     * Get the view namespace for this plugin
+     * Used for theme override lookups
+     */
+    public function getViewNamespace(): string
+    {
+        // Use explicit view_namespace if set in plugin.json
+        if (! empty($this->extras['view_namespace'])) {
+            return $this->extras['view_namespace'];
+        }
+
+        // Default to vendor-slug format (e.g., tallcms-helloworld)
+        return "{$this->vendor}-{$this->slug}";
     }
 
     /**

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\View;
 use ZipArchive;
 
 class PluginManager
@@ -1037,11 +1038,18 @@ class PluginManager
             Log::debug('Could not clear config cache: '.$e->getMessage());
         }
 
-        // Clear view cache
+        // Clear view cache (compiled views)
         try {
             Artisan::call('view:clear');
         } catch (\Throwable $e) {
             Log::debug('Could not clear view cache: '.$e->getMessage());
+        }
+
+        // Flush view finder cache (in-memory namespace resolution)
+        try {
+            View::flushFinderCache();
+        } catch (\Throwable $e) {
+            Log::debug('Could not flush view finder cache: '.$e->getMessage());
         }
 
         // Clear route cache
