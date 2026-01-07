@@ -153,6 +153,9 @@ class ThemeManager
         $this->resetViewPaths();
         $this->registerThemeViewPaths();
 
+        // Register theme overrides for plugin view namespaces
+        $this->registerPluginViewOverrides($theme);
+
         // Flush view finder cache to ensure fresh template resolution
         View::flushFinderCache();
 
@@ -627,6 +630,53 @@ class ThemeManager
 
         if (File::exists($viewPath)) {
             View::addNamespace($namespace, $viewPath);
+        }
+    }
+
+    /**
+     * Register theme overrides for plugin view namespaces
+     * Allows themes to override plugin views by placing them in:
+     * themes/{slug}/resources/views/vendor/{plugin-view-namespace}/
+     */
+    public function registerPluginViewOverrides(Theme $theme): void
+    {
+        // Check if plugin manager is available
+        if (! app()->bound('plugin.manager')) {
+            return;
+        }
+
+        try {
+            $pluginManager = app('plugin.manager');
+            $plugins = $pluginManager->getInstalledPlugins();
+
+            foreach ($plugins as $plugin) {
+                $viewNamespace = $plugin->getViewNamespace();
+
+                // Build theme override path
+                $themePath = base_path("themes/{$theme->slug}/resources/views/vendor/{$viewNamespace}");
+
+                if (! File::exists($themePath)) {
+                    continue;
+                }
+
+                // Prepend theme path to the plugin's view namespace so theme wins
+                View::prependNamespace($viewNamespace, $themePath);
+
+                // Also prepend to the canonical plugin namespace (plugin.vendor.slug)
+                View::prependNamespace("plugin.{$plugin->vendor}.{$plugin->slug}", $themePath);
+
+                Log::debug("Registered theme override for plugin views", [
+                    'theme' => $theme->slug,
+                    'plugin' => $plugin->getFullSlug(),
+                    'namespace' => $viewNamespace,
+                    'path' => $themePath,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to register plugin view overrides for theme', [
+                'theme' => $theme->slug,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 

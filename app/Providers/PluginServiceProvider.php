@@ -150,7 +150,7 @@ class PluginServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register plugin view namespaces
+     * Register plugin view namespaces with theme override support
      */
     protected function registerPluginViewPaths(): void
     {
@@ -160,12 +160,68 @@ class PluginServiceProvider extends ServiceProvider
             $viewPath = $plugin->getViewPath();
 
             if (File::exists($viewPath)) {
+                // Register the canonical plugin namespace (plugin.vendor.slug)
                 View::addNamespace(
                     "plugin.{$plugin->vendor}.{$plugin->slug}",
                     $viewPath
                 );
             }
         }
+
+        // After all plugin namespaces are registered, prepend theme override paths
+        $this->registerThemeOverridesForPlugins();
+    }
+
+    /**
+     * Register theme override paths for all plugin view namespaces
+     * Theme path: themes/{active}/resources/views/vendor/{view-namespace}/
+     */
+    protected function registerThemeOverridesForPlugins(): void
+    {
+        // Check if theme manager is available
+        if (! $this->app->bound('theme.manager')) {
+            return;
+        }
+
+        try {
+            $themeManager = $this->app->make('theme.manager');
+            $activeTheme = $themeManager->getActiveTheme();
+
+            if (! $activeTheme) {
+                return;
+            }
+
+            $pluginManager = $this->app->make(PluginManager::class);
+
+            foreach ($pluginManager->getInstalledPlugins() as $plugin) {
+                $this->registerThemeOverrideForPlugin($plugin, $activeTheme);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to register theme overrides for plugins', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Register theme override path for a specific plugin
+     */
+    protected function registerThemeOverrideForPlugin(Plugin $plugin, $theme): void
+    {
+        $viewNamespace = $plugin->getViewNamespace();
+
+        // Build theme override path: themes/{slug}/resources/views/vendor/{view-namespace}/
+        $themePath = base_path("themes/{$theme->slug}/resources/views/vendor/{$viewNamespace}");
+
+        if (! File::exists($themePath)) {
+            return;
+        }
+
+        // Prepend theme path to the plugin's view namespace so theme wins
+        View::prependNamespace($viewNamespace, $themePath);
+
+        // Also prepend to the canonical plugin namespace
+        View::prependNamespace("plugin.{$plugin->vendor}.{$plugin->slug}", $themePath);
     }
 
     /**
