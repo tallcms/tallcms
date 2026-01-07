@@ -24,13 +24,32 @@ class CmsRevision extends Model
         'additional_data',
         'revision_number',
         'notes',
+        'is_manual',
+        'content_hash',
     ];
 
     protected $casts = [
         // Note: 'content' is NOT cast - it stores raw value from parent model
         // (could be JSON string for tiptap or HTML string for legacy content)
         'additional_data' => 'array',
+        'is_manual' => 'boolean',
     ];
+
+    /**
+     * Scope to get only manual (pinned) snapshots
+     */
+    public function scopeManual($query)
+    {
+        return $query->where('is_manual', true);
+    }
+
+    /**
+     * Scope to get only automatic snapshots
+     */
+    public function scopeAutomatic($query)
+    {
+        return $query->where('is_manual', false);
+    }
 
     /**
      * Get the parent revisionable model (page or post)

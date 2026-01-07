@@ -34,9 +34,16 @@ return [
     |
     */
     'publishing' => [
-        // Maximum number of revisions to keep per content item
-        // Set to null for unlimited revisions
-        'revision_limit' => env('CMS_REVISION_LIMIT', 50),
+        // Maximum number of automatic revisions to keep per content item.
+        // Automatic revisions are created on every save when content changes.
+        // Set to null for unlimited. Default: 100
+        'revision_limit' => env('CMS_REVISION_LIMIT', 100),
+
+        // Maximum number of manual (pinned) snapshots to keep per content item.
+        // Manual snapshots are created via the "Save Snapshot" action.
+        // Set to null for unlimited. Default: 50
+        // Note: Combined total of revisions = revision_limit + revision_manual_limit
+        'revision_manual_limit' => env('CMS_REVISION_MANUAL_LIMIT', 50),
 
         // Notification channels for workflow events
         // Available: 'mail', 'database'

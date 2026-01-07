@@ -49,10 +49,48 @@ class EditCmsPost extends EditRecord
                 ->color('info')
                 ->button(),
 
+            $this->getSaveSnapshotAction(),
+
             DeleteAction::make(),
             ForceDeleteAction::make(),
             RestoreAction::make(),
         ];
+    }
+
+    protected function getSaveSnapshotAction(): Action
+    {
+        return Action::make('saveSnapshot')
+            ->label('Save Snapshot')
+            ->icon('heroicon-o-camera')
+            ->color('gray')
+            ->visible(fn () => $this->record !== null && auth()->user()?->can('ViewRevisions:CmsPost'))
+            ->form([
+                Textarea::make('notes')
+                    ->label('Snapshot Notes (optional)')
+                    ->placeholder('Describe this milestone...')
+                    ->rows(2),
+            ])
+            ->modalHeading('Save Snapshot')
+            ->modalDescription('Save your current changes and create a pinned milestone in the revision history.')
+            ->modalSubmitActionLabel('Save Snapshot')
+            ->action(function (array $data) {
+                // Skip ALL auto revision hooks for this save
+                $this->record->skipPreUpdateRevision = true;
+                $this->record->skipPostUpdateRevision = true;
+
+                // Save form first to capture unsaved changes
+                $this->save();
+                $this->record->refresh();
+
+                // Create manual snapshot directly (not via hooks)
+                $this->record->createManualSnapshot($data['notes'] ?? null);
+
+                Notification::make()
+                    ->success()
+                    ->title('Snapshot Saved')
+                    ->body('Changes saved and snapshot created.')
+                    ->send();
+            });
     }
 
     protected function getSubmitForReviewAction(): Action
