@@ -665,7 +665,7 @@ class ThemeManager
                 // Also prepend to the canonical plugin namespace (plugin.vendor.slug)
                 View::prependNamespace("plugin.{$plugin->vendor}.{$plugin->slug}", $themePath);
 
-                Log::debug("Registered theme override for plugin views", [
+                Log::debug('Registered theme override for plugin views', [
                     'theme' => $theme->slug,
                     'plugin' => $plugin->getFullSlug(),
                     'namespace' => $viewNamespace,
