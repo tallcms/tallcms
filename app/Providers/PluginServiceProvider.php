@@ -208,6 +208,31 @@ class PluginServiceProvider extends ServiceProvider
             return true;
         }
 
+        // Check for app()->make('router')
+        if (preg_match('/\bapp\s*\(\s*\)\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+            return true;
+        }
+
+        // Check for App::make('router')
+        if (preg_match('/\bApp::\s*make\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+            return true;
+        }
+
+        // Check for Registrar::class usage
+        if (preg_match('/\bRegistrar::class\b/', $contentWithoutComments)) {
+            return true;
+        }
+
+        // Check for Illuminate\Contracts\Routing\Registrar
+        if (preg_match('/\\\\?Illuminate\\\\Contracts\\\\Routing\\\\Registrar\b/', $contentWithoutComments)) {
+            return true;
+        }
+
+        // Check for make(Router::class) or make(Registrar::class)
+        if (preg_match('/\bmake\s*\(\s*\\\\?(Router|Registrar)::class\s*\)/', $contentWithoutComments)) {
+            return true;
+        }
+
         return false;
     }
 
@@ -500,15 +525,6 @@ class PluginServiceProvider extends ServiceProvider
             ];
         }
 
-        // Block call_user_func / call_user_func_array with any Route-related patterns
-        if (preg_match('/\bcall_user_func(_array)?\s*\(/', $contentWithoutComments)) {
-            return [
-                'routes' => [],
-                'valid' => false,
-                'error' => 'call_user_func detected. Dynamic function calls are not allowed in route files.',
-            ];
-        }
-
         // Block variable-based class dispatch ($class::method pattern where $class could be Route)
         if (preg_match('/\$\w+::(get|post|put|patch|delete|any|match|group)\s*\(/i', $contentWithoutComments)) {
             return [
@@ -518,12 +534,59 @@ class PluginServiceProvider extends ServiceProvider
             ];
         }
 
-        // Block forward_static_call patterns
-        if (preg_match('/\bforward_static_call(_array)?\s*\(/', $contentWithoutComments)) {
+        // Block call_user_func / forward_static_call only when Route-related
+        if (preg_match('/\b(call_user_func|call_user_func_array|forward_static_call|forward_static_call_array)\s*\([^)]*Route/i', $contentWithoutComments)) {
             return [
                 'routes' => [],
                 'valid' => false,
-                'error' => 'forward_static_call detected. Dynamic calls are not allowed in route files.',
+                'error' => 'Dynamic function call with Route detected. Only literal Route:: calls are allowed.',
+            ];
+        }
+
+        // === CONTAINER-BASED ROUTER BYPASS DETECTION ===
+
+        // Block app()->make('router') or app()->make("router")
+        if (preg_match('/\bapp\s*\(\s*\)\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'app()->make(\'router\') detected. Only Route:: facade calls are allowed.',
+            ];
+        }
+
+        // Block App::make('router')
+        if (preg_match('/\bApp::\s*make\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'App::make(\'router\') detected. Only Route:: facade calls are allowed.',
+            ];
+        }
+
+        // Block Registrar::class (Illuminate\Contracts\Routing\Registrar)
+        if (preg_match('/\bRegistrar::class\b/', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'Registrar::class detected. Only Route:: facade calls are allowed.',
+            ];
+        }
+
+        // Block Illuminate\Contracts\Routing\Registrar usage
+        if (preg_match('/\\\\?Illuminate\\\\Contracts\\\\Routing\\\\Registrar\b/', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'Registrar contract detected. Only Route:: facade calls are allowed.',
+            ];
+        }
+
+        // Block container make with Router::class or Registrar::class
+        if (preg_match('/\bmake\s*\(\s*\\\\?(Router|Registrar)::class\s*\)/', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'Container make with Router/Registrar class detected. Only Route:: facade calls are allowed.',
             ];
         }
 

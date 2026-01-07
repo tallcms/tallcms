@@ -523,6 +523,41 @@ class PluginValidator
             return $errors;
         }
 
+        // Check for app()->make('router')
+        if (preg_match('/\bapp\s*\(\s*\)\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+            $errors[] = 'Plugin providers must not register routes directly. Found app()->make(\'router\') in provider.';
+
+            return $errors;
+        }
+
+        // Check for App::make('router')
+        if (preg_match('/\bApp::\s*make\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+            $errors[] = 'Plugin providers must not register routes directly. Found App::make(\'router\') in provider.';
+
+            return $errors;
+        }
+
+        // Check for Registrar::class usage
+        if (preg_match('/\bRegistrar::class\b/', $contentWithoutComments)) {
+            $errors[] = 'Plugin providers must not register routes directly. Found Registrar::class in provider.';
+
+            return $errors;
+        }
+
+        // Check for Illuminate\Contracts\Routing\Registrar
+        if (preg_match('/\\\\?Illuminate\\\\Contracts\\\\Routing\\\\Registrar\b/', $contentWithoutComments)) {
+            $errors[] = 'Plugin providers must not register routes directly. Found Registrar contract in provider.';
+
+            return $errors;
+        }
+
+        // Check for make(Router::class) or make(Registrar::class)
+        if (preg_match('/\bmake\s*\(\s*\\\\?(Router|Registrar)::class\s*\)/', $contentWithoutComments)) {
+            $errors[] = 'Plugin providers must not register routes directly. Found make(Router/Registrar::class) in provider.';
+
+            return $errors;
+        }
+
         return $errors;
     }
 
