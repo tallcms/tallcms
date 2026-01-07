@@ -106,7 +106,7 @@ class TeamBlock extends RichContentCustomBlock
                                             ])
                                             ->columns(2)
                                             ->defaultItems(0)
-                                            ->maxItems(5)
+                                            ->maxItems(7)
                                             ->collapsible()
                                             ->itemLabel(fn (array $state): ?string => match ($state['platform'] ?? null) {
                                                 'linkedin' => 'LinkedIn',

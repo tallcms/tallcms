@@ -35,9 +35,7 @@
     style="{{ $customProperties }}"
     @if($shouldAnimate)
         x-data="{
-            animated: false,
             prefersReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-            counters: {},
             animateValue(el, target, duration = 2000) {
                 if (this.prefersReducedMotion) {
                     el.textContent = target;
@@ -66,11 +64,7 @@
                 window.requestAnimationFrame(step);
             }
         }"
-        x-intersect:enter.once="animated = true; $nextTick(() => {
-            document.querySelectorAll('[data-stat-value]').forEach(el => {
-                animateValue(el, el.dataset.statValue);
-            });
-        })"
+        x-intersect:enter.once="$el.querySelectorAll('[data-stat-value]').forEach(el => animateValue(el, el.dataset.statValue))"
     @endif
 >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -110,7 +104,7 @@
                             @if($shouldAnimate)
                                 <span data-stat-value="{{ $stat['value'] }}">0</span>
                             @else
-                                <span>{{ number_format((int) preg_replace('/[^0-9]/', '', $stat['value'])) }}</span>
+                                <span>{{ $stat['value'] }}</span>
                             @endif
                             @if(!empty($stat['suffix']))
                                 <span class="stat-suffix">{{ $stat['suffix'] }}</span>

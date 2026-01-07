@@ -149,7 +149,7 @@ class LogosBlock extends RichContentCustomBlock
 
     public static function toPreviewHtml(array $config): string
     {
-        $logos = self::resolveLogos($config);
+        $logos = self::resolveLogos($config, forPreview: true);
 
         return view('cms.blocks.logos', [
             'id' => static::getId(),
@@ -166,7 +166,7 @@ class LogosBlock extends RichContentCustomBlock
 
     public static function toHtml(array $config, array $data): string
     {
-        $logos = self::resolveLogos($config);
+        $logos = self::resolveLogos($config, forPreview: false);
 
         return view('cms.blocks.logos', [
             'id' => static::getId(),
@@ -181,25 +181,34 @@ class LogosBlock extends RichContentCustomBlock
         ])->render();
     }
 
-    private static function resolveLogos(array $config): array
+    private static function resolveLogos(array $config, bool $forPreview): array
     {
         $source = $config['source'] ?? 'manual';
 
-        if ($source === 'collection' && ! empty($config['collection_id'])) {
-            $collection = MediaCollection::with('media')->find($config['collection_id']);
-            if ($collection) {
-                return $collection->media->map(fn ($media) => [
-                    'image' => $media->path,
-                    'alt' => $media->alt ?? $media->name ?? 'Logo',
-                    'url' => null,
-                ])->toArray();
+        if ($source === 'collection') {
+            if (empty($config['collection_id'])) {
+                // Collection source selected but no collection chosen
+                // In preview: show placeholders; in production: return empty to signal misconfiguration
+                return $forPreview ? self::getSampleLogos() : [];
             }
+
+            $collection = MediaCollection::with('media')->find($config['collection_id']);
+            if (! $collection || $collection->media->isEmpty()) {
+                // Collection not found or empty
+                return $forPreview ? self::getSampleLogos() : [];
+            }
+
+            return $collection->media->map(fn ($media) => [
+                'image' => $media->path,
+                'alt' => $media->alt ?? $media->name ?? 'Logo',
+                'url' => null,
+            ])->toArray();
         }
 
-        // Manual logos or fallback to sample
+        // Manual logos
         $logos = $config['logos'] ?? [];
         if (empty($logos)) {
-            return self::getSampleLogos();
+            return $forPreview ? self::getSampleLogos() : [];
         }
 
         return $logos;
@@ -207,7 +216,6 @@ class LogosBlock extends RichContentCustomBlock
 
     private static function getSampleLogos(): array
     {
-        // Return empty array for preview with placeholder styling
         return [
             ['alt' => 'Company 1', 'image' => null, 'url' => null],
             ['alt' => 'Company 2', 'image' => null, 'url' => null],
