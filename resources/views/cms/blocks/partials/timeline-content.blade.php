@@ -1,6 +1,10 @@
 {{-- Timeline Content Card --}}
-<div class="timeline-content bg-white dark:bg-gray-800 rounded-xl shadow-md p-5 sm:p-6 {{ $alignRight ?? false ? '' : 'w-full' }}">
-    @if(!empty($item['date']) && !($isNumbered ?? false))
+@php
+    $textAlign = ($alignRight ?? false) ? 'text-right' : 'text-left';
+@endphp
+<div class="timeline-content bg-white dark:bg-gray-800 rounded-xl shadow-md p-5 sm:p-6 {{ $textAlign }} {{ ($alignRight ?? false) ? '' : 'w-full' }}">
+    {{-- Date shown in content regardless of numbered mode (number only affects node display) --}}
+    @if(!empty($item['date']))
         <span class="inline-block text-xs font-semibold text-primary-600 dark:text-primary-400 mb-2">
             {{ $item['date'] }}
         </span>

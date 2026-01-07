@@ -61,9 +61,10 @@
                             <div class="relative {{ $isAlternating ? 'flex items-center' : 'pl-16 sm:pl-20' }}">
                                 @if($isAlternating)
                                     {{-- Alternating Layout --}}
-                                    <div class="flex-1 {{ $isEven ? 'pr-8 sm:pr-12 text-right' : 'order-2 pl-8 sm:pl-12' }}">
+                                    {{-- Left side (even items): right-aligned text pointing toward center --}}
+                                    <div class="flex-1 {{ $isEven ? 'pr-8 sm:pr-12' : 'order-2 pl-8 sm:pl-12' }}">
                                         @if($isEven)
-                                            @include('cms.blocks.partials.timeline-content', ['item' => $item, 'alignRight' => true])
+                                            @include('cms.blocks.partials.timeline-content', ['item' => $item, 'alignRight' => true, 'isNumbered' => $isNumbered])
                                         @endif
                                     </div>
 
@@ -78,9 +79,10 @@
                                         ])
                                     </div>
 
-                                    <div class="flex-1 {{ $isEven ? 'order-2 pl-8 sm:pl-12' : 'pr-8 sm:pr-12 text-right' }}">
+                                    {{-- Right side (odd items): left-aligned text pointing toward center --}}
+                                    <div class="flex-1 {{ $isEven ? 'order-2 pl-8 sm:pl-12' : 'pr-8 sm:pr-12' }}">
                                         @if(!$isEven)
-                                            @include('cms.blocks.partials.timeline-content', ['item' => $item, 'alignRight' => true])
+                                            @include('cms.blocks.partials.timeline-content', ['item' => $item, 'alignRight' => false, 'isNumbered' => $isNumbered])
                                         @endif
                                     </div>
                                 @else
@@ -95,7 +97,7 @@
                                         ])
                                     </div>
 
-                                    @include('cms.blocks.partials.timeline-content', ['item' => $item, 'alignRight' => false])
+                                    @include('cms.blocks.partials.timeline-content', ['item' => $item, 'alignRight' => false, 'isNumbered' => $isNumbered])
                                 @endif
                             </div>
                         @endforeach

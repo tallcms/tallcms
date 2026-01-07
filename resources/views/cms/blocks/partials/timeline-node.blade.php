@@ -10,8 +10,8 @@
             class="w-6 h-6 text-primary-600 dark:text-primary-400"
         />
     @elseif(!empty($date))
-        <span class="text-xs font-semibold text-primary-600 dark:text-primary-400 text-center leading-tight px-1">
-            {{ Str::limit($date, 6, '') }}
+        <span class="text-xs font-semibold text-primary-600 dark:text-primary-400 text-center leading-tight px-1 truncate max-w-full">
+            {{ $date }}
         </span>
     @else
         <div class="w-3 h-3 rounded-full bg-primary-600 dark:bg-primary-400"></div>
