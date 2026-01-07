@@ -665,6 +665,114 @@ For projects not using the multi-theme system, follow these guidelines for block
 - **Vite Configuration**: Automatically detects and processes both entry points
 - **Hot Reload**: Changes to the shared blocks.css file update both admin and frontend automatically
 
+## Plugin System
+
+TallCMS includes a secure plugin system for extending functionality. See [docs/PLUGIN_DEVELOPMENT.md](/docs/PLUGIN_DEVELOPMENT.md) for full documentation.
+
+### Plugin Structure
+```
+plugins/
+└── {vendor}/
+    └── {plugin-slug}/
+        ├── plugin.json              # Required: Plugin metadata
+        ├── src/
+        │   ├── Providers/           # Service providers
+        │   ├── Blocks/              # Custom blocks (auto-discovered)
+        │   └── Filament/            # Admin panel integration
+        ├── resources/views/         # Blade templates
+        ├── routes/
+        │   ├── public.php           # Public routes (whitelisted)
+        │   └── web.php              # Prefixed routes (/_plugins/{vendor}/{slug}/)
+        └── database/migrations/     # Database migrations
+```
+
+### Key Files
+- **PluginManager** (`app/Services/PluginManager.php`): Plugin discovery, installation, updates
+- **PluginValidator** (`app/Services/PluginValidator.php`): Security validation, ZIP scanning
+- **PluginServiceProvider** (`app/Providers/PluginServiceProvider.php`): Plugin bootstrapping, route loading
+- **PluginMigrator** (`app/Services/PluginMigrator.php`): Database migration handling
+
+### Plugin Configuration (plugin.json)
+```json
+{
+    "name": "Plugin Name",
+    "slug": "plugin-slug",
+    "vendor": "vendor-name",
+    "version": "1.0.0",
+    "description": "Plugin description",
+    "author": "Author Name",
+    "namespace": "Vendor\\PluginName",
+    "provider": "Vendor\\PluginName\\Providers\\PluginServiceProvider",
+    "compatibility": {
+        "php": "^8.2",
+        "tallcms": "^1.0"
+    },
+    "public_routes": ["/route1", "/route2"],
+    "filament_plugin": "Vendor\\PluginName\\Filament\\PluginNamePlugin"
+}
+```
+
+### Security Guardrails
+
+**Blocked in Service Providers:**
+- `Route::` facade calls
+- `app('router')`, `resolve('router')` access
+- `Illuminate\Routing\Router` usage
+- Aliased Route facades
+
+**Blocked in Route Files:**
+- `Route::any`, `Route::resource`, `Route::group`
+- Router instance variables (`$router->`)
+- Route facade aliases
+
+**Blocked Namespaces:**
+- `App\`, `Database\`, `Tests\`
+- `Illuminate\`, `Laravel\`, `Filament\`
+- `Livewire\`, `Spatie\`
+
+### Plugin Routes
+
+**Public routes** (no prefix, requires whitelist):
+```php
+// plugin.json: "public_routes": ["/hello"]
+// routes/public.php
+Route::get('/hello', fn() => 'Hello')->name('hello');
+```
+
+**Prefixed routes** (auto-prefixed with `/_plugins/{vendor}/{slug}/`):
+```php
+// routes/web.php
+Route::get('/dashboard', fn() => view('...'))->name('dashboard');
+// Accessible at: /_plugins/vendor/slug/dashboard
+```
+
+### Custom Blocks
+
+Blocks in `src/Blocks/` implementing `CustomBlockInterface` are auto-discovered:
+
+```php
+class MyBlock implements CustomBlockInterface
+{
+    public static function getBlockName(): string { return 'my-block'; }
+    public static function getBlockLabel(): string { return 'My Block'; }
+    public static function getBlockIcon(): string { return 'heroicon-o-star'; }
+    public static function getBlockSchema(): array { return [...]; }
+    public static function getViewName(): string { return 'vendor-plugin::blocks.my-block'; }
+}
+```
+
+### Theme Override for Plugin Views
+
+Themes can override plugin views at:
+```
+themes/{theme}/resources/views/vendor/{plugin-view-namespace}/
+```
+
+Example: Override `acme-plugin::blocks/widget.blade.php`:
+```
+themes/my-theme/resources/views/vendor/acme-plugin/blocks/widget.blade.php
+```
+
 ## Helper Functions
 
 ### Theme Functions
