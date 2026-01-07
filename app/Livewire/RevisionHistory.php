@@ -4,19 +4,26 @@ namespace App\Livewire;
 
 use App\Models\CmsRevision;
 use App\Services\ContentDiffService;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
-class RevisionHistory extends Component
+class RevisionHistory extends Component implements HasActions, HasForms
 {
+    use InteractsWithActions;
+    use InteractsWithForms;
+
     public Model $record;
 
-    // Selection can be revision ID or 'current' for current content
-    public string|int|null $selectedRevision = null;
+    public ?int $selectedRevision = null;
 
-    public string|int|null $compareRevision = null;
+    public ?int $compareRevision = null;
 
     public ?array $diff = null;
 
@@ -51,10 +58,10 @@ class RevisionHistory extends Component
         return $this->revisions->firstWhere('id', $id);
     }
 
-    public function selectRevision(string|int $revisionId): void
+    public function selectRevision(int $revisionId): void
     {
         // Validate revision belongs to this record
-        if ($revisionId !== 'current' && ! $this->findRevision($revisionId)) {
+        if (! $this->findRevision($revisionId)) {
             return;
         }
 
@@ -75,14 +82,19 @@ class RevisionHistory extends Component
         }
     }
 
-    public function compareToCurrent(int $revisionId): void
+    public function compareToLatest(int $revisionId): void
     {
         if (! $this->findRevision($revisionId)) {
             return;
         }
 
+        $latest = $this->revisions->first();
+        if (! $latest || $latest->id === $revisionId) {
+            return;
+        }
+
         $this->selectedRevision = $revisionId;
-        $this->compareRevision = 'current';
+        $this->compareRevision = $latest->id;
         $this->calculateDiff();
     }
 
@@ -123,9 +135,9 @@ class RevisionHistory extends Component
 
         $diffService = app(ContentDiffService::class);
 
-        // Get content for both sides - don't mutate selections, compute locally
-        $firstContent = $this->getContentForSelection($this->selectedRevision);
-        $secondContent = $this->getContentForSelection($this->compareRevision);
+        // Get content for both revisions
+        $firstContent = $this->getContentForRevision($this->selectedRevision);
+        $secondContent = $this->getContentForRevision($this->compareRevision);
 
         if ($firstContent === null && $secondContent === null) {
             $this->diff = null;
@@ -136,8 +148,8 @@ class RevisionHistory extends Component
         // Determine older/newer without mutating user selections
         $firstId = $this->selectedRevision;
         $secondId = $this->compareRevision;
-        $firstLabel = $this->getLabelForSelection($firstId);
-        $secondLabel = $this->getLabelForSelection($secondId);
+        $firstLabel = $this->getLabelForRevision($firstId);
+        $secondLabel = $this->getLabelForRevision($secondId);
 
         // Determine which is older (for display order only)
         $shouldSwap = $this->isNewer($firstId, $secondId);
@@ -158,13 +170,9 @@ class RevisionHistory extends Component
             $newerContent = $secondContent;
         }
 
-        // Find restorable revision (any non-current revision in the comparison)
-        $restorableId = null;
-        if (is_int($newerId)) {
-            $restorableId = $newerId;
-        } elseif (is_int($olderId)) {
-            $restorableId = $olderId;
-        }
+        // The older revision is restorable (not the latest/current)
+        $latest = $this->revisions->first();
+        $restorableId = ($latest && $olderId !== $latest->id) ? $olderId : null;
 
         $this->diff = [
             'older_label' => $olderLabel,
@@ -172,7 +180,7 @@ class RevisionHistory extends Component
             'older_id' => $olderId,
             'newer_id' => $newerId,
             'restorable_id' => $restorableId,
-            'restorable_label' => $restorableId ? $this->getLabelForSelection($restorableId) : null,
+            'restorable_label' => $restorableId ? $this->getLabelForRevision($restorableId) : null,
             'title' => $this->diffField('title', $olderContent, $newerContent),
             'excerpt' => $this->diffField('excerpt', $olderContent, $newerContent),
             'meta_title' => $this->diffField('meta_title', $olderContent, $newerContent),
@@ -185,19 +193,10 @@ class RevisionHistory extends Component
     }
 
     /**
-     * Check if first selection is newer than second (for ordering display)
+     * Check if first revision is newer than second (for ordering display)
      */
-    protected function isNewer(string|int $first, string|int $second): bool
+    protected function isNewer(int $first, int $second): bool
     {
-        // Current is always newest
-        if ($first === 'current') {
-            return true;
-        }
-        if ($second === 'current') {
-            return false;
-        }
-
-        // Compare revision numbers from cached collection
         $rev1 = $this->findRevision($first);
         $rev2 = $this->findRevision($second);
 
@@ -208,19 +207,9 @@ class RevisionHistory extends Component
         return $rev1->revision_number > $rev2->revision_number;
     }
 
-    protected function getContentForSelection(string|int $selection): ?array
+    protected function getContentForRevision(int $revisionId): ?array
     {
-        if ($selection === 'current') {
-            return [
-                'title' => $this->record->title,
-                'excerpt' => $this->record->excerpt,
-                'content' => $this->record->content,
-                'meta_title' => $this->record->meta_title,
-                'meta_description' => $this->record->meta_description,
-            ];
-        }
-
-        $revision = $this->findRevision($selection);
+        $revision = $this->findRevision($revisionId);
         if (! $revision) {
             return null;
         }
@@ -234,15 +223,19 @@ class RevisionHistory extends Component
         ];
     }
 
-    protected function getLabelForSelection(string|int $selection): string
+    protected function getLabelForRevision(int $revisionId): string
     {
-        if ($selection === 'current') {
-            return 'Current Version';
+        $revision = $this->findRevision($revisionId);
+        if (! $revision) {
+            return 'Unknown';
         }
 
-        $revision = $this->findRevision($selection);
+        $latest = $this->revisions->first();
+        if ($latest && $revision->id === $latest->id) {
+            return "Revision #{$revision->revision_number} (Current)";
+        }
 
-        return $revision ? "Revision #{$revision->revision_number}" : 'Unknown';
+        return "Revision #{$revision->revision_number}";
     }
 
     protected function diffField(string $field, ?array $older, ?array $newer): ?array
@@ -260,7 +253,27 @@ class RevisionHistory extends Component
         ];
     }
 
-    public function restoreRevision(int $revisionId): void
+    public function restoreAction(): Action
+    {
+        return Action::make('restore')
+            ->label(fn (array $arguments) => 'Restore '.$this->getLabelForRevision($arguments['revisionId'] ?? 0))
+            ->icon('heroicon-o-arrow-uturn-left')
+            ->color('warning')
+            ->requiresConfirmation()
+            ->modalHeading('Restore Revision')
+            ->modalDescription(fn (array $arguments) => 'Are you sure you want to restore '.$this->getLabelForRevision($arguments['revisionId'] ?? 0).'? This will create a new revision with the restored content.')
+            ->modalSubmitActionLabel('Restore')
+            ->action(function (array $arguments) {
+                $revisionId = $arguments['revisionId'] ?? null;
+                if (! $revisionId) {
+                    return;
+                }
+
+                $this->performRestore($revisionId);
+            });
+    }
+
+    protected function performRestore(int $revisionId): void
     {
         try {
             // Security: verify revision belongs to this record
@@ -304,16 +317,17 @@ class RevisionHistory extends Component
             $this->revisionsCache = null; // Clear cache to refresh
 
             // Redirect to the edit page to refresh the form with restored content
+            // Use navigate: false to force full page reload and bypass Livewire SPA cache
             $routeName = $this->record instanceof \App\Models\CmsPost
                 ? 'filament.admin.resources.cms-posts.edit'
                 : 'filament.admin.resources.cms-pages.edit';
 
-            $this->redirect(route($routeName, ['record' => $this->record]), navigate: true);
+            $this->redirect(route($routeName, ['record' => $this->record]), navigate: false);
         } catch (\Exception $e) {
             Notification::make()
                 ->danger()
                 ->title('Error')
-                ->body('Failed to restore revision: ' . $e->getMessage())
+                ->body('Failed to restore revision: '.$e->getMessage())
                 ->send();
         }
     }
