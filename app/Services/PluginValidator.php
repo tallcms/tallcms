@@ -502,6 +502,27 @@ class PluginValidator
             return $errors;
         }
 
+        // Check for Route::class constant (enables dynamic dispatch)
+        if (preg_match('/\bRoute::class\b/', $contentWithoutComments)) {
+            $errors[] = 'Plugin providers must not register routes directly. Found Route::class constant in provider.';
+
+            return $errors;
+        }
+
+        // Check for Route facade class string
+        if (preg_match('/[\'"]\\\\?Illuminate\\\\Support\\\\Facades\\\\Route[\'"]/', $contentWithoutComments)) {
+            $errors[] = 'Plugin providers must not register routes directly. Found Route facade class string in provider.';
+
+            return $errors;
+        }
+
+        // Check for call_user_func patterns with Route
+        if (preg_match('/\bcall_user_func(_array)?\s*\([^)]*Route/', $contentWithoutComments)) {
+            $errors[] = 'Plugin providers must not register routes directly. Found call_user_func with Route in provider.';
+
+            return $errors;
+        }
+
         return $errors;
     }
 
