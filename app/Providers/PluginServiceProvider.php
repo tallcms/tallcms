@@ -172,8 +172,24 @@ class PluginServiceProvider extends ServiceProvider
             return true;
         }
 
-        // Check for direct Router class usage
+        // Check for direct Router class usage (FQCN with leading backslash)
         if (preg_match('/\\\\Illuminate\\\\Routing\\\\Router\b/', $contentWithoutComments)) {
+            return true;
+        }
+
+        // Check for imported Router class (use Illuminate\Routing\Router;)
+        if (preg_match('/\buse\s+Illuminate\\\\Routing\\\\Router\b/', $contentWithoutComments)) {
+            return true;
+        }
+
+        // Check for Router::class constant resolution
+        if (preg_match('/\b(app|resolve)\s*\(\s*\)?\s*->\s*make\s*\(\s*\\\\?Router::class/', $contentWithoutComments)) {
+            return true;
+        }
+        if (preg_match('/\bresolve\s*\(\s*\\\\?Router::class\s*\)/', $contentWithoutComments)) {
+            return true;
+        }
+        if (preg_match('/\bapp\s*\(\s*\\\\?Router::class\s*\)/', $contentWithoutComments)) {
             return true;
         }
 
@@ -374,6 +390,83 @@ class PluginServiceProvider extends ServiceProvider
         $contentWithoutComments = preg_replace('#//.*$#m', '', $content);
         $contentWithoutComments = preg_replace('#/\*.*?\*/#s', '', $contentWithoutComments);
 
+        // === BYPASS DETECTION: Block router instance/alias usage ===
+
+        // Check for aliased Route facade (e.g., "use ... Route as R;" then "R::get")
+        if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/', $contentWithoutComments, $matches)) {
+            $alias = $matches[1];
+            if (preg_match('/\b'.preg_quote($alias, '/').'::/', $contentWithoutComments)) {
+                return [
+                    'routes' => [],
+                    'valid' => false,
+                    'error' => "Route facade alias detected ({$alias}::). Only Route:: is allowed in route files.",
+                ];
+            }
+        }
+
+        // Check for $router variable usage (any variable ending in router/Router)
+        if (preg_match('/\$\w*[rR]outer\s*->\s*(get|post|put|patch|delete|any|match|group)/i', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'Router instance variable usage detected. Only Route:: facade calls are allowed.',
+            ];
+        }
+
+        // Check for app('router') or app("router") usage
+        if (preg_match('/\bapp\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'app(\'router\') usage detected. Only Route:: facade calls are allowed.',
+            ];
+        }
+
+        // Check for resolve('router') usage
+        if (preg_match('/\bresolve\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'resolve(\'router\') usage detected. Only Route:: facade calls are allowed.',
+            ];
+        }
+
+        // Check for Router::class resolution (app()->make(Router::class), resolve(Router::class))
+        if (preg_match('/\b(app|resolve)\s*\(\s*\)?\s*->\s*make\s*\(\s*\\\\?Router::class/', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'Router::class resolution detected. Only Route:: facade calls are allowed.',
+            ];
+        }
+        if (preg_match('/\bresolve\s*\(\s*\\\\?Router::class\s*\)/', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'resolve(Router::class) usage detected. Only Route:: facade calls are allowed.',
+            ];
+        }
+
+        // Check for Illuminate\Routing\Router usage (with or without leading backslash)
+        if (preg_match('/\\\\?Illuminate\\\\Routing\\\\Router\b/', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'Direct Router class usage detected. Only Route:: facade calls are allowed.',
+            ];
+        }
+
+        // Check for imported Router class usage (use Illuminate\Routing\Router; then Router:: or new Router)
+        if (preg_match('/\buse\s+Illuminate\\\\Routing\\\\Router\b/', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'Router class import detected. Only Route:: facade calls are allowed.',
+            ];
+        }
+
+        // === FORBIDDEN ROUTE METHODS ===
+
         // Check for forbidden Route methods that could bypass guardrails
         foreach (self::FORBIDDEN_ROUTE_METHODS as $method) {
             if (preg_match('/\bRoute::'.$method.'\s*\(/i', $contentWithoutComments)) {
@@ -394,6 +487,8 @@ class PluginServiceProvider extends ServiceProvider
                 'error' => 'Route grouping/chaining detected. Only simple route definitions are allowed.',
             ];
         }
+
+        // === PARSE VALID ROUTES ===
 
         // Parse allowed route methods
         $routes = [];
