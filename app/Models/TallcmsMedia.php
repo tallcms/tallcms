@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 class TallcmsMedia extends Model
 {
     protected $table = 'tallcms_media';
-    
+
     protected $fillable = [
         'name',
         'file_name',
@@ -42,12 +42,12 @@ class TallcmsMedia extends Model
     {
         $bytes = $this->size;
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        
+
         for ($i = 0; $bytes > 1024; $i++) {
             $bytes /= 1024;
         }
-        
-        return round($bytes, 2) . ' ' . $units[$i];
+
+        return round($bytes, 2).' '.$units[$i];
     }
 
     /**
@@ -63,11 +63,11 @@ class TallcmsMedia extends Model
      */
     public function getDimensionsAttribute(): ?string
     {
-        if (!$this->is_image || !isset($this->meta['width'], $this->meta['height'])) {
+        if (! $this->is_image || ! isset($this->meta['width'], $this->meta['height'])) {
             return null;
         }
-        
-        return $this->meta['width'] . ' × ' . $this->meta['height'];
+
+        return $this->meta['width'].' × '.$this->meta['height'];
     }
 
     /**
@@ -89,14 +89,14 @@ class TallcmsMedia extends Model
     public function scopeInCollection($query, $collection)
     {
         if (is_string($collection)) {
-            return $query->whereHas('collections', fn($q) => $q->where('slug', $collection));
+            return $query->whereHas('collections', fn ($q) => $q->where('slug', $collection));
         }
-        
+
         if (is_array($collection)) {
-            return $query->whereHas('collections', fn($q) => $q->whereIn('id', $collection));
+            return $query->whereHas('collections', fn ($q) => $q->whereIn('id', $collection));
         }
-        
-        return $query->whereHas('collections', fn($q) => $q->where('id', $collection));
+
+        return $query->whereHas('collections', fn ($q) => $q->where('id', $collection));
     }
 
     /**
@@ -104,7 +104,7 @@ class TallcmsMedia extends Model
      */
     public function scopeOfType($query, string $type)
     {
-        return $query->where('mime_type', 'like', $type . '%');
+        return $query->where('mime_type', 'like', $type.'%');
     }
 
     /**

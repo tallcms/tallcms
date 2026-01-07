@@ -7,8 +7,8 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -111,7 +111,7 @@ class ContactFormBlock extends RichContentCustomBlock
                             ->reorderable()
                             ->reorderableWithDragAndDrop()
                             ->collapsible()
-                            ->itemLabel(fn (array $state): ?string => ($state['label'] ?? 'Field') . ' (' . ($state['type'] ?? 'text') . ')')
+                            ->itemLabel(fn (array $state): ?string => ($state['label'] ?? 'Field').' ('.($state['type'] ?? 'text').')')
                             ->addActionLabel('Add Field'),
                     ]),
 

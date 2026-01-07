@@ -8,10 +8,8 @@ use App\Filament\Resources\CmsPages\Pages\ListCmsPages;
 use App\Filament\Resources\CmsPages\Schemas\CmsPageForm;
 use App\Filament\Resources\CmsPages\Tables\CmsPagesTable;
 use App\Models\CmsPage;
-use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -20,8 +18,7 @@ class CmsPageResource extends Resource
 {
     protected static ?string $model = CmsPage::class;
 
-     protected static ?string $pluralModelLabel = 'Pages';
-
+    protected static ?string $pluralModelLabel = 'Pages';
 
     public static function form(Schema $schema): Schema
     {
@@ -56,27 +53,27 @@ class CmsPageResource extends Resource
                 SoftDeletingScope::class,
             ]);
     }
-    
+
     public static function getNavigationIcon(): string
     {
         return 'heroicon-o-document-text';
     }
-    
+
     public static function getNavigationGroup(): ?string
     {
         return 'Content Management';
     }
-    
+
     public static function getNavigationLabel(): string
     {
         return 'Pages';
     }
-    
+
     public static function getNavigationSort(): ?int
     {
         return 1;
     }
-    
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();

@@ -14,7 +14,7 @@ class ListCmsCategories extends ListRecords
     {
         return [
             CreateAction::make()
-                ->label("New Category"),
+                ->label('New Category'),
         ];
     }
 }

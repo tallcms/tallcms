@@ -8,15 +8,25 @@ use Illuminate\Support\Facades\File;
 class Theme
 {
     public string $name;
+
     public string $slug;
+
     public string $version;
+
     public string $description;
+
     public string $author;
+
     public array $tailwind;
+
     public array $supports;
+
     public array $build;
+
     public string $path;
+
     public ?string $parent = null;
+
     public array $extras = [];
 
     public function __construct(array $data, string $path)
@@ -60,14 +70,15 @@ class Theme
      */
     public static function fromDirectory(string $path): ?self
     {
-        $themeJsonPath = $path . '/theme.json';
-        
-        if (!File::exists($themeJsonPath)) {
+        $themeJsonPath = $path.'/theme.json';
+
+        if (! File::exists($themeJsonPath)) {
             return null;
         }
 
         try {
             $themeData = json_decode(File::get($themeJsonPath), true);
+
             return new self($themeData, $path);
         } catch (\Exception $e) {
             return null;
@@ -94,8 +105,8 @@ class Theme
     protected static function discoverFromFilesystem(): Collection
     {
         $themesPath = base_path('themes');
-        
-        if (!File::exists($themesPath)) {
+
+        if (! File::exists($themesPath)) {
             return collect();
         }
 
@@ -120,13 +131,12 @@ class Theme
         return self::all()->firstWhere('slug', $slug);
     }
 
-
     /**
      * Get theme's view path
      */
     public function getViewPath(string $viewPath = ''): string
     {
-        return $this->path . '/resources/views' . ($viewPath ? '/' . $viewPath : '');
+        return $this->path.'/resources/views'.($viewPath ? '/'.$viewPath : '');
     }
 
     /**
@@ -134,7 +144,7 @@ class Theme
      */
     public function getPublicPath(string $assetPath = ''): string
     {
-        return $this->path . '/public' . ($assetPath ? '/' . $assetPath : '');
+        return $this->path.'/public'.($assetPath ? '/'.$assetPath : '');
     }
 
     /**
@@ -142,7 +152,7 @@ class Theme
      */
     public function getResourcePath(string $resourcePath = ''): string
     {
-        return $this->path . '/resources' . ($resourcePath ? '/' . $resourcePath : '');
+        return $this->path.'/resources'.($resourcePath ? '/'.$resourcePath : '');
     }
 
     /**
@@ -158,8 +168,8 @@ class Theme
      */
     public function supportsBlock(string $blockName): bool
     {
-        return isset($this->supports['blocks']) && 
-               is_array($this->supports['blocks']) && 
+        return isset($this->supports['blocks']) &&
+               is_array($this->supports['blocks']) &&
                in_array($blockName, $this->supports['blocks']);
     }
 
@@ -192,7 +202,7 @@ class Theme
      */
     public function getParent(): ?self
     {
-        if (!$this->parent) {
+        if (! $this->parent) {
             return null;
         }
 
@@ -217,9 +227,11 @@ class Theme
 
         // Build chain up to parent themes (prevent circular references)
         $visited = [$this->slug];
-        while ($current->hasParent() && !in_array($current->parent, $visited)) {
+        while ($current->hasParent() && ! in_array($current->parent, $visited)) {
             $parent = $current->getParent();
-            if (!$parent) break;
+            if (! $parent) {
+                break;
+            }
 
             $chain[] = $parent;
             $visited[] = $parent->slug;
@@ -235,7 +247,7 @@ class Theme
     public function findView(string $viewPath): ?string
     {
         // Try current theme first
-        $fullPath = $this->path . '/resources/views/' . str_replace('.', '/', $viewPath) . '.blade.php';
+        $fullPath = $this->path.'/resources/views/'.str_replace('.', '/', $viewPath).'.blade.php';
         if (File::exists($fullPath)) {
             return $fullPath;
         }
@@ -269,7 +281,7 @@ class Theme
         $primaryScreenshot = $this->extras['screenshots']['primary'] ?? null;
         if ($primaryScreenshot) {
             // Screenshot path must be relative to public/
-            $screenshotPath = $this->path . '/public/' . $primaryScreenshot;
+            $screenshotPath = $this->path.'/public/'.$primaryScreenshot;
             $candidatePaths[] = [
                 'asset' => $primaryScreenshot,
                 'source' => $screenshotPath,
@@ -278,7 +290,7 @@ class Theme
             // Also check if the path already includes public/
             if (str_starts_with($primaryScreenshot, 'public/')) {
                 $assetPath = substr($primaryScreenshot, 7);
-                $fullPath = $this->path . '/' . $primaryScreenshot;
+                $fullPath = $this->path.'/'.$primaryScreenshot;
                 $candidatePaths[] = [
                     'asset' => $assetPath,
                     'source' => $fullPath,
@@ -299,7 +311,7 @@ class Theme
         foreach ($possibleNames as $filename) {
             $candidatePaths[] = [
                 'asset' => $filename,
-                'source' => $this->path . '/public/' . $filename,
+                'source' => $this->path.'/public/'.$filename,
             ];
         }
 
@@ -307,7 +319,7 @@ class Theme
             $sourcePath = $paths['source'];
             $assetPath = ltrim($paths['asset'], '/');
 
-            if (!File::exists($sourcePath)) {
+            if (! File::exists($sourcePath)) {
                 continue;
             }
 
@@ -322,6 +334,7 @@ class Theme
             try {
                 $mime = File::mimeType($sourcePath) ?: 'image/png';
                 $data = base64_encode(File::get($sourcePath));
+
                 return "data:{$mime};base64,{$data}";
             } catch (\Throwable $e) {
                 continue;
@@ -342,7 +355,7 @@ class Theme
 
         foreach ($gallery as $screenshot) {
             // Screenshots must be in public/ directory
-            $fullPath = $this->path . '/public/' . $screenshot;
+            $fullPath = $this->path.'/public/'.$screenshot;
             if (File::exists($fullPath)) {
                 $urls[] = asset("themes/{$this->slug}/{$screenshot}");
             }
@@ -384,7 +397,8 @@ class Theme
      */
     public function isBuilt(): bool
     {
-        $manifestPath = $this->path . '/public/build/manifest.json';
+        $manifestPath = $this->path.'/public/build/manifest.json';
+
         return File::exists($manifestPath);
     }
 
@@ -412,36 +426,36 @@ class Theme
         $compatibility = $this->getCompatibility();
 
         // Check PHP version
-        if (!empty($compatibility['php'])) {
+        if (! empty($compatibility['php'])) {
             $requiredPhp = $compatibility['php'];
-            if (!$this->versionSatisfies(PHP_VERSION, $requiredPhp)) {
+            if (! $this->versionSatisfies(PHP_VERSION, $requiredPhp)) {
                 return false;
             }
         }
 
         // Check PHP extensions
-        if (!empty($compatibility['extensions'])) {
+        if (! empty($compatibility['extensions'])) {
             foreach ($compatibility['extensions'] as $extension) {
-                if (!extension_loaded($extension)) {
+                if (! extension_loaded($extension)) {
                     return false;
                 }
             }
         }
 
         // Check TallCMS version
-        if (!empty($compatibility['tallcms']) && $compatibility['tallcms'] !== '*') {
-            if (!$this->versionSatisfies(self::getTallcmsVersion(), $compatibility['tallcms'])) {
+        if (! empty($compatibility['tallcms']) && $compatibility['tallcms'] !== '*') {
+            if (! $this->versionSatisfies(self::getTallcmsVersion(), $compatibility['tallcms'])) {
                 return false;
             }
         }
 
         // Check prebuilt requirement in production
-        if (!$this->isPrebuilt() && app()->environment('production')) {
+        if (! $this->isPrebuilt() && app()->environment('production')) {
             return false;
         }
 
         // Check if theme is built when prebuilt is expected
-        if ($this->isPrebuilt() && !$this->isBuilt()) {
+        if ($this->isPrebuilt() && ! $this->isBuilt()) {
             return false;
         }
 
@@ -457,37 +471,37 @@ class Theme
         $compatibility = $this->getCompatibility();
 
         // Check PHP version
-        if (!empty($compatibility['php'])) {
+        if (! empty($compatibility['php'])) {
             $requiredPhp = $compatibility['php'];
-            if (!$this->versionSatisfies(PHP_VERSION, $requiredPhp)) {
-                $unmet[] = "Requires PHP {$requiredPhp}, current is " . PHP_VERSION;
+            if (! $this->versionSatisfies(PHP_VERSION, $requiredPhp)) {
+                $unmet[] = "Requires PHP {$requiredPhp}, current is ".PHP_VERSION;
             }
         }
 
         // Check PHP extensions
-        if (!empty($compatibility['extensions'])) {
+        if (! empty($compatibility['extensions'])) {
             foreach ($compatibility['extensions'] as $extension) {
-                if (!extension_loaded($extension)) {
+                if (! extension_loaded($extension)) {
                     $unmet[] = "Requires PHP extension: {$extension}";
                 }
             }
         }
 
         // Check TallCMS version
-        if (!empty($compatibility['tallcms']) && $compatibility['tallcms'] !== '*') {
+        if (! empty($compatibility['tallcms']) && $compatibility['tallcms'] !== '*') {
             $currentTallcms = self::getTallcmsVersion();
-            if (!$this->versionSatisfies($currentTallcms, $compatibility['tallcms'])) {
+            if (! $this->versionSatisfies($currentTallcms, $compatibility['tallcms'])) {
                 $unmet[] = "Requires TallCMS {$compatibility['tallcms']}, current is {$currentTallcms}";
             }
         }
 
         // Check prebuilt requirement in production
-        if (!$this->isPrebuilt() && app()->environment('production')) {
+        if (! $this->isPrebuilt() && app()->environment('production')) {
             $unmet[] = 'Source themes cannot be used in production';
         }
 
         // Check if theme is built
-        if ($this->isPrebuilt() && !$this->isBuilt()) {
+        if ($this->isPrebuilt() && ! $this->isBuilt()) {
             $unmet[] = 'Theme assets have not been built';
         }
 
@@ -530,7 +544,7 @@ class Theme
             $major = $parts[0];
 
             return version_compare($current, $minVersion, '>=')
-                && version_compare($current, ($major + 1) . '.0.0', '<');
+                && version_compare($current, ($major + 1).'.0.0', '<');
         }
 
         // Handle tilde (~) version constraints
@@ -541,8 +555,9 @@ class Theme
             if (count($parts) >= 2) {
                 $major = $parts[0];
                 $minor = $parts[1];
+
                 return version_compare($current, $minVersion, '>=')
-                    && version_compare($current, "{$major}." . ($minor + 1) . '.0', '<');
+                    && version_compare($current, "{$major}.".($minor + 1).'.0', '<');
             }
         }
 

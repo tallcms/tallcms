@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\TallcmsMedia;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class TallcmsMediaPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:TallcmsMedia');
@@ -66,5 +66,4 @@ class TallcmsMediaPolicy
     {
         return $authUser->can('Reorder:TallcmsMedia');
     }
-
 }

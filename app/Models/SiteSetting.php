@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Cache;
 class SiteSetting extends Model
 {
     protected $table = 'tallcms_site_settings';
-    
+
     protected $fillable = [
         'key',
         'value',
@@ -27,14 +27,14 @@ class SiteSetting extends Model
     public static function get(string $key, mixed $default = null): mixed
     {
         $cacheKey = "site_setting_{$key}";
-        
+
         return Cache::remember($cacheKey, 3600, function () use ($key, $default) {
             $setting = static::where('key', $key)->first();
-            
-            if (!$setting) {
+
+            if (! $setting) {
                 return $default;
             }
-            
+
             return match ($setting->type) {
                 'boolean' => filter_var($setting->value, FILTER_VALIDATE_BOOLEAN),
                 'json' => json_decode($setting->value, true),
@@ -75,12 +75,12 @@ class SiteSetting extends Model
     public static function group(string $group): array
     {
         $settings = static::where('group', $group)->get();
-        
+
         $result = [];
         foreach ($settings as $setting) {
             $result[$setting->key] = static::get($setting->key);
         }
-        
+
         return $result;
     }
 

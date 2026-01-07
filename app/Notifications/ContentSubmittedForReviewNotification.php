@@ -12,7 +12,6 @@ use Illuminate\Notifications\Notification;
 
 class ContentSubmittedForReviewNotification extends Notification
 {
-
     public function __construct(
         protected Model $content
     ) {}

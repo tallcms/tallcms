@@ -14,7 +14,7 @@ class ListCmsPages extends ListRecords
     {
         return [
             CreateAction::make()
-                ->label("New Page"),
+                ->label('New Page'),
         ];
     }
 }

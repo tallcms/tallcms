@@ -20,12 +20,12 @@ return new class extends Migration
             $table->text('url')->nullable(); // For external/custom URLs
             $table->json('meta')->nullable(); // icons, css_class, open_in_new_tab, etc.
             $table->boolean('is_active')->default(true);
-            
+
             // Add nested set columns using kalnoy/nestedset
             $table->nestedSet();
-            
+
             $table->timestamps();
-            
+
             $table->index(['menu_id', 'is_active']);
         });
     }

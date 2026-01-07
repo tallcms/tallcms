@@ -29,7 +29,7 @@ class ImageGalleryBlock extends RichContentCustomBlock
                 TextInput::make('title')
                     ->maxLength(255)
                     ->placeholder('Gallery title (optional)'),
-                    
+
                 FileUpload::make('images')
                     ->image()
                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
@@ -49,7 +49,7 @@ class ImageGalleryBlock extends RichContentCustomBlock
                     ])
                     ->required()
                     ->helperText('Recommended: 1200×800px or larger. Up to 12 images, max 5MB each. Formats: JPEG, PNG, WebP. Drag to reorder.'),
-                    
+
                 Select::make('layout')
                     ->options([
                         'grid-2' => 'Grid (2 columns)',
@@ -59,7 +59,7 @@ class ImageGalleryBlock extends RichContentCustomBlock
                         'carousel' => 'Carousel/Slider',
                     ])
                     ->default('grid-3'),
-                    
+
                 Select::make('image_size')
                     ->label('Image Size')
                     ->options([

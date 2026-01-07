@@ -16,7 +16,7 @@ class ThemeServiceProvider extends ServiceProvider
     {
         // Register ThemeManager as singleton
         $this->app->singleton(ThemeManager::class, function ($app) {
-            return new ThemeManager();
+            return new ThemeManager;
         });
 
         // Register theme manager alias
@@ -75,12 +75,12 @@ class ThemeServiceProvider extends ServiceProvider
                      endforeach; ?>";
         });
 
-
         // @theme directive to get current theme info
         Blade::directive('theme', function ($property = null) {
             if ($property) {
                 return "<?php echo app('theme.manager')->getActiveTheme()->{$property}; ?>";
             }
+
             return "<?php echo app('theme.manager')->getActiveTheme()->name; ?>";
         });
     }
@@ -93,12 +93,12 @@ class ThemeServiceProvider extends ServiceProvider
         View::composer('*', function ($view) {
             $themeManager = app(ThemeManager::class);
             $activeTheme = $themeManager->getActiveTheme();
-            
+
             $view->with([
                 'currentTheme' => $activeTheme,
                 'themeAsset' => function ($path) use ($themeManager) {
                     return $themeManager->themeAsset($path);
-                }
+                },
             ]);
         });
     }
@@ -109,8 +109,8 @@ class ThemeServiceProvider extends ServiceProvider
     protected function ensureThemeConfig(): void
     {
         $configPath = config_path('theme.php');
-        
-        if (!file_exists($configPath)) {
+
+        if (! file_exists($configPath)) {
             $defaultConfig = [
                 'active' => 'default',
                 'themes_path' => base_path('themes'),
@@ -119,8 +119,8 @@ class ThemeServiceProvider extends ServiceProvider
             ];
 
             file_put_contents(
-                $configPath, 
-                "<?php\n\nreturn " . var_export($defaultConfig, true) . ";\n"
+                $configPath,
+                "<?php\n\nreturn ".var_export($defaultConfig, true).";\n"
             );
         }
     }
@@ -132,11 +132,11 @@ class ThemeServiceProvider extends ServiceProvider
     {
         $themeManager = $this->app->make(ThemeManager::class);
         $activeTheme = $themeManager->getActiveTheme();
-        
+
         // Only bind if we have a valid file-based theme
-        if ($activeTheme && file_exists($activeTheme->path . '/theme.json')) {
+        if ($activeTheme && file_exists($activeTheme->path.'/theme.json')) {
             $fileBasedTheme = new \App\Services\FileBasedTheme($activeTheme);
-            
+
             // Bind the FileBasedTheme to ThemeInterface
             $this->app->bind(\App\Contracts\ThemeInterface::class, function () use ($fileBasedTheme) {
                 return $fileBasedTheme;

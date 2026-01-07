@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Services\CustomBlockDiscoveryService;
 use Filament\Forms\Components\RichEditor\RichContentRenderer;
 
 class ContentDiffService

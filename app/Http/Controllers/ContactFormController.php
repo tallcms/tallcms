@@ -43,7 +43,7 @@ class ContactFormController extends Controller
     public function submit(Request $request): JsonResponse
     {
         // Rate limiting check
-        $key = 'contact-form:' . $request->ip();
+        $key = 'contact-form:'.$request->ip();
 
         if (RateLimiter::tooManyAttempts($key, 3)) {
             return response()->json([
@@ -304,7 +304,7 @@ class ContactFormController extends Controller
 
             // Validate label length
             if (strlen($field['label']) > 255) {
-                return "Invalid form configuration: field label too long.";
+                return 'Invalid form configuration: field label too long.';
             }
         }
 

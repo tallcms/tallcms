@@ -15,21 +15,22 @@ use Illuminate\Support\Facades\File;
 /**
  * Check if .env file has a valid APP_KEY
  */
-if (!function_exists('hasValidAppKey')) {
+if (! function_exists('hasValidAppKey')) {
     function hasValidAppKey(string $envPath): bool
     {
-        if (!file_exists($envPath)) {
+        if (! file_exists($envPath)) {
             return false;
         }
-        
+
         $content = file_get_contents($envPath);
-        
+
         // Check if APP_KEY exists and is not empty
         if (preg_match('/^APP_KEY=(.+)$/m', $content, $matches)) {
             $key = trim($matches[1], '"\'');
-            return !empty($key) && $key !== 'base64:';
+
+            return ! empty($key) && $key !== 'base64:';
         }
-        
+
         return false;
     }
 }
@@ -37,28 +38,28 @@ if (!function_exists('hasValidAppKey')) {
 /**
  * Check if .env file has placeholder database credentials
  */
-if (!function_exists('hasPlaceholderDbCredentials')) {
+if (! function_exists('hasPlaceholderDbCredentials')) {
     function hasPlaceholderDbCredentials(string $envPath): bool
     {
-        if (!file_exists($envPath)) {
+        if (! file_exists($envPath)) {
             return true;
         }
-        
+
         $content = file_get_contents($envPath);
-        
+
         // Check for placeholder values
         $placeholders = [
             'your_database_name',
-            'your_username', 
-            'your_password'
+            'your_username',
+            'your_password',
         ];
-        
+
         foreach ($placeholders as $placeholder) {
             if (str_contains($content, $placeholder)) {
                 return true;
             }
         }
-        
+
         return false;
     }
 }
@@ -66,22 +67,22 @@ if (!function_exists('hasPlaceholderDbCredentials')) {
 /**
  * Create minimal .env file for installer
  */
-if (!function_exists('createMinimalEnvForInstaller')) {
+if (! function_exists('createMinimalEnvForInstaller')) {
     function createMinimalEnvForInstaller(string $envPath, string $envExamplePath): void
     {
         try {
             // Try to copy from .env.example first
             if (file_exists($envExamplePath)) {
                 copy($envExamplePath, $envPath);
-                
+
                 // Verify it has a valid APP_KEY
                 if (hasValidAppKey($envPath)) {
                     return;
                 }
             }
-            
+
             // Generate minimal .env with proper APP_KEY (no DB config - user will set in installer)
-            $appKey = 'base64:' . base64_encode(random_bytes(32));
+            $appKey = 'base64:'.base64_encode(random_bytes(32));
             $content = "APP_NAME=TallCMS\n";
             $content .= "APP_ENV=production\n";
             $content .= "APP_KEY={$appKey}\n";
@@ -106,9 +107,9 @@ if (!function_exists('createMinimalEnvForInstaller')) {
             $content .= "DB_USERNAME=\n";
             $content .= "DB_PASSWORD=\n\n";
             $content .= "INSTALLER_ENABLED=true\n";
-            
+
             file_put_contents($envPath, $content);
-            
+
         } catch (Exception $e) {
             // If we can't write .env file, show error
             http_response_code(500);
@@ -142,9 +143,9 @@ $requestUri = $_SERVER['REQUEST_URI'] ?? '';
 $isInstallerRequest = str_starts_with($requestUri, '/install');
 
 // Path to .env file
-$envPath = __DIR__ . '/../.env';
-$envExamplePath = __DIR__ . '/../.env.example';
-$lockPath = __DIR__ . '/../installer.lock';
+$envPath = __DIR__.'/../.env';
+$envExamplePath = __DIR__.'/../.env.example';
+$lockPath = __DIR__.'/../installer.lock';
 
 // Check if installation is complete
 $installationComplete = file_exists($lockPath);
@@ -156,26 +157,26 @@ $installerDisabledInEnv = str_contains($envContents, 'INSTALLER_ENABLED=false');
 // If installation is complete (either method) and not explicitly enabled, skip installer logic
 if ($installationComplete || $installerDisabledInEnv) {
     $installerEnabled = str_contains($envContents, 'INSTALLER_ENABLED=true');
-    
-    if (!$installerEnabled && $isInstallerRequest) {
+
+    if (! $installerEnabled && $isInstallerRequest) {
         // Redirect away from installer if installation is complete
         header('Location: /');
         exit;
     }
-    
+
     // Let Laravel handle normal requests
     return;
 }
 
 // Handle missing or incomplete .env for installer
-if (!file_exists($envPath) || !hasValidAppKey($envPath) || hasPlaceholderDbCredentials($envPath)) {
-    
+if (! file_exists($envPath) || ! hasValidAppKey($envPath) || hasPlaceholderDbCredentials($envPath)) {
+
     // If not an installer request, redirect to installer
-    if (!$isInstallerRequest) {
+    if (! $isInstallerRequest) {
         header('Location: /install');
         exit;
     }
-    
+
     // For installer requests, ensure we have a minimal .env with APP_KEY
     createMinimalEnvForInstaller($envPath, $envExamplePath);
 }

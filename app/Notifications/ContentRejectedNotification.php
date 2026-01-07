@@ -12,7 +12,6 @@ use Illuminate\Notifications\Notification;
 
 class ContentRejectedNotification extends Notification
 {
-
     public function __construct(
         protected Model $content,
         protected string $reason

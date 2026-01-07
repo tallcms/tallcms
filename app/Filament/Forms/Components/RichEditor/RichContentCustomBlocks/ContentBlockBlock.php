@@ -3,11 +3,11 @@
 namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
 use Filament\Actions\Action;
-use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 
 class ContentBlockBlock extends RichContentCustomBlock
 {
@@ -30,16 +30,16 @@ class ContentBlockBlock extends RichContentCustomBlock
                     ->label('Title')
                     ->maxLength(255)
                     ->placeholder('Enter section title'),
-                    
+
                 TextInput::make('subtitle')
                     ->label('Subtitle')
                     ->maxLength(255)
                     ->placeholder('Optional subtitle or subheading'),
-                    
+
                 RichEditor::make('body')
                     ->label('Content')
                     ->placeholder('Write your content here...'),
-                    
+
                 Select::make('content_width')
                     ->label('Content Width')
                     ->options([
@@ -48,7 +48,7 @@ class ContentBlockBlock extends RichContentCustomBlock
                         'wide' => 'Wide (more space)',
                     ])
                     ->default('normal'),
-                    
+
                 Select::make('heading_level')
                     ->label('Heading Level')
                     ->options([
@@ -58,7 +58,7 @@ class ContentBlockBlock extends RichContentCustomBlock
                     ])
                     ->default('h2')
                     ->helperText('Choose appropriate heading level for page structure'),
-                    
+
                 Toggle::make('first_section')
                     ->label('First Section')
                     ->helperText('Add top spacing if this is the first content after navigation')

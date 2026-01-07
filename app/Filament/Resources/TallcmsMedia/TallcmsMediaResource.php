@@ -19,11 +19,11 @@ class TallcmsMediaResource extends Resource
     protected static ?string $model = TallcmsMedia::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-    
+
     protected static ?string $navigationLabel = 'Media Library';
-    
+
     protected static ?string $modelLabel = 'Media File';
-    
+
     protected static ?string $pluralModelLabel = 'Media Files';
 
     public static function form(Schema $schema): Schema

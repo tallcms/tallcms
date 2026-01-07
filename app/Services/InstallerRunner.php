@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 class InstallerRunner
 {
     private array $output = [];
+
     private array $errors = [];
 
     /**
@@ -17,50 +18,54 @@ class InstallerRunner
     public function runInstallation(array $config): array
     {
         $this->clearOutput();
-        
-        
+
         try {
             // Step 1: Clear configuration cache
-            $this->runStep('Clearing configuration cache', function() {
+            $this->runStep('Clearing configuration cache', function () {
                 Artisan::call('config:clear');
+
                 return 'Configuration cache cleared';
             });
 
             // Step 2: Generate application key if needed
             if (empty(config('app.key'))) {
-                $this->runStep('Generating application key', function() {
+                $this->runStep('Generating application key', function () {
                     Artisan::call('key:generate', ['--force' => true]);
+
                     return 'Application key generated';
                 });
             }
 
             // Step 3: Run migrations
-            $this->runStep('Running database migrations', function() {
+            $this->runStep('Running database migrations', function () {
                 Artisan::call('migrate', ['--force' => true]);
+
                 return 'Database migrations completed';
             });
 
             // Step 4: Create storage symlink
-            $this->runStep('Creating storage symlink', function() {
+            $this->runStep('Creating storage symlink', function () {
                 Artisan::call('storage:link');
+
                 return 'Storage symlink created';
             });
 
             // Step 5: Setup TallCMS (roles, permissions, admin user)
-            $this->runStep('Setting up TallCMS roles and admin user', function() use ($config) {
+            $this->runStep('Setting up TallCMS roles and admin user', function () use ($config) {
                 return $this->runTallCmsSetup($config['admin']);
             });
 
             // Step 6: Create default homepage
-            $this->runStep('Creating default homepage', function() {
+            $this->runStep('Creating default homepage', function () {
                 return $this->createDefaultHomepage();
             });
 
             // Step 7: Clear all caches
-            $this->runStep('Optimizing application', function() {
+            $this->runStep('Optimizing application', function () {
                 Artisan::call('config:cache');
                 Artisan::call('route:cache');
                 Artisan::call('view:cache');
+
                 return 'Application optimized';
             });
 
@@ -68,17 +73,17 @@ class InstallerRunner
                 'success' => true,
                 'message' => 'Installation completed successfully',
                 'output' => $this->output,
-                'errors' => $this->errors
+                'errors' => $this->errors,
             ];
 
         } catch (\Exception $e) {
-            $this->errors[] = "Installation failed: " . $e->getMessage();
-            
+            $this->errors[] = 'Installation failed: '.$e->getMessage();
+
             return [
                 'success' => false,
-                'message' => 'Installation failed: ' . $e->getMessage(),
+                'message' => 'Installation failed: '.$e->getMessage(),
                 'output' => $this->output,
-                'errors' => $this->errors
+                'errors' => $this->errors,
             ];
         }
     }
@@ -93,13 +98,12 @@ class InstallerRunner
             $result = $callback();
             $this->output[] = "✓ {$result}";
         } catch (\Exception $e) {
-            $error = "✗ {$description} failed: " . $e->getMessage();
+            $error = "✗ {$description} failed: ".$e->getMessage();
             $this->output[] = $error;
             $this->errors[] = $error;
             throw $e;
         }
     }
-
 
     /**
      * Run TallCMS setup command (roles/permissions/admin user)
@@ -130,10 +134,10 @@ class InstallerRunner
                     'name' => $adminConfig['name'] ?? 'null',
                     'email' => $adminConfig['email'] ?? 'null',
                     'password_length' => isset($adminConfig['password']) ? strlen($adminConfig['password']) : 0,
-                ]
+                ],
             ]);
-            
-            throw new \Exception("TallCMS setup failed: " . $e->getMessage());
+
+            throw new \Exception('TallCMS setup failed: '.$e->getMessage());
         }
     }
 
@@ -173,7 +177,7 @@ class InstallerRunner
             // Validate required keys exist
             $requiredKeys = ['host', 'port', 'username', 'password', 'database'];
             foreach ($requiredKeys as $key) {
-                if (!array_key_exists($key, $dbConfig)) {
+                if (! array_key_exists($key, $dbConfig)) {
                     throw new \Exception("Missing required database configuration key: {$key}");
                 }
             }
@@ -196,13 +200,13 @@ class InstallerRunner
 
             // Check if the target database exists
             $dbName = $dbConfig['database'];
-            $result = DB::connection('test_server')->select("SHOW DATABASES LIKE '" . $dbName . "'");
-            $databaseExists = !empty($result);
+            $result = DB::connection('test_server')->select("SHOW DATABASES LIKE '".$dbName."'");
+            $databaseExists = ! empty($result);
 
-            if (!$databaseExists) {
+            if (! $databaseExists) {
                 return [
                     'success' => true,
-                    'message' => "Connected to MySQL server, but database '{$dbName}' does not exist. It will be created during installation if permissions allow."
+                    'message' => "Connected to MySQL server, but database '{$dbName}' does not exist. It will be created during installation if permissions allow.",
                 ];
             }
 
@@ -214,13 +218,13 @@ class InstallerRunner
 
             return [
                 'success' => true,
-                'message' => "Successfully connected to database '{$dbName}'"
+                'message' => "Successfully connected to database '{$dbName}'",
             ];
 
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => 'Database connection failed: ' . $e->getMessage()
+                'message' => 'Database connection failed: '.$e->getMessage(),
             ];
         }
     }

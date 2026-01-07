@@ -2,7 +2,7 @@
 
 use App\Models\TallcmsMenu;
 
-if (!function_exists('isMenuItemActive')) {
+if (! function_exists('isMenuItemActive')) {
     /**
      * Check if a menu item URL matches the current request
      */
@@ -27,7 +27,7 @@ if (!function_exists('isMenuItemActive')) {
         $itemPath = rtrim($itemPath, '/') ?: '/';
 
         // Normalize current path
-        $currentPath = '/' . ltrim($currentPath, '/');
+        $currentPath = '/'.ltrim($currentPath, '/');
         $currentPath = rtrim($currentPath, '/') ?: '/';
 
         // Exact match
@@ -44,7 +44,7 @@ if (!function_exists('isMenuItemActive')) {
     }
 }
 
-if (!function_exists('buildMenuItemArray')) {
+if (! function_exists('buildMenuItemArray')) {
     /**
      * Recursively build menu item array with children
      */
@@ -78,87 +78,87 @@ if (!function_exists('buildMenuItemArray')) {
     }
 }
 
-if (!function_exists('menu')) {
+if (! function_exists('menu')) {
     /**
      * Get a menu by location with resolved URLs
      */
     function menu(string $location): ?array
     {
         $menu = TallcmsMenu::byLocation($location);
-        
-        if (!$menu) {
+
+        if (! $menu) {
             return null;
         }
 
         // Get all menu items for this menu and build the tree structure
         $items = $menu->allItems()
-                     ->where('is_active', true)
-                     ->with('page')
-                     ->defaultOrder()
-                     ->get()
-                     ->toTree();
-        
+            ->where('is_active', true)
+            ->with('page')
+            ->defaultOrder()
+            ->get()
+            ->toTree();
+
         return $items->map(function ($item) {
             return buildMenuItemArray($item);
         })->toArray();
     }
 }
 
-if (!function_exists('render_menu')) {
+if (! function_exists('render_menu')) {
     /**
      * Render a menu as HTML
      */
     function render_menu(string $location, array $options = []): string
     {
         $menu = menu($location);
-        
-        if (!$menu) {
+
+        if (! $menu) {
             return '';
         }
 
         $ulClass = $options['ul_class'] ?? 'menu';
         $liClass = $options['li_class'] ?? 'menu-item';
         $linkClass = $options['link_class'] ?? 'menu-link';
-        
+
         $html = "<ul class=\"{$ulClass}\">";
-        
+
         foreach ($menu as $item) {
             $html .= render_menu_item($item, $liClass, $linkClass);
         }
-        
+
         $html .= '</ul>';
-        
+
         return $html;
     }
 }
 
-if (!function_exists('render_menu_item')) {
+if (! function_exists('render_menu_item')) {
     /**
      * Render a single menu item
      */
     function render_menu_item(array $item, string $liClass = '', string $linkClass = ''): string
     {
-        $hasChildren = !empty($item['children']);
-        $liClass = trim($liClass . ($hasChildren ? ' has-children' : ''));
-        
+        $hasChildren = ! empty($item['children']);
+        $liClass = trim($liClass.($hasChildren ? ' has-children' : ''));
+
         if ($item['css_class']) {
-            $liClass = trim($liClass . ' ' . $item['css_class']);
+            $liClass = trim($liClass.' '.$item['css_class']);
         }
-        
+
         $html = "<li class=\"{$liClass}\">";
-        
+
         if ($item['url']) {
             $target = $item['target'] === '_blank' ? ' target="_blank" rel="noopener"' : '';
             $icon = $item['icon'] ? "<i class=\"{$item['icon']}\"></i> " : '';
-            
+
             $html .= "<a href=\"{$item['url']}\" class=\"{$linkClass}\"{$target}>";
-            $html .= $icon . htmlspecialchars($item['label']);
+            $html .= $icon.htmlspecialchars($item['label']);
             $html .= '</a>';
         } else {
             // Header/separator items without links
-            $html .= "<span class=\"{$linkClass}\">" . htmlspecialchars($item['label']) . '</span>';
+            $html .= "<span class=\"{$linkClass}\">".htmlspecialchars($item['label']).'</span>';
         }
-        
+
         if ($hasChildren) {
             $html .= '<ul class="submenu">';
             foreach ($item['children'] as $child) {
@@ -166,9 +166,9 @@ if (!function_exists('render_menu_item')) {
             }
             $html .= '</ul>';
         }
-        
+
         $html .= '</li>';
-        
+
         return $html;
     }
 }

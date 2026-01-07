@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('media_id')->constrained('tallcms_media')->onDelete('cascade');
             $table->foreignId('collection_id')->constrained('tallcms_media_collections')->onDelete('cascade');
             $table->timestamps();
-            
+
             $table->unique(['media_id', 'collection_id']);
             $table->index(['collection_id', 'media_id']);
         });

@@ -9,14 +9,14 @@ use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
 use Filament\Forms\Components\Select;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Forms\Components\Slider;
 use Filament\Forms\Components\Slider\Enums\PipsMode;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 
 class HeroBlock extends RichContentCustomBlock
@@ -44,16 +44,16 @@ class HeroBlock extends RichContentCustomBlock
                                 TextInput::make('heading')
                                     ->maxLength(255)
                                     ->placeholder('Enter hero heading'),
-                                    
+
                                 Textarea::make('subheading')
                                     ->maxLength(500)
                                     ->placeholder('Enter hero subheading or description'),
-                                    
+
                                 TextInput::make('button_text')
                                     ->maxLength(100)
                                     ->placeholder('Call to action button text')
                                     ->live(),
-                                    
+
                                 Select::make('button_link_type')
                                     ->label('Button Link Type')
                                     ->options([
@@ -67,25 +67,25 @@ class HeroBlock extends RichContentCustomBlock
                                     ->required(fn (Get $get): bool => filled($get('button_text')))
                                     ->afterStateUpdated(fn (callable $set) => $set('button_page_id', null))
                                     ->afterStateUpdated(fn (callable $set) => $set('button_url', null)),
-                                    
+
                                 Select::make('button_page_id')
                                     ->label('Select Page')
                                     ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
                                     ->searchable()
                                     ->visible(fn (Get $get): bool => $get('button_link_type') === 'page' && filled($get('button_text')))
                                     ->required(fn (Get $get): bool => $get('button_link_type') === 'page' && filled($get('button_text'))),
-                                    
+
                                 TextInput::make('button_url')
                                     ->label('URL')
                                     ->placeholder('https://example.com or /contact or #section')
                                     ->visible(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom']) && filled($get('button_text')))
                                     ->required(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom']) && filled($get('button_text'))),
-                                    
+
                                 TextInput::make('secondary_button_text')
                                     ->maxLength(100)
                                     ->placeholder('Secondary button text (optional)')
                                     ->live(),
-                                    
+
                                 Select::make('secondary_button_link_type')
                                     ->label('Secondary Button Link Type')
                                     ->options([
@@ -99,21 +99,21 @@ class HeroBlock extends RichContentCustomBlock
                                     ->required(fn (Get $get): bool => filled($get('secondary_button_text')))
                                     ->afterStateUpdated(fn (callable $set) => $set('secondary_button_page_id', null))
                                     ->afterStateUpdated(fn (callable $set) => $set('secondary_button_url', null)),
-                                    
+
                                 Select::make('secondary_button_page_id')
                                     ->label('Select Page')
                                     ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
                                     ->searchable()
                                     ->visible(fn (Get $get): bool => $get('secondary_button_link_type') === 'page' && filled($get('secondary_button_text')))
                                     ->required(fn (Get $get): bool => $get('secondary_button_link_type') === 'page' && filled($get('secondary_button_text'))),
-                                    
+
                                 TextInput::make('secondary_button_url')
                                     ->label('Secondary URL')
                                     ->placeholder('https://example.com or /contact or #section')
                                     ->visible(fn (Get $get): bool => in_array($get('secondary_button_link_type'), ['external', 'custom']) && filled($get('secondary_button_text')))
                                     ->required(fn (Get $get): bool => in_array($get('secondary_button_link_type'), ['external', 'custom']) && filled($get('secondary_button_text'))),
                             ]),
-                            
+
                         Tab::make('Button Styling')
                             ->icon('heroicon-m-cursor-arrow-rays')
                             ->schema([
@@ -128,7 +128,7 @@ class HeroBlock extends RichContentCustomBlock
                                             ])
                                             ->default('preset')
                                             ->live(),
-                                            
+
                                         Select::make('primary_button_preset')
                                             ->label('Color Preset')
                                             ->options([
@@ -141,12 +141,12 @@ class HeroBlock extends RichContentCustomBlock
                                             ])
                                             ->default('white')
                                             ->visible(fn (Get $get): bool => $get('primary_button_style') === 'preset'),
-                                            
+
                                         ColorPicker::make('primary_button_bg_color')
                                             ->label('Background Color')
                                             ->default('#ffffff')
                                             ->visible(fn (Get $get): bool => $get('primary_button_style') === 'custom'),
-                                            
+
                                         ColorPicker::make('primary_button_text_color')
                                             ->label('Text Color')
                                             ->default('#111827')
@@ -154,7 +154,7 @@ class HeroBlock extends RichContentCustomBlock
                                     ])
                                     ->visible(fn (Get $get): bool => filled($get('button_text')))
                                     ->columns(2),
-                                    
+
                                 Section::make('Secondary Button Styling')
                                     ->description('Customize the secondary button colors')
                                     ->schema([
@@ -166,7 +166,7 @@ class HeroBlock extends RichContentCustomBlock
                                             ])
                                             ->default('preset')
                                             ->live(),
-                                            
+
                                         Select::make('secondary_button_preset')
                                             ->label('Color Preset')
                                             ->options([
@@ -180,17 +180,17 @@ class HeroBlock extends RichContentCustomBlock
                                             ])
                                             ->default('outline-white')
                                             ->visible(fn (Get $get): bool => $get('secondary_button_style') === 'preset'),
-                                            
+
                                         ColorPicker::make('secondary_button_bg_color')
                                             ->label('Background Color')
                                             ->default('#ffffff00') // Transparent
                                             ->visible(fn (Get $get): bool => $get('secondary_button_style') === 'custom'),
-                                            
+
                                         ColorPicker::make('secondary_button_text_color')
                                             ->label('Text Color')
                                             ->default('#ffffff')
                                             ->visible(fn (Get $get): bool => $get('secondary_button_style') === 'custom'),
-                                            
+
                                         ColorPicker::make('secondary_button_border_color')
                                             ->label('Border Color')
                                             ->default('#ffffff')
@@ -199,7 +199,7 @@ class HeroBlock extends RichContentCustomBlock
                                     ->visible(fn (Get $get): bool => filled($get('secondary_button_text')))
                                     ->columns(2),
                             ]),
-                            
+
                         Tab::make('Background & Layout')
                             ->icon('heroicon-m-photo')
                             ->schema([
@@ -222,7 +222,7 @@ class HeroBlock extends RichContentCustomBlock
                                     ->disk(cms_media_disk())
                                     ->visibility(cms_media_visibility())
                                     ->nullable()
-                                    ->helperText(fn (Get $get): string => match($get('height')) {
+                                    ->helperText(fn (Get $get): string => match ($get('height')) {
                                         'small' => 'Recommended: 2560×800px (21:9 panoramic). Keep focal point centered. Max 5MB.',
                                         'medium' => 'Recommended: 2560×1100px (21:9). Keep focal point centered. Max 5MB.',
                                         default => 'Recommended: 2560×1440px (16:9). Keep focal point centered. Max 5MB.',

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('color')->default('#6b7280'); // Default gray color for badges
             $table->timestamps();
-            
+
             $table->index('slug');
         });
     }

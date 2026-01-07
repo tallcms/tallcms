@@ -24,7 +24,7 @@ return new class extends Migration
             $table->text('alt_text')->nullable();
             $table->text('caption')->nullable();
             $table->timestamps();
-            
+
             $table->index(['collection_name', 'created_at']);
             $table->index('mime_type');
         });

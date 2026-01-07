@@ -32,6 +32,7 @@ class TallcmsMediaTable
                     ->limit(30)
                     ->tooltip(function (TextColumn $column): ?string {
                         $state = $column->getState();
+
                         return strlen($state) > 30 ? $state : null;
                     }),
 
@@ -88,8 +89,9 @@ class TallcmsMediaTable
                     ])
                     ->query(function ($query, array $data) {
                         if ($data['value']) {
-                            return $query->where('mime_type', 'like', $data['value'] . '%');
+                            return $query->where('mime_type', 'like', $data['value'].'%');
                         }
+
                         return $query;
                     }),
             ])

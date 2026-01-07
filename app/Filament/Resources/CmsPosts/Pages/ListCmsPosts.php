@@ -14,7 +14,7 @@ class ListCmsPosts extends ListRecords
     {
         return [
             CreateAction::make()
-                ->label("New Post"),
+                ->label('New Post'),
         ];
     }
 }

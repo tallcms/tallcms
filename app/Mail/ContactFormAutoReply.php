@@ -21,7 +21,7 @@ class ContactFormAutoReply extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Thank you for contacting ' . config('app.name'),
+            subject: 'Thank you for contacting '.config('app.name'),
         );
     }
 

@@ -27,21 +27,21 @@ class CustomBlockDiscoveryService
         $blocks = collect();
         $blockPath = app_path('Filament/Forms/Components/RichEditor/RichContentCustomBlocks');
 
-        if (!File::exists($blockPath)) {
+        if (! File::exists($blockPath)) {
             return self::$discoveredBlocks = $blocks;
         }
 
-        $blockFiles = File::glob($blockPath . '/*.php');
+        $blockFiles = File::glob($blockPath.'/*.php');
 
         foreach ($blockFiles as $file) {
             try {
                 $className = self::getClassNameFromFile($file);
-                
+
                 if ($className && class_exists($className)) {
                     $reflection = new ReflectionClass($className);
-                    
+
                     // Only include classes that extend RichContentCustomBlock and are not abstract
-                    if ($reflection->isSubclassOf(RichContentCustomBlock::class) && !$reflection->isAbstract()) {
+                    if ($reflection->isSubclassOf(RichContentCustomBlock::class) && ! $reflection->isAbstract()) {
                         $blocks->push($className);
                     }
                 }
@@ -60,26 +60,26 @@ class CustomBlockDiscoveryService
     protected static function getClassNameFromFile(string $filePath): ?string
     {
         $content = File::get($filePath);
-        
+
         // Extract namespace
         $namespacePattern = '/namespace\s+([^;]+);/';
         preg_match($namespacePattern, $content, $namespaceMatches);
         $namespace = $namespaceMatches[1] ?? null;
-        
-        if (!$namespace) {
+
+        if (! $namespace) {
             return null;
         }
-        
+
         // Extract class name
         $classPattern = '/class\s+(\w+)/';
         preg_match($classPattern, $content, $classMatches);
         $className = $classMatches[1] ?? null;
-        
-        if (!$className) {
+
+        if (! $className) {
             return null;
         }
-        
-        return $namespace . '\\' . $className;
+
+        return $namespace.'\\'.$className;
     }
 
     /**

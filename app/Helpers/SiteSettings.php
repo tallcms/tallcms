@@ -1,6 +1,6 @@
 <?php
 
-if (!function_exists('settings')) {
+if (! function_exists('settings')) {
     /**
      * Get site setting value
      */
@@ -10,7 +10,7 @@ if (!function_exists('settings')) {
     }
 }
 
-if (!function_exists('site_name')) {
+if (! function_exists('site_name')) {
     /**
      * Get site name setting
      */
@@ -20,7 +20,7 @@ if (!function_exists('site_name')) {
     }
 }
 
-if (!function_exists('site_tagline')) {
+if (! function_exists('site_tagline')) {
     /**
      * Get site tagline setting
      */
@@ -30,7 +30,7 @@ if (!function_exists('site_tagline')) {
     }
 }
 
-if (!function_exists('contact_email')) {
+if (! function_exists('contact_email')) {
     /**
      * Get contact email setting
      */
@@ -40,7 +40,7 @@ if (!function_exists('contact_email')) {
     }
 }
 
-if (!function_exists('company_name')) {
+if (! function_exists('company_name')) {
     /**
      * Get company name setting
      */
@@ -50,12 +50,12 @@ if (!function_exists('company_name')) {
     }
 }
 
-if (!function_exists('social_link')) {
+if (! function_exists('social_link')) {
     /**
      * Get social media link setting
      */
     function social_link(string $platform): string
     {
-        return settings('social_' . $platform, '');
+        return settings('social_'.$platform, '');
     }
 }

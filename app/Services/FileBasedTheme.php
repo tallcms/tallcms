@@ -28,7 +28,7 @@ class FileBasedTheme implements ThemeInterface
     {
         $tailwindColors = $this->theme->getTailwindConfig()['colors'] ?? [];
         $primaryColors = $tailwindColors['primary'] ?? [];
-        
+
         // Build palette in the expected format
         return [
             'primary' => $this->buildColorShades($primaryColors, '#2563eb'),
@@ -44,7 +44,7 @@ class FileBasedTheme implements ThemeInterface
     {
         // Define the complete scale we need
         $requiredShades = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
-        
+
         if (empty($shades)) {
             // Generate complete shades from fallback color
             return [
@@ -64,17 +64,17 @@ class FileBasedTheme implements ThemeInterface
 
         // Normalize partial shade sets to complete scale
         $normalizedShades = [];
-        
+
         // Find the base color (500 or closest available)
         $baseColor = $shades[500] ?? $shades[600] ?? $shades[400] ?? $fallback;
-        if (!$baseColor && !empty($shades)) {
+        if (! $baseColor && ! empty($shades)) {
             // Use the middle value from available shades
             $availableShades = array_keys($shades);
             sort($availableShades);
             $middleIndex = floor(count($availableShades) / 2);
             $baseColor = $shades[$availableShades[$middleIndex]];
         }
-        
+
         // Build complete scale, using provided shades where available
         foreach ($requiredShades as $shade) {
             if (isset($shades[$shade])) {
@@ -104,13 +104,15 @@ class FileBasedTheme implements ThemeInterface
     {
         // Convert hex to RGB
         $rgb = $this->hexToRgb($color);
-        if (!$rgb) return $color;
-        
+        if (! $rgb) {
+            return $color;
+        }
+
         // Lighten by mixing with white
         $rgb[0] = min(255, $rgb[0] + (255 - $rgb[0]) * $amount);
         $rgb[1] = min(255, $rgb[1] + (255 - $rgb[1]) * $amount);
         $rgb[2] = min(255, $rgb[2] + (255 - $rgb[2]) * $amount);
-        
+
         return $this->rgbToHex($rgb);
     }
 
@@ -118,13 +120,15 @@ class FileBasedTheme implements ThemeInterface
     {
         // Convert hex to RGB
         $rgb = $this->hexToRgb($color);
-        if (!$rgb) return $color;
-        
+        if (! $rgb) {
+            return $color;
+        }
+
         // Darken by reducing each channel
         $rgb[0] = max(0, $rgb[0] * (1 - $amount));
         $rgb[1] = max(0, $rgb[1] * (1 - $amount));
         $rgb[2] = max(0, $rgb[2] * (1 - $amount));
-        
+
         return $this->rgbToHex($rgb);
     }
 
@@ -132,29 +136,29 @@ class FileBasedTheme implements ThemeInterface
     {
         // Remove # if present
         $hex = ltrim($hex, '#');
-        
+
         // Handle 3 or 6 character hex
         if (strlen($hex) == 3) {
-            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+            $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
         }
-        
-        if (strlen($hex) != 6 || !ctype_xdigit($hex)) {
+
+        if (strlen($hex) != 6 || ! ctype_xdigit($hex)) {
             return null;
         }
-        
+
         return [
             hexdec(substr($hex, 0, 2)),
             hexdec(substr($hex, 2, 2)),
-            hexdec(substr($hex, 4, 2))
+            hexdec(substr($hex, 4, 2)),
         ];
     }
 
     protected function rgbToHex(array $rgb): string
     {
-        return sprintf('#%02x%02x%02x', 
-            (int)round($rgb[0]), 
-            (int)round($rgb[1]), 
-            (int)round($rgb[2])
+        return sprintf('#%02x%02x%02x',
+            (int) round($rgb[0]),
+            (int) round($rgb[1]),
+            (int) round($rgb[2])
         );
     }
 
@@ -162,7 +166,7 @@ class FileBasedTheme implements ThemeInterface
     {
         $colors = $this->getColorPalette();
         $primary = $colors['primary'];
-        $secondary = $colors['secondary']; 
+        $secondary = $colors['secondary'];
         $success = $colors['success'];
         $warning = $colors['warning'];
         $danger = $colors['danger'];
@@ -326,7 +330,7 @@ class FileBasedTheme implements ThemeInterface
     {
         $colors = $this->getColorPalette();
         $primary = $colors['primary'];
-        
+
         $properties = [
             '--color-primary-50' => $primary[50] ?? '#eff6ff',
             '--color-primary-500' => $primary[500] ?? '#3b82f6',
@@ -336,7 +340,7 @@ class FileBasedTheme implements ThemeInterface
         ];
 
         return implode("\n", array_map(
-            fn($key, $value) => "  {$key}: {$value};",
+            fn ($key, $value) => "  {$key}: {$value};",
             array_keys($properties),
             $properties
         ));
@@ -345,7 +349,7 @@ class FileBasedTheme implements ThemeInterface
     public function getCssFilePath(): string
     {
         $manifestPath = public_path("themes/{$this->theme->slug}/build/manifest.json");
-        
+
         // If manifest exists, read the actual hashed filename
         if (file_exists($manifestPath)) {
             try {
@@ -357,7 +361,7 @@ class FileBasedTheme implements ThemeInterface
                 // Fall through to default
             }
         }
-        
+
         // Fallback to expected path (may 404 in production if not built)
         return "themes/{$this->theme->slug}/build/assets/app.css";
     }

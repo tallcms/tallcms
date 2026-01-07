@@ -12,7 +12,6 @@ use Illuminate\Notifications\Notification;
 
 class ContentApprovedNotification extends Notification
 {
-
     public function __construct(
         protected Model $content
     ) {}

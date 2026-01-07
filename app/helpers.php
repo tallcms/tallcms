@@ -1,6 +1,6 @@
 <?php
 
-if (!function_exists('theme')) {
+if (! function_exists('theme')) {
     /**
      * Get the current active theme instance
      */
@@ -10,7 +10,7 @@ if (!function_exists('theme')) {
     }
 }
 
-if (!function_exists('theme_colors')) {
+if (! function_exists('theme_colors')) {
     /**
      * Get the current theme's color palette
      */
@@ -20,7 +20,7 @@ if (!function_exists('theme_colors')) {
     }
 }
 
-if (!function_exists('theme_button_presets')) {
+if (! function_exists('theme_button_presets')) {
     /**
      * Get the current theme's button presets
      */
@@ -30,7 +30,7 @@ if (!function_exists('theme_button_presets')) {
     }
 }
 
-if (!function_exists('theme_text_presets')) {
+if (! function_exists('theme_text_presets')) {
     /**
      * Get the current theme's text presets
      */
@@ -40,7 +40,7 @@ if (!function_exists('theme_text_presets')) {
     }
 }
 
-if (!function_exists('theme_padding_presets')) {
+if (! function_exists('theme_padding_presets')) {
     /**
      * Get the current theme's padding presets
      */
@@ -52,7 +52,7 @@ if (!function_exists('theme_padding_presets')) {
 
 // Multi-Theme System Helper Functions
 
-if (!function_exists('theme_manager')) {
+if (! function_exists('theme_manager')) {
     /**
      * Get the theme manager instance
      */
@@ -62,7 +62,7 @@ if (!function_exists('theme_manager')) {
     }
 }
 
-if (!function_exists('active_theme')) {
+if (! function_exists('active_theme')) {
     /**
      * Get the active theme instance
      */
@@ -72,7 +72,7 @@ if (!function_exists('active_theme')) {
     }
 }
 
-if (!function_exists('theme_asset')) {
+if (! function_exists('theme_asset')) {
     /**
      * Get theme asset URL with fallback
      */
@@ -82,7 +82,7 @@ if (!function_exists('theme_asset')) {
     }
 }
 
-if (!function_exists('theme_vite_assets')) {
+if (! function_exists('theme_vite_assets')) {
     /**
      * Get theme Vite assets from manifest
      */
@@ -92,8 +92,7 @@ if (!function_exists('theme_vite_assets')) {
     }
 }
 
-
-if (!function_exists('has_theme_override')) {
+if (! function_exists('has_theme_override')) {
     /**
      * Check if current theme has override for specific view
      */
@@ -105,7 +104,7 @@ if (!function_exists('has_theme_override')) {
 
 // AWS / Storage Helper Functions
 
-if (!function_exists('cms_media_disk')) {
+if (! function_exists('cms_media_disk')) {
     /**
      * Get the disk name for CMS media uploads
      * Returns 's3' if S3-compatible storage is configured, otherwise 'public'
@@ -126,7 +125,7 @@ if (!function_exists('cms_media_disk')) {
 
         // Fallback: check if S3 bucket is configured (supports IAM roles without static keys)
         $bucket = config('filesystems.disks.s3.bucket');
-        if (!empty($bucket)) {
+        if (! empty($bucket)) {
             return 's3';
         }
 
@@ -134,7 +133,7 @@ if (!function_exists('cms_media_disk')) {
     }
 }
 
-if (!function_exists('cms_media_visibility')) {
+if (! function_exists('cms_media_visibility')) {
     /**
      * Get the visibility setting for CMS media uploads
      */
@@ -144,7 +143,7 @@ if (!function_exists('cms_media_visibility')) {
     }
 }
 
-if (!function_exists('cms_uses_s3')) {
+if (! function_exists('cms_uses_s3')) {
     /**
      * Check if CMS is configured to use S3 for media storage
      */
@@ -156,17 +155,17 @@ if (!function_exists('cms_uses_s3')) {
 
 // CMS Content Helper Functions
 
-if (!function_exists('cms_post_url')) {
+if (! function_exists('cms_post_url')) {
     /**
      * Generate URL for a post within a parent page context
      *
-     * @param \App\Models\CmsPost $post The post to generate URL for
-     * @param string $parentSlug The parent page slug (e.g., 'blog')
+     * @param  \App\Models\CmsPost  $post  The post to generate URL for
+     * @param  string  $parentSlug  The parent page slug (e.g., 'blog')
      * @return string The full URL to the post
      */
     function cms_post_url(\App\Models\CmsPost $post, string $parentSlug): string
     {
-        $slug = trim($parentSlug, '/') . '/' . $post->slug;
+        $slug = trim($parentSlug, '/').'/'.$post->slug;
 
         return route('cms.page', ['slug' => $slug]);
     }

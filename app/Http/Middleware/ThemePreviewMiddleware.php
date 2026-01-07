@@ -2,10 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Contracts\ThemeInterface;
 use App\Models\Theme;
 use App\Services\FileBasedTheme;
 use App\Services\ThemeManager;
-use App\Contracts\ThemeInterface;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
@@ -57,8 +57,9 @@ class ThemePreviewMiddleware
     {
         $theme = Theme::find($slug);
 
-        if (!$theme) {
+        if (! $theme) {
             $this->storePreviewError("Theme '{$slug}' not found");
+
             return;
         }
 
@@ -66,6 +67,7 @@ class ThemePreviewMiddleware
         $previewError = $this->validateThemeForPreview($theme);
         if ($previewError) {
             $this->storePreviewError($previewError);
+
             return;
         }
 
@@ -91,14 +93,15 @@ class ThemePreviewMiddleware
     protected function validateThemeForPreview(Theme $theme): ?string
     {
         // Theme must be built if it's marked as prebuilt
-        if ($theme->isPrebuilt() && !$theme->isBuilt()) {
+        if ($theme->isPrebuilt() && ! $theme->isBuilt()) {
             return "Theme '{$theme->name}' has not been built. Run 'npm run build' in the theme directory.";
         }
 
         // Theme must meet system requirements
-        if (!$theme->meetsRequirements()) {
+        if (! $theme->meetsRequirements()) {
             $unmet = $theme->getUnmetRequirements();
-            return "Theme '{$theme->name}' does not meet requirements: " . implode(', ', $unmet);
+
+            return "Theme '{$theme->name}' does not meet requirements: ".implode(', ', $unmet);
         }
 
         return null;
@@ -150,7 +153,7 @@ class ThemePreviewMiddleware
 
         // Remove existing theme view paths
         $filteredPaths = array_filter($currentPaths, function ($path) use ($themesBasePath) {
-            return !str_starts_with($path, $themesBasePath);
+            return ! str_starts_with($path, $themesBasePath);
         });
 
         // Reset paths without theme paths
@@ -194,7 +197,7 @@ class ThemePreviewMiddleware
 
             // Remove all theme.* namespaces
             $hints = array_filter($hints, function ($key) {
-                return !str_starts_with($key, 'theme.');
+                return ! str_starts_with($key, 'theme.');
             }, ARRAY_FILTER_USE_KEY);
 
             $hintsProperty->setValue($viewFinder, $hints);

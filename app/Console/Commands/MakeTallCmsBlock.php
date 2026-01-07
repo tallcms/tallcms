@@ -42,28 +42,28 @@ class MakeTallCmsBlock extends Command
     public function handle()
     {
         $name = $this->argument('name');
-        $className = Str::studly($name) . 'Block';
+        $className = Str::studly($name).'Block';
         $kebabName = Str::kebab($name);
         $snakeName = Str::snake($name);
-        
+
         // Create the block class
         $this->createBlockClass($className, $kebabName, $snakeName);
-        
+
         // Create the template
         $this->createBlockTemplate($kebabName, $className);
-        
+
         $this->info("TallCMS block '{$className}' created successfully!");
         $this->info("Block class: app/Filament/Forms/Components/RichEditor/RichContentCustomBlocks/{$className}.php");
         $this->info("Template: resources/views/cms/blocks/{$kebabName}.blade.php");
         $this->newLine();
-        $this->info("✅ No registration required! The block will be auto-discovered and available immediately.");
+        $this->info('✅ No registration required! The block will be auto-discovered and available immediately.');
         $this->newLine();
         $this->warn("⚠️  IMPORTANT: Don't forget to add CSS styles!");
-        $this->line("📁 Add block styles to: resources/css/blocks.css");
+        $this->line('📁 Add block styles to: resources/css/blocks.css');
         $this->line("🔧 Run 'npm run build' to compile assets");
-        $this->line("🧪 Test in both admin preview and frontend");
+        $this->line('🧪 Test in both admin preview and frontend');
         $this->newLine();
-        $this->line("🎉 Your new block is ready to use in the rich editor!");
+        $this->line('🎉 Your new block is ready to use in the rich editor!');
     }
 
     /**
@@ -72,17 +72,17 @@ class MakeTallCmsBlock extends Command
     protected function createBlockClass(string $className, string $kebabName, string $snakeName): void
     {
         $classPath = app_path("Filament/Forms/Components/RichEditor/RichContentCustomBlocks/{$className}.php");
-        
+
         // Ensure directory exists
         $this->files->ensureDirectoryExists(dirname($classPath));
-        
+
         $stub = $this->getBlockClassStub();
         $content = str_replace(
             ['{{CLASS_NAME}}', '{{KEBAB_NAME}}', '{{SNAKE_NAME}}', '{{BLOCK_ID}}'],
             [$className, $kebabName, $snakeName, $snakeName],
             $stub
         );
-        
+
         $this->files->put($classPath, $content);
     }
 
@@ -92,17 +92,17 @@ class MakeTallCmsBlock extends Command
     protected function createBlockTemplate(string $kebabName, string $className): void
     {
         $templatePath = resource_path("views/cms/blocks/{$kebabName}.blade.php");
-        
+
         // Ensure directory exists
         $this->files->ensureDirectoryExists(dirname($templatePath));
-        
+
         $stub = $this->getBlockTemplateStub();
         $content = str_replace(
             ['{{KEBAB_NAME}}', '{{CLASS_NAME}}'],
             [$kebabName, $className],
             $stub
         );
-        
+
         $this->files->put($templatePath, $content);
     }
 

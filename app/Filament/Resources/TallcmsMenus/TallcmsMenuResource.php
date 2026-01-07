@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\TallcmsMenus;
 
-use App\Filament\Resources\TallcmsMenus\Pages;
 use App\Filament\Resources\TallcmsMenus\Pages\CreateTallcmsMenu;
 use App\Filament\Resources\TallcmsMenus\Pages\EditTallcmsMenu;
 use App\Filament\Resources\TallcmsMenus\Pages\ListTallcmsMenus;
@@ -20,11 +19,11 @@ class TallcmsMenuResource extends Resource
     protected static ?string $model = TallcmsMenu::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-    
+
     protected static ?string $navigationLabel = 'Menus';
-    
+
     protected static ?string $modelLabel = 'Menu';
-    
+
     protected static ?string $pluralModelLabel = 'Menus';
 
     public static function form(Schema $schema): Schema

@@ -14,26 +14,27 @@ class MergeTagService
     public static function replaceTags(string $content, $record = null): string
     {
         $tags = self::getTagValues($record);
-        
+
         foreach ($tags as $tag => $value) {
             // Skip empty values to avoid replacing tags with empty strings unless intended
             if ($value !== null && $value !== '') {
-                $content = str_replace('{{' . $tag . '}}', $value, $content);
+                $content = str_replace('{{'.$tag.'}}', $value, $content);
             }
         }
-        
+
         return $content;
     }
-    
+
     /**
      * Get a specific tag value
      */
     public static function getTag(string $tag, $record = null): string
     {
         $tags = self::getTagValues($record);
+
         return $tags[$tag] ?? '';
     }
-    
+
     /**
      * Get all available merge tag values
      */
@@ -47,13 +48,13 @@ class MergeTagService
             'site_url' => config('app.url', url('/')),
             'current_year' => date('Y'),
             'current_date' => now()->format('F j, Y'),
-            
+
             // Contact info from settings
             'contact_email' => settings('contact_email', config('mail.from.address', 'hello@example.com')),
             'contact_phone' => settings('contact_phone', ''),
             'company_name' => settings('company_name', settings('site_name', config('app.name', 'TallCMS'))),
             'company_address' => settings('company_address', ''),
-            
+
             // Social media from settings
             'social_facebook' => settings('social_facebook', ''),
             'social_twitter' => settings('social_twitter', ''),
@@ -62,22 +63,22 @@ class MergeTagService
             'social_youtube' => settings('social_youtube', ''),
             'social_tiktok' => settings('social_tiktok', ''),
             'newsletter_signup' => settings('newsletter_signup_url', '#newsletter'),
-            
+
             // SEO and branding from settings
             'logo_url' => settings('logo') ? Storage::url(settings('logo')) : '',
             'favicon_url' => settings('favicon') ? Storage::url(settings('favicon')) : '',
         ];
-        
+
         // Add record-specific tags if record is provided
         if ($record instanceof CmsPage) {
             $tags = array_merge($tags, self::getPageTags($record));
         } elseif ($record instanceof CmsPost) {
             $tags = array_merge($tags, self::getPostTags($record));
         }
-        
+
         return $tags;
     }
-    
+
     /**
      * Get page-specific merge tags
      */
@@ -85,11 +86,11 @@ class MergeTagService
     {
         return [
             'page_title' => $page->title ?? '',
-            'page_url' => url('/' . ltrim($page->slug, '/')),
+            'page_url' => url('/'.ltrim($page->slug, '/')),
             'page_author' => 'Admin', // Pages don't have authors, could be site admin
         ];
     }
-    
+
     /**
      * Get post-specific merge tags
      */
@@ -97,17 +98,17 @@ class MergeTagService
     {
         return [
             'post_title' => $post->title ?? '',
-            'post_url' => url('/post/' . $post->slug), // TODO: Implement post routing or update when blog routing is added
+            'post_url' => url('/post/'.$post->slug), // TODO: Implement post routing or update when blog routing is added
             'post_excerpt' => $post->excerpt ?? '',
             'post_author' => $post->author->name ?? 'Unknown Author',
             'post_author_email' => $post->author->email ?? '',
             'post_categories' => $post->categories->pluck('name')->implode(', ') ?: 'Uncategorized',
             'post_published_date' => $post->published_at ? $post->published_at->format('F j, Y') : 'Not Published',
-            'post_reading_time' => $post->reading_time . ' min read',
+            'post_reading_time' => $post->reading_time.' min read',
             'related_posts' => '', // This could be implemented to show related posts HTML
         ];
     }
-    
+
     /**
      * Get all available merge tags for documentation
      */
@@ -134,13 +135,13 @@ class MergeTagService
             'logo_url' => 'Logo URL (from settings)',
             'favicon_url' => 'Favicon URL (from settings)',
         ];
-        
+
         $pageTags = [
             'page_title' => 'Page Title',
             'page_url' => 'Page URL',
             'page_author' => 'Page Author',
         ];
-        
+
         $postTags = [
             'post_title' => 'Post Title',
             'post_url' => 'Post URL',
@@ -153,7 +154,7 @@ class MergeTagService
             'newsletter_signup' => 'Newsletter Signup URL',
             'related_posts' => 'Related Posts',
         ];
-        
+
         switch ($type) {
             case 'pages':
                 return array_merge($siteTags, $pageTags);

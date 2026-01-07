@@ -2,8 +2,9 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Auth\MultiFactor\App\AppAuthentication;
+use App\Services\ThemeResolver;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -12,8 +13,6 @@ use Filament\Navigation\MenuItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
-use App\Services\ThemeResolver;
-use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -70,7 +69,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->plugins([
                 FilamentShieldPlugin::make()
-                 ->navigationGroup('User Management'),
+                    ->navigationGroup('User Management'),
             ])
             ->authMiddleware([
                 Authenticate::class,
@@ -79,7 +78,7 @@ class AdminPanelProvider extends PanelProvider
                 MenuItem::make()
                     ->label('View Site')
                     ->url('/', shouldOpenInNewTab: true)
-                    ->icon('heroicon-o-globe-alt')
+                    ->icon('heroicon-o-globe-alt'),
             ]);
     }
 }

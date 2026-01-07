@@ -1,7 +1,7 @@
 <?php
 
 // Handle installer bootstrap before Laravel fully loads
-require __DIR__ . '/installer.php';
+require __DIR__.'/installer.php';
 
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;

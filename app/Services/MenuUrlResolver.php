@@ -20,7 +20,7 @@ class MenuUrlResolver
 
     protected function resolvePageUrl(TallcmsMenuItem $item): ?string
     {
-        if (!$item->page) {
+        if (! $item->page) {
             return null;
         }
 
@@ -29,11 +29,11 @@ class MenuUrlResolver
 
         if ($siteType === 'single-page') {
             // In SPA mode, everything links to anchors on homepage
-            return $page->is_homepage ? '#top' : '#' . $page->slug;
+            return $page->is_homepage ? '#top' : '#'.$page->slug;
         }
 
         // Multi-page mode - homepage goes to root, others use their slug
-        return $page->is_homepage ? '/' : '/' . $page->slug;
+        return $page->is_homepage ? '/' : '/'.$page->slug;
     }
 
     public function shouldOpenInNewTab(TallcmsMenuItem $item): bool

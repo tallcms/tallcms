@@ -29,11 +29,11 @@ class MaintenanceModeMiddleware
         try {
             // Check if maintenance mode is enabled
             $maintenanceMode = SiteSetting::get('maintenance_mode', false);
-            
+
             if ($maintenanceMode) {
                 $maintenanceMessage = SiteSetting::get('maintenance_message', 'We\'re currently performing scheduled maintenance. Please check back soon!');
                 $siteName = SiteSetting::get('site_name');
-                
+
                 return response()->view('maintenance', [
                     'maintenanceMessage' => $maintenanceMessage,
                     'siteName' => $siteName,
@@ -56,23 +56,23 @@ class MaintenanceModeMiddleware
         // 1. No installer lock file exists
         // 2. Database tables don't exist
         // 3. .env doesn't exist
-        
-        if (!File::exists(storage_path('installer.lock'))) {
+
+        if (! File::exists(storage_path('installer.lock'))) {
             return true;
         }
 
-        if (!File::exists(base_path('.env'))) {
+        if (! File::exists(base_path('.env'))) {
             return true;
         }
 
         try {
             // Check if database is configured
-            if (empty(config('database.connections.' . config('database.default') . '.database'))) {
+            if (empty(config('database.connections.'.config('database.default').'.database'))) {
                 return true;
             }
-            
+
             // Check if the settings table exists
-            return !Schema::hasTable('tallcms_site_settings');
+            return ! Schema::hasTable('tallcms_site_settings');
         } catch (\Exception $e) {
             // If we can't check the schema, assume installation is incomplete
             // This handles cases where database isn't configured or accessible

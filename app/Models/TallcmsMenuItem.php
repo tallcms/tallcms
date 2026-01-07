@@ -10,9 +10,9 @@ use Kalnoy\Nestedset\NodeTrait;
 class TallcmsMenuItem extends Model
 {
     use NodeTrait;
-    
+
     protected $table = 'tallcms_menu_items';
-    
+
     protected $fillable = [
         'menu_id',
         'label',
@@ -67,7 +67,7 @@ class TallcmsMenuItem extends Model
     {
         return $query->where('is_active', true);
     }
-    
+
     // Define scope attributes for nested set operations
     public function getScopeAttributes()
     {
