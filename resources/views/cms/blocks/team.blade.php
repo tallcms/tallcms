@@ -34,6 +34,17 @@
     };
 
     $sectionSpacing = ($first_section ?? false) ? 'pt-0' : 'pt-16 sm:pt-24';
+
+    // Platform display labels for accessibility
+    $platformLabels = [
+        'linkedin' => 'LinkedIn',
+        'twitter' => 'Twitter / X',
+        'github' => 'GitHub',
+        'email' => 'Email',
+        'website' => 'Website',
+        'instagram' => 'Instagram',
+        'facebook' => 'Facebook',
+    ];
 @endphp
 
 <section
@@ -103,7 +114,7 @@
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         class="social-link text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-                                        aria-label="{{ ucfirst($social['platform']) }}"
+                                        aria-label="{{ $platformLabels[$social['platform']] ?? ucfirst($social['platform']) }}"
                                     >
                                         @switch($social['platform'])
                                             @case('linkedin')
