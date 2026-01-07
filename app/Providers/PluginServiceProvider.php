@@ -157,102 +157,102 @@ class PluginServiceProvider extends ServiceProvider
         $contentWithoutComments = preg_replace('#//.*$#m', '', $content);
         $contentWithoutComments = preg_replace('#/\*.*?\*/#s', '', $contentWithoutComments);
 
-        // Check for direct Route:: calls
-        if (preg_match('/\bRoute::/', $contentWithoutComments)) {
+        // Check for direct Route:: calls (case-insensitive - PHP class names are case-insensitive)
+        if (preg_match('/\bRoute::/i', $contentWithoutComments)) {
             return true;
         }
 
         // Check for aliased Route facade (e.g., "use ... Route as R;" then "R::get")
-        if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/', $contentWithoutComments, $matches)) {
+        if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/i', $contentWithoutComments, $matches)) {
             $alias = $matches[1];
             if (preg_match('/\b'.preg_quote($alias, '/').'::/', $contentWithoutComments)) {
                 return true;
             }
         }
 
-        // Check for router instance via app() helper
-        if (preg_match('/\bapp\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+        // Check for router instance via app() helper (case-insensitive - PHP function names are case-insensitive)
+        if (preg_match('/\bapp\s*\(\s*[\'"]router[\'"]\s*\)/i', $contentWithoutComments)) {
             return true;
         }
 
         // Check for router instance via resolve() helper
-        if (preg_match('/\bresolve\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\bresolve\s*\(\s*[\'"]router[\'"]\s*\)/i', $contentWithoutComments)) {
             return true;
         }
 
         // Check for router instance via $this->app container access
-        if (preg_match('/\$this\s*->\s*app\s*\[\s*[\'"]router[\'"]\s*\]/', $contentWithoutComments)) {
+        if (preg_match('/\$this\s*->\s*app\s*\[\s*[\'"]router[\'"]\s*\]/i', $contentWithoutComments)) {
             return true;
         }
 
         // Check for direct Router class usage (FQCN with leading backslash)
-        if (preg_match('/\\\\Illuminate\\\\Routing\\\\Router\b/', $contentWithoutComments)) {
+        if (preg_match('/\\\\Illuminate\\\\Routing\\\\Router\b/i', $contentWithoutComments)) {
             return true;
         }
 
         // Check for imported Router class (use Illuminate\Routing\Router;)
-        if (preg_match('/\buse\s+Illuminate\\\\Routing\\\\Router\b/', $contentWithoutComments)) {
+        if (preg_match('/\buse\s+Illuminate\\\\Routing\\\\Router\b/i', $contentWithoutComments)) {
             return true;
         }
 
         // Check for Router::class constant resolution
-        if (preg_match('/\b(app|resolve)\s*\(\s*\)?\s*->\s*make\s*\(\s*\\\\?Router::class/', $contentWithoutComments)) {
+        if (preg_match('/\b(app|resolve)\s*\(\s*\)?\s*->\s*make\s*\(\s*\\\\?Router::class/i', $contentWithoutComments)) {
             return true;
         }
-        if (preg_match('/\bresolve\s*\(\s*\\\\?Router::class\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\bresolve\s*\(\s*\\\\?Router::class\s*\)/i', $contentWithoutComments)) {
             return true;
         }
-        if (preg_match('/\bapp\s*\(\s*\\\\?Router::class\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\bapp\s*\(\s*\\\\?Router::class\s*\)/i', $contentWithoutComments)) {
             return true;
         }
 
         // Check for Route::class constant (enables dynamic dispatch)
-        if (preg_match('/\bRoute::class\b/', $contentWithoutComments)) {
+        if (preg_match('/\bRoute::class\b/i', $contentWithoutComments)) {
             return true;
         }
 
         // Check for Route facade class string
-        if (preg_match('/[\'"]\\\\?Illuminate\\\\Support\\\\Facades\\\\Route[\'"]/', $contentWithoutComments)) {
+        if (preg_match('/[\'"]\\\\?Illuminate\\\\Support\\\\Facades\\\\Route[\'"]/i', $contentWithoutComments)) {
             return true;
         }
 
         // Check for call_user_func patterns (dynamic dispatch)
-        if (preg_match('/\bcall_user_func(_array)?\s*\([^)]*Route/', $contentWithoutComments)) {
+        if (preg_match('/\bcall_user_func(_array)?\s*\([^)]*Route/i', $contentWithoutComments)) {
             return true;
         }
 
         // Check for app()->make('router')
-        if (preg_match('/\bapp\s*\(\s*\)\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\bapp\s*\(\s*\)\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/i', $contentWithoutComments)) {
             return true;
         }
 
         // Check for App::make('router')
-        if (preg_match('/\bApp::\s*make\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\bApp::\s*make\s*\(\s*[\'"]router[\'"]\s*\)/i', $contentWithoutComments)) {
             return true;
         }
 
         // Check for Registrar::class usage
-        if (preg_match('/\bRegistrar::class\b/', $contentWithoutComments)) {
+        if (preg_match('/\bRegistrar::class\b/i', $contentWithoutComments)) {
             return true;
         }
 
         // Check for Illuminate\Contracts\Routing\Registrar
-        if (preg_match('/\\\\?Illuminate\\\\Contracts\\\\Routing\\\\Registrar\b/', $contentWithoutComments)) {
+        if (preg_match('/\\\\?Illuminate\\\\Contracts\\\\Routing\\\\Registrar\b/i', $contentWithoutComments)) {
             return true;
         }
 
         // Check for make(Router::class) or make(Registrar::class)
-        if (preg_match('/\bmake\s*\(\s*\\\\?(Router|Registrar)::class\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\bmake\s*\(\s*\\\\?(Router|Registrar)::class\s*\)/i', $contentWithoutComments)) {
             return true;
         }
 
         // Check for $this->app->make('router')
-        if (preg_match('/\$this\s*->\s*app\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\$this\s*->\s*app\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/i', $contentWithoutComments)) {
             return true;
         }
 
         // Check for app()['router'] array access
-        if (preg_match('/\bapp\s*\(\s*\)\s*\[\s*[\'"]router[\'"]\s*\]/', $contentWithoutComments)) {
+        if (preg_match('/\bapp\s*\(\s*\)\s*\[\s*[\'"]router[\'"]\s*\]/i', $contentWithoutComments)) {
             return true;
         }
 
@@ -260,30 +260,31 @@ class PluginServiceProvider extends ServiceProvider
     }
 
     /**
-     * Router usage patterns to scan for in src/ files
+     * Router usage patterns to scan for in src/ files (case-insensitive)
      */
     protected const ROUTER_PATTERNS = [
-        '/\bRoute::/' => 'Route::',
-        '/\bapp\s*\(\s*[\'"]router[\'"]\s*\)/' => 'app(\'router\')',
-        '/\bresolve\s*\(\s*[\'"]router[\'"]\s*\)/' => 'resolve(\'router\')',
-        '/\$this\s*->\s*app\s*\[\s*[\'"]router[\'"]\s*\]/' => '$this->app[\'router\']',
-        '/\$this\s*->\s*app\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/' => '$this->app->make(\'router\')',
-        '/\bapp\s*\(\s*\)\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/' => 'app()->make(\'router\')',
-        '/\bapp\s*\(\s*\)\s*\[\s*[\'"]router[\'"]\s*\]/' => 'app()[\'router\']',
-        '/\bApp::\s*make\s*\(\s*[\'"]router[\'"]\s*\)/' => 'App::make(\'router\')',
-        '/\\\\Illuminate\\\\Routing\\\\Router\b/' => 'Illuminate\\Routing\\Router',
-        '/\buse\s+Illuminate\\\\Routing\\\\Router\b/' => 'Router class import',
-        '/\bRoute::class\b/' => 'Route::class',
-        '/\bRouter::class\b/' => 'Router::class',
-        '/\bRegistrar::class\b/' => 'Registrar::class',
-        '/\\\\?Illuminate\\\\Contracts\\\\Routing\\\\Registrar\b/' => 'Registrar contract',
-        '/[\'"]\\\\?Illuminate\\\\Support\\\\Facades\\\\Route[\'"]/' => 'Route facade class string',
-        '/\bcall_user_func(_array)?\s*\([^)]*Route/' => 'call_user_func with Route',
+        '/\bRoute::/i' => 'Route::',
+        '/\bapp\s*\(\s*[\'"]router[\'"]\s*\)/i' => 'app(\'router\')',
+        '/\bresolve\s*\(\s*[\'"]router[\'"]\s*\)/i' => 'resolve(\'router\')',
+        '/\$this\s*->\s*app\s*\[\s*[\'"]router[\'"]\s*\]/i' => '$this->app[\'router\']',
+        '/\$this\s*->\s*app\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/i' => '$this->app->make(\'router\')',
+        '/\bapp\s*\(\s*\)\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/i' => 'app()->make(\'router\')',
+        '/\bapp\s*\(\s*\)\s*\[\s*[\'"]router[\'"]\s*\]/i' => 'app()[\'router\']',
+        '/\bApp::\s*make\s*\(\s*[\'"]router[\'"]\s*\)/i' => 'App::make(\'router\')',
+        '/\\\\Illuminate\\\\Routing\\\\Router\b/i' => 'Illuminate\\Routing\\Router',
+        '/\buse\s+Illuminate\\\\Routing\\\\Router\b/i' => 'Router class import',
+        '/\bRoute::class\b/i' => 'Route::class',
+        '/\bRouter::class\b/i' => 'Router::class',
+        '/\bRegistrar::class\b/i' => 'Registrar::class',
+        '/\\\\?Illuminate\\\\Contracts\\\\Routing\\\\Registrar\b/i' => 'Registrar contract',
+        '/[\'"]\\\\?Illuminate\\\\Support\\\\Facades\\\\Route[\'"]/i' => 'Route facade class string',
+        '/\bcall_user_func(_array)?\s*\([^)]*Route/i' => 'call_user_func with Route',
     ];
 
     /**
      * Check if any src/ files contain router usage patterns
      * Returns the relative path of the first offending file, or null if clean
+     * Results are cached by plugin version + src directory mtime to avoid re-scanning on every request
      */
     protected function srcFilesContainRouterUsage(Plugin $plugin): ?string
     {
@@ -293,6 +294,82 @@ class PluginServiceProvider extends ServiceProvider
             return null;
         }
 
+        // Generate cache key based on plugin identity and src directory state
+        $cacheKey = $this->getSrcScanCacheKey($plugin, $srcPath);
+        $cacheFile = storage_path("framework/cache/plugin-src-scan-{$cacheKey}.php");
+
+        // Check cache - if result exists and is still valid, use it
+        if (File::exists($cacheFile)) {
+            $cached = include $cacheFile;
+            if (is_array($cached) && isset($cached['result'])) {
+                return $cached['result'];
+            }
+        }
+
+        // Perform the actual scan
+        $result = $this->scanSrcFilesForRouterUsage($srcPath);
+
+        // Cache the result
+        $this->cacheSrcScanResult($cacheFile, $result);
+
+        return $result;
+    }
+
+    /**
+     * Generate a cache key for src scan based on plugin version and directory state
+     */
+    protected function getSrcScanCacheKey(Plugin $plugin, string $srcPath): string
+    {
+        // Get latest mtime from src directory
+        $latestMtime = $this->getLatestMtime($srcPath);
+
+        return md5($plugin->getFullSlug().'|'.$plugin->version.'|'.$latestMtime);
+    }
+
+    /**
+     * Get the latest modification time from a directory (recursive)
+     */
+    protected function getLatestMtime(string $path): int
+    {
+        $latestMtime = File::lastModified($path);
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $file) {
+            if ($file->isFile() && $file->getExtension() === 'php') {
+                $mtime = $file->getMTime();
+                if ($mtime > $latestMtime) {
+                    $latestMtime = $mtime;
+                }
+            }
+        }
+
+        return $latestMtime;
+    }
+
+    /**
+     * Cache src scan result to a file
+     */
+    protected function cacheSrcScanResult(string $cacheFile, ?string $result): void
+    {
+        $content = '<?php return '.var_export(['result' => $result, 'cached_at' => time()], true).';';
+
+        // Ensure cache directory exists
+        $cacheDir = dirname($cacheFile);
+        if (! File::exists($cacheDir)) {
+            File::makeDirectory($cacheDir, 0755, true);
+        }
+
+        File::put($cacheFile, $content);
+    }
+
+    /**
+     * Perform the actual src file scan for router usage patterns
+     */
+    protected function scanSrcFilesForRouterUsage(string $srcPath): ?string
+    {
         $iterator = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($srcPath, \RecursiveDirectoryIterator::SKIP_DOTS)
         );
@@ -309,8 +386,8 @@ class PluginServiceProvider extends ServiceProvider
             $contentWithoutComments = preg_replace('#//.*$#m', '', $content);
             $contentWithoutComments = preg_replace('#/\*.*?\*/#s', '', $contentWithoutComments);
 
-            // Check for aliased Route facade
-            if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/', $contentWithoutComments, $matches)) {
+            // Check for aliased Route facade (case-insensitive)
+            if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/i', $contentWithoutComments, $matches)) {
                 $alias = $matches[1];
                 if (preg_match('/\b'.preg_quote($alias, '/').'::/', $contentWithoutComments)) {
                     return $relativePath;
@@ -533,10 +610,10 @@ class PluginServiceProvider extends ServiceProvider
             ];
         }
 
-        // === BYPASS DETECTION: Block router instance/alias usage ===
+        // === BYPASS DETECTION: Block router instance/alias usage (all case-insensitive) ===
 
         // Check for aliased Route facade (e.g., "use ... Route as R;" then "R::get")
-        if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/', $contentWithoutComments, $matches)) {
+        if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/i', $contentWithoutComments, $matches)) {
             $alias = $matches[1];
             if (preg_match('/\b'.preg_quote($alias, '/').'::/', $contentWithoutComments)) {
                 return [
@@ -557,7 +634,7 @@ class PluginServiceProvider extends ServiceProvider
         }
 
         // Check for app('router') or app("router") usage
-        if (preg_match('/\bapp\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\bapp\s*\(\s*[\'"]router[\'"]\s*\)/i', $contentWithoutComments)) {
             return [
                 'routes' => [],
                 'valid' => false,
@@ -566,7 +643,7 @@ class PluginServiceProvider extends ServiceProvider
         }
 
         // Check for resolve('router') usage
-        if (preg_match('/\bresolve\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\bresolve\s*\(\s*[\'"]router[\'"]\s*\)/i', $contentWithoutComments)) {
             return [
                 'routes' => [],
                 'valid' => false,
@@ -575,14 +652,14 @@ class PluginServiceProvider extends ServiceProvider
         }
 
         // Check for Router::class resolution (app()->make(Router::class), resolve(Router::class))
-        if (preg_match('/\b(app|resolve)\s*\(\s*\)?\s*->\s*make\s*\(\s*\\\\?Router::class/', $contentWithoutComments)) {
+        if (preg_match('/\b(app|resolve)\s*\(\s*\)?\s*->\s*make\s*\(\s*\\\\?Router::class/i', $contentWithoutComments)) {
             return [
                 'routes' => [],
                 'valid' => false,
                 'error' => 'Router::class resolution detected. Only Route:: facade calls are allowed.',
             ];
         }
-        if (preg_match('/\bresolve\s*\(\s*\\\\?Router::class\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\bresolve\s*\(\s*\\\\?Router::class\s*\)/i', $contentWithoutComments)) {
             return [
                 'routes' => [],
                 'valid' => false,
@@ -591,7 +668,7 @@ class PluginServiceProvider extends ServiceProvider
         }
 
         // Check for Illuminate\Routing\Router usage (with or without leading backslash)
-        if (preg_match('/\\\\?Illuminate\\\\Routing\\\\Router\b/', $contentWithoutComments)) {
+        if (preg_match('/\\\\?Illuminate\\\\Routing\\\\Router\b/i', $contentWithoutComments)) {
             return [
                 'routes' => [],
                 'valid' => false,
@@ -600,7 +677,7 @@ class PluginServiceProvider extends ServiceProvider
         }
 
         // Check for imported Router class usage (use Illuminate\Routing\Router; then Router:: or new Router)
-        if (preg_match('/\buse\s+Illuminate\\\\Routing\\\\Router\b/', $contentWithoutComments)) {
+        if (preg_match('/\buse\s+Illuminate\\\\Routing\\\\Router\b/i', $contentWithoutComments)) {
             return [
                 'routes' => [],
                 'valid' => false,
@@ -611,7 +688,7 @@ class PluginServiceProvider extends ServiceProvider
         // === DYNAMIC CALL BYPASS DETECTION ===
 
         // Block Route::class constant (enables dynamic dispatch: $r = Route::class; $r::get())
-        if (preg_match('/\bRoute::class\b/', $contentWithoutComments)) {
+        if (preg_match('/\bRoute::class\b/i', $contentWithoutComments)) {
             return [
                 'routes' => [],
                 'valid' => false,
@@ -620,7 +697,7 @@ class PluginServiceProvider extends ServiceProvider
         }
 
         // Block Illuminate\Support\Facades\Route as string (for call_user_func, etc.)
-        if (preg_match('/[\'"]\\\\?Illuminate\\\\Support\\\\Facades\\\\Route[\'"]/', $contentWithoutComments)) {
+        if (preg_match('/[\'"]\\\\?Illuminate\\\\Support\\\\Facades\\\\Route[\'"]/i', $contentWithoutComments)) {
             return [
                 'routes' => [],
                 'valid' => false,
@@ -649,7 +726,7 @@ class PluginServiceProvider extends ServiceProvider
         // === CONTAINER-BASED ROUTER BYPASS DETECTION ===
 
         // Block app()->make('router') or app()->make("router")
-        if (preg_match('/\bapp\s*\(\s*\)\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\bapp\s*\(\s*\)\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/i', $contentWithoutComments)) {
             return [
                 'routes' => [],
                 'valid' => false,
@@ -658,7 +735,7 @@ class PluginServiceProvider extends ServiceProvider
         }
 
         // Block App::make('router')
-        if (preg_match('/\bApp::\s*make\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\bApp::\s*make\s*\(\s*[\'"]router[\'"]\s*\)/i', $contentWithoutComments)) {
             return [
                 'routes' => [],
                 'valid' => false,
@@ -667,7 +744,7 @@ class PluginServiceProvider extends ServiceProvider
         }
 
         // Block Registrar::class (Illuminate\Contracts\Routing\Registrar)
-        if (preg_match('/\bRegistrar::class\b/', $contentWithoutComments)) {
+        if (preg_match('/\bRegistrar::class\b/i', $contentWithoutComments)) {
             return [
                 'routes' => [],
                 'valid' => false,
@@ -676,7 +753,7 @@ class PluginServiceProvider extends ServiceProvider
         }
 
         // Block Illuminate\Contracts\Routing\Registrar usage
-        if (preg_match('/\\\\?Illuminate\\\\Contracts\\\\Routing\\\\Registrar\b/', $contentWithoutComments)) {
+        if (preg_match('/\\\\?Illuminate\\\\Contracts\\\\Routing\\\\Registrar\b/i', $contentWithoutComments)) {
             return [
                 'routes' => [],
                 'valid' => false,
@@ -685,7 +762,7 @@ class PluginServiceProvider extends ServiceProvider
         }
 
         // Block container make with Router::class or Registrar::class
-        if (preg_match('/\bmake\s*\(\s*\\\\?(Router|Registrar)::class\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\bmake\s*\(\s*\\\\?(Router|Registrar)::class\s*\)/i', $contentWithoutComments)) {
             return [
                 'routes' => [],
                 'valid' => false,
@@ -694,7 +771,7 @@ class PluginServiceProvider extends ServiceProvider
         }
 
         // Block $this->app->make('router') pattern
-        if (preg_match('/\$this\s*->\s*app\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\$this\s*->\s*app\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/i', $contentWithoutComments)) {
             return [
                 'routes' => [],
                 'valid' => false,
@@ -703,7 +780,7 @@ class PluginServiceProvider extends ServiceProvider
         }
 
         // Block app()['router'] array access pattern
-        if (preg_match('/\bapp\s*\(\s*\)\s*\[\s*[\'"]router[\'"]\s*\]/', $contentWithoutComments)) {
+        if (preg_match('/\bapp\s*\(\s*\)\s*\[\s*[\'"]router[\'"]\s*\]/i', $contentWithoutComments)) {
             return [
                 'routes' => [],
                 'valid' => false,
@@ -712,7 +789,7 @@ class PluginServiceProvider extends ServiceProvider
         }
 
         // Block $this->app['router'] array access pattern
-        if (preg_match('/\$this\s*->\s*app\s*\[\s*[\'"]router[\'"]\s*\]/', $contentWithoutComments)) {
+        if (preg_match('/\$this\s*->\s*app\s*\[\s*[\'"]router[\'"]\s*\]/i', $contentWithoutComments)) {
             return [
                 'routes' => [],
                 'valid' => false,
@@ -755,7 +832,7 @@ class PluginServiceProvider extends ServiceProvider
         }
 
         // Count total Route:: calls vs parsed routes to detect unparseable patterns
-        $totalRouteCalls = preg_match_all('/\bRoute::[a-zA-Z]+\s*\(/', $contentWithoutComments);
+        $totalRouteCalls = preg_match_all('/\bRoute::[a-zA-Z]+\s*\(/i', $contentWithoutComments);
         if ($totalRouteCalls > count($routes)) {
             return [
                 'routes' => [],
