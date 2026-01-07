@@ -443,15 +443,15 @@ class PluginValidator
             $contentWithoutComments = preg_replace('#//.*$#m', '', $content);
             $contentWithoutComments = preg_replace('#/\*.*?\*/#s', '', $contentWithoutComments);
 
-            // Check for Route:: calls
-            if (preg_match('/\bRoute::/', $contentWithoutComments)) {
+            // Check for Route:: calls (case-insensitive - PHP class names are case-insensitive)
+            if (preg_match('/\bRoute::/i', $contentWithoutComments)) {
                 $errors[] = "Route registration found in src/{$relativePath}. Routes must only be defined in routes/public.php or routes/web.php.";
 
                 continue;
             }
 
-            // Check for aliased Route facade
-            if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/', $contentWithoutComments, $matches)) {
+            // Check for aliased Route facade (case-insensitive)
+            if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/i', $contentWithoutComments, $matches)) {
                 $alias = $matches[1];
                 if (preg_match('/\b'.preg_quote($alias, '/').'::/', $contentWithoutComments)) {
                     $errors[] = "Aliased Route facade ({$alias}::) found in src/{$relativePath}. Routes must only be defined in routes/public.php or routes/web.php.";
@@ -460,23 +460,23 @@ class PluginValidator
                 }
             }
 
-            // Check for router instance patterns
+            // Check for router instance patterns (all case-insensitive)
             $routerPatterns = [
-                '/\bapp\s*\(\s*[\'"]router[\'"]\s*\)/' => 'app(\'router\')',
-                '/\bresolve\s*\(\s*[\'"]router[\'"]\s*\)/' => 'resolve(\'router\')',
-                '/\$this\s*->\s*app\s*\[\s*[\'"]router[\'"]\s*\]/' => '$this->app[\'router\']',
-                '/\$this\s*->\s*app\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/' => '$this->app->make(\'router\')',
-                '/\bapp\s*\(\s*\)\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/' => 'app()->make(\'router\')',
-                '/\bapp\s*\(\s*\)\s*\[\s*[\'"]router[\'"]\s*\]/' => 'app()[\'router\']',
-                '/\bApp::\s*make\s*\(\s*[\'"]router[\'"]\s*\)/' => 'App::make(\'router\')',
-                '/\\\\Illuminate\\\\Routing\\\\Router\b/' => 'Illuminate\\Routing\\Router',
-                '/\buse\s+Illuminate\\\\Routing\\\\Router\b/' => 'Router class import',
-                '/\bRoute::class\b/' => 'Route::class',
-                '/\bRouter::class\b/' => 'Router::class',
-                '/\bRegistrar::class\b/' => 'Registrar::class',
-                '/\\\\?Illuminate\\\\Contracts\\\\Routing\\\\Registrar\b/' => 'Registrar contract',
-                '/[\'"]\\\\?Illuminate\\\\Support\\\\Facades\\\\Route[\'"]/' => 'Route facade class string',
-                '/\bcall_user_func(_array)?\s*\([^)]*Route/' => 'call_user_func with Route',
+                '/\bapp\s*\(\s*[\'"]router[\'"]\s*\)/i' => 'app(\'router\')',
+                '/\bresolve\s*\(\s*[\'"]router[\'"]\s*\)/i' => 'resolve(\'router\')',
+                '/\$this\s*->\s*app\s*\[\s*[\'"]router[\'"]\s*\]/i' => '$this->app[\'router\']',
+                '/\$this\s*->\s*app\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/i' => '$this->app->make(\'router\')',
+                '/\bapp\s*\(\s*\)\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/i' => 'app()->make(\'router\')',
+                '/\bapp\s*\(\s*\)\s*\[\s*[\'"]router[\'"]\s*\]/i' => 'app()[\'router\']',
+                '/\bApp::\s*make\s*\(\s*[\'"]router[\'"]\s*\)/i' => 'App::make(\'router\')',
+                '/\\\\Illuminate\\\\Routing\\\\Router\b/i' => 'Illuminate\\Routing\\Router',
+                '/\buse\s+Illuminate\\\\Routing\\\\Router\b/i' => 'Router class import',
+                '/\bRoute::class\b/i' => 'Route::class',
+                '/\bRouter::class\b/i' => 'Router::class',
+                '/\bRegistrar::class\b/i' => 'Registrar::class',
+                '/\\\\?Illuminate\\\\Contracts\\\\Routing\\\\Registrar\b/i' => 'Registrar contract',
+                '/[\'"]\\\\?Illuminate\\\\Support\\\\Facades\\\\Route[\'"]/i' => 'Route facade class string',
+                '/\bcall_user_func(_array)?\s*\([^)]*Route/i' => 'call_user_func with Route',
             ];
 
             foreach ($routerPatterns as $pattern => $description) {
@@ -523,15 +523,15 @@ class PluginValidator
             $contentWithoutComments = preg_replace('#//.*$#m', '', $content);
             $contentWithoutComments = preg_replace('#/\*.*?\*/#s', '', $contentWithoutComments);
 
-            // Check for Route:: calls
-            if (preg_match('/\bRoute::/', $contentWithoutComments)) {
+            // Check for Route:: calls (case-insensitive)
+            if (preg_match('/\bRoute::/i', $contentWithoutComments)) {
                 $errors[] = "Route registration found in {$relativePath}. Routes must only be defined in routes/public.php or routes/web.php.";
 
                 continue;
             }
 
-            // Check for aliased Route facade
-            if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/', $contentWithoutComments, $matches)) {
+            // Check for aliased Route facade (case-insensitive)
+            if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/i', $contentWithoutComments, $matches)) {
                 $alias = $matches[1];
                 if (preg_match('/\b'.preg_quote($alias, '/').'::/', $contentWithoutComments)) {
                     $errors[] = "Aliased Route facade ({$alias}::) found in {$relativePath}. Routes must only be defined in routes/public.php or routes/web.php.";
@@ -540,23 +540,23 @@ class PluginValidator
                 }
             }
 
-            // Check for router instance patterns
+            // Check for router instance patterns (all case-insensitive)
             $routerPatterns = [
-                '/\bapp\s*\(\s*[\'"]router[\'"]\s*\)/' => 'app(\'router\')',
-                '/\bresolve\s*\(\s*[\'"]router[\'"]\s*\)/' => 'resolve(\'router\')',
-                '/\$this\s*->\s*app\s*\[\s*[\'"]router[\'"]\s*\]/' => '$this->app[\'router\']',
-                '/\$this\s*->\s*app\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/' => '$this->app->make(\'router\')',
-                '/\bapp\s*\(\s*\)\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/' => 'app()->make(\'router\')',
-                '/\bapp\s*\(\s*\)\s*\[\s*[\'"]router[\'"]\s*\]/' => 'app()[\'router\']',
-                '/\bApp::\s*make\s*\(\s*[\'"]router[\'"]\s*\)/' => 'App::make(\'router\')',
-                '/\\\\Illuminate\\\\Routing\\\\Router\b/' => 'Illuminate\\Routing\\Router',
-                '/\buse\s+Illuminate\\\\Routing\\\\Router\b/' => 'Router class import',
-                '/\bRoute::class\b/' => 'Route::class',
-                '/\bRouter::class\b/' => 'Router::class',
-                '/\bRegistrar::class\b/' => 'Registrar::class',
-                '/\\\\?Illuminate\\\\Contracts\\\\Routing\\\\Registrar\b/' => 'Registrar contract',
-                '/[\'"]\\\\?Illuminate\\\\Support\\\\Facades\\\\Route[\'"]/' => 'Route facade class string',
-                '/\bcall_user_func(_array)?\s*\([^)]*Route/' => 'call_user_func with Route',
+                '/\bapp\s*\(\s*[\'"]router[\'"]\s*\)/i' => 'app(\'router\')',
+                '/\bresolve\s*\(\s*[\'"]router[\'"]\s*\)/i' => 'resolve(\'router\')',
+                '/\$this\s*->\s*app\s*\[\s*[\'"]router[\'"]\s*\]/i' => '$this->app[\'router\']',
+                '/\$this\s*->\s*app\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/i' => '$this->app->make(\'router\')',
+                '/\bapp\s*\(\s*\)\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/i' => 'app()->make(\'router\')',
+                '/\bapp\s*\(\s*\)\s*\[\s*[\'"]router[\'"]\s*\]/i' => 'app()[\'router\']',
+                '/\bApp::\s*make\s*\(\s*[\'"]router[\'"]\s*\)/i' => 'App::make(\'router\')',
+                '/\\\\Illuminate\\\\Routing\\\\Router\b/i' => 'Illuminate\\Routing\\Router',
+                '/\buse\s+Illuminate\\\\Routing\\\\Router\b/i' => 'Router class import',
+                '/\bRoute::class\b/i' => 'Route::class',
+                '/\bRouter::class\b/i' => 'Router::class',
+                '/\bRegistrar::class\b/i' => 'Registrar::class',
+                '/\\\\?Illuminate\\\\Contracts\\\\Routing\\\\Registrar\b/i' => 'Registrar contract',
+                '/[\'"]\\\\?Illuminate\\\\Support\\\\Facades\\\\Route[\'"]/i' => 'Route facade class string',
+                '/\bcall_user_func(_array)?\s*\([^)]*Route/i' => 'call_user_func with Route',
             ];
 
             foreach ($routerPatterns as $pattern => $description) {
@@ -600,15 +600,15 @@ class PluginValidator
         $contentWithoutComments = preg_replace('#//.*$#m', '', $content);
         $contentWithoutComments = preg_replace('#/\*.*?\*/#s', '', $contentWithoutComments);
 
-        // Check for direct Route:: calls
-        if (preg_match('/\bRoute::/', $contentWithoutComments)) {
+        // Check for direct Route:: calls (case-insensitive - PHP class names are case-insensitive)
+        if (preg_match('/\bRoute::/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Use routes/public.php or routes/web.php instead. Found Route:: call in provider.';
 
             return $errors;
         }
 
         // Check for aliased Route facade (e.g., "use ... Route as R;" then "R::get")
-        if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/', $contentWithoutComments, $matches)) {
+        if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/i', $contentWithoutComments, $matches)) {
             $alias = $matches[1];
             if (preg_match('/\b'.preg_quote($alias, '/').'::/', $contentWithoutComments)) {
                 $errors[] = "Plugin providers must not register routes directly. Found aliased Route facade usage ({$alias}::).";
@@ -617,123 +617,123 @@ class PluginValidator
             }
         }
 
-        // Check for router instance via app() helper
-        if (preg_match('/\bapp\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+        // Check for router instance via app() helper (case-insensitive - PHP function names are case-insensitive)
+        if (preg_match('/\bapp\s*\(\s*[\'"]router[\'"]\s*\)/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found app(\'router\') usage in provider.';
 
             return $errors;
         }
 
         // Check for router instance via resolve() helper
-        if (preg_match('/\bresolve\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\bresolve\s*\(\s*[\'"]router[\'"]\s*\)/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found resolve(\'router\') usage in provider.';
 
             return $errors;
         }
 
         // Check for router instance via $this->app container access
-        if (preg_match('/\$this\s*->\s*app\s*\[\s*[\'"]router[\'"]\s*\]/', $contentWithoutComments)) {
+        if (preg_match('/\$this\s*->\s*app\s*\[\s*[\'"]router[\'"]\s*\]/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found $this->app[\'router\'] usage in provider.';
 
             return $errors;
         }
 
         // Check for direct Router class usage (FQCN with leading backslash)
-        if (preg_match('/\\\\Illuminate\\\\Routing\\\\Router\b/', $contentWithoutComments)) {
+        if (preg_match('/\\\\Illuminate\\\\Routing\\\\Router\b/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found Illuminate\\Routing\\Router usage in provider.';
 
             return $errors;
         }
 
         // Check for imported Router class (use Illuminate\Routing\Router;)
-        if (preg_match('/\buse\s+Illuminate\\\\Routing\\\\Router\b/', $contentWithoutComments)) {
+        if (preg_match('/\buse\s+Illuminate\\\\Routing\\\\Router\b/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found Router class import in provider.';
 
             return $errors;
         }
 
         // Check for Router::class constant resolution
-        if (preg_match('/\b(app|resolve)\s*\(\s*\)?\s*->\s*make\s*\(\s*\\\\?Router::class/', $contentWithoutComments)) {
+        if (preg_match('/\b(app|resolve)\s*\(\s*\)?\s*->\s*make\s*\(\s*\\\\?Router::class/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found Router::class resolution in provider.';
 
             return $errors;
         }
-        if (preg_match('/\bresolve\s*\(\s*\\\\?Router::class\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\bresolve\s*\(\s*\\\\?Router::class\s*\)/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found resolve(Router::class) in provider.';
 
             return $errors;
         }
-        if (preg_match('/\bapp\s*\(\s*\\\\?Router::class\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\bapp\s*\(\s*\\\\?Router::class\s*\)/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found app(Router::class) in provider.';
 
             return $errors;
         }
 
         // Check for Route::class constant (enables dynamic dispatch)
-        if (preg_match('/\bRoute::class\b/', $contentWithoutComments)) {
+        if (preg_match('/\bRoute::class\b/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found Route::class constant in provider.';
 
             return $errors;
         }
 
         // Check for Route facade class string
-        if (preg_match('/[\'"]\\\\?Illuminate\\\\Support\\\\Facades\\\\Route[\'"]/', $contentWithoutComments)) {
+        if (preg_match('/[\'"]\\\\?Illuminate\\\\Support\\\\Facades\\\\Route[\'"]/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found Route facade class string in provider.';
 
             return $errors;
         }
 
         // Check for call_user_func patterns with Route
-        if (preg_match('/\bcall_user_func(_array)?\s*\([^)]*Route/', $contentWithoutComments)) {
+        if (preg_match('/\bcall_user_func(_array)?\s*\([^)]*Route/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found call_user_func with Route in provider.';
 
             return $errors;
         }
 
         // Check for app()->make('router')
-        if (preg_match('/\bapp\s*\(\s*\)\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\bapp\s*\(\s*\)\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found app()->make(\'router\') in provider.';
 
             return $errors;
         }
 
         // Check for App::make('router')
-        if (preg_match('/\bApp::\s*make\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\bApp::\s*make\s*\(\s*[\'"]router[\'"]\s*\)/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found App::make(\'router\') in provider.';
 
             return $errors;
         }
 
         // Check for Registrar::class usage
-        if (preg_match('/\bRegistrar::class\b/', $contentWithoutComments)) {
+        if (preg_match('/\bRegistrar::class\b/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found Registrar::class in provider.';
 
             return $errors;
         }
 
         // Check for Illuminate\Contracts\Routing\Registrar
-        if (preg_match('/\\\\?Illuminate\\\\Contracts\\\\Routing\\\\Registrar\b/', $contentWithoutComments)) {
+        if (preg_match('/\\\\?Illuminate\\\\Contracts\\\\Routing\\\\Registrar\b/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found Registrar contract in provider.';
 
             return $errors;
         }
 
         // Check for make(Router::class) or make(Registrar::class)
-        if (preg_match('/\bmake\s*\(\s*\\\\?(Router|Registrar)::class\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\bmake\s*\(\s*\\\\?(Router|Registrar)::class\s*\)/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found make(Router/Registrar::class) in provider.';
 
             return $errors;
         }
 
         // Check for $this->app->make('router')
-        if (preg_match('/\$this\s*->\s*app\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+        if (preg_match('/\$this\s*->\s*app\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found $this->app->make(\'router\') in provider.';
 
             return $errors;
         }
 
         // Check for app()['router'] array access
-        if (preg_match('/\bapp\s*\(\s*\)\s*\[\s*[\'"]router[\'"]\s*\]/', $contentWithoutComments)) {
+        if (preg_match('/\bapp\s*\(\s*\)\s*\[\s*[\'"]router[\'"]\s*\]/i', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found app()[\'router\'] in provider.';
 
             return $errors;
