@@ -170,11 +170,11 @@
                                 <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ $label }}</h4>
                                 <div class="grid grid-cols-2 gap-3 text-sm">
                                     <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-2">
-                                        <span class="text-red-600 dark:text-red-400 text-xs font-medium">Before:</span>
+                                        <span class="text-red-600 dark:text-red-400 text-xs font-medium">{{ $diff['older_label'] }}:</span>
                                         <p class="text-gray-700 dark:text-gray-300 mt-1">{{ $diff[$field]['old'] ?: '(empty)' }}</p>
                                     </div>
                                     <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded p-2">
-                                        <span class="text-green-600 dark:text-green-400 text-xs font-medium">After:</span>
+                                        <span class="text-green-600 dark:text-green-400 text-xs font-medium">{{ $diff['newer_label'] }}:</span>
                                         <p class="text-gray-700 dark:text-gray-300 mt-1">{{ $diff[$field]['new'] ?: '(empty)' }}</p>
                                     </div>
                                 </div>
@@ -188,13 +188,13 @@
                             <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Content</h4>
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <p class="text-xs font-medium text-red-600 dark:text-red-400 mb-1">Before</p>
+                                    <p class="text-xs font-medium text-red-600 dark:text-red-400 mb-1">{{ $diff['older_label'] }}</p>
                                     <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 rounded text-sm max-h-80 overflow-y-auto prose prose-sm dark:prose-invert max-w-none prose-headings:text-gray-800 dark:prose-headings:text-gray-200">
                                         {!! $diff['content']['old_html'] ?: '<em class="text-gray-400">(empty)</em>' !!}
                                     </div>
                                 </div>
                                 <div>
-                                    <p class="text-xs font-medium text-green-600 dark:text-green-400 mb-1">After</p>
+                                    <p class="text-xs font-medium text-green-600 dark:text-green-400 mb-1">{{ $diff['newer_label'] }}</p>
                                     <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-3 rounded text-sm max-h-80 overflow-y-auto prose prose-sm dark:prose-invert max-w-none prose-headings:text-gray-800 dark:prose-headings:text-gray-200">
                                         {!! $diff['content']['new_html'] ?: '<em class="text-gray-400">(empty)</em>' !!}
                                     </div>
