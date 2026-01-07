@@ -264,7 +264,7 @@ class PluginManager
                     $checkNamespace = rtrim($namespace, '\\');
 
                     // Check if namespace matches or is a sub-namespace
-                    if ($prefix === $checkNamespace || str_starts_with($checkNamespace, $prefix . '\\')) {
+                    if ($prefix === $checkNamespace || str_starts_with($checkNamespace, $prefix.'\\')) {
                         return true;
                     }
                 }
@@ -274,7 +274,7 @@ class PluginManager
                     $prefix = rtrim($prefix, '\\');
                     $checkNamespace = rtrim($namespace, '\\');
 
-                    if ($prefix === $checkNamespace || str_starts_with($checkNamespace, $prefix . '\\')) {
+                    if ($prefix === $checkNamespace || str_starts_with($checkNamespace, $prefix.'\\')) {
                         return true;
                     }
                 }
@@ -436,7 +436,14 @@ class PluginManager
             File::ensureDirectoryExists(dirname($finalPath), 0755);
 
             // Move from temp to final location
-            File::moveDirectory($tempPath, $finalPath);
+            if (! File::moveDirectory($tempPath, $finalPath)) {
+                // Cleanup temp directory if move failed
+                if (File::exists($tempPath)) {
+                    File::deleteDirectory($tempPath);
+                }
+
+                return PluginInstallResult::failed(['Failed to move plugin to final location. Check directory permissions.']);
+            }
 
             // Load the plugin
             $plugin = Plugin::fromDirectory($finalPath);
@@ -650,7 +657,16 @@ class PluginManager
             File::deleteDirectory($finalPath);
 
             // Move new version to final location
-            File::moveDirectory($tempPath, $finalPath);
+            if (! File::moveDirectory($tempPath, $finalPath)) {
+                // Restore from backup since the move failed
+                if (File::exists($tempPath)) {
+                    File::deleteDirectory($tempPath);
+                }
+                $this->restoreFromBackup($backupPath, $finalPath);
+                $this->deleteBackup($backupPath);
+
+                return PluginInstallResult::failed(['Failed to move updated plugin to final location. Original plugin restored from backup.']);
+            }
 
             // Load the updated plugin
             $plugin = Plugin::fromDirectory($finalPath);
@@ -764,6 +780,8 @@ class PluginManager
 
     /**
      * Restore a plugin from backup
+     *
+     * @throws \RuntimeException If restore fails
      */
     protected function restoreFromBackup(string $backupPath, string $targetPath): void
     {
@@ -772,7 +790,10 @@ class PluginManager
         }
 
         File::ensureDirectoryExists(dirname($targetPath), 0755);
-        File::moveDirectory($backupPath, $targetPath);
+
+        if (! File::moveDirectory($backupPath, $targetPath)) {
+            throw new \RuntimeException("Failed to restore plugin from backup. Backup remains at: {$backupPath}");
+        }
     }
 
     /**
@@ -796,7 +817,16 @@ class PluginManager
         File::ensureDirectoryExists($archivePath, 0755);
 
         if (File::exists($backupPath)) {
-            File::moveDirectory($backupPath, $versionPath);
+            if (! File::moveDirectory($backupPath, $versionPath)) {
+                Log::warning("Failed to archive backup for {$vendor}/{$slug}", [
+                    'backup_path' => $backupPath,
+                    'version' => $version,
+                ]);
+                // Clean up the backup since we couldn't archive it
+                File::deleteDirectory($backupPath);
+
+                return;
+            }
         }
 
         // Clean old backups (keep last 3)
@@ -973,12 +1003,20 @@ class PluginManager
                 $dirs = File::directories($extractTemp);
                 if (count($dirs) === 1) {
                     // Move contents from wrapper to target
-                    File::moveDirectory($dirs[0], $targetPath);
+                    if (! File::moveDirectory($dirs[0], $targetPath)) {
+                        File::deleteDirectory($extractTemp);
+
+                        throw new \RuntimeException('Failed to move extracted plugin contents from wrapper directory');
+                    }
                     File::deleteDirectory($extractTemp);
                 } else {
                     // Multiple directories, just move everything
                     foreach (File::directories($extractTemp) as $dir) {
-                        File::moveDirectory($dir, "{$targetPath}/".basename($dir));
+                        if (! File::moveDirectory($dir, "{$targetPath}/".basename($dir))) {
+                            File::deleteDirectory($extractTemp);
+
+                            throw new \RuntimeException('Failed to move extracted directory: '.basename($dir));
+                        }
                     }
                     foreach (File::files($extractTemp) as $file) {
                         File::move($file, "{$targetPath}/".basename($file));

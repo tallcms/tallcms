@@ -429,13 +429,53 @@ class PluginValidator
 
         $content = File::get($providerPath);
 
-        // Remove comments before checking for Route:: calls
+        // Remove comments before checking for route registration patterns
         $contentWithoutComments = preg_replace('#//.*$#m', '', $content);
         $contentWithoutComments = preg_replace('#/\*.*?\*/#s', '', $contentWithoutComments);
 
-        // Check for Route:: calls
+        // Check for direct Route:: calls
         if (preg_match('/\bRoute::/', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Use routes/public.php or routes/web.php instead. Found Route:: call in provider.';
+
+            return $errors;
+        }
+
+        // Check for aliased Route facade (e.g., "use ... Route as R;" then "R::get")
+        if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/', $contentWithoutComments, $matches)) {
+            $alias = $matches[1];
+            if (preg_match('/\b'.preg_quote($alias, '/').'::/', $contentWithoutComments)) {
+                $errors[] = "Plugin providers must not register routes directly. Found aliased Route facade usage ({$alias}::).";
+
+                return $errors;
+            }
+        }
+
+        // Check for router instance via app() helper
+        if (preg_match('/\bapp\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+            $errors[] = 'Plugin providers must not register routes directly. Found app(\'router\') usage in provider.';
+
+            return $errors;
+        }
+
+        // Check for router instance via resolve() helper
+        if (preg_match('/\bresolve\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+            $errors[] = 'Plugin providers must not register routes directly. Found resolve(\'router\') usage in provider.';
+
+            return $errors;
+        }
+
+        // Check for router instance via $this->app container access
+        if (preg_match('/\$this\s*->\s*app\s*\[\s*[\'"]router[\'"]\s*\]/', $contentWithoutComments)) {
+            $errors[] = 'Plugin providers must not register routes directly. Found $this->app[\'router\'] usage in provider.';
+
+            return $errors;
+        }
+
+        // Check for direct Router class instantiation or type-hinting injection
+        if (preg_match('/\\\\Illuminate\\\\Routing\\\\Router\b/', $contentWithoutComments)) {
+            $errors[] = 'Plugin providers must not register routes directly. Found Illuminate\\Routing\\Router usage in provider.';
+
+            return $errors;
         }
 
         return $errors;

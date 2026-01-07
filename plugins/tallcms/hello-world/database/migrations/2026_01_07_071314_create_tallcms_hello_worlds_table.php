@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tallcms_hello-worlds', function (Blueprint $table) {
+        Schema::create('tallcms_hello_worlds', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tallcms_hello-worlds');
+        Schema::dropIfExists('tallcms_hello_worlds');
     }
 };
