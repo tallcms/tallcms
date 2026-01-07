@@ -57,15 +57,16 @@ class ContentDiffService
                 ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
                 ->toHtml();
 
-            // If renderer returns empty but content exists, fall back to raw
+            // If renderer returns empty but content exists, fall back to readable format
             if (empty($html) && ! empty($decoded['content'])) {
-                return json_encode($content);
+                // Return original string content if available, otherwise pretty-print JSON
+                return is_string($content) ? $content : json_encode($decoded, JSON_PRETTY_PRINT);
             }
 
             return $html;
         } catch (\Exception) {
-            // Fallback to raw content on error
-            return is_string($content) ? $content : json_encode($content);
+            // Fallback to readable format on error
+            return is_string($content) ? $content : json_encode($decoded, JSON_PRETTY_PRINT);
         }
     }
 }
