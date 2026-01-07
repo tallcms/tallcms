@@ -558,6 +558,20 @@ class PluginValidator
             return $errors;
         }
 
+        // Check for $this->app->make('router')
+        if (preg_match('/\$this\s*->\s*app\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+            $errors[] = 'Plugin providers must not register routes directly. Found $this->app->make(\'router\') in provider.';
+
+            return $errors;
+        }
+
+        // Check for app()['router'] array access
+        if (preg_match('/\bapp\s*\(\s*\)\s*\[\s*[\'"]router[\'"]\s*\]/', $contentWithoutComments)) {
+            $errors[] = 'Plugin providers must not register routes directly. Found app()[\'router\'] in provider.';
+
+            return $errors;
+        }
+
         return $errors;
     }
 

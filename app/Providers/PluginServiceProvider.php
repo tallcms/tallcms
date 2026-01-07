@@ -233,6 +233,16 @@ class PluginServiceProvider extends ServiceProvider
             return true;
         }
 
+        // Check for $this->app->make('router')
+        if (preg_match('/\$this\s*->\s*app\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+            return true;
+        }
+
+        // Check for app()['router'] array access
+        if (preg_match('/\bapp\s*\(\s*\)\s*\[\s*[\'"]router[\'"]\s*\]/', $contentWithoutComments)) {
+            return true;
+        }
+
         return false;
     }
 
@@ -430,6 +440,17 @@ class PluginServiceProvider extends ServiceProvider
         $contentWithoutComments = preg_replace('#//.*$#m', '', $content);
         $contentWithoutComments = preg_replace('#/\*.*?\*/#s', '', $contentWithoutComments);
 
+        // === FILE INCLUSION BYPASS DETECTION ===
+
+        // Block require/include statements (could load files that register routes)
+        if (preg_match('/\b(require|require_once|include|include_once)\s*[\(\s]/i', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'File inclusion (require/include) detected. All routes must be defined directly in the route file.',
+            ];
+        }
+
         // === BYPASS DETECTION: Block router instance/alias usage ===
 
         // Check for aliased Route facade (e.g., "use ... Route as R;" then "R::get")
@@ -587,6 +608,33 @@ class PluginServiceProvider extends ServiceProvider
                 'routes' => [],
                 'valid' => false,
                 'error' => 'Container make with Router/Registrar class detected. Only Route:: facade calls are allowed.',
+            ];
+        }
+
+        // Block $this->app->make('router') pattern
+        if (preg_match('/\$this\s*->\s*app\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => '$this->app->make(\'router\') detected. Only Route:: facade calls are allowed.',
+            ];
+        }
+
+        // Block app()['router'] array access pattern
+        if (preg_match('/\bapp\s*\(\s*\)\s*\[\s*[\'"]router[\'"]\s*\]/', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'app()[\'router\'] array access detected. Only Route:: facade calls are allowed.',
+            ];
+        }
+
+        // Block $this->app['router'] array access pattern
+        if (preg_match('/\$this\s*->\s*app\s*\[\s*[\'"]router[\'"]\s*\]/', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => '$this->app[\'router\'] array access detected. Only Route:: facade calls are allowed.',
             ];
         }
 
