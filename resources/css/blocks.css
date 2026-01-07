@@ -276,6 +276,100 @@
 }
 
 /* ==========================================================================
+   Team Block Styles
+   ========================================================================== */
+
+.team-block {
+    /* Team block container */
+}
+
+.team-block h2 {
+    color: var(--block-heading-color);
+}
+
+.team-block .team-member {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.team-block .team-member:hover {
+    transform: translateY(-4px);
+}
+
+.team-block .team-member-name {
+    color: var(--block-heading-color);
+}
+
+.team-block .team-member-role {
+    color: var(--block-text-color);
+}
+
+.team-block .team-member-bio {
+    color: var(--block-text-color);
+}
+
+.team-block .social-link {
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.team-block .social-link:hover {
+    transform: scale(1.1);
+}
+
+/* ==========================================================================
+   Stats Block Styles
+   ========================================================================== */
+
+.stats-block {
+    /* Stats block container */
+}
+
+.stats-block h2 {
+    color: var(--block-heading-color);
+}
+
+.stats-block .stat-item {
+    transition: transform 0.2s ease;
+}
+
+.stats-block .stat-item:hover {
+    transform: translateY(-2px);
+}
+
+.stats-block .stat-value {
+    color: var(--block-heading-color);
+    font-variant-numeric: tabular-nums;
+}
+
+.stats-block .stat-label {
+    color: var(--block-text-color);
+}
+
+.stats-block .stat-icon {
+    color: var(--block-link-color, #2563eb);
+}
+
+/* ==========================================================================
+   Logos Block Styles
+   ========================================================================== */
+
+.logos-block {
+    /* Logos block container */
+}
+
+.logos-block .logo-item {
+    transition: all 0.3s ease;
+}
+
+.logos-block .logo-item img {
+    transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
+.logos-block .logo-placeholder {
+    min-width: 100px;
+    border: 2px dashed var(--block-border-color, #e5e7eb);
+}
+
+/* ==========================================================================
    Pricing Block Styles
    ========================================================================== */
 
