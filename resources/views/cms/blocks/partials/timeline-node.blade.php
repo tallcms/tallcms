@@ -10,7 +10,7 @@
             class="w-6 h-6 text-primary-600 dark:text-primary-400"
         />
     @elseif(!empty($date))
-        <span class="text-xs font-semibold text-primary-600 dark:text-primary-400 text-center leading-tight px-1 truncate max-w-full">
+        <span class="text-xs font-semibold text-primary-600 dark:text-primary-400 text-center leading-tight px-1 truncate w-full">
             {{ $date }}
         </span>
     @else
