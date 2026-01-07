@@ -165,7 +165,7 @@ class PluginServiceProvider extends ServiceProvider
         // Check for aliased Route facade (e.g., "use ... Route as R;" then "R::get")
         if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/i', $contentWithoutComments, $matches)) {
             $alias = $matches[1];
-            if (preg_match('/\b'.preg_quote($alias, '/').'::/', $contentWithoutComments)) {
+            if (preg_match('/\b'.preg_quote($alias, '/').'::/'.'i', $contentWithoutComments)) {
                 return true;
             }
         }
@@ -389,7 +389,7 @@ class PluginServiceProvider extends ServiceProvider
             // Check for aliased Route facade (case-insensitive)
             if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/i', $contentWithoutComments, $matches)) {
                 $alias = $matches[1];
-                if (preg_match('/\b'.preg_quote($alias, '/').'::/', $contentWithoutComments)) {
+                if (preg_match('/\b'.preg_quote($alias, '/').'::/'.'i', $contentWithoutComments)) {
                     return $relativePath;
                 }
             }
@@ -615,7 +615,7 @@ class PluginServiceProvider extends ServiceProvider
         // Check for aliased Route facade (e.g., "use ... Route as R;" then "R::get")
         if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/i', $contentWithoutComments, $matches)) {
             $alias = $matches[1];
-            if (preg_match('/\b'.preg_quote($alias, '/').'::/', $contentWithoutComments)) {
+            if (preg_match('/\b'.preg_quote($alias, '/').'::/'.'i', $contentWithoutComments)) {
                 return [
                     'routes' => [],
                     'valid' => false,
