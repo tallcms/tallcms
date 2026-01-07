@@ -3,12 +3,12 @@
 namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
 use Filament\Actions\Action;
-use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -41,13 +41,13 @@ class PricingBlock extends RichContentCustomBlock
                                     ->label('Section Title')
                                     ->placeholder('Choose Your Plan')
                                     ->maxLength(255),
-                                
+
                                 Textarea::make('section_subtitle')
                                     ->label('Section Subtitle')
                                     ->placeholder('Select the perfect plan for your needs')
                                     ->maxLength(500)
                                     ->rows(2),
-                                
+
                                 Select::make('text_alignment')
                                     ->label('Text Alignment')
                                     ->options([
@@ -57,7 +57,7 @@ class PricingBlock extends RichContentCustomBlock
                                     ])
                                     ->default('center'),
                             ]),
-                        
+
                         Tab::make('Plans')
                             ->icon('heroicon-m-currency-dollar')
                             ->schema([
@@ -71,36 +71,36 @@ class PricingBlock extends RichContentCustomBlock
                                                     ->required()
                                                     ->placeholder('Professional')
                                                     ->maxLength(100),
-                                                
+
                                                 TextInput::make('description')
                                                     ->label('Plan Description')
                                                     ->placeholder('Perfect for growing teams')
                                                     ->maxLength(200),
-                                                
+
                                                 Toggle::make('is_popular')
                                                     ->label('Mark as Popular/Recommended')
                                                     ->default(false),
-                                                
+
                                                 TextInput::make('popular_badge_text')
                                                     ->label('Popular Badge Text')
                                                     ->placeholder('Most Popular')
                                                     ->maxLength(50)
                                                     ->visible(fn ($get) => $get('is_popular')),
                                             ])->columns(2),
-                                        
+
                                         Section::make('Pricing')
                                             ->schema([
                                                 TextInput::make('currency_symbol')
                                                     ->label('Currency Symbol')
                                                     ->default('$')
                                                     ->maxLength(5),
-                                                
+
                                                 TextInput::make('price')
                                                     ->label('Price')
                                                     ->required()
                                                     ->placeholder('29')
                                                     ->numeric(),
-                                                
+
                                                 Select::make('billing_period')
                                                     ->label('Billing Period')
                                                     ->options([
@@ -112,13 +112,13 @@ class PricingBlock extends RichContentCustomBlock
                                                         'free' => 'free',
                                                     ])
                                                     ->default('month'),
-                                                
+
                                                 TextInput::make('discount_text')
                                                     ->label('Discount Text (Optional)')
                                                     ->placeholder('Save 20%')
                                                     ->maxLength(50),
                                             ])->columns(4),
-                                        
+
                                         Section::make('Features')
                                             ->schema([
                                                 Repeater::make('features')
@@ -129,11 +129,11 @@ class PricingBlock extends RichContentCustomBlock
                                                             ->required()
                                                             ->placeholder('Unlimited projects')
                                                             ->maxLength(200),
-                                                        
+
                                                         Toggle::make('included')
                                                             ->label('Included')
                                                             ->default(true),
-                                                        
+
                                                         TextInput::make('tooltip')
                                                             ->label('Tooltip (Optional)')
                                                             ->placeholder('Additional information about this feature')
@@ -143,7 +143,7 @@ class PricingBlock extends RichContentCustomBlock
                                                     ->collapsible()
                                                     ->itemLabel(fn (array $state): ?string => $state['text'] ?? null),
                                             ]),
-                                        
+
                                         Section::make('Call to Action')
                                             ->schema([
                                                 TextInput::make('button_text')
@@ -151,12 +151,12 @@ class PricingBlock extends RichContentCustomBlock
                                                     ->required()
                                                     ->placeholder('Get Started')
                                                     ->maxLength(50),
-                                                
+
                                                 TextInput::make('button_url')
                                                     ->label('Button URL')
                                                     ->placeholder('/signup?plan=professional')
                                                     ->maxLength(500),
-                                                
+
                                                 Select::make('button_style')
                                                     ->label('Button Style')
                                                     ->options([
@@ -165,7 +165,7 @@ class PricingBlock extends RichContentCustomBlock
                                                         'outline' => 'Outline',
                                                     ])
                                                     ->default('primary'),
-                                                
+
                                                 TextInput::make('trial_text')
                                                     ->label('Trial Text (Optional)')
                                                     ->placeholder('14-day free trial')
@@ -179,7 +179,7 @@ class PricingBlock extends RichContentCustomBlock
                                     ->minItems(1)
                                     ->maxItems(6),
                             ]),
-                        
+
                         Tab::make('Layout')
                             ->icon('heroicon-m-squares-2x2')
                             ->schema([
@@ -192,7 +192,7 @@ class PricingBlock extends RichContentCustomBlock
                                         '4' => '4 Columns',
                                     ])
                                     ->default('3'),
-                                
+
                                 Select::make('card_style')
                                     ->label('Card Style')
                                     ->options([
@@ -202,7 +202,7 @@ class PricingBlock extends RichContentCustomBlock
                                         'elevated' => 'Elevated',
                                     ])
                                     ->default('shadow'),
-                                
+
                                 Select::make('spacing')
                                     ->label('Card Spacing')
                                     ->options([
@@ -279,7 +279,7 @@ class PricingBlock extends RichContentCustomBlock
                 ],
             ],
         ], $config);
-        
+
         return view('cms.blocks.pricing', $sampleConfig)->render();
     }
 

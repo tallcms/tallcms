@@ -3,11 +3,11 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
 
 class EnvWriter
 {
     private string $envPath;
+
     private array $envData;
 
     public function __construct()
@@ -32,7 +32,7 @@ class EnvWriter
                 File::copy($examplePath, $this->envPath);
             } else {
                 // Create basic .env content with temporary key
-                $tempKey = 'base64:' . base64_encode(random_bytes(32));
+                $tempKey = 'base64:'.base64_encode(random_bytes(32));
                 $content = "APP_NAME=TallCMS\n";
                 $content .= "APP_ENV=production\n";
                 $content .= "APP_KEY={$tempKey}\n";
@@ -40,14 +40,15 @@ class EnvWriter
                 $content .= "APP_URL=http://localhost\n\n";
                 $content .= "DB_CONNECTION=mysql\n";
                 $content .= "INSTALLER_ENABLED=true\n";
-                
+
                 File::put($this->envPath, $content);
             }
-            
+
             // Reload env data after creation
             $this->loadEnvData();
+
             return true;
-            
+
         } catch (\Exception $e) {
             return false;
         }
@@ -59,19 +60,19 @@ class EnvWriter
     private function loadEnvData(): void
     {
         $this->envData = [];
-        
+
         if (File::exists($this->envPath)) {
             $content = File::get($this->envPath);
             $lines = explode("\n", $content);
-            
+
             foreach ($lines as $line) {
                 $line = trim($line);
-                
+
                 // Skip comments and empty lines
                 if (empty($line) || str_starts_with($line, '#')) {
                     continue;
                 }
-                
+
                 // Parse KEY=VALUE
                 if (str_contains($line, '=')) {
                     [$key, $value] = explode('=', $line, 2);
@@ -87,6 +88,7 @@ class EnvWriter
     public function set(string $key, string $value): self
     {
         $this->envData[$key] = $value;
+
         return $this;
     }
 
@@ -96,6 +98,7 @@ class EnvWriter
     public function unset(string $key): self
     {
         unset($this->envData[$key]);
+
         return $this;
     }
 
@@ -112,6 +115,7 @@ class EnvWriter
                 $this->set($key, $value);
             }
         }
+
         return $this;
     }
 
@@ -129,8 +133,9 @@ class EnvWriter
     public function generateAppKey(): self
     {
         if (empty($this->get('APP_KEY'))) {
-            $this->set('APP_KEY', 'base64:' . base64_encode(random_bytes(32)));
+            $this->set('APP_KEY', 'base64:'.base64_encode(random_bytes(32)));
         }
+
         return $this;
     }
 
@@ -155,7 +160,7 @@ class EnvWriter
     public function setAppConfig(array $config): self
     {
         return $this->setMany([
-            'APP_NAME' => '"' . ($config['name'] ?? 'TallCMS') . '"',
+            'APP_NAME' => '"'.($config['name'] ?? 'TallCMS').'"',
             'APP_URL' => $config['url'] ?? 'http://localhost',
             'APP_ENV' => $config['environment'] ?? 'production',
             'APP_DEBUG' => $config['debug'] ? 'true' : 'false',
@@ -169,8 +174,8 @@ class EnvWriter
     {
         $variables = [
             'MAIL_MAILER' => $config['mailer'] ?? 'smtp',
-            'MAIL_FROM_ADDRESS' => '"' . ($config['from_address'] ?? 'noreply@example.com') . '"',
-            'MAIL_FROM_NAME' => '"' . ($config['from_name'] ?? 'TallCMS') . '"',
+            'MAIL_FROM_ADDRESS' => '"'.($config['from_address'] ?? 'noreply@example.com').'"',
+            'MAIL_FROM_NAME' => '"'.($config['from_name'] ?? 'TallCMS').'"',
         ];
 
         if ($config['mailer'] === 'smtp') {
@@ -213,7 +218,7 @@ class EnvWriter
         }
 
         // S3 bucket configuration
-        if (!empty($config['bucket'])) {
+        if (! empty($config['bucket'])) {
             $variables['AWS_BUCKET'] = $config['bucket'];
             $variables['FILESYSTEM_DISK'] = 's3';
         }
@@ -222,20 +227,20 @@ class EnvWriter
         // Use null to remove from .env when switching to AWS (which doesn't need endpoint)
         if (array_key_exists('endpoint', $config)) {
             $endpoint = $config['endpoint'] ?? null;
-            $variables['AWS_ENDPOINT'] = !empty($endpoint) ? $endpoint : null;
+            $variables['AWS_ENDPOINT'] = ! empty($endpoint) ? $endpoint : null;
         }
 
         // Path-style endpoints (required for MinIO and some other providers)
         // Remove entirely when not needed rather than setting to false
         if (array_key_exists('use_path_style', $config)) {
-            $variables['AWS_USE_PATH_STYLE_ENDPOINT'] = !empty($config['use_path_style']) ? 'true' : null;
+            $variables['AWS_USE_PATH_STYLE_ENDPOINT'] = ! empty($config['use_path_style']) ? 'true' : null;
         }
 
         // Custom URL for CDN/domain prefixes (e.g., CloudFront)
         // Clear stale values when switching providers unless explicitly provided
         if (array_key_exists('url', $config)) {
             $url = $config['url'] ?? null;
-            $variables['AWS_URL'] = !empty($url) ? $url : null;
+            $variables['AWS_URL'] = ! empty($url) ? $url : null;
         } else {
             // Clear any existing AWS_URL when reconfiguring storage
             $variables['AWS_URL'] = null;
@@ -276,8 +281,8 @@ class EnvWriter
     {
         return $this->setMany([
             'MAIL_MAILER' => 'ses',
-            'MAIL_FROM_ADDRESS' => '"' . ($config['from_address'] ?? 'noreply@example.com') . '"',
-            'MAIL_FROM_NAME' => '"' . ($config['from_name'] ?? 'TallCMS') . '"',
+            'MAIL_FROM_ADDRESS' => '"'.($config['from_address'] ?? 'noreply@example.com').'"',
+            'MAIL_FROM_NAME' => '"'.($config['from_name'] ?? 'TallCMS').'"',
         ]);
     }
 
@@ -297,6 +302,7 @@ class EnvWriter
         try {
             $content = $this->buildEnvContent();
             File::put($this->envPath, $content);
+
             return true;
         } catch (\Exception $e) {
             return false;
@@ -311,13 +317,13 @@ class EnvWriter
         $envExists = File::exists($this->envPath);
         $dirWritable = is_writable(dirname($this->envPath));
         $fileWritable = $envExists ? is_writable($this->envPath) : $dirWritable;
-        
+
         return [
             'exists' => $envExists,
             'writable' => $fileWritable,
             'directory_writable' => $dirWritable,
-            'can_create' => !$envExists && $dirWritable,
-            'can_update' => $envExists && $fileWritable
+            'can_create' => ! $envExists && $dirWritable,
+            'can_update' => $envExists && $fileWritable,
         ];
     }
 
@@ -327,12 +333,12 @@ class EnvWriter
     private function buildEnvContent(): string
     {
         $lines = [];
-        
+
         // Add header comment
         $lines[] = '# TallCMS Environment Configuration';
         $lines[] = '# Generated by TallCMS Web Installer';
         $lines[] = '';
-        
+
         // Group variables by section
         $sections = [
             'Application' => ['APP_NAME', 'APP_ENV', 'APP_KEY', 'APP_DEBUG', 'APP_TIMEZONE', 'APP_URL'],
@@ -344,25 +350,25 @@ class EnvWriter
             'AWS' => ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_DEFAULT_REGION', 'AWS_BUCKET', 'AWS_ENDPOINT', 'AWS_USE_PATH_STYLE_ENDPOINT', 'AWS_URL'],
             'Installer' => ['INSTALLER_ENABLED'],
         ];
-        
+
         foreach ($sections as $sectionName => $keys) {
             $sectionHasValues = false;
             $sectionLines = [];
-            
+
             foreach ($keys as $key) {
                 if (isset($this->envData[$key])) {
                     $value = $this->envData[$key];
-                    
+
                     // Quote values that contain spaces or special characters
                     if (str_contains($value, ' ') || str_contains($value, '#') || str_contains($value, '=')) {
-                        $value = '"' . str_replace('"', '\"', $value) . '"';
+                        $value = '"'.str_replace('"', '\"', $value).'"';
                     }
-                    
+
                     $sectionLines[] = "{$key}={$value}";
                     $sectionHasValues = true;
                 }
             }
-            
+
             // Add section if it has values
             if ($sectionHasValues) {
                 $lines[] = "# {$sectionName}";
@@ -370,22 +376,22 @@ class EnvWriter
                 $lines[] = '';
             }
         }
-        
+
         // Add any remaining variables
         $usedKeys = collect($sections)->flatten()->toArray();
         $remainingKeys = array_diff(array_keys($this->envData), $usedKeys);
-        
-        if (!empty($remainingKeys)) {
+
+        if (! empty($remainingKeys)) {
             $lines[] = '# Other';
             foreach ($remainingKeys as $key) {
                 $value = $this->envData[$key];
                 if (str_contains($value, ' ') || str_contains($value, '#') || str_contains($value, '=')) {
-                    $value = '"' . str_replace('"', '\"', $value) . '"';
+                    $value = '"'.str_replace('"', '\"', $value).'"';
                 }
                 $lines[] = "{$key}={$value}";
             }
         }
-        
+
         return implode("\n", $lines);
     }
 
@@ -395,9 +401,11 @@ class EnvWriter
     public function backup(): bool
     {
         if (File::exists($this->envPath)) {
-            $backupPath = $this->envPath . '.backup.' . now()->format('Y-m-d_H-i-s');
+            $backupPath = $this->envPath.'.backup.'.now()->format('Y-m-d_H-i-s');
+
             return File::copy($this->envPath, $backupPath);
         }
+
         return true;
     }
 }

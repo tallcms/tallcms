@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('group')->default('general'); // general, contact, branding
             $table->text('description')->nullable();
             $table->timestamps();
-            
+
             $table->index(['key', 'group']);
         });
     }

@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use PDO;
 
@@ -36,9 +35,9 @@ class EnvironmentChecker
             'required' => ">= {$requiredVersion}",
             'current' => $currentVersion,
             'passed' => $passed,
-            'message' => $passed 
+            'message' => $passed
                 ? "PHP {$currentVersion} meets requirements"
-                : "PHP {$requiredVersion} or higher is required. Current: {$currentVersion}"
+                : "PHP {$requiredVersion} or higher is required. Current: {$currentVersion}",
         ];
     }
 
@@ -49,7 +48,7 @@ class EnvironmentChecker
     {
         $requiredExtensions = [
             'openssl' => 'OpenSSL for encryption',
-            'pdo' => 'PDO for database access', 
+            'pdo' => 'PDO for database access',
             'mbstring' => 'Mbstring for string handling',
             'tokenizer' => 'Tokenizer for Laravel',
             'xml' => 'XML for parsing',
@@ -59,7 +58,7 @@ class EnvironmentChecker
             'curl' => 'cURL for HTTP requests',
             'fileinfo' => 'Fileinfo for file type detection',
             'gd' => 'GD for image processing',
-            'zip' => 'Zip for archive handling'
+            'zip' => 'Zip for archive handling',
         ];
 
         $extensions = [];
@@ -67,7 +66,7 @@ class EnvironmentChecker
 
         foreach ($requiredExtensions as $extension => $description) {
             $installed = extension_loaded($extension);
-            if (!$installed) {
+            if (! $installed) {
                 $allPassed = false;
             }
 
@@ -75,7 +74,7 @@ class EnvironmentChecker
                 'name' => $extension,
                 'description' => $description,
                 'installed' => $installed,
-                'passed' => $installed
+                'passed' => $installed,
             ];
         }
 
@@ -83,9 +82,9 @@ class EnvironmentChecker
             'name' => 'PHP Extensions',
             'extensions' => $extensions,
             'passed' => $allPassed,
-            'message' => $allPassed 
+            'message' => $allPassed
                 ? 'All required PHP extensions are installed'
-                : 'Some required PHP extensions are missing'
+                : 'Some required PHP extensions are missing',
         ];
     }
 
@@ -100,7 +99,7 @@ class EnvironmentChecker
             storage_path('framework') => 'Storage framework directory',
             storage_path('logs') => 'Storage logs directory',
             base_path('bootstrap/cache') => 'Bootstrap cache directory',
-            public_path('storage') => 'Public storage symlink (will be created if missing)'
+            public_path('storage') => 'Public storage symlink (will be created if missing)',
         ];
 
         $directories = [];
@@ -108,7 +107,7 @@ class EnvironmentChecker
 
         foreach ($requiredDirectories as $directory => $description) {
             // Create directory if it doesn't exist
-            if (!File::exists($directory)) {
+            if (! File::exists($directory)) {
                 try {
                     File::makeDirectory($directory, 0755, true);
                 } catch (\Exception $e) {
@@ -118,8 +117,8 @@ class EnvironmentChecker
 
             $exists = File::exists($directory);
             $writable = $exists && is_writable($directory);
-            
-            if (!$writable) {
+
+            if (! $writable) {
                 $allPassed = false;
             }
 
@@ -128,7 +127,7 @@ class EnvironmentChecker
                 'description' => $description,
                 'exists' => $exists,
                 'writable' => $writable,
-                'passed' => $writable
+                'passed' => $writable,
             ];
         }
 
@@ -136,25 +135,25 @@ class EnvironmentChecker
             'name' => 'Directory Permissions',
             'directories' => $directories,
             'passed' => $allPassed,
-            'message' => $allPassed 
+            'message' => $allPassed
                 ? 'All required directories are writable'
-                : 'Some directories are not writable'
+                : 'Some directories are not writable',
         ];
     }
 
     /**
      * Check database connection with provided credentials
      */
-    public function checkDatabaseConnection(array $config = null): array
+    public function checkDatabaseConnection(?array $config = null): array
     {
-        if (!$config) {
+        if (! $config) {
             // Use existing .env config if no config provided
             $config = [
                 'host' => env('DB_HOST', 'localhost'),
                 'port' => env('DB_PORT', 3306),
                 'database' => env('DB_DATABASE'),
                 'username' => env('DB_USERNAME'),
-                'password' => env('DB_PASSWORD')
+                'password' => env('DB_PASSWORD'),
             ];
         }
 
@@ -163,7 +162,7 @@ class EnvironmentChecker
                 return [
                     'name' => 'Database Connection',
                     'passed' => false,
-                    'message' => 'Database configuration not provided'
+                    'message' => 'Database configuration not provided',
                 ];
             }
 
@@ -171,11 +170,11 @@ class EnvironmentChecker
             $dsn = "mysql:host={$config['host']};port={$config['port']};charset=utf8mb4";
             $pdo = new PDO($dsn, $config['username'], $config['password'], [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_TIMEOUT => 10
+                PDO::ATTR_TIMEOUT => 10,
             ]);
 
             // Check if database exists
-            $stmt = $pdo->prepare("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?");
+            $stmt = $pdo->prepare('SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?');
             $stmt->execute([$config['database']]);
             $databaseExists = (bool) $stmt->fetch();
 
@@ -183,16 +182,16 @@ class EnvironmentChecker
                 'name' => 'Database Connection',
                 'passed' => true,
                 'database_exists' => $databaseExists,
-                'message' => $databaseExists 
+                'message' => $databaseExists
                     ? "Successfully connected to database '{$config['database']}'"
-                    : "Connected to MySQL server, but database '{$config['database']}' doesn't exist (will be created)"
+                    : "Connected to MySQL server, but database '{$config['database']}' doesn't exist (will be created)",
             ];
 
         } catch (\PDOException $e) {
             return [
                 'name' => 'Database Connection',
                 'passed' => false,
-                'message' => 'Database connection failed: ' . $e->getMessage()
+                'message' => 'Database connection failed: '.$e->getMessage(),
             ];
         }
     }
@@ -205,11 +204,11 @@ class EnvironmentChecker
         $checks = [
             $this->checkPhpVersion(),
             $this->checkPhpExtensions(),
-            $this->checkWritableDirectories()
+            $this->checkWritableDirectories(),
         ];
 
         foreach ($checks as $check) {
-            if (!$check['passed']) {
+            if (! $check['passed']) {
                 return false;
             }
         }

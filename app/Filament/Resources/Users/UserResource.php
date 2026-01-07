@@ -4,7 +4,7 @@ namespace App\Filament\Resources\Users;
 
 /**
  * User Management Resource with Role-Based Permissions
- * 
+ *
  * Powered by Filament Shield for comprehensive role and permission management.
  * Shield Plugin: https://github.com/bezhanSalleh/filament-shield
  * Author: Bezhan Salleh
@@ -27,11 +27,11 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;
-    
+
     protected static ?int $navigationSort = 1;
-    
+
     protected static ?string $modelLabel = 'User';
-    
+
     protected static ?string $pluralModelLabel = 'Users';
 
     public static function form(Schema $schema): Schema
@@ -60,7 +60,7 @@ class UserResource extends Resource
         ];
     }
 
-     public static function getNavigationGroup(): ?string
+    public static function getNavigationGroup(): ?string
     {
         return 'User Management';
     }

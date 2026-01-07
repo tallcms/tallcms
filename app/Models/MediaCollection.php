@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 class MediaCollection extends Model
 {
     protected $table = 'tallcms_media_collections';
-    
+
     protected $fillable = [
         'name',
         'slug',

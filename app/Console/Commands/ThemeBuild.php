@@ -30,8 +30,9 @@ class ThemeBuild extends Command
         // Determine which theme to build
         if ($slug) {
             $theme = Theme::find($slug);
-            if (!$theme) {
+            if (! $theme) {
                 $this->error("Theme '{$slug}' not found!");
+
                 return 1;
             }
         } else {
@@ -45,56 +46,59 @@ class ThemeBuild extends Command
     protected function buildTheme(Theme $theme, bool $force = false, bool $install = false): int
     {
         $this->info("Building theme: {$theme->name} ({$theme->slug})");
-        
+
         // Check if theme directory exists
-        if (!File::exists($theme->path)) {
+        if (! File::exists($theme->path)) {
             $this->error("Theme directory not found: {$theme->path}");
+
             return 1;
         }
 
         // Check if package.json exists
-        $packageJsonPath = $theme->path . '/package.json';
-        if (!File::exists($packageJsonPath)) {
-            $this->error("No package.json found in theme directory!");
-            $this->line("Theme may not have build configuration.");
+        $packageJsonPath = $theme->path.'/package.json';
+        if (! File::exists($packageJsonPath)) {
+            $this->error('No package.json found in theme directory!');
+            $this->line('Theme may not have build configuration.');
+
             return 1;
         }
 
         // Install dependencies if requested or node_modules doesn't exist
-        if ($install || !File::exists($theme->path . '/node_modules')) {
-            $this->line("Installing dependencies...");
-            if (!$this->installDependencies($theme)) {
+        if ($install || ! File::exists($theme->path.'/node_modules')) {
+            $this->line('Installing dependencies...');
+            if (! $this->installDependencies($theme)) {
                 return 1;
             }
         }
 
         // Create symlinks for public assets
-        $this->line("Publishing theme assets...");
+        $this->line('Publishing theme assets...');
         $this->themeManager->publishThemeAssets($theme);
 
         // Build assets
-        $this->line("Building theme assets...");
+        $this->line('Building theme assets...');
         if ($this->themeManager->buildThemeAssets($theme)) {
             $this->info("✅ Theme '{$theme->name}' built successfully!");
-            
+
             // Show build output information
             $this->showBuildInfo($theme);
-            
+
             return 0;
         }
 
-        $this->error("❌ Failed to build theme assets!");
+        $this->error('❌ Failed to build theme assets!');
         $this->line("Check the theme's build configuration and try again.");
+
         return 1;
     }
 
     protected function installDependencies(Theme $theme): bool
     {
-        $this->withProgressBar(range(1, 3), function ($step) use ($theme) {
-            match($step) {
-                1 => $this->line("  Checking package.json..."),
-                2 => $this->line("  Running npm install..."),
-                3 => $this->line("  Finalizing installation..."),
+        $this->withProgressBar(range(1, 3), function ($step) {
+            match ($step) {
+                1 => $this->line('  Checking package.json...'),
+                2 => $this->line('  Running npm install...'),
+                3 => $this->line('  Finalizing installation...'),
             };
             sleep(1);
         });
@@ -103,37 +107,39 @@ class ThemeBuild extends Command
 
         // Run npm install in theme directory
         $process = \Illuminate\Support\Facades\Process::path($theme->path)->run('npm install');
-        
+
         if ($process->failed()) {
-            $this->error("Failed to install dependencies!");
-            $this->line("Error output:");
+            $this->error('Failed to install dependencies!');
+            $this->line('Error output:');
             $this->line($process->errorOutput());
+
             return false;
         }
 
-        $this->info("Dependencies installed successfully!");
+        $this->info('Dependencies installed successfully!');
+
         return true;
     }
 
     protected function showBuildInfo(Theme $theme): void
     {
         $this->newLine();
-        $this->comment("Build Information:");
-        
+        $this->comment('Build Information:');
+
         // Check for built assets
         $publicPath = public_path("themes/{$theme->slug}");
         if (File::exists($publicPath)) {
             $this->line("Public assets: {$publicPath}");
         }
 
-        $buildPath = $theme->path . '/public/build';
+        $buildPath = $theme->path.'/public/build';
         if (File::exists($buildPath)) {
             $this->line("Built assets: {$buildPath}");
-            
+
             // Show asset files
             $assetFiles = File::files($buildPath);
             if ($assetFiles) {
-                $this->line("Generated files:");
+                $this->line('Generated files:');
                 foreach ($assetFiles as $file) {
                     $size = $this->formatBytes(File::size($file));
                     $this->line("  • {$file->getFilename()} ({$size})");
@@ -142,7 +148,7 @@ class ThemeBuild extends Command
         }
 
         $this->newLine();
-        $this->line("Theme is ready to use!");
+        $this->line('Theme is ready to use!');
         $this->line("Activate with: php artisan theme:activate {$theme->slug}");
     }
 
@@ -154,6 +160,6 @@ class ThemeBuild extends Command
             $bytes /= 1024;
         }
 
-        return round($bytes, $precision) . ' ' . $units[$i];
+        return round($bytes, $precision).' '.$units[$i];
     }
 }

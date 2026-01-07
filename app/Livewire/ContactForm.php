@@ -14,8 +14,11 @@ use Livewire\Component;
 class ContactForm extends Component
 {
     public array $config = [];
+
     public array $formData = [];
+
     public string $honeypot = '';
+
     public bool $submitted = false;
 
     public function mount(array $config): void
@@ -64,7 +67,7 @@ class ContactForm extends Component
     public function submit(): void
     {
         // Rate limiting check
-        $key = 'contact-form:' . request()->ip();
+        $key = 'contact-form:'.request()->ip();
 
         if (RateLimiter::tooManyAttempts($key, 3)) {
             $this->addError('form', 'Too many submissions. Please try again in a few minutes.');

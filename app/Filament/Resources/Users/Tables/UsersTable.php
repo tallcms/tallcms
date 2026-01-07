@@ -11,7 +11,6 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
-use Spatie\Permission\Models\Role;
 
 class UsersTable
 {
@@ -23,21 +22,21 @@ class UsersTable
                     ->label('Full Name')
                     ->searchable()
                     ->sortable(),
-                    
+
                 TextColumn::make('email')
                     ->label('Email Address')
                     ->searchable()
                     ->sortable()
                     ->copyable()
                     ->copyMessage('Email address copied'),
-                    
+
                 TagsColumn::make('roles.name')
                     ->label('Roles')
                     ->badge()
                     ->separator(',')
                     ->limitList(2)
                     ->expandableLimitedList(),
-                    
+
                 IconColumn::make('is_active')
                     ->label('Status')
                     ->boolean()
@@ -46,17 +45,17 @@ class UsersTable
                     ->trueColor('success')
                     ->falseColor('danger')
                     ->sortable(),
-                    
+
                 IconColumn::make('email_verified_at')
                     ->label('Verified')
                     ->boolean()
-                    ->getStateUsing(fn ($record) => !is_null($record->email_verified_at))
+                    ->getStateUsing(fn ($record) => ! is_null($record->email_verified_at))
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-exclamation-triangle')
                     ->trueColor('success')
                     ->falseColor('warning')
                     ->sortable(),
-                    
+
                 TextColumn::make('created_at')
                     ->label('Joined')
                     ->dateTime()
@@ -70,7 +69,7 @@ class UsersTable
                     ->placeholder('All users')
                     ->trueLabel('Active only')
                     ->falseLabel('Inactive only'),
-                    
+
                 TernaryFilter::make('email_verified_at')
                     ->label('Email Verification')
                     ->placeholder('All users')
@@ -80,7 +79,7 @@ class UsersTable
                         true: fn ($query) => $query->whereNotNull('email_verified_at'),
                         false: fn ($query) => $query->whereNull('email_verified_at'),
                     ),
-                    
+
                 SelectFilter::make('roles')
                     ->label('Role')
                     ->relationship('roles', 'name')

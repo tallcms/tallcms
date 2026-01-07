@@ -6,8 +6,8 @@ use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class TallCmsSetup extends Command
 {
@@ -38,29 +38,30 @@ class TallCmsSetup extends Command
         $this->newLine();
 
         // Check if already setup
-        if (!$this->option('force') && $this->isAlreadySetup()) {
+        if (! $this->option('force') && $this->isAlreadySetup()) {
             $this->warn('TallCMS appears to be already set up.');
             $this->info('Use --force flag to force re-setup.');
+
             return Command::FAILURE;
         }
 
         // Create roles and permissions
         $this->createRolesAndPermissions();
-        
+
         // Create or update first admin user
         $this->createAdminUser();
-        
+
         $this->newLine();
         $this->info('✅ TallCMS setup completed successfully!');
         $this->info('You can now access the admin panel at /admin');
-        
+
         return Command::SUCCESS;
     }
 
     protected function isAlreadySetup(): bool
     {
         try {
-            return Role::where('name', 'super_admin')->exists() && 
+            return Role::where('name', 'super_admin')->exists() &&
                    User::role('super_admin')->exists();
         } catch (\Exception) {
             // Tables don't exist yet, so setup is not complete
@@ -75,7 +76,7 @@ class TallCmsSetup extends Command
         // Create roles
         $roles = [
             'super_admin' => 'Super Administrator - Complete system access',
-            'administrator' => 'Administrator - Full content and limited user management', 
+            'administrator' => 'Administrator - Full content and limited user management',
             'editor' => 'Editor - Full content management',
             'author' => 'Author - Create and edit own content',
         ];
@@ -92,12 +93,12 @@ class TallCmsSetup extends Command
         $this->call('shield:generate', [
             '--all' => true,
             '--panel' => 'admin',
-            '--option' => 'policies_and_permissions'
+            '--option' => 'policies_and_permissions',
         ]);
-        
+
         $this->info('🛡️  Running Shield seeder for permissions...');
         $this->call('db:seed', ['--class' => 'ShieldSeeder']);
-        
+
         // Now customize the role permissions for our CMS roles
         $this->customizeRolePermissions();
 
@@ -112,12 +113,13 @@ class TallCmsSetup extends Command
         // Check if we have an existing user
         $existingUser = User::first();
 
-        if ($existingUser && !$this->option('force')) {
+        if ($existingUser && ! $this->option('force')) {
             $makeAdmin = $this->confirm("Found existing user ({$existingUser->email}). Make them super admin?", true);
 
             if ($makeAdmin) {
                 $existingUser->assignRole('super_admin');
                 $this->info("✅ {$existingUser->email} is now a super admin!");
+
                 return;
             }
         }
@@ -125,7 +127,7 @@ class TallCmsSetup extends Command
         // Get admin name
         $name = $this->option('name');
         if ($this->option('no-interaction')) {
-            if (!$name) {
+            if (! $name) {
                 throw new \RuntimeException('Admin name is required when using --no-interaction. Use --name="Your Name"');
             }
         } else {
@@ -133,13 +135,13 @@ class TallCmsSetup extends Command
         }
 
         $email = $this->option('email');
-        
+
         // Validate email in non-interactive mode
         if ($this->option('no-interaction')) {
-            if (!$email) {
+            if (! $email) {
                 throw new \RuntimeException('Admin email is required when using --no-interaction. Use --email="your@email.com"');
             }
-            if (!$this->isValidEmail($email)) {
+            if (! $this->isValidEmail($email)) {
                 throw new \RuntimeException("Invalid email format: {$email}. Please provide a valid email address.");
             }
             if (User::where('email', $email)->exists()) {
@@ -150,10 +152,10 @@ class TallCmsSetup extends Command
             if ($email === null) {
                 $email = $this->ask('Admin email address');
             }
-            while (!$email || !$this->isValidEmail($email) || User::where('email', $email)->exists()) {
-                if (!$email) {
+            while (! $email || ! $this->isValidEmail($email) || User::where('email', $email)->exists()) {
+                if (! $email) {
                     $this->error('Email address is required.');
-                } elseif (!$this->isValidEmail($email)) {
+                } elseif (! $this->isValidEmail($email)) {
                     $this->error('Please enter a valid email address.');
                 } else {
                     $this->error('This email already exists.');
@@ -163,10 +165,10 @@ class TallCmsSetup extends Command
         }
 
         $password = $this->option('password');
-        
+
         // Validate password in non-interactive mode
         if ($this->option('no-interaction')) {
-            if (!$password) {
+            if (! $password) {
                 throw new \RuntimeException('Admin password is required when using --no-interaction. Use --password="your-password"');
             }
             if (strlen((string) $password) < 8) {
@@ -201,16 +203,17 @@ class TallCmsSetup extends Command
     protected function customizeRolePermissions(): void
     {
         $allPermissions = Permission::all();
-        
+
         if ($allPermissions->isEmpty()) {
             $this->error('No permissions found! Shield seeder may have failed.');
+
             return;
         }
-        
+
         // Super Admin already has all permissions from Shield seeder
         $superAdminRole = Role::where('name', 'super_admin')->first();
         $this->line("  ✓ Super Admin: {$superAdminRole->permissions->count()} permissions (full access)");
-        
+
         // Administrator: Content + limited user management + some settings
         $administratorPermissions = $allPermissions->filter(function ($permission) {
             return $this->isAdministratorPermission($permission->name);
@@ -218,7 +221,7 @@ class TallCmsSetup extends Command
         $administratorRole = Role::where('name', 'administrator')->first();
         $administratorRole->syncPermissions($administratorPermissions);
         $this->line("  ✓ Administrator: {$administratorPermissions->count()} permissions (content + users + settings)");
-        
+
         // Editor: Full content management, no users/settings
         $editorPermissions = $allPermissions->filter(function ($permission) {
             return $this->isEditorPermission($permission->name);
@@ -226,7 +229,7 @@ class TallCmsSetup extends Command
         $editorRole = Role::where('name', 'editor')->first();
         $editorRole->syncPermissions($editorPermissions);
         $this->line("  ✓ Editor: {$editorPermissions->count()} permissions (content management only)");
-        
+
         // Author: Own content + basic operations
         $authorPermissions = $allPermissions->filter(function ($permission) {
             return $this->isAuthorPermission($permission->name);
@@ -239,40 +242,40 @@ class TallCmsSetup extends Command
     protected function isAdministratorPermission(string $permission): bool
     {
         // Allow all content management (CmsPage, CmsPost, CmsCategory)
-        if (str_contains($permission, 'CmsPage') || 
-            str_contains($permission, 'CmsPost') || 
+        if (str_contains($permission, 'CmsPage') ||
+            str_contains($permission, 'CmsPost') ||
             str_contains($permission, 'CmsCategory') ||
             str_contains($permission, 'TallcmsMenu') ||
             str_contains($permission, 'TallcmsMedia')) {
             return true;
         }
-        
+
         // Allow user management (but exclude Shield roles)
-        if (str_contains($permission, 'User') && 
-            !str_contains($permission, 'Role') && 
-            !str_contains($permission, 'Shield')) {
+        if (str_contains($permission, 'User') &&
+            ! str_contains($permission, 'Role') &&
+            ! str_contains($permission, 'Shield')) {
             return true;
         }
-        
+
         // Allow site settings page
         if (str_contains($permission, 'SiteSettings')) {
             return true;
         }
-        
+
         return false;
     }
 
     protected function isEditorPermission(string $permission): bool
     {
         // Full content management
-        if (str_contains($permission, 'CmsPage') || 
-            str_contains($permission, 'CmsPost') || 
+        if (str_contains($permission, 'CmsPage') ||
+            str_contains($permission, 'CmsPost') ||
             str_contains($permission, 'CmsCategory') ||
             str_contains($permission, 'TallcmsMenu') ||
             str_contains($permission, 'TallcmsMedia')) {
             return true;
         }
-        
+
         // No user management, no settings, no system features
         return false;
     }
@@ -282,48 +285,48 @@ class TallCmsSetup extends Command
         // Basic content permissions (view, create, update)
         if (str_contains($permission, 'CmsPage') || str_contains($permission, 'CmsPost')) {
             // Allow ViewAny, View, Create, Update
-            if (str_contains($permission, 'ViewAny:') || 
-                str_contains($permission, 'View:') || 
-                str_contains($permission, 'Create:') || 
+            if (str_contains($permission, 'ViewAny:') ||
+                str_contains($permission, 'View:') ||
+                str_contains($permission, 'Create:') ||
                 str_contains($permission, 'Update:')) {
                 return true;
             }
             // Exclude Delete, ForceDelete, Restore for security
         }
-        
+
         // View categories only (but can't manage them)
-        if (str_contains($permission, 'CmsCategory') && 
+        if (str_contains($permission, 'CmsCategory') &&
             (str_contains($permission, 'ViewAny:') || str_contains($permission, 'View:'))) {
             return true;
         }
-        
+
         // Basic media operations
-        if (str_contains($permission, 'TallcmsMedia') && 
-            (str_contains($permission, 'ViewAny:') || 
-             str_contains($permission, 'View:') || 
-             str_contains($permission, 'Create:') || 
+        if (str_contains($permission, 'TallcmsMedia') &&
+            (str_contains($permission, 'ViewAny:') ||
+             str_contains($permission, 'View:') ||
+             str_contains($permission, 'Create:') ||
              str_contains($permission, 'Update:'))) {
             return true;
         }
-        
+
         // Basic dashboard access
         if ($permission === 'view_dashboard') {
             return true;
         }
-        
+
         // Menu management (view only)
-        if (str_contains($permission, 'TallcmsMenu') && 
+        if (str_contains($permission, 'TallcmsMenu') &&
             (str_contains($permission, 'ViewAny:') || str_contains($permission, 'View:'))) {
             return true;
         }
-        
+
         return false;
     }
 
     protected function isValidEmail(string $email): bool
     {
         return Validator::make(['email' => $email], [
-            'email' => 'required|email'
+            'email' => 'required|email',
         ])->passes();
     }
 }

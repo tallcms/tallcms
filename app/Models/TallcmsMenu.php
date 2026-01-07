@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class TallcmsMenu extends Model
 {
     protected $table = 'tallcms_menus';
-    
+
     protected $fillable = [
         'name',
         'location',
@@ -23,15 +23,15 @@ class TallcmsMenu extends Model
     public function items(): HasMany
     {
         return $this->hasMany(TallcmsMenuItem::class, 'menu_id')
-                    ->whereIsRoot()
-                    ->defaultOrder();
+            ->whereIsRoot()
+            ->defaultOrder();
     }
 
     public function allItems(): HasMany
     {
         return $this->hasMany(TallcmsMenuItem::class, 'menu_id');
     }
-    
+
     public function activeItems(): HasMany
     {
         return $this->items()->where('is_active', true);
@@ -40,7 +40,7 @@ class TallcmsMenu extends Model
     public static function byLocation(string $location): ?self
     {
         return static::where('location', $location)
-                    ->where('is_active', true)
-                    ->first();
+            ->where('is_active', true)
+            ->first();
     }
 }

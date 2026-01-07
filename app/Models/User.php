@@ -12,7 +12,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements FilamentUser, HasAppAuthentication
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, HasRoles, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -55,7 +55,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     public function canAccessPanel(\Filament\Panel $panel): bool
     {
         // Check if user is active
-        if (!($this->is_active ?? true)) {
+        if (! ($this->is_active ?? true)) {
             return false;
         }
 

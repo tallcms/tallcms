@@ -15,7 +15,7 @@ class InstallerGate
     public function handle(Request $request, Closure $next): Response
     {
         // Check if installer should be accessible
-        if (!$this->shouldAllowInstaller()) {
+        if (! $this->shouldAllowInstaller()) {
             // If installation is complete, redirect to homepage
             return redirect('/')->with('error', 'Installation is already complete.');
         }
@@ -40,7 +40,7 @@ class InstallerGate
         }
 
         // Allow if .env doesn't exist (fresh installation)
-        if (!File::exists(base_path('.env'))) {
+        if (! File::exists(base_path('.env'))) {
             return true;
         }
 

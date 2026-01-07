@@ -2,12 +2,13 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Theme;
+use Illuminate\Console\Command;
 
 class ThemeActivateCommand extends Command
 {
     protected $signature = 'theme:activate {slug : The theme slug to activate}';
+
     protected $description = 'Activate a theme';
 
     public function handle()
@@ -17,9 +18,9 @@ class ThemeActivateCommand extends Command
 
         // Check if theme exists
         $theme = Theme::find($slug);
-        if (!$theme) {
+        if (! $theme) {
             $this->error("Theme '{$slug}' not found.");
-            
+
             // Show available themes
             $availableThemes = $themeManager->getAvailableThemes();
             if ($availableThemes->isNotEmpty()) {
@@ -29,7 +30,7 @@ class ThemeActivateCommand extends Command
                     $this->line("- {$availableTheme->slug} ({$availableTheme->name})");
                 }
             }
-            
+
             return 1;
         }
 
@@ -37,6 +38,7 @@ class ThemeActivateCommand extends Command
         $activeTheme = $themeManager->getActiveTheme();
         if ($activeTheme->slug === $slug) {
             $this->warn("Theme '{$slug}' is already active.");
+
             return 0;
         }
 
@@ -45,7 +47,7 @@ class ThemeActivateCommand extends Command
         // Activate the theme
         if ($themeManager->setActiveTheme($slug)) {
             $this->info('Theme activated successfully!');
-            
+
             // Show theme info
             $this->line('');
             $this->line("Name: {$theme->name}");
@@ -54,9 +56,10 @@ class ThemeActivateCommand extends Command
             if ($theme->hasParent()) {
                 $this->line("Parent: {$theme->parent}");
             }
-            
+
         } else {
             $this->error('Failed to activate theme.');
+
             return 1;
         }
 

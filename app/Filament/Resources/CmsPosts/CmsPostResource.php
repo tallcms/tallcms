@@ -8,10 +8,8 @@ use App\Filament\Resources\CmsPosts\Pages\ListCmsPosts;
 use App\Filament\Resources\CmsPosts\Schemas\CmsPostForm;
 use App\Filament\Resources\CmsPosts\Tables\CmsPostsTable;
 use App\Models\CmsPost;
-use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -20,8 +18,7 @@ class CmsPostResource extends Resource
 {
     protected static ?string $model = CmsPost::class;
 
-     protected static ?string $pluralModelLabel = 'Posts';
-
+    protected static ?string $pluralModelLabel = 'Posts';
 
     public static function form(Schema $schema): Schema
     {
@@ -53,22 +50,22 @@ class CmsPostResource extends Resource
     {
         return 'heroicon-o-newspaper';
     }
-    
+
     public static function getNavigationGroup(): ?string
     {
         return 'Content Management';
     }
-    
+
     public static function getNavigationLabel(): string
     {
         return 'Posts';
     }
-    
+
     public static function getNavigationSort(): ?int
     {
         return 2;
     }
-    
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
@@ -76,7 +73,7 @@ class CmsPostResource extends Resource
                 SoftDeletingScope::class,
             ]);
     }
-    
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();

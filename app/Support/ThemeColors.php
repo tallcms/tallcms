@@ -35,7 +35,7 @@ class ThemeColors implements ThemeInterface
                 'default' => '#d97706',
             ],
             'enable_dark_mode' => [
-                'type' => 'boolean', 
+                'type' => 'boolean',
                 'label' => 'Enable Dark Mode',
                 'default' => true,
             ],
@@ -179,7 +179,7 @@ class ThemeColors implements ThemeInterface
     public static function getFilamentColors(): array
     {
         $colors = self::getColors();
-        
+
         return [
             'primary' => $colors['primary'],
             'secondary' => $colors['secondary'],
@@ -205,13 +205,13 @@ class ThemeColors implements ThemeInterface
     {
         $colors = self::getColors();
         $css = '';
-        
+
         foreach ($colors as $name => $shades) {
             foreach ($shades as $shade => $value) {
                 $css .= "    --color-{$name}-{$shade}: {$value};\n";
             }
         }
-        
+
         return $css;
     }
 
@@ -321,7 +321,7 @@ class ThemeColors implements ThemeInterface
     public static function getStaticTextPresets(): array
     {
         $colors = self::getColors();
-        
+
         return [
             'primary' => [
                 'heading' => $colors['neutral'][900],

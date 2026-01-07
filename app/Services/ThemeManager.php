@@ -2,24 +2,25 @@
 
 namespace App\Services;
 
+use App\Events\ThemeActivated;
+use App\Events\ThemeActivating;
+use App\Events\ThemeInstalled;
+use App\Events\ThemeInstalling;
 use App\Models\Theme;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Log;
-use App\Events\ThemeActivating;
-use App\Events\ThemeActivated;
-use App\Events\ThemeInstalling;
-use App\Events\ThemeInstalled;
 use ZipArchive;
 
 class ThemeManager
 {
     protected ?Theme $activeTheme = null;
+
     protected const CACHE_KEY = 'themes.discovered';
 
     /**
@@ -33,7 +34,7 @@ class ThemeManager
 
         $activeSlug = Config::get('theme.active', 'default');
         $requestedTheme = Theme::find($activeSlug);
-        
+
         // Safety check: ensure the theme actually exists on disk
         if ($requestedTheme && $this->validateThemeExists($requestedTheme)) {
             $this->activeTheme = $requestedTheme;
@@ -41,7 +42,7 @@ class ThemeManager
             // Active theme is missing or invalid - fallback safely
             $this->activeTheme = $this->getSafeDefaultTheme($activeSlug);
         }
-        
+
         return $this->activeTheme;
     }
 
@@ -50,9 +51,9 @@ class ThemeManager
      */
     protected function validateThemeExists(Theme $theme): bool
     {
-        return File::exists($theme->path) && 
-               File::exists($theme->path . '/theme.json') &&
-               is_readable($theme->path . '/theme.json');
+        return File::exists($theme->path) &&
+               File::exists($theme->path.'/theme.json') &&
+               is_readable($theme->path.'/theme.json');
     }
 
     /**
@@ -64,19 +65,22 @@ class ThemeManager
         $defaultTheme = Theme::find('default');
         if ($defaultTheme && $this->validateThemeExists($defaultTheme)) {
             $this->logThemeFallback($requestedSlug, 'default');
+
             return $defaultTheme;
         }
-        
+
         // If no 'default' theme, use the first available theme
         $availableThemes = $this->getAvailableThemes();
         if ($availableThemes->isNotEmpty()) {
             $fallbackTheme = $availableThemes->first();
             $this->logThemeFallback($requestedSlug, $fallbackTheme->slug);
+
             return $fallbackTheme;
         }
-        
+
         // Last resort: create a virtual default theme
         $this->logThemeFallback($requestedSlug, 'virtual-default');
+
         return $this->getDefaultTheme();
     }
 
@@ -100,10 +104,10 @@ class ThemeManager
         // Refresh theme cache to ensure we have the latest themes
         // This prevents issues when a new theme was just added
         $this->refreshCache();
-        
+
         $theme = Theme::find($slug);
-        
-        if (!$theme) {
+
+        if (! $theme) {
             return false;
         }
 
@@ -121,7 +125,7 @@ class ThemeManager
         $config = File::exists($configPath) ? include $configPath : [];
         $config['active'] = $slug;
 
-        File::put($configPath, "<?php\n\nreturn " . var_export($config, true) . ";\n");
+        File::put($configPath, "<?php\n\nreturn ".var_export($config, true).";\n");
 
         // Clear PHP file stat cache to ensure fresh reads
         clearstatcache(true, $configPath);
@@ -156,7 +160,7 @@ class ThemeManager
         // This must happen on every theme switch regardless of environment
         $compiledViewPath = config('view.compiled');
         if ($compiledViewPath && File::isDirectory($compiledViewPath)) {
-            foreach (File::glob($compiledViewPath . '/*.php') as $view) {
+            foreach (File::glob($compiledViewPath.'/*.php') as $view) {
                 File::delete($view);
             }
         }
@@ -217,15 +221,16 @@ class ThemeManager
     {
         $previousSlug = Cache::get('theme.rollback_slug');
 
-        if (!$previousSlug) {
+        if (! $previousSlug) {
             return false;
         }
 
         // Verify the previous theme still exists
         $previousTheme = Theme::find($previousSlug);
-        if (!$previousTheme) {
+        if (! $previousTheme) {
             Cache::forget('theme.rollback_slug');
             Cache::forget('theme.rollback_timestamp');
+
             return false;
         }
 
@@ -259,7 +264,7 @@ class ThemeManager
     {
         $rollbackSlug = $this->getRollbackSlug();
 
-        if (!$rollbackSlug) {
+        if (! $rollbackSlug) {
             return false;
         }
 
@@ -286,11 +291,11 @@ class ThemeManager
             $cachedThemes = Cache::remember(self::CACHE_KEY, $cacheTtl, function () {
                 return $this->discoverThemes();
             });
-            
+
             // Prune missing directories to prevent phantom themes
             return $this->pruneMissingThemes($cachedThemes);
         }
-        
+
         return $this->discoverThemes();
     }
 
@@ -300,15 +305,15 @@ class ThemeManager
     protected function pruneMissingThemes(Collection $themes): Collection
     {
         $validThemes = $themes->filter(function ($theme) {
-            return File::exists($theme->path) && File::exists($theme->path . '/theme.json');
+            return File::exists($theme->path) && File::exists($theme->path.'/theme.json');
         });
-        
+
         // If we pruned themes, update the cache
         if ($validThemes->count() !== $themes->count()) {
             $cacheTtl = Config::get('theme.cache_ttl', 3600);
             Cache::put(self::CACHE_KEY, $validThemes, $cacheTtl);
         }
-        
+
         return $validThemes;
     }
 
@@ -318,8 +323,8 @@ class ThemeManager
     protected function discoverThemes(): Collection
     {
         $themesPath = base_path('themes');
-        
-        if (!File::exists($themesPath)) {
+
+        if (! File::exists($themesPath)) {
             return collect();
         }
 
@@ -350,6 +355,7 @@ class ThemeManager
     public function refreshCache(): Collection
     {
         $this->clearCache();
+
         return $this->getAvailableThemes();
     }
 
@@ -363,8 +369,9 @@ class ThemeManager
 
         $theme = Theme::find($slug);
 
-        if (!$theme) {
+        if (! $theme) {
             Log::error("installTheme: Theme '{$slug}' not found after cache refresh");
+
             return false;
         }
 
@@ -374,18 +381,18 @@ class ThemeManager
         $success = true;
 
         // Create public symlink
-        if (!$this->publishThemeAssets($theme)) {
+        if (! $this->publishThemeAssets($theme)) {
             Log::error("installTheme: Failed to publish theme assets for '{$slug}'");
             $success = false;
         }
 
         // Build theme assets only if package.json exists AND theme is not already built
         // Pre-built themes (uploaded ZIPs) should already have public/build/manifest.json
-        $packageJsonPath = $theme->path . '/package.json';
-        $manifestPath = $theme->path . '/public/build/manifest.json';
+        $packageJsonPath = $theme->path.'/package.json';
+        $manifestPath = $theme->path.'/public/build/manifest.json';
 
-        if (File::exists($packageJsonPath) && !File::exists($manifestPath)) {
-            if (!$this->buildThemeAssets($theme)) {
+        if (File::exists($packageJsonPath) && ! File::exists($manifestPath)) {
+            if (! $this->buildThemeAssets($theme)) {
                 Log::error("installTheme: Failed to build theme assets for '{$slug}'");
                 $success = false;
             }
@@ -403,8 +410,8 @@ class ThemeManager
     /**
      * Extract a theme from a validated ZIP file
      *
-     * @param string $zipPath Path to the ZIP file
-     * @param string $slug Theme slug (from validated theme.json)
+     * @param  string  $zipPath  Path to the ZIP file
+     * @param  string  $slug  Theme slug (from validated theme.json)
      * @return array{success: bool, error: ?string}
      */
     public function extractTheme(string $zipPath, string $slug): array
@@ -419,7 +426,7 @@ class ThemeManager
             ];
         }
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         $openResult = $zip->open($zipPath);
 
         if ($openResult !== true) {
@@ -459,7 +466,7 @@ class ThemeManager
 
                 // Calculate target path
                 $relativePath = $filename;
-                if ($hasSubdirectory && str_starts_with($filename, $prefix . '/')) {
+                if ($hasSubdirectory && str_starts_with($filename, $prefix.'/')) {
                     $relativePath = substr($filename, strlen($prefix) + 1);
                 }
 
@@ -468,11 +475,11 @@ class ThemeManager
                     continue;
                 }
 
-                $destPath = $targetPath . '/' . $relativePath;
+                $destPath = $targetPath.'/'.$relativePath;
 
                 // Ensure destination directory exists
                 $destDir = dirname($destPath);
-                if (!File::exists($destDir)) {
+                if (! File::exists($destDir)) {
                     File::makeDirectory($destDir, 0755, true, true);
                 }
 
@@ -481,6 +488,7 @@ class ThemeManager
                 if ($content === false) {
                     // Cleanup on failure
                     File::deleteDirectory($targetPath);
+
                     return [
                         'success' => false,
                         'error' => "Failed to extract file: {$filename}",
@@ -525,8 +533,9 @@ class ThemeManager
     public function deleteTheme(string $slug): array
     {
         // Validate slug format to prevent path traversal
-        if (!preg_match('/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/', $slug) || strlen($slug) > 64) {
-            Log::warning("deleteTheme: Invalid slug format rejected", ['slug' => $slug]);
+        if (! preg_match('/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/', $slug) || strlen($slug) > 64) {
+            Log::warning('deleteTheme: Invalid slug format rejected', ['slug' => $slug]);
+
             return [
                 'success' => false,
                 'error' => 'Invalid theme slug format.',
@@ -574,11 +583,11 @@ class ThemeManager
         $originalPaths = collect($viewFinder->getPaths())
             ->filter(function ($path) {
                 // Remove any theme paths but keep original Laravel paths
-                return !str_contains($path, '/themes/');
+                return ! str_contains($path, '/themes/');
             })
             ->values()
             ->toArray();
-            
+
         $viewFinder->setPaths($originalPaths);
     }
 
@@ -615,7 +624,7 @@ class ThemeManager
     {
         $namespace = "theme.{$theme->slug}";
         $viewPath = $theme->getViewPath();
-        
+
         if (File::exists($viewPath)) {
             View::addNamespace($namespace, $viewPath);
         }
@@ -642,30 +651,32 @@ class ThemeManager
         if (File::exists($themePublicPath)) {
             // Ensure parent directory exists
             File::makeDirectory(dirname($publicThemePath), 0755, true, true);
-            
+
             // Try symlink first, fallback to copy
             try {
                 if (function_exists('symlink') && @symlink($themePublicPath, $publicThemePath)) {
                     return true;
                 }
-                
+
                 // Fallback to recursive copy - check if it actually succeeds
                 $copySuccess = File::copyDirectory($themePublicPath, $publicThemePath);
-                
-                if (!$copySuccess || !File::exists($publicThemePath)) {
+
+                if (! $copySuccess || ! File::exists($publicThemePath)) {
                     \Log::warning("Failed to copy theme assets for {$theme->slug} to {$publicThemePath}");
+
                     return false;
                 }
-                
+
                 return true;
-                
+
             } catch (\Exception $e) {
                 // Log the error but don't fail silently
-                \Log::warning("Failed to publish theme assets for {$theme->slug}: " . $e->getMessage());
+                \Log::warning("Failed to publish theme assets for {$theme->slug}: ".$e->getMessage());
+
                 return false;
             }
         }
-        
+
         return true; // No assets to publish
     }
 
@@ -677,7 +688,7 @@ class ThemeManager
         $themePath = $theme->path;
 
         // Check if node_modules exists, if not run npm install
-        if (!File::exists($themePath . '/node_modules')) {
+        if (! File::exists($themePath.'/node_modules')) {
             $result = Process::path($themePath)->run('npm install');
             if ($result->failed()) {
                 return false;
@@ -686,9 +697,9 @@ class ThemeManager
 
         // Run build command
         $result = Process::path($themePath)->run('npm run build');
+
         return $result->successful();
     }
-
 
     /**
      * Get theme asset URL with parent fallback
@@ -696,7 +707,7 @@ class ThemeManager
     public function themeAsset(string $path): string
     {
         $activeTheme = $this->getActiveTheme();
-        
+
         // Try theme hierarchy (child to parent)
         foreach ($activeTheme->getHierarchy() as $theme) {
             $themeAssetPath = "themes/{$theme->slug}/{$path}";
@@ -704,7 +715,7 @@ class ThemeManager
                 return asset($themeAssetPath);
             }
         }
-        
+
         // Fallback to default asset
         return asset($path);
     }
@@ -715,30 +726,30 @@ class ThemeManager
     public function getThemeViteAssets(array $entrypoints): array
     {
         $activeTheme = $this->getActiveTheme();
-        
+
         // First check for dev server (hot reloading)
         $devServerAssets = $this->tryDevServerAssets($activeTheme, $entrypoints);
         if ($devServerAssets !== null) {
             return $devServerAssets;
         }
-        
+
         // No dev server, use built assets with intelligent inheritance
         $assets = [];
-        
+
         foreach ($entrypoints as $entry) {
             $assetFound = false;
-            
+
             // Try each theme in hierarchy for this specific entry
             foreach ($activeTheme->getHierarchy() as $theme) {
                 $manifestPath = public_path("themes/{$theme->slug}/build/manifest.json");
-                
-                if (!File::exists($manifestPath)) {
+
+                if (! File::exists($manifestPath)) {
                     continue;
                 }
-                
+
                 try {
                     $manifest = json_decode(File::get($manifestPath), true);
-                    
+
                     if (isset($manifest[$entry])) {
                         // Found the entry in this theme's manifest
                         $this->addManifestEntry($assets, $manifest[$entry], $theme, $entry, $manifest);
@@ -749,19 +760,19 @@ class ThemeManager
                     continue;
                 }
             }
-            
+
             // If not found in any theme manifest, try main app fallback
-            if (!$assetFound) {
+            if (! $assetFound) {
                 $beforeCount = count($assets);
                 $this->tryMainAppFallback($assets, $entry);
-                
+
                 // If main app fallback also failed and this is CSS, use static fallback as last resort
                 if (count($assets) === $beforeCount && str_ends_with($entry, '.css')) {
                     $this->addStaticCssFallback($assets, "no manifest found for {$entry}");
                 }
             }
         }
-        
+
         return $this->deduplicateAssets($assets);
     }
 
@@ -775,10 +786,10 @@ class ThemeManager
         // 2. Main app hot file (app dev server)
         $themeHotFile = public_path("themes/{$activeTheme->slug}/hot");
         $appHotFile = storage_path('framework/vite.hot');
-        
+
         $devServerUrl = null;
         $isThemeDevServer = false;
-        
+
         if (File::exists($themeHotFile)) {
             $devServerUrl = trim(File::get($themeHotFile));
             $isThemeDevServer = true;
@@ -786,25 +797,25 @@ class ThemeManager
             $devServerUrl = trim(File::get($appHotFile));
             $isThemeDevServer = false;
         }
-        
-        if (!$devServerUrl) {
+
+        if (! $devServerUrl) {
             return null; // No dev server running
         }
-        
+
         // Build dev server assets
         $assets = [];
-        
+
         foreach ($entrypoints as $entry) {
             $assets[] = [
-                'url' => $devServerUrl . '/' . $entry,
+                'url' => $devServerUrl.'/'.$entry,
                 'type' => str_ends_with($entry, '.css') ? 'css' : 'js',
                 'dev_server' => true,
                 'entry' => $entry,
                 'note' => $isThemeDevServer ? 'theme dev server' : 'main app dev server',
-                'fallback' => !$isThemeDevServer // Mark app dev server as fallback
+                'fallback' => ! $isThemeDevServer, // Mark app dev server as fallback
             ];
         }
-        
+
         return $assets;
     }
 
@@ -818,9 +829,9 @@ class ThemeManager
             'url' => asset("themes/{$theme->slug}/build/{$assetInfo['file']}"),
             'type' => str_ends_with($assetInfo['file'], '.css') ? 'css' : 'js',
             'entry' => $entry,
-            'theme' => $theme->slug
+            'theme' => $theme->slug,
         ];
-        
+
         // Add any CSS imports from JS entries
         if (isset($assetInfo['css'])) {
             foreach ($assetInfo['css'] as $cssFile) {
@@ -828,11 +839,11 @@ class ThemeManager
                     'url' => asset("themes/{$theme->slug}/build/{$cssFile}"),
                     'type' => 'css',
                     'entry' => $entry,
-                    'theme' => $theme->slug
+                    'theme' => $theme->slug,
                 ];
             }
         }
-        
+
         // Add any imports - properly resolve manifest keys to actual files
         // Note: This resolves imports from the same manifest where the entry was found.
         // Split chunks defined only in parent themes won't be automatically pulled in.
@@ -841,16 +852,16 @@ class ThemeManager
                 // Resolve import key to actual manifest entry
                 if (isset($manifest[$importKey])) {
                     $importInfo = $manifest[$importKey];
-                    
+
                     // Add the main import file
                     $assets[] = [
                         'url' => asset("themes/{$theme->slug}/build/{$importInfo['file']}"),
                         'type' => str_ends_with($importInfo['file'], '.css') ? 'css' : 'js',
                         'entry' => $entry,
                         'theme' => $theme->slug,
-                        'import' => true
+                        'import' => true,
                     ];
-                    
+
                     // Also include any CSS from imports
                     if (isset($importInfo['css'])) {
                         foreach ($importInfo['css'] as $importCssFile) {
@@ -859,7 +870,7 @@ class ThemeManager
                                 'type' => 'css',
                                 'entry' => $entry,
                                 'theme' => $theme->slug,
-                                'import' => true
+                                'import' => true,
                             ];
                         }
                     }
@@ -874,14 +885,14 @@ class ThemeManager
     protected function tryMainAppFallback(array &$assets, string $entry): void
     {
         $mainManifestPath = public_path('build/manifest.json');
-        
-        if (!File::exists($mainManifestPath)) {
+
+        if (! File::exists($mainManifestPath)) {
             return;
         }
-        
+
         try {
             $mainManifest = json_decode(File::get($mainManifestPath), true);
-            
+
             // Special handling for blocks.css - fallback to app.css since blocks.css is imported there
             if ($entry === 'resources/css/blocks.css') {
                 if (isset($mainManifest['resources/css/app.css'])) {
@@ -891,25 +902,26 @@ class ThemeManager
                         'type' => 'css',
                         'fallback' => true,
                         'entry' => $entry,
-                        'note' => 'main app.css (includes blocks.css) fallback'
+                        'note' => 'main app.css (includes blocks.css) fallback',
                     ];
                 }
+
                 return;
             }
-            
+
             // For other entries, try direct fallback to main app manifest
             if (isset($mainManifest[$entry])) {
                 $assetInfo = $mainManifest[$entry];
-                
+
                 // Add main asset file
                 $assets[] = [
                     'url' => asset("build/{$assetInfo['file']}"),
                     'type' => str_ends_with($assetInfo['file'], '.css') ? 'css' : 'js',
                     'fallback' => true,
                     'entry' => $entry,
-                    'note' => 'main app fallback'
+                    'note' => 'main app fallback',
                 ];
-                
+
                 // Add any CSS imports from JS entries
                 if (isset($assetInfo['css'])) {
                     foreach ($assetInfo['css'] as $cssFile) {
@@ -918,11 +930,11 @@ class ThemeManager
                             'type' => 'css',
                             'fallback' => true,
                             'entry' => $entry,
-                            'note' => 'main app CSS import fallback'
+                            'note' => 'main app CSS import fallback',
                         ];
                     }
                 }
-                
+
                 // Add any imports - properly resolve manifest keys
                 if (isset($assetInfo['imports'])) {
                     foreach ($assetInfo['imports'] as $importKey) {
@@ -934,7 +946,7 @@ class ThemeManager
                                 'fallback' => true,
                                 'entry' => $entry,
                                 'import' => true,
-                                'note' => 'main app import fallback'
+                                'note' => 'main app import fallback',
                             ];
                         }
                     }
@@ -959,7 +971,7 @@ class ThemeManager
             'author' => 'TallCMS',
             'tailwind' => [],
             'supports' => [],
-            'build' => []
+            'build' => [],
         ], base_path('themes/default'));
     }
 
@@ -974,10 +986,9 @@ class ThemeManager
             'assets' => [
                 'css' => $this->themeAsset('css/app.css'),
                 'js' => $this->themeAsset('js/app.js'),
-            ]
+            ],
         ];
     }
-
 
     /**
      * Get themes directory path
@@ -993,13 +1004,13 @@ class ThemeManager
     protected function addStaticCssFallback(array &$fallbackAssets, string $reason): void
     {
         $staticCssPath = glob(public_path('build/assets/app-*.css'));
-        if (!empty($staticCssPath)) {
+        if (! empty($staticCssPath)) {
             $cssFile = basename($staticCssPath[0]);
             $fallbackAssets[] = [
                 'url' => asset("build/assets/{$cssFile}"),
                 'type' => 'css',
                 'fallback' => true,
-                'note' => "static fallback for block styles ({$reason})"
+                'note' => "static fallback for block styles ({$reason})",
             ];
         }
     }
@@ -1011,48 +1022,48 @@ class ThemeManager
     {
         $seen = [];
         $deduplicated = [];
-        
+
         foreach ($assets as $asset) {
-            $key = $asset['url'] . '|' . $asset['type'];
-            
-            if (!isset($seen[$key])) {
+            $key = $asset['url'].'|'.$asset['type'];
+
+            if (! isset($seen[$key])) {
                 $seen[$key] = $asset; // Store the full asset, not just a boolean
                 $deduplicated[] = $asset;
             } else {
                 // Merge metadata from duplicate assets to preserve entry/import information
                 $existing = &$seen[$key];
-                
+
                 // Merge entries if both have entry information
                 if (isset($asset['entry']) && isset($existing['entry'])) {
-                    if (!is_array($existing['entry'])) {
+                    if (! is_array($existing['entry'])) {
                         $existing['entry'] = [$existing['entry']];
                     }
-                    if (!in_array($asset['entry'], $existing['entry'])) {
+                    if (! in_array($asset['entry'], $existing['entry'])) {
                         $existing['entry'][] = $asset['entry'];
                     }
                 }
-                
+
                 // Preserve import flag if either asset is an import
                 if (isset($asset['import']) && $asset['import']) {
                     $existing['import'] = true;
                 }
-                
+
                 // Prefer non-fallback sources but preserve fallback info
                 if (isset($existing['fallback']) && isset($asset['fallback'])) {
                     $existing['fallback'] = $existing['fallback'] && $asset['fallback'];
                 } elseif (isset($asset['fallback'])) {
                     $existing['fallback'] = $asset['fallback'];
                 }
-                
+
                 // Combine notes for debugging
                 if (isset($asset['note']) && isset($existing['note'])) {
                     if ($asset['note'] !== $existing['note']) {
-                        $existing['note'] = $existing['note'] . '; ' . $asset['note'];
+                        $existing['note'] = $existing['note'].'; '.$asset['note'];
                     }
                 } elseif (isset($asset['note'])) {
                     $existing['note'] = $asset['note'];
                 }
-                
+
                 // Update the deduplicated array with merged metadata
                 foreach ($deduplicated as &$deduped) {
                     if ($deduped['url'] === $asset['url'] && $deduped['type'] === $asset['type']) {
@@ -1062,7 +1073,7 @@ class ThemeManager
                 }
             }
         }
-        
+
         return $deduplicated;
     }
 }

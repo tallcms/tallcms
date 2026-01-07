@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Theme;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
 use ZipArchive;
 
 class ThemeValidator
@@ -83,24 +82,24 @@ class ThemeValidator
         $warnings = [];
 
         // Verify theme directory exists
-        if (!File::exists($theme->path)) {
-            return ValidationResult::failed(['Theme directory not found: ' . $theme->path]);
+        if (! File::exists($theme->path)) {
+            return ValidationResult::failed(['Theme directory not found: '.$theme->path]);
         }
 
         // Verify theme.json exists and is readable
         $themeJsonPath = "{$theme->path}/theme.json";
-        if (!File::exists($themeJsonPath)) {
+        if (! File::exists($themeJsonPath)) {
             return ValidationResult::failed(['theme.json is missing']);
         }
 
-        if (!is_readable($themeJsonPath)) {
+        if (! is_readable($themeJsonPath)) {
             return ValidationResult::failed(['theme.json is not readable']);
         }
 
         // Parse theme.json
         $themeData = json_decode(File::get($themeJsonPath), true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return ValidationResult::failed(['theme.json contains invalid JSON: ' . json_last_error_msg()]);
+            return ValidationResult::failed(['theme.json contains invalid JSON: '.json_last_error_msg()]);
         }
 
         // Validate required fields
@@ -119,7 +118,7 @@ class ThemeValidator
         $isPrebuilt = $themeData['compatibility']['prebuilt'] ?? true;
         if ($isPrebuilt) {
             $manifestPath = "{$theme->path}/public/build/manifest.json";
-            if (!File::exists($manifestPath)) {
+            if (! File::exists($manifestPath)) {
                 $errors[] = 'Theme is marked as prebuilt but public/build/manifest.json is missing. Run "npm run build" in the theme directory.';
             } else {
                 // Verify files referenced in manifest actually exist
@@ -130,13 +129,13 @@ class ThemeValidator
 
         // Check asset symlinks
         $publicThemePath = public_path("themes/{$theme->slug}");
-        if (!File::exists($publicThemePath)) {
+        if (! File::exists($publicThemePath)) {
             $warnings[] = 'Theme assets not published - will be created on activation';
         }
 
         // Scan for forbidden files
         $forbiddenFiles = $this->scanForForbiddenFiles($theme->path);
-        if (!empty($forbiddenFiles)) {
+        if (! empty($forbiddenFiles)) {
             foreach ($forbiddenFiles as $file) {
                 $errors[] = "Forbidden file found: {$file}";
             }
@@ -159,15 +158,15 @@ class ThemeValidator
         $warnings = [];
         $themeData = [];
 
-        if (!File::exists($zipPath)) {
+        if (! File::exists($zipPath)) {
             return ValidationResult::failed(['ZIP file not found']);
         }
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         $openResult = $zip->open($zipPath);
 
         if ($openResult !== true) {
-            return ValidationResult::failed(['Unable to open ZIP file: error code ' . $openResult]);
+            return ValidationResult::failed(['Unable to open ZIP file: error code '.$openResult]);
         }
 
         try {
@@ -202,7 +201,7 @@ class ThemeValidator
                 $themeData = json_decode($themeJsonContent, true);
 
                 if (json_last_error() !== JSON_ERROR_NONE) {
-                    $errors[] = 'theme.json contains invalid JSON: ' . json_last_error_msg();
+                    $errors[] = 'theme.json contains invalid JSON: '.json_last_error_msg();
                 } else {
                     // Validate required fields
                     foreach ($this->requiredFields as $field) {
@@ -212,8 +211,8 @@ class ThemeValidator
                     }
 
                     // Validate slug format (prevent path traversal via slug)
-                    if (!empty($themeData['slug'])) {
-                        if (!preg_match('/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/', $themeData['slug'])) {
+                    if (! empty($themeData['slug'])) {
+                        if (! preg_match('/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/', $themeData['slug'])) {
                             $errors[] = 'Slug must contain only lowercase letters, numbers, and hyphens (cannot start or end with hyphen)';
                         }
                         if (strlen($themeData['slug']) > 64) {
@@ -263,13 +262,13 @@ class ThemeValidator
         $warnings = [];
         $themeData = [];
 
-        if (!File::exists($path)) {
+        if (! File::exists($path)) {
             return ValidationResult::failed(['Directory does not exist']);
         }
 
         // Check required files
         foreach ($this->requiredFiles as $file) {
-            if (!File::exists("{$path}/{$file}")) {
+            if (! File::exists("{$path}/{$file}")) {
                 $errors[] = "Missing required file: {$file}";
             }
         }
@@ -280,7 +279,7 @@ class ThemeValidator
             $themeData = json_decode(File::get($themeJsonPath), true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
-                $errors[] = 'Invalid JSON in theme.json: ' . json_last_error_msg();
+                $errors[] = 'Invalid JSON in theme.json: '.json_last_error_msg();
             } else {
                 // Validate required fields
                 foreach ($this->requiredFields as $field) {
@@ -290,8 +289,8 @@ class ThemeValidator
                 }
 
                 // Validate slug format (prevent path traversal via slug)
-                if (!empty($themeData['slug'])) {
-                    if (!preg_match('/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/', $themeData['slug'])) {
+                if (! empty($themeData['slug'])) {
+                    if (! preg_match('/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/', $themeData['slug'])) {
                         $errors[] = 'Slug must contain only lowercase letters, numbers, and hyphens (cannot start or end with hyphen)';
                     }
                     if (strlen($themeData['slug']) > 64) {
@@ -339,36 +338,36 @@ class ThemeValidator
         $compatibility = $themeData['compatibility'] ?? [];
 
         // Check PHP version
-        if (!empty($compatibility['php'])) {
+        if (! empty($compatibility['php'])) {
             $requiredPhp = $compatibility['php'];
             $currentPhp = PHP_VERSION;
 
-            if (!$this->versionSatisfies($currentPhp, $requiredPhp)) {
+            if (! $this->versionSatisfies($currentPhp, $requiredPhp)) {
                 $errors[] = "Theme requires PHP {$requiredPhp}, current version is {$currentPhp}";
             }
         }
 
         // Check PHP extensions
-        if (!empty($compatibility['extensions'])) {
+        if (! empty($compatibility['extensions'])) {
             foreach ($compatibility['extensions'] as $extension) {
-                if (!extension_loaded($extension)) {
+                if (! extension_loaded($extension)) {
                     $errors[] = "Theme requires PHP extension: {$extension}";
                 }
             }
         }
 
         // Check TallCMS version - this is now an error if incompatible
-        if (!empty($compatibility['tallcms']) && $compatibility['tallcms'] !== '*') {
+        if (! empty($compatibility['tallcms']) && $compatibility['tallcms'] !== '*') {
             $requiredTallcms = $compatibility['tallcms'];
             $currentTallcms = self::getTallcmsVersion();
-            if (!$this->versionSatisfies($currentTallcms, $requiredTallcms)) {
+            if (! $this->versionSatisfies($currentTallcms, $requiredTallcms)) {
                 $errors[] = "Theme requires TallCMS {$requiredTallcms}, current version is {$currentTallcms}";
             }
         }
 
         // Check prebuilt requirement in production
         $isPrebuilt = $compatibility['prebuilt'] ?? true;
-        if (!$isPrebuilt && app()->environment('production')) {
+        if (! $isPrebuilt && app()->environment('production')) {
             $errors[] = 'Source themes (requiring build) cannot be installed in production environment';
         }
 
@@ -394,7 +393,7 @@ class ThemeValidator
         foreach ($iterator as $file) {
             if ($file->isFile()) {
                 $filename = $file->getFilename();
-                $relativePath = str_replace($path . '/', '', $file->getPathname());
+                $relativePath = str_replace($path.'/', '', $file->getPathname());
 
                 // Skip node_modules and vendor directories
                 if (str_contains($relativePath, 'node_modules/') || str_contains($relativePath, 'vendor/')) {
@@ -515,7 +514,7 @@ class ThemeValidator
 
             // ^X.Y.Z means >= X.Y.Z and < (X+1).0.0
             return version_compare($current, $minVersion, '>=')
-                && version_compare($current, ($major + 1) . '.0.0', '<');
+                && version_compare($current, ($major + 1).'.0.0', '<');
         }
 
         // Handle tilde (~) version constraints
@@ -526,9 +525,10 @@ class ThemeValidator
             if (count($parts) >= 2) {
                 $major = $parts[0];
                 $minor = $parts[1];
+
                 // ~X.Y.Z means >= X.Y.Z and < X.(Y+1).0
                 return version_compare($current, $minVersion, '>=')
-                    && version_compare($current, "{$major}." . ($minor + 1) . '.0', '<');
+                    && version_compare($current, "{$major}.".($minor + 1).'.0', '<');
             }
         }
 
@@ -568,11 +568,11 @@ class ThemeValidator
 
             // Check for valid JSON
             if (json_last_error() !== JSON_ERROR_NONE) {
-                return ['Manifest file contains invalid JSON: ' . json_last_error_msg()];
+                return ['Manifest file contains invalid JSON: '.json_last_error_msg()];
             }
 
             // Check manifest is an associative array (not sequential)
-            if (!is_array($manifest) || (count($manifest) > 0 && array_keys($manifest) === range(0, count($manifest) - 1))) {
+            if (! is_array($manifest) || (count($manifest) > 0 && array_keys($manifest) === range(0, count($manifest) - 1))) {
                 return ['Manifest must be an associative array with entry keys'];
             }
 
@@ -580,34 +580,36 @@ class ThemeValidator
 
             // Check for expected entry points
             foreach ($this->expectedManifestEntries as $expectedEntry) {
-                if (!isset($manifest[$expectedEntry])) {
+                if (! isset($manifest[$expectedEntry])) {
                     $warnings[] = "Manifest missing expected entry: {$expectedEntry}";
                 }
             }
 
             foreach ($manifest as $entry => $info) {
                 // Validate entry structure
-                if (!is_array($info)) {
+                if (! is_array($info)) {
                     $errors[] = "Manifest entry '{$entry}' must be an object";
+
                     continue;
                 }
 
                 // Check 'file' key exists and file exists
-                if (!isset($info['file'])) {
+                if (! isset($info['file'])) {
                     $errors[] = "Manifest entry '{$entry}' missing 'file' key";
+
                     continue;
                 }
 
-                $filePath = $buildPath . '/' . $info['file'];
-                if (!File::exists($filePath)) {
+                $filePath = $buildPath.'/'.$info['file'];
+                if (! File::exists($filePath)) {
                     $errors[] = "Manifest references missing file: {$info['file']}";
                 }
 
                 // Check CSS imports exist
                 if (isset($info['css']) && is_array($info['css'])) {
                     foreach ($info['css'] as $cssFile) {
-                        $cssPath = $buildPath . '/' . $cssFile;
-                        if (!File::exists($cssPath)) {
+                        $cssPath = $buildPath.'/'.$cssFile;
+                        if (! File::exists($cssPath)) {
                             $errors[] = "Manifest references missing CSS file: {$cssFile}";
                         }
                     }
@@ -616,14 +618,14 @@ class ThemeValidator
                 // Validate imports reference existing manifest keys
                 if (isset($info['imports']) && is_array($info['imports'])) {
                     foreach ($info['imports'] as $importKey) {
-                        if (!isset($manifest[$importKey])) {
+                        if (! isset($manifest[$importKey])) {
                             $errors[] = "Manifest entry '{$entry}' references non-existent import: {$importKey}";
                         }
                     }
                 }
             }
         } catch (\Exception $e) {
-            $errors[] = 'Unable to validate manifest: ' . $e->getMessage();
+            $errors[] = 'Unable to validate manifest: '.$e->getMessage();
         }
 
         return $errors;
@@ -705,6 +707,7 @@ class ThemeValidator
                 if ($ext === '.php' && str_ends_with($lowername, '.blade.php')) {
                     continue;
                 }
+
                 return true;
             }
         }
@@ -737,6 +740,6 @@ class ValidationResult
 
     public function hasWarnings(): bool
     {
-        return !empty($this->warnings);
+        return ! empty($this->warnings);
     }
 }

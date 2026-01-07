@@ -25,12 +25,13 @@ class ThemeList extends Command
         $activeTheme = $this->themeManager->getActiveTheme();
 
         if ($themes->isEmpty()) {
-            $this->warn("No themes found!");
-            $this->line("Create a new theme with: php artisan make:theme MyTheme");
+            $this->warn('No themes found!');
+            $this->line('Create a new theme with: php artisan make:theme MyTheme');
+
             return 0;
         }
 
-        $this->info("Available TallCMS Themes:");
+        $this->info('Available TallCMS Themes:');
         $this->newLine();
 
         if ($detailed) {
@@ -40,10 +41,10 @@ class ThemeList extends Command
         }
 
         $this->newLine();
-        $this->comment("Commands:");
-        $this->line("• Activate theme: php artisan theme:activate <slug>");
-        $this->line("• Build theme: php artisan theme:build <slug>");
-        $this->line("• Create theme: php artisan make:theme <name>");
+        $this->comment('Commands:');
+        $this->line('• Activate theme: php artisan theme:activate <slug>');
+        $this->line('• Build theme: php artisan theme:build <slug>');
+        $this->line('• Create theme: php artisan make:theme <name>');
 
         return 0;
     }
@@ -62,7 +63,7 @@ class ThemeList extends Command
                 $theme->name,
                 $theme->slug,
                 $theme->version,
-                $isInstalled ? '✅ Yes' : '❌ No'
+                $isInstalled ? '✅ Yes' : '❌ No',
             ];
         }
 
@@ -82,27 +83,31 @@ class ThemeList extends Command
             // Theme header
             $status = $isActive ? ' 🟢 (Active)' : '';
             $this->line("<fg=cyan;options=bold>{$theme->name}{$status}</>");
-            
+
             // Theme details
             $this->line("  Slug:         {$theme->slug}");
             $this->line("  Description:  {$theme->description}");
             $this->line("  Author:       {$theme->author}");
             $this->line("  Version:      {$theme->version}");
-            $this->line("  Installed:    " . ($isInstalled ? '✅ Yes' : '❌ No'));
-            
+            $this->line('  Installed:    '.($isInstalled ? '✅ Yes' : '❌ No'));
+
             // Supported features
-            if (!empty($theme->supports['blocks'])) {
+            if (! empty($theme->supports['blocks'])) {
                 $blocks = implode(', ', $theme->supports['blocks']);
                 $this->line("  Blocks:       {$blocks}");
             }
-            
+
             // Additional features
             $features = [];
-            if ($theme->supports['dark_mode'] ?? false) $features[] = 'Dark Mode';
-            if ($theme->supports['responsive'] ?? false) $features[] = 'Responsive';
-            
+            if ($theme->supports['dark_mode'] ?? false) {
+                $features[] = 'Dark Mode';
+            }
+            if ($theme->supports['responsive'] ?? false) {
+                $features[] = 'Responsive';
+            }
+
             if ($features) {
-                $this->line("  Features:     " . implode(', ', $features));
+                $this->line('  Features:     '.implode(', ', $features));
             }
         }
     }
@@ -110,6 +115,7 @@ class ThemeList extends Command
     protected function isThemeInstalled(Theme $theme): bool
     {
         $publicThemePath = public_path("themes/{$theme->slug}");
+
         return file_exists($publicThemePath);
     }
 }

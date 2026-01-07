@@ -3,11 +3,11 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Models\Theme;
 
 class ThemeListCommand extends Command
 {
     protected $signature = 'theme:list {--active : Show only the active theme}';
+
     protected $description = 'List all available themes';
 
     public function handle()
@@ -24,11 +24,13 @@ class ThemeListCommand extends Command
             if ($activeTheme->hasParent()) {
                 $this->line("Parent: {$activeTheme->parent}");
             }
+
             return;
         }
 
         if ($themes->isEmpty()) {
             $this->warn('No themes found.');
+
             return;
         }
 
@@ -45,12 +47,12 @@ class ThemeListCommand extends Command
                 $theme->version,
                 $theme->author,
                 $theme->parent ?? '-',
-                $theme->slug === $activeTheme->slug ? '<info>Active</info>' : 'Available'
+                $theme->slug === $activeTheme->slug ? '<info>Active</info>' : 'Available',
             ];
         }
 
         $this->table($headers, $rows);
-        
+
         $this->line('');
         $this->line("Active theme: <info>{$activeTheme->name}</info> ({$activeTheme->slug})");
     }

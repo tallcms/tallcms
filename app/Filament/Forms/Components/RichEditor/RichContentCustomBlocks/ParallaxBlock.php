@@ -4,8 +4,8 @@ namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
 use Filament\Actions\Action;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 
 class ParallaxBlock extends RichContentCustomBlock
 {
@@ -28,7 +28,7 @@ class ParallaxBlock extends RichContentCustomBlock
                     ->required()
                     ->maxLength(255)
                     ->placeholder('Enter block title'),
-                    
+
                 Textarea::make('description')
                     ->maxLength(500)
                     ->placeholder('Enter block description'),

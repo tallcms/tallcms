@@ -21,9 +21,10 @@ use Livewire\Attributes\Computed;
 
 class ThemeManager extends Page implements HasForms
 {
-    use InteractsWithForms, HasPageShield;
+    use HasPageShield, InteractsWithForms;
 
     protected static ?string $title = 'Theme Manager';
+
     protected string $view = 'filament.pages.theme-manager';
 
     public static function getNavigationIcon(): string|BackedEnum|null
@@ -47,6 +48,7 @@ class ThemeManager extends Page implements HasForms
     }
 
     public ?string $selectedTheme = null;
+
     public ?array $themeDetails = null;
 
     /**
@@ -122,24 +124,26 @@ class ThemeManager extends Page implements HasForms
     {
         $theme = Theme::find($slug);
 
-        if (!$theme) {
+        if (! $theme) {
             Notification::make()
                 ->title('Theme not found')
                 ->body("The theme '{$slug}' could not be found.")
                 ->danger()
                 ->send();
+
             return;
         }
 
         // Run preflight validation
         $validation = $this->getValidator()->preflightCheck($theme);
 
-        if (!$validation->isValid) {
+        if (! $validation->isValid) {
             Notification::make()
                 ->title('Theme activation failed')
                 ->body(implode("\n", $validation->errors))
                 ->danger()
                 ->send();
+
             return;
         }
 
@@ -180,12 +184,13 @@ class ThemeManager extends Page implements HasForms
     {
         $rollbackSlug = $this->getRollbackSlug();
 
-        if (!$rollbackSlug) {
+        if (! $rollbackSlug) {
             Notification::make()
                 ->title('No rollback available')
                 ->body('There is no previous theme to rollback to.')
                 ->warning()
                 ->send();
+
             return;
         }
 
@@ -214,36 +219,39 @@ class ThemeManager extends Page implements HasForms
     {
         $theme = Theme::find($slug);
 
-        if (!$theme) {
+        if (! $theme) {
             Notification::make()
                 ->title('Theme not found')
                 ->danger()
                 ->send();
+
             return;
         }
 
         // Validate theme can be previewed (same checks as middleware)
-        if ($theme->isPrebuilt() && !$theme->isBuilt()) {
+        if ($theme->isPrebuilt() && ! $theme->isBuilt()) {
             Notification::make()
                 ->title('Theme not built')
                 ->body("Theme '{$theme->name}' has not been built. Run 'npm run build' in the theme directory first.")
                 ->danger()
                 ->send();
+
             return;
         }
 
-        if (!$theme->meetsRequirements()) {
+        if (! $theme->meetsRequirements()) {
             $unmet = $theme->getUnmetRequirements();
             Notification::make()
                 ->title('Theme requirements not met')
                 ->body(implode("\n", $unmet))
                 ->danger()
                 ->send();
+
             return;
         }
 
         // Generate preview URL
-        $previewUrl = url('/') . '?theme_preview=' . $slug;
+        $previewUrl = url('/').'?theme_preview='.$slug;
 
         // Dispatch event to open in new tab
         $this->dispatch('open-preview', url: $previewUrl);
@@ -262,7 +270,7 @@ class ThemeManager extends Page implements HasForms
     {
         $theme = Theme::find($slug);
 
-        if (!$theme) {
+        if (! $theme) {
             return;
         }
 
@@ -338,24 +346,26 @@ class ThemeManager extends Page implements HasForms
                 $slug = $arguments['slug'];
                 $theme = Theme::find($slug);
 
-                if (!$theme) {
+                if (! $theme) {
                     Notification::make()
                         ->title('Theme not found')
                         ->body("The theme '{$slug}' could not be found.")
                         ->danger()
                         ->send();
+
                     return;
                 }
 
                 // Use the service method to delete
                 $result = $this->getThemeManager()->deleteTheme($slug);
 
-                if (!$result['success']) {
+                if (! $result['success']) {
                     Notification::make()
                         ->title('Delete failed')
                         ->body($result['error'])
                         ->danger()
                         ->send();
+
                     return;
                 }
 
@@ -414,12 +424,13 @@ class ThemeManager extends Page implements HasForms
                 ])
                 ->action(function (array $data) {
                     // Server-side guard: verify uploads are enabled (visible() is UI-only)
-                    if (!config('theme.allow_uploads', false)) {
+                    if (! config('theme.allow_uploads', false)) {
                         Notification::make()
                             ->title('Uploads disabled')
                             ->body('Theme uploads are not enabled in configuration.')
                             ->danger()
                             ->send();
+
                         return;
                     }
 
@@ -431,12 +442,13 @@ class ThemeManager extends Page implements HasForms
                         // Step 1: Validate ZIP file
                         $validation = $this->getValidator()->validateZip($zipPath);
 
-                        if (!$validation->isValid) {
+                        if (! $validation->isValid) {
                             Notification::make()
                                 ->title('Invalid theme package')
                                 ->body(implode("\n", $validation->errors))
                                 ->danger()
                                 ->send();
+
                             return;
                         }
 
@@ -458,18 +470,20 @@ class ThemeManager extends Page implements HasForms
                                 ->body("A theme with slug '{$slug}' already exists. Please remove it first or upload a theme with a different slug.")
                                 ->danger()
                                 ->send();
+
                             return;
                         }
 
                         // Step 3: Extract theme
                         $extractResult = $this->getThemeManager()->extractTheme($zipPath, $slug);
 
-                        if (!$extractResult['success']) {
+                        if (! $extractResult['success']) {
                             Notification::make()
                                 ->title('Extraction failed')
                                 ->body($extractResult['error'])
                                 ->danger()
                                 ->send();
+
                             return;
                         }
 
@@ -479,7 +493,7 @@ class ThemeManager extends Page implements HasForms
                         // Step 4: Validate extracted directory
                         $dirValidation = $this->getValidator()->validateDirectory(base_path("themes/{$slug}"));
 
-                        if (!$dirValidation->isValid) {
+                        if (! $dirValidation->isValid) {
                             // Cleanup extracted files on validation failure
                             File::deleteDirectory(base_path("themes/{$slug}"));
                             $extractedSlug = null;
@@ -489,6 +503,7 @@ class ThemeManager extends Page implements HasForms
                                 ->body(implode("\n", $dirValidation->errors))
                                 ->danger()
                                 ->send();
+
                             return;
                         }
 
@@ -513,6 +528,7 @@ class ThemeManager extends Page implements HasForms
                                 ->body('Failed to publish theme assets. Check logs for details.')
                                 ->danger()
                                 ->send();
+
                             return;
                         }
 
@@ -553,7 +569,7 @@ class ThemeManager extends Page implements HasForms
 
                         Notification::make()
                             ->title('Upload failed')
-                            ->body('An unexpected error occurred: ' . $e->getMessage())
+                            ->body('An unexpected error occurred: '.$e->getMessage())
                             ->danger()
                             ->send();
                     } finally {

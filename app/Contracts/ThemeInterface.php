@@ -16,7 +16,7 @@ interface ThemeInterface
 
     /**
      * Get the theme's color palette for components
-     * 
+     *
      * @return array{
      *     primary: array<int, string>,
      *     secondary: array<int, string>,
@@ -30,10 +30,10 @@ interface ThemeInterface
 
     /**
      * Get preset button colors for rich editor components
-     * 
+     *
      * All presets must include bg, text, hover, and border properties.
      * Must include basic semantic colors and hero-specific variants.
-     * 
+     *
      * @return array{
      *     white: array{bg: string, text: string, hover: string, border: string},
      *     primary: array{bg: string, text: string, hover: string, border: string},
@@ -56,7 +56,7 @@ interface ThemeInterface
 
     /**
      * Get text color presets for different contrast levels
-     * 
+     *
      * @return array{
      *     primary: array{heading: string, description: string},
      *     secondary: array{heading: string, description: string},
@@ -78,7 +78,7 @@ interface ThemeInterface
 
     /**
      * Get padding/spacing presets for components
-     * 
+     *
      * @return array{
      *     small: array{padding: string, classes: string},
      *     medium: array{padding: string, classes: string},

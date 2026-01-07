@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('template')->nullable();
             $table->timestamps();
             $table->softDeletes();
-            
+
             $table->index(['status', 'published_at']);
             $table->index('slug');
             $table->index('parent_id');

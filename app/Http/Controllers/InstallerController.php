@@ -5,24 +5,26 @@ namespace App\Http\Controllers;
 use App\Services\EnvironmentChecker;
 use App\Services\EnvWriter;
 use App\Services\InstallerRunner;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\JsonResponse;
 
 class InstallerController extends Controller
 {
     private EnvironmentChecker $environmentChecker;
+
     private EnvWriter $envWriter;
+
     private InstallerRunner $installerRunner;
 
     public function __construct()
     {
-        $this->environmentChecker = new EnvironmentChecker();
-        $this->envWriter = new EnvWriter();
-        $this->installerRunner = new InstallerRunner();
+        $this->environmentChecker = new EnvironmentChecker;
+        $this->envWriter = new EnvWriter;
+        $this->installerRunner = new InstallerRunner;
     }
 
     /**
@@ -33,9 +35,9 @@ class InstallerController extends Controller
         // Bootstrap should have handled .env creation already
         // Just check if we can write to it
         $envStatus = $this->envWriter->canWriteEnv();
-        
+
         return view('installer.welcome', [
-            'envStatus' => $envStatus
+            'envStatus' => $envStatus,
         ]);
     }
 
@@ -45,7 +47,7 @@ class InstallerController extends Controller
     public function environment(): View
     {
         $checks = $this->environmentChecker->checkAll();
-        
+
         return view('installer.environment', compact('checks'));
     }
 
@@ -55,7 +57,7 @@ class InstallerController extends Controller
     public function configuration(): View
     {
         // Ensure environment checks pass before showing configuration
-        if (!$this->environmentChecker->isReady()) {
+        if (! $this->environmentChecker->isReady()) {
             return redirect()->route('installer.environment')
                 ->with('error', 'Please resolve environment issues before proceeding');
         }
@@ -80,7 +82,7 @@ class InstallerController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid database configuration',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -93,7 +95,7 @@ class InstallerController extends Controller
         ];
 
         $result = $this->installerRunner->testDatabaseConnection($dbConfig);
-        
+
         return response()->json($result);
     }
 
@@ -108,20 +110,20 @@ class InstallerController extends Controller
             'app_url' => 'required|url|max:255',
             'app_environment' => 'required|in:local,production',
             'app_debug' => 'boolean',
-            
+
             // Database settings
             'db_host' => 'required|string|max:255',
             'db_port' => 'required|integer|min:1|max:65535',
             'db_database' => 'required|string|max:64',
             'db_username' => 'required|string|max:255',
             'db_password' => 'nullable|string|max:255',
-            
+
             // Admin user
             'admin_name' => 'required|string|max:255',
             'admin_email' => 'required|email|max:255',
             'admin_password' => 'required|string|min:8|max:255',
             'admin_password_confirmation' => 'required|same:admin_password',
-            
+
             // Mail settings (optional)
             'mail_mailer' => 'nullable|in:smtp,ses,mail,sendmail',
             'mail_host' => 'nullable|string|max:255',
@@ -146,10 +148,10 @@ class InstallerController extends Controller
                 function ($attribute, $value, $fail) use ($request) {
                     $provider = $request->input('s3_provider', 'local');
                     $bucket = $request->input('aws_bucket');
-                    $needsEndpoint = !in_array($provider, ['local', 'aws', '', null]);
+                    $needsEndpoint = ! in_array($provider, ['local', 'aws', '', null]);
 
-                    if ($needsEndpoint && !empty($bucket) && empty($value)) {
-                        $fail('Endpoint URL is required for ' . ucfirst($provider) . ' when a bucket is specified.');
+                    if ($needsEndpoint && ! empty($bucket) && empty($value)) {
+                        $fail('Endpoint URL is required for '.ucfirst($provider).' when a bucket is specified.');
                     }
                 },
             ],
@@ -208,10 +210,10 @@ class InstallerController extends Controller
             // Supports: static credentials, IAM roles (no keys), or pre-configured environments
             $provider = $request->input('s3_provider', 'local');
             $isLocalStorage = $provider === 'local' || $provider === '' || $provider === null;
-            $hasCloudStorage = !$isLocalStorage && ($request->filled('aws_bucket') || $request->filled('aws_access_key_id'));
+            $hasCloudStorage = ! $isLocalStorage && ($request->filled('aws_bucket') || $request->filled('aws_access_key_id'));
 
             if ($hasCloudStorage) {
-                $needsEndpoint = !in_array($provider, ['aws']);
+                $needsEndpoint = ! in_array($provider, ['aws']);
                 $usePathStyle = in_array($provider, ['minio', 'custom']);
 
                 $this->envWriter->setS3Config([
@@ -230,13 +232,13 @@ class InstallerController extends Controller
             }
 
             // Save .env file
-            if (!$this->envWriter->save()) {
+            if (! $this->envWriter->save()) {
                 throw new \Exception('Failed to write .env file');
             }
 
             // Clear configuration cache to pick up new .env values
             \Artisan::call('config:clear');
-            
+
             // Force reload of database configuration
             config(['database.connections.mysql' => [
                 'driver' => 'mysql',
@@ -251,7 +253,7 @@ class InstallerController extends Controller
                 'strict' => true,
                 'engine' => null,
             ]]);
-            
+
             // Clear any existing database connections to force reconnection
             \DB::purge('mysql');
 
@@ -273,7 +275,7 @@ class InstallerController extends Controller
 
             $result = $this->installerRunner->runInstallation($config);
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 throw new \Exception($result['message']);
             }
 
@@ -283,7 +285,7 @@ class InstallerController extends Controller
             // Store installation output for display
             session([
                 'installation_output' => $result['output'],
-                'installation_success' => true
+                'installation_success' => true,
             ]);
 
             // Lock installer immediately after success
@@ -293,7 +295,7 @@ class InstallerController extends Controller
 
         } catch (\Exception $e) {
             return redirect()->route('installer.configuration')
-                ->with('error', 'Installation failed: ' . $e->getMessage())
+                ->with('error', 'Installation failed: '.$e->getMessage())
                 ->withInput();
         }
     }
@@ -303,12 +305,12 @@ class InstallerController extends Controller
      */
     public function complete(): View|RedirectResponse
     {
-        if (!session('installation_success')) {
+        if (! session('installation_success')) {
             return redirect()->route('installer.welcome');
         }
 
         $output = session('installation_output', []);
-        
+
         return view('installer.complete', compact('output'));
     }
 
@@ -318,21 +320,21 @@ class InstallerController extends Controller
     private function lockInstaller(): void
     {
         $lockPath = base_path('installer.lock');
-        
+
         try {
             // Try to create lock file first - this is the most reliable test
             $success = File::put($lockPath, now()->toDateTimeString());
-            
+
             if ($success === false) {
                 throw new \Exception('Failed to write installer lock file');
             }
-            
-            \Log::info('Installer locked successfully. Lock file created at: ' . $lockPath);
-            
+
+            \Log::info('Installer locked successfully. Lock file created at: '.$lockPath);
+
         } catch (\Exception $e) {
             // If we can't create the lock file, try alternative approaches
-            \Log::warning('Cannot create installer lock file in project root: ' . $e->getMessage());
-            
+            \Log::warning('Cannot create installer lock file in project root: '.$e->getMessage());
+
             // Fallback: Try to use .env to disable installer
             try {
                 $this->envWriter->disableInstaller()->save();
@@ -340,21 +342,22 @@ class InstallerController extends Controller
             } catch (\Exception $envError) {
                 // If both methods fail, throw a comprehensive error
                 throw new \Exception(
-                    "Cannot lock installer: Unable to create lock file ({$e->getMessage()}) " .
-                    "and unable to update .env file ({$envError->getMessage()}). " .
-                    "Please ensure web server has write permissions to either the project root " .
-                    "or the .env file to prevent reinstallation."
+                    "Cannot lock installer: Unable to create lock file ({$e->getMessage()}) ".
+                    "and unable to update .env file ({$envError->getMessage()}). ".
+                    'Please ensure web server has write permissions to either the project root '.
+                    'or the .env file to prevent reinstallation.'
                 );
             }
+
             return;
         }
-        
+
         // Primary lock successful - also try to disable in .env as secondary measure
         try {
             $this->envWriter->disableInstaller()->save();
         } catch (\Exception $e) {
             // .env update failed, but lock file created successfully - this is acceptable
-            \Log::warning('Failed to update .env file during installer lock: ' . $e->getMessage());
+            \Log::warning('Failed to update .env file during installer lock: '.$e->getMessage());
         }
     }
 }

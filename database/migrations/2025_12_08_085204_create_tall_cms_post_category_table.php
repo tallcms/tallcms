@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('post_id')->constrained('tallcms_posts')->onDelete('cascade');
             $table->foreignId('category_id')->constrained('tallcms_categories')->onDelete('cascade');
             $table->timestamps();
-            
+
             $table->unique(['post_id', 'category_id']);
         });
     }

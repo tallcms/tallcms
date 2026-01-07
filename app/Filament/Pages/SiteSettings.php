@@ -9,24 +9,27 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Components\Section;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Section;
 
 class SiteSettings extends Page implements HasForms
 {
-    use InteractsWithForms, HasPageShield;
-    
+    use HasPageShield, InteractsWithForms;
+
     protected string $view = 'filament.pages.site-settings';
+
     protected static ?string $navigationLabel = 'Site Settings';
+
     protected static ?string $title = 'Site Settings';
+
     protected static ?int $navigationSort = 99;
 
     public ?array $data = [];
 
-     public static function getNavigationIcon(): string
+    public static function getNavigationIcon(): string
     {
         return 'heroicon-o-cog-8-tooth';
     }
@@ -39,13 +42,13 @@ class SiteSettings extends Page implements HasForms
             'site_tagline' => SiteSetting::get('site_tagline'),
             'site_description' => SiteSetting::get('site_description'),
             'site_type' => SiteSetting::get('site_type', 'multi-page'),
-            
+
             // Contact settings
             'contact_email' => SiteSetting::get('contact_email'),
             'contact_phone' => SiteSetting::get('contact_phone'),
             'company_name' => SiteSetting::get('company_name'),
             'company_address' => SiteSetting::get('company_address'),
-            
+
             // Social media settings
             'social_facebook' => SiteSetting::get('social_facebook'),
             'social_twitter' => SiteSetting::get('social_twitter'),
@@ -54,11 +57,11 @@ class SiteSettings extends Page implements HasForms
             'social_youtube' => SiteSetting::get('social_youtube'),
             'social_tiktok' => SiteSetting::get('social_tiktok'),
             'newsletter_signup_url' => SiteSetting::get('newsletter_signup_url'),
-            
+
             // Branding settings
             'logo' => SiteSetting::get('logo'),
             'favicon' => SiteSetting::get('favicon'),
-            
+
             // System settings
             'maintenance_mode' => SiteSetting::get('maintenance_mode', false),
             'maintenance_message' => SiteSetting::get('maintenance_message', 'We\'re currently performing scheduled maintenance. Please check back soon!'),
@@ -242,11 +245,11 @@ class SiteSettings extends Page implements HasForms
                     'maintenance_mode' => 'boolean',
                     default => 'text',
                 };
-                
+
                 $group = match ($key) {
                     'site_name', 'site_tagline', 'site_description', 'site_type' => 'general',
                     'contact_email', 'contact_phone', 'company_name', 'company_address' => 'contact',
-                    'social_facebook', 'social_twitter', 'social_linkedin', 'social_instagram', 
+                    'social_facebook', 'social_twitter', 'social_linkedin', 'social_instagram',
                     'social_youtube', 'social_tiktok', 'newsletter_signup_url' => 'social',
                     'logo', 'favicon' => 'branding',
                     'maintenance_mode', 'maintenance_message' => 'maintenance',
@@ -265,5 +268,4 @@ class SiteSettings extends Page implements HasForms
             ->success()
             ->send();
     }
-
 }

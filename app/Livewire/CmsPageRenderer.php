@@ -13,8 +13,11 @@ use Livewire\Component;
 class CmsPageRenderer extends Component
 {
     public CmsPage $page;
+
     public ?CmsPost $post = null;
+
     public string $renderedContent;
+
     public string $parentSlug = '';
 
     public function mount(string $slug = '/')
@@ -25,12 +28,13 @@ class CmsPageRenderer extends Component
                 ->published()
                 ->first();
 
-            if (!$homepage) {
+            if (! $homepage) {
                 return $this->showWelcomePage();
             }
 
             $this->page = $homepage;
             $this->renderPageContent();
+
             return;
         }
 
@@ -58,6 +62,7 @@ class CmsPageRenderer extends Component
         if ($page) {
             $this->page = $page;
             $this->renderPageContent();
+
             return;
         }
 
@@ -80,6 +85,7 @@ class CmsPageRenderer extends Component
                     $this->post = $post;
                     $this->parentSlug = '';
                     $this->renderedContent = 'POST_DETAIL';
+
                     return;
                 }
             }
@@ -104,7 +110,7 @@ class CmsPageRenderer extends Component
             ->published()
             ->first();
 
-        if (!$parentPage) {
+        if (! $parentPage) {
             return false;
         }
 
@@ -125,6 +131,7 @@ class CmsPageRenderer extends Component
                     $this->post = $post;
                     $this->parentSlug = $parentSlug;
                     $this->renderedContent = 'POST_DETAIL';
+
                     return true;
                 }
             }
@@ -138,6 +145,7 @@ class CmsPageRenderer extends Component
         if ($nestedPage) {
             $this->page = $nestedPage;
             $this->renderPageContent();
+
             return true;
         }
 

@@ -27,7 +27,7 @@ return new class extends Migration
             $table->integer('views')->default(0);
             $table->timestamps();
             $table->softDeletes();
-            
+
             $table->index(['status', 'published_at']);
             $table->index('slug');
             $table->index('author_id');

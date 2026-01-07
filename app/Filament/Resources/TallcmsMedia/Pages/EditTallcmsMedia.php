@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\TallcmsMedia\Pages;
 
 use App\Filament\Resources\TallcmsMedia\TallcmsMediaResource;
-use App\Models\TallcmsMedia;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
@@ -26,7 +25,7 @@ class EditTallcmsMedia extends EditRecord
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
         // Handle file replacement
-        if (!empty($data['new_file'])) {
+        if (! empty($data['new_file'])) {
             $newFilePath = $data['new_file'];
             $oldPath = $record->path;
             $disk = cms_media_disk();
@@ -62,12 +61,12 @@ class EditTallcmsMedia extends EditRecord
                 'meta' => $meta,
             ]);
         }
-        
+
         // Remove new_file from data as it's not a model field
         unset($data['new_file']);
-        
+
         $record->update($data);
-        
+
         return $record;
     }
 }

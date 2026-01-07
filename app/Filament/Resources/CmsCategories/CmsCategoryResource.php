@@ -8,10 +8,8 @@ use App\Filament\Resources\CmsCategories\Pages\ListCmsCategories;
 use App\Filament\Resources\CmsCategories\Schemas\CmsCategoryForm;
 use App\Filament\Resources\CmsCategories\Tables\CmsCategoriesTable;
 use App\Models\CmsCategory;
-use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -20,8 +18,7 @@ class CmsCategoryResource extends Resource
 {
     protected static ?string $model = CmsCategory::class;
 
-     protected static ?string $pluralModelLabel = 'Categories';
-
+    protected static ?string $pluralModelLabel = 'Categories';
 
     public static function form(Schema $schema): Schema
     {
@@ -53,22 +50,22 @@ class CmsCategoryResource extends Resource
     {
         return 'heroicon-o-tag';
     }
-    
+
     public static function getNavigationGroup(): ?string
     {
         return 'Content Management';
     }
-    
+
     public static function getNavigationLabel(): string
     {
         return 'Categories';
     }
-    
+
     public static function getNavigationSort(): ?int
     {
         return 2;
     }
-    
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
@@ -76,7 +73,7 @@ class CmsCategoryResource extends Resource
                 SoftDeletingScope::class,
             ]);
     }
-    
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();

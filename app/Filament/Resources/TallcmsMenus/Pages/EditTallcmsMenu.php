@@ -3,8 +3,8 @@
 namespace App\Filament\Resources\TallcmsMenus\Pages;
 
 use App\Filament\Resources\TallcmsMenus\TallcmsMenuResource;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditTallcmsMenu extends EditRecord
@@ -20,7 +20,7 @@ class EditTallcmsMenu extends EditRecord
                 ->color('primary')
                 ->url(fn (): string => "/admin/menu-items-manager?activeTab={$this->getRecord()->id}")
                 ->openUrlInNewTab(false),
-                
+
             DeleteAction::make(),
         ];
     }

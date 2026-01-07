@@ -2,14 +2,13 @@
 
 namespace App\Filament\Resources\TallcmsMenus\Tables;
 
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\Action;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Filament\Support\Colors\Color;
 
 class TallcmsMenusTable
 {
@@ -28,8 +27,8 @@ class TallcmsMenusTable
                     ->state(fn ($record) => $record->allItems()->count())
                     ->badge()
                     ->color('primary')
-                    ->formatStateUsing(fn ($state) => $state . ' items'),
-                    
+                    ->formatStateUsing(fn ($state) => $state.' items'),
+
                 IconColumn::make('is_active')
                     ->boolean(),
                 TextColumn::make('created_at')
@@ -51,16 +50,16 @@ class TallcmsMenusTable
                     ->color('primary')
                     ->url(fn ($record): string => "/admin/menu-items-manager?activeTab={$record->id}")
                     ->openUrlInNewTab(false),
-                    
+
                 Action::make('preview')
                     ->label('Preview')
                     ->icon('heroicon-o-eye')
                     ->color('gray')
-                    ->modalHeading(fn ($record) => 'Preview: ' . $record->name)
+                    ->modalHeading(fn ($record) => 'Preview: '.$record->name)
                     ->modalContent(fn ($record) => view('admin.menu-preview', compact('record')))
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close'),
-                    
+
                 EditAction::make()
                     ->label('Settings'),
             ])
