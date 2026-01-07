@@ -471,9 +471,33 @@ class PluginValidator
             return $errors;
         }
 
-        // Check for direct Router class instantiation or type-hinting injection
+        // Check for direct Router class usage (FQCN with leading backslash)
         if (preg_match('/\\\\Illuminate\\\\Routing\\\\Router\b/', $contentWithoutComments)) {
             $errors[] = 'Plugin providers must not register routes directly. Found Illuminate\\Routing\\Router usage in provider.';
+
+            return $errors;
+        }
+
+        // Check for imported Router class (use Illuminate\Routing\Router;)
+        if (preg_match('/\buse\s+Illuminate\\\\Routing\\\\Router\b/', $contentWithoutComments)) {
+            $errors[] = 'Plugin providers must not register routes directly. Found Router class import in provider.';
+
+            return $errors;
+        }
+
+        // Check for Router::class constant resolution
+        if (preg_match('/\b(app|resolve)\s*\(\s*\)?\s*->\s*make\s*\(\s*\\\\?Router::class/', $contentWithoutComments)) {
+            $errors[] = 'Plugin providers must not register routes directly. Found Router::class resolution in provider.';
+
+            return $errors;
+        }
+        if (preg_match('/\bresolve\s*\(\s*\\\\?Router::class\s*\)/', $contentWithoutComments)) {
+            $errors[] = 'Plugin providers must not register routes directly. Found resolve(Router::class) in provider.';
+
+            return $errors;
+        }
+        if (preg_match('/\bapp\s*\(\s*\\\\?Router::class\s*\)/', $contentWithoutComments)) {
+            $errors[] = 'Plugin providers must not register routes directly. Found app(Router::class) in provider.';
 
             return $errors;
         }

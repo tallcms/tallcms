@@ -230,10 +230,105 @@ class PluginManager
     }
 
     /**
-     * Check if a plugin namespace is managed by Composer
-     * This prevents ZIP installs from colliding with Composer-installed packages
+     * Blocked namespace prefixes that plugins cannot use
+     * These are reserved for the application and core Laravel functionality
+     */
+    protected const BLOCKED_NAMESPACE_PREFIXES = [
+        'App',
+        'Database',
+        'Tests',
+        'Illuminate',
+        'Laravel',
+        'Filament',
+        'Livewire',
+        'Spatie',
+    ];
+
+    /**
+     * Check if a plugin namespace is managed by Composer or conflicts with app namespaces
+     * This prevents ZIP installs from colliding with Composer-installed packages or app classes
      */
     public function isComposerManaged(string $namespace): bool
+    {
+        $checkNamespace = rtrim($namespace, '\\');
+
+        // Check against blocked namespace prefixes (security: prevent class shadowing)
+        foreach (self::BLOCKED_NAMESPACE_PREFIXES as $blocked) {
+            if ($checkNamespace === $blocked || str_starts_with($checkNamespace, $blocked.'\\')) {
+                return true;
+            }
+        }
+
+        // Check root composer.json autoload (app's own namespaces)
+        if ($this->isInRootComposerAutoload($checkNamespace)) {
+            return true;
+        }
+
+        // Check composer.lock for installed packages
+        if ($this->isInComposerLock($checkNamespace)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if namespace conflicts with root composer.json autoload
+     */
+    protected function isInRootComposerAutoload(string $namespace): bool
+    {
+        $composerJson = base_path('composer.json');
+
+        if (! File::exists($composerJson)) {
+            return false;
+        }
+
+        try {
+            $composerData = json_decode(File::get($composerJson), true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return false;
+            }
+
+            // Check autoload and autoload-dev sections
+            $autoloadSections = [
+                $composerData['autoload'] ?? [],
+                $composerData['autoload-dev'] ?? [],
+            ];
+
+            foreach ($autoloadSections as $autoload) {
+                // Check PSR-4
+                foreach ($autoload['psr-4'] ?? [] as $prefix => $path) {
+                    $prefix = rtrim($prefix, '\\');
+                    if ($prefix === $namespace || str_starts_with($namespace, $prefix.'\\')) {
+                        return true;
+                    }
+                }
+
+                // Check PSR-0
+                foreach ($autoload['psr-0'] ?? [] as $prefix => $path) {
+                    $prefix = rtrim($prefix, '\\');
+                    if ($prefix === $namespace || str_starts_with($namespace, $prefix.'\\')) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        } catch (\Throwable $e) {
+            Log::warning('Failed to check composer.json for namespace collision', [
+                'namespace' => $namespace,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Check if namespace conflicts with composer.lock packages
+     */
+    protected function isInComposerLock(string $namespace): bool
     {
         $composerLock = base_path('composer.lock');
 
@@ -259,12 +354,8 @@ class PluginManager
 
                 // Check PSR-4 autoload entries
                 foreach ($autoload['psr-4'] ?? [] as $prefix => $path) {
-                    // Normalize namespace prefixes (remove trailing backslash)
                     $prefix = rtrim($prefix, '\\');
-                    $checkNamespace = rtrim($namespace, '\\');
-
-                    // Check if namespace matches or is a sub-namespace
-                    if ($prefix === $checkNamespace || str_starts_with($checkNamespace, $prefix.'\\')) {
+                    if ($prefix === $namespace || str_starts_with($namespace, $prefix.'\\')) {
                         return true;
                     }
                 }
@@ -272,9 +363,7 @@ class PluginManager
                 // Check PSR-0 autoload entries
                 foreach ($autoload['psr-0'] ?? [] as $prefix => $path) {
                     $prefix = rtrim($prefix, '\\');
-                    $checkNamespace = rtrim($namespace, '\\');
-
-                    if ($prefix === $checkNamespace || str_starts_with($checkNamespace, $prefix.'\\')) {
+                    if ($prefix === $namespace || str_starts_with($namespace, $prefix.'\\')) {
                         return true;
                     }
                 }
