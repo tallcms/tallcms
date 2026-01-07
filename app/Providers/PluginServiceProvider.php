@@ -33,6 +33,24 @@ class PluginServiceProvider extends ServiceProvider
 
         // Register plugin manager alias
         $this->app->alias(PluginManager::class, 'plugin.manager');
+
+        // Register PSR-4 autoloading early so Filament can find plugin classes
+        // This must happen during register() before AdminPanelProvider's panel() runs
+        $this->registerPluginAutoloading();
+    }
+
+    /**
+     * Register PSR-4 autoloading for all plugins
+     * Must run during register() phase for Filament integration
+     */
+    protected function registerPluginAutoloading(): void
+    {
+        $pluginManager = $this->app->make(PluginManager::class);
+
+        // Use discover() directly to avoid cache facade during register phase
+        foreach ($pluginManager->discover() as $plugin) {
+            $pluginManager->registerAutoload($plugin);
+        }
     }
 
     /**
@@ -71,9 +89,6 @@ class PluginServiceProvider extends ServiceProvider
 
         foreach ($pluginManager->getInstalledPlugins() as $plugin) {
             try {
-                // Register PSR-4 autoloading
-                $pluginManager->registerAutoload($plugin);
-
                 // Scan provider for Route:: calls before booting (hard fail)
                 if ($this->providerRegistersRoutes($plugin)) {
                     Log::error("Plugin provider contains Route:: calls - blocked: {$plugin->getFullSlug()}");
