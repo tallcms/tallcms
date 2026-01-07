@@ -23,28 +23,26 @@ Content (Pages and Posts) follows a defined status lifecycle:
 │  Draft  │ ──────────────────► │ Pending Review  │ ───────────────► │ Published │
 └─────────┘       Review        └─────────────────┘                   └───────────┘
      ▲                                  │
-     │                                  │ Reject
-     │                                  ▼
-     │                           ┌──────────┐
-     └─────────────────────────  │ Rejected │
-              (Edit & Resubmit)  └──────────┘
+     │                                  │ Reject (returns to Draft
+     └──────────────────────────────────┘  with rejection_reason)
 ```
 
 ### Status Definitions
 
 | Status | Description |
 |--------|-------------|
-| `draft` | Initial state. Content is being authored and is not visible publicly. |
+| `draft` | Initial state. Content is being authored and is not visible publicly. May include `rejection_reason` if previously rejected. |
 | `pending` | Submitted for review. Awaiting editor/admin approval. |
 | `published` | Approved and visible to the public (respects `published_at` date). |
-| `rejected` | Returned to author with feedback. Can be edited and resubmitted. |
+
+> **Note**: There is no separate "rejected" status. Rejection returns content to `draft` status with the `rejection_reason` field populated.
 
 ### Workflow Actions
 
 #### Submit for Review
-- **Available when**: Status is `draft` or `rejected`
+- **Available when**: Status is `draft`
 - **Permission**: `SubmitForReview:CmsPost` / `SubmitForReview:CmsPage`
-- **Effect**: Changes status to `pending`, records `submitted_at` and `submitted_by`
+- **Effect**: Changes status to `pending`, records `submitted_at` and `submitted_by`, clears any previous `rejection_reason`
 - **Notification**: Sends notification to users with Approve permission
 
 #### Approve & Publish
@@ -57,7 +55,7 @@ Content (Pages and Posts) follows a defined status lifecycle:
 #### Reject
 - **Available when**: Status is `pending`
 - **Permission**: `Approve:CmsPost` / `Approve:CmsPage`
-- **Effect**: Changes status to `rejected`, stores `rejection_reason`
+- **Effect**: Returns status to `draft`, stores `rejection_reason`, clears `approved_by`/`approved_at`
 - **Notification**: Sends notification to the content author with rejection reason
 
 ### Scheduled Publishing
@@ -66,15 +64,19 @@ Content can be scheduled for future publication:
 
 1. Set `published_at` to a future date/time
 2. Submit for review and get approval
-3. Content remains invisible until `published_at` is reached
-4. A scheduled task publishes content when the time arrives
+3. Content automatically becomes visible when `published_at` is reached
+
+> **Note**: There is no background task that "publishes" scheduled content. The `published` scope filters by `published_at <= now()`, so content becomes visible automatically when the scheduled time arrives.
 
 ```php
-// Check if content is scheduled
-$post->isScheduled(); // true if published_at is in the future
+// Check if content is scheduled (approved but published_at in future)
+$post->isScheduled(); // true if status is published AND published_at > now()
 
 // Scope for scheduled content
 CmsPost::scheduled()->get();
+
+// Scope for currently visible content
+CmsPost::published()->get(); // status = published AND published_at <= now()
 ```
 
 ### Database Fields
@@ -105,12 +107,16 @@ TallCMS automatically tracks content revisions to provide:
 
 #### Automatic Snapshots
 
-Revisions are created automatically on every save when content changes:
+Two revisions are created automatically on every save when content changes:
 
-1. **Pre-update snapshot**: Captures state BEFORE the change (audit trail)
-2. **Post-update snapshot**: Captures state AFTER the change (current state)
+1. **Pre-update snapshot**: Captures state BEFORE the change (audit trail of what was replaced)
+2. **Post-update snapshot**: Captures state AFTER the change (current state, ensures "latest = current")
 
-The system uses SHA-256 content hashing to detect actual changes. If the hash is identical to the latest revision, no new revision is created.
+The system uses SHA-256 content hashing to detect changes:
+- **Pre-update**: Only created if current DB state differs from latest revision hash
+- **Post-update**: Only created if new content differs from latest revision hash
+
+This means each content change creates two revision entries. With default limits (100 auto + 50 manual), you effectively have ~50 content changes in history before pruning begins.
 
 #### Manual Snapshots (Pinned)
 
@@ -172,14 +178,18 @@ The following fields are tracked for revisions:
 
 ### Revision Pruning
 
-To prevent unbounded growth, revisions are automatically pruned:
+To prevent unbounded growth, revisions are automatically pruned after each save:
 
 | Type | Default Limit | Config Key |
 |------|---------------|------------|
 | Automatic | 100 | `CMS_REVISION_LIMIT` |
 | Manual (Pinned) | 50 | `CMS_REVISION_MANUAL_LIMIT` |
 
-Oldest revisions are pruned first. Manual and automatic revisions have separate limits.
+**Pruning behavior:**
+- Automatic and manual revisions are pruned **separately** (each has its own limit)
+- Oldest revisions (lowest `revision_number`) are pruned first
+- Combined maximum per content item: `revision_limit + revision_manual_limit` (default: 150)
+- Set either limit to `null` for unlimited revisions of that type
 
 ### Database Schema
 
