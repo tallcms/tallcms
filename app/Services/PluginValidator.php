@@ -115,6 +115,10 @@ class PluginValidator
         $routeErrors = $this->scanProviderForRoutes($plugin);
         $errors = array_merge($errors, $routeErrors);
 
+        // Scan all src/ files for router usage (catches hidden route registration)
+        $srcRouteErrors = $this->scanSrcForRouterUsage($plugin->getSrcPath());
+        $errors = array_merge($errors, $srcRouteErrors);
+
         return new PluginValidationResult(
             empty($errors),
             $errors,
@@ -226,6 +230,10 @@ class PluginValidator
             $routeErrors = $this->scanZipRoutesForDangerousPatterns($zip);
             $errors = array_merge($errors, $routeErrors);
 
+            // Scan all src/ files for router usage (catches hidden route registration)
+            $srcRouteErrors = $this->scanZipSrcForRouterUsage($zip);
+            $errors = array_merge($errors, $srcRouteErrors);
+
         } finally {
             $zip->close();
         }
@@ -296,6 +304,10 @@ class PluginValidator
         // Scan route files for dangerous patterns
         $routeErrors = $this->scanDirectoryRoutesForDangerousPatterns($path);
         $errors = array_merge($errors, $routeErrors);
+
+        // Scan all src/ files for router usage (catches hidden route registration)
+        $srcRouteErrors = $this->scanSrcForRouterUsage("{$path}/src");
+        $errors = array_merge($errors, $srcRouteErrors);
 
         return new PluginValidationResult(
             empty($errors),
@@ -401,6 +413,161 @@ class PluginValidator
             [],
             []
         );
+    }
+
+    /**
+     * Scan all PHP files in src/ directory for router usage
+     * This catches route registration hidden in helper classes
+     */
+    public function scanSrcForRouterUsage(string $srcPath): array
+    {
+        $errors = [];
+
+        if (! File::exists($srcPath) || ! is_dir($srcPath)) {
+            return $errors;
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($srcPath, \RecursiveDirectoryIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $file) {
+            if (! $file->isFile() || $file->getExtension() !== 'php') {
+                continue;
+            }
+
+            $relativePath = str_replace($srcPath.'/', '', $file->getPathname());
+            $content = File::get($file->getPathname());
+
+            // Remove comments before checking
+            $contentWithoutComments = preg_replace('#//.*$#m', '', $content);
+            $contentWithoutComments = preg_replace('#/\*.*?\*/#s', '', $contentWithoutComments);
+
+            // Check for Route:: calls
+            if (preg_match('/\bRoute::/', $contentWithoutComments)) {
+                $errors[] = "Route registration found in src/{$relativePath}. Routes must only be defined in routes/public.php or routes/web.php.";
+
+                continue;
+            }
+
+            // Check for aliased Route facade
+            if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/', $contentWithoutComments, $matches)) {
+                $alias = $matches[1];
+                if (preg_match('/\b'.preg_quote($alias, '/').'::/', $contentWithoutComments)) {
+                    $errors[] = "Aliased Route facade ({$alias}::) found in src/{$relativePath}. Routes must only be defined in routes/public.php or routes/web.php.";
+
+                    continue;
+                }
+            }
+
+            // Check for router instance patterns
+            $routerPatterns = [
+                '/\bapp\s*\(\s*[\'"]router[\'"]\s*\)/' => 'app(\'router\')',
+                '/\bresolve\s*\(\s*[\'"]router[\'"]\s*\)/' => 'resolve(\'router\')',
+                '/\$this\s*->\s*app\s*\[\s*[\'"]router[\'"]\s*\]/' => '$this->app[\'router\']',
+                '/\$this\s*->\s*app\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/' => '$this->app->make(\'router\')',
+                '/\bapp\s*\(\s*\)\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/' => 'app()->make(\'router\')',
+                '/\bapp\s*\(\s*\)\s*\[\s*[\'"]router[\'"]\s*\]/' => 'app()[\'router\']',
+                '/\bApp::\s*make\s*\(\s*[\'"]router[\'"]\s*\)/' => 'App::make(\'router\')',
+                '/\\\\Illuminate\\\\Routing\\\\Router\b/' => 'Illuminate\\Routing\\Router',
+                '/\buse\s+Illuminate\\\\Routing\\\\Router\b/' => 'Router class import',
+                '/\bRoute::class\b/' => 'Route::class',
+                '/\bRouter::class\b/' => 'Router::class',
+                '/\bRegistrar::class\b/' => 'Registrar::class',
+                '/\\\\?Illuminate\\\\Contracts\\\\Routing\\\\Registrar\b/' => 'Registrar contract',
+                '/[\'"]\\\\?Illuminate\\\\Support\\\\Facades\\\\Route[\'"]/' => 'Route facade class string',
+                '/\bcall_user_func(_array)?\s*\([^)]*Route/' => 'call_user_func with Route',
+            ];
+
+            foreach ($routerPatterns as $pattern => $description) {
+                if (preg_match($pattern, $contentWithoutComments)) {
+                    $errors[] = "Router access ({$description}) found in src/{$relativePath}. Routes must only be defined in routes/public.php or routes/web.php.";
+                    break; // Only report first issue per file
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Scan all PHP files in ZIP's src/ directory for router usage
+     */
+    public function scanZipSrcForRouterUsage(ZipArchive $zip): array
+    {
+        $errors = [];
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $name = $zip->getNameIndex($i);
+
+            // Skip directories
+            if (str_ends_with($name, '/')) {
+                continue;
+            }
+
+            // Normalize and check if it's in src/
+            $normalizedName = $this->normalizeZipPath($name);
+            if (! str_starts_with($normalizedName, 'src/') || ! str_ends_with($normalizedName, '.php')) {
+                continue;
+            }
+
+            // Skip blade templates
+            if (str_ends_with($normalizedName, '.blade.php')) {
+                continue;
+            }
+
+            $content = $zip->getFromIndex($i);
+            $relativePath = $normalizedName;
+
+            // Remove comments before checking
+            $contentWithoutComments = preg_replace('#//.*$#m', '', $content);
+            $contentWithoutComments = preg_replace('#/\*.*?\*/#s', '', $contentWithoutComments);
+
+            // Check for Route:: calls
+            if (preg_match('/\bRoute::/', $contentWithoutComments)) {
+                $errors[] = "Route registration found in {$relativePath}. Routes must only be defined in routes/public.php or routes/web.php.";
+
+                continue;
+            }
+
+            // Check for aliased Route facade
+            if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/', $contentWithoutComments, $matches)) {
+                $alias = $matches[1];
+                if (preg_match('/\b'.preg_quote($alias, '/').'::/', $contentWithoutComments)) {
+                    $errors[] = "Aliased Route facade ({$alias}::) found in {$relativePath}. Routes must only be defined in routes/public.php or routes/web.php.";
+
+                    continue;
+                }
+            }
+
+            // Check for router instance patterns
+            $routerPatterns = [
+                '/\bapp\s*\(\s*[\'"]router[\'"]\s*\)/' => 'app(\'router\')',
+                '/\bresolve\s*\(\s*[\'"]router[\'"]\s*\)/' => 'resolve(\'router\')',
+                '/\$this\s*->\s*app\s*\[\s*[\'"]router[\'"]\s*\]/' => '$this->app[\'router\']',
+                '/\$this\s*->\s*app\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/' => '$this->app->make(\'router\')',
+                '/\bapp\s*\(\s*\)\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/' => 'app()->make(\'router\')',
+                '/\bapp\s*\(\s*\)\s*\[\s*[\'"]router[\'"]\s*\]/' => 'app()[\'router\']',
+                '/\bApp::\s*make\s*\(\s*[\'"]router[\'"]\s*\)/' => 'App::make(\'router\')',
+                '/\\\\Illuminate\\\\Routing\\\\Router\b/' => 'Illuminate\\Routing\\Router',
+                '/\buse\s+Illuminate\\\\Routing\\\\Router\b/' => 'Router class import',
+                '/\bRoute::class\b/' => 'Route::class',
+                '/\bRouter::class\b/' => 'Router::class',
+                '/\bRegistrar::class\b/' => 'Registrar::class',
+                '/\\\\?Illuminate\\\\Contracts\\\\Routing\\\\Registrar\b/' => 'Registrar contract',
+                '/[\'"]\\\\?Illuminate\\\\Support\\\\Facades\\\\Route[\'"]/' => 'Route facade class string',
+                '/\bcall_user_func(_array)?\s*\([^)]*Route/' => 'call_user_func with Route',
+            ];
+
+            foreach ($routerPatterns as $pattern => $description) {
+                if (preg_match($pattern, $contentWithoutComments)) {
+                    $errors[] = "Router access ({$description}) found in {$relativePath}. Routes must only be defined in routes/public.php or routes/web.php.";
+                    break;
+                }
+            }
+        }
+
+        return $errors;
     }
 
     /**
