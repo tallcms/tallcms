@@ -16,7 +16,7 @@ class CustomBlockDiscoveryService
     protected static ?Collection $discoveredBlocks = null;
 
     /**
-     * Discover all custom blocks in the application
+     * Discover all custom blocks in the application and plugins
      */
     public static function discover(): Collection
     {
@@ -25,10 +25,28 @@ class CustomBlockDiscoveryService
         }
 
         $blocks = collect();
+
+        // Discover blocks from the main application
         $blockPath = app_path('Filament/Forms/Components/RichEditor/RichContentCustomBlocks');
+        if (File::exists($blockPath)) {
+            $blocks = $blocks->merge(self::discoverFromPath($blockPath));
+        }
+
+        // Discover blocks from installed plugins
+        $blocks = $blocks->merge(self::discoverFromPlugins());
+
+        return self::$discoveredBlocks = $blocks->unique()->sort();
+    }
+
+    /**
+     * Discover blocks from a specific path
+     */
+    protected static function discoverFromPath(string $blockPath): Collection
+    {
+        $blocks = collect();
 
         if (! File::exists($blockPath)) {
-            return self::$discoveredBlocks = $blocks;
+            return $blocks;
         }
 
         $blockFiles = File::glob($blockPath.'/*.php');
@@ -51,7 +69,53 @@ class CustomBlockDiscoveryService
             }
         }
 
-        return self::$discoveredBlocks = $blocks->sort();
+        return $blocks;
+    }
+
+    /**
+     * Discover blocks from installed plugins
+     */
+    protected static function discoverFromPlugins(): Collection
+    {
+        $blocks = collect();
+
+        if (! app()->bound('plugin.manager')) {
+            return $blocks;
+        }
+
+        try {
+            $pluginManager = app('plugin.manager');
+            $plugins = $pluginManager->getInstalledPlugins();
+
+            foreach ($plugins as $plugin) {
+                if (! $plugin->hasBlocks()) {
+                    continue;
+                }
+
+                $blocksPath = $plugin->getBlocksPath();
+                $blockFiles = File::glob($blocksPath.'/*.php');
+
+                foreach ($blockFiles as $file) {
+                    try {
+                        $className = self::getClassNameFromFile($file);
+
+                        if ($className && class_exists($className)) {
+                            $reflection = new ReflectionClass($className);
+
+                            if ($reflection->isSubclassOf(RichContentCustomBlock::class) && ! $reflection->isAbstract()) {
+                                $blocks->push($className);
+                            }
+                        }
+                    } catch (ReflectionException $e) {
+                        continue;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Don't fail if plugin system has issues
+        }
+
+        return $blocks;
     }
 
     /**
