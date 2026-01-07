@@ -229,6 +229,68 @@ class PluginManager
     }
 
     /**
+     * Check if a plugin namespace is managed by Composer
+     * This prevents ZIP installs from colliding with Composer-installed packages
+     */
+    public function isComposerManaged(string $namespace): bool
+    {
+        $composerLock = base_path('composer.lock');
+
+        if (! File::exists($composerLock)) {
+            return false;
+        }
+
+        try {
+            $lockData = json_decode(File::get($composerLock), true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return false;
+            }
+
+            // Check both packages and packages-dev
+            $packages = array_merge(
+                $lockData['packages'] ?? [],
+                $lockData['packages-dev'] ?? []
+            );
+
+            foreach ($packages as $package) {
+                $autoload = $package['autoload'] ?? [];
+
+                // Check PSR-4 autoload entries
+                foreach ($autoload['psr-4'] ?? [] as $prefix => $path) {
+                    // Normalize namespace prefixes (remove trailing backslash)
+                    $prefix = rtrim($prefix, '\\');
+                    $checkNamespace = rtrim($namespace, '\\');
+
+                    // Check if namespace matches or is a sub-namespace
+                    if ($prefix === $checkNamespace || str_starts_with($checkNamespace, $prefix . '\\')) {
+                        return true;
+                    }
+                }
+
+                // Check PSR-0 autoload entries
+                foreach ($autoload['psr-0'] ?? [] as $prefix => $path) {
+                    $prefix = rtrim($prefix, '\\');
+                    $checkNamespace = rtrim($namespace, '\\');
+
+                    if ($prefix === $checkNamespace || str_starts_with($checkNamespace, $prefix . '\\')) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        } catch (\Throwable $e) {
+            Log::warning('Failed to check composer.lock for namespace collision', [
+                'namespace' => $namespace,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
      * Boot a plugin's service provider
      */
     public function bootPlugin(Plugin $plugin): void
@@ -343,6 +405,15 @@ class PluginManager
             return PluginInstallResult::failed(["Plugin {$vendor}/{$slug} is already installed. Use update to replace it."]);
         }
 
+        // Check for Composer namespace collision
+        $namespace = $pluginData['namespace'] ?? '';
+        if ($namespace && $this->isComposerManaged($namespace)) {
+            return PluginInstallResult::failed([
+                "Cannot install plugin: namespace '{$namespace}' is already managed by Composer. ".
+                'ZIP-based plugins cannot override Composer-installed packages.',
+            ]);
+        }
+
         // Extract to temp directory first
         $tempPath = storage_path("app/plugin-temp/{$vendor}-{$slug}-".uniqid());
 
@@ -387,6 +458,14 @@ class PluginManager
                 File::deleteDirectory($finalPath);
 
                 return PluginInstallResult::failed($classValidation->errors);
+            }
+
+            // Validate provider doesn't contain Route:: calls (security check)
+            $routeErrors = $validator->scanProviderForRoutes($plugin);
+            if (! empty($routeErrors)) {
+                File::deleteDirectory($finalPath);
+
+                return PluginInstallResult::failed($routeErrors);
             }
 
             // Run migrations if auto_migrate is enabled
@@ -528,6 +607,25 @@ class PluginManager
             ]);
         }
 
+        // Enforce version upgrade (block downgrades and same-version updates)
+        $newVersion = $pluginData['version'] ?? '0.0.0';
+        $currentVersion = $existingPlugin->version;
+
+        if (version_compare($newVersion, $currentVersion, '<=')) {
+            return PluginInstallResult::failed([
+                "Cannot update to version {$newVersion}. Current version is {$currentVersion}. Only upgrades are allowed.",
+            ]);
+        }
+
+        // Check for Composer namespace collision (in case existing plugin was file-based but new one conflicts)
+        $namespace = $pluginData['namespace'] ?? '';
+        if ($namespace && $this->isComposerManaged($namespace)) {
+            return PluginInstallResult::failed([
+                "Cannot update plugin: namespace '{$namespace}' is managed by Composer. ".
+                'ZIP-based plugins cannot override Composer-installed packages.',
+            ]);
+        }
+
         // Create backup
         $backupPath = $this->createBackup($existingPlugin);
 
@@ -576,6 +674,17 @@ class PluginManager
                 $this->deleteBackup($backupPath);
 
                 return PluginInstallResult::failed($classValidation->errors);
+            }
+
+            // Validate provider doesn't contain Route:: calls (security check)
+            $routeErrors = $validator->scanProviderForRoutes($plugin);
+            if (! empty($routeErrors)) {
+                // Restore from backup
+                File::deleteDirectory($finalPath);
+                $this->restoreFromBackup($backupPath, $finalPath);
+                $this->deleteBackup($backupPath);
+
+                return PluginInstallResult::failed($routeErrors);
             }
 
             // Run any new migrations
