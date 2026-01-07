@@ -37,16 +37,15 @@
         x-data="{
             prefersReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
             animateValue(el, target, duration = 2000) {
-                if (this.prefersReducedMotion) {
+                // Only animate pure integers (no decimals, commas, or other characters)
+                const isPureInteger = /^\d+$/.test(target);
+
+                if (this.prefersReducedMotion || !isPureInteger) {
                     el.textContent = target;
                     return;
                 }
 
-                const numericTarget = parseInt(target.replace(/[^0-9]/g, ''), 10);
-                if (isNaN(numericTarget)) {
-                    el.textContent = target;
-                    return;
-                }
+                const numericTarget = parseInt(target, 10);
 
                 let startTime = null;
                 const step = (timestamp) => {

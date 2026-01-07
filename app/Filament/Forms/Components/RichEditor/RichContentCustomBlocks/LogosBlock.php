@@ -168,6 +168,11 @@ class LogosBlock extends RichContentCustomBlock
     {
         $logos = self::resolveLogos($config, forPreview: false);
 
+        // Return empty string if no logos configured (signals misconfiguration)
+        if (empty($logos)) {
+            return '';
+        }
+
         return view('cms.blocks.logos', [
             'id' => static::getId(),
             'heading' => $config['heading'] ?? '',
