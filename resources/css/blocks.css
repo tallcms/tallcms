@@ -180,6 +180,102 @@
 }
 
 /* ==========================================================================
+   Features Block Styles
+   ========================================================================== */
+
+.features-block {
+    /* Features block container */
+}
+
+.features-block h2 {
+    color: var(--block-heading-color);
+}
+
+.features-block .feature-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.features-block .feature-card:hover {
+    transform: translateY(-4px);
+}
+
+.features-block .feature-card h3 {
+    color: var(--block-heading-color);
+}
+
+.features-block .feature-card p {
+    color: var(--block-text-color);
+}
+
+/* ==========================================================================
+   FAQ Block Styles
+   ========================================================================== */
+
+.faq-block {
+    /* FAQ block container */
+}
+
+.faq-block h2 {
+    color: var(--block-heading-color);
+}
+
+.faq-block .faq-item {
+    border: 1px solid var(--block-border-color, #e5e7eb);
+    transition: border-color 0.2s ease;
+}
+
+.faq-block .faq-item:hover {
+    border-color: var(--block-link-color, #2563eb);
+}
+
+.faq-block .faq-question {
+    color: var(--block-heading-color);
+    font-weight: 600;
+}
+
+.faq-block .faq-answer {
+    color: var(--block-text-color);
+}
+
+/* ==========================================================================
+   Testimonials Block Styles
+   ========================================================================== */
+
+.testimonials-block {
+    /* Testimonials block container */
+}
+
+.testimonials-block h2 {
+    color: var(--block-heading-color);
+}
+
+.testimonials-block .testimonial-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.testimonials-block .testimonial-card:hover {
+    transform: translateY(-2px);
+}
+
+.testimonials-block .testimonial-quote {
+    color: var(--block-text-color);
+    font-style: italic;
+}
+
+.testimonials-block .testimonial-author {
+    color: var(--block-heading-color);
+    font-weight: 600;
+}
+
+.testimonials-block .testimonial-role {
+    color: var(--block-text-color);
+}
+
+.testimonials-block .testimonial-rating {
+    color: #fbbf24; /* Amber for stars */
+}
+
+/* ==========================================================================
    Pricing Block Styles
    ========================================================================== */
 
