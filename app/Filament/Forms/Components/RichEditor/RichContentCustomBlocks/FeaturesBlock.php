@@ -97,8 +97,8 @@ class FeaturesBlock extends RichContentCustomBlock
 
                                         TextInput::make('link')
                                             ->label('Link (Optional)')
-                                            ->placeholder('/features/performance')
-                                            ->url()
+                                            ->placeholder('https://example.com/features')
+                                            ->helperText('Use full URLs (https://...) or relative paths (/page)')
                                             ->maxLength(255),
                                     ])
                                     ->defaultItems(3)

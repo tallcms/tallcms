@@ -78,27 +78,28 @@
                 @foreach($features as $feature)
                     @php
                         $hasLink = !empty($feature['link']);
-                        $tag = $hasLink ? 'a' : 'div';
-                        $linkAttrs = $hasLink ? 'href="' . e($feature['link']) . '"' : '';
+                        $iconType = $feature['icon_type'] ?? 'heroicon';
+                        $iconName = $feature['icon'] ?? '';
+
+                        // Validate heroicon name format (must be heroicon-{style}-{name})
+                        $isValidHeroicon = $iconType === 'heroicon'
+                            && !empty($iconName)
+                            && preg_match('/^heroicon-[oms]-[\w-]+$/', $iconName);
                     @endphp
 
-                    <{{ $tag }}
-                        {{ $hasLink ? 'href=' . e($feature['link']) : '' }}
-                        class="feature-card {{ $styleClass }} {{ $paddingClass }} {{ $textAlignClass }} transition-all duration-200 {{ $hasLink ? 'hover:shadow-xl hover:-translate-y-1 cursor-pointer' : '' }} {{ $isIconLeft ? 'flex items-start gap-4 !text-left' : '' }}"
-                    >
-                        {{-- Icon --}}
-                        @php
-                            $iconType = $feature['icon_type'] ?? 'heroicon';
-                        @endphp
+                    @if($hasLink)
+                        <a
+                            href="{{ e($feature['link']) }}"
+                            class="feature-card group {{ $styleClass }} {{ $paddingClass }} {{ $textAlignClass }} transition-all duration-200 hover:shadow-xl hover:-translate-y-1 cursor-pointer {{ $isIconLeft ? 'flex items-start gap-4 !text-left' : '' }}"
+                        >
+                    @else
+                        <div class="feature-card {{ $styleClass }} {{ $paddingClass }} {{ $textAlignClass }} transition-all duration-200 {{ $isIconLeft ? 'flex items-start gap-4 !text-left' : '' }}">
+                    @endif
 
+                        {{-- Icon --}}
                         <div class="{{ $isIconLeft ? 'flex-shrink-0' : 'flex justify-center mb-4' }}">
                             <div class="{{ $iconContainerClass }} rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                                @if($iconType === 'heroicon' && !empty($feature['icon']))
-                                    @php
-                                        $iconName = $feature['icon'];
-                                        // Convert heroicon-o-name to heroicon-o name format for Blade component
-                                        $iconComponent = str_replace('heroicon-', '', $iconName);
-                                    @endphp
+                                @if($isValidHeroicon)
                                     <x-dynamic-component
                                         :component="$iconName"
                                         class="{{ $iconSizeClass }} text-primary-600 dark:text-primary-400"
@@ -112,7 +113,7 @@
                                 @elseif($iconType === 'emoji' && !empty($feature['emoji']))
                                     <span class="text-3xl">{{ $feature['emoji'] }}</span>
                                 @else
-                                    {{-- Default icon if none specified --}}
+                                    {{-- Default icon if none specified or invalid --}}
                                     <x-heroicon-o-star class="{{ $iconSizeClass }} text-primary-600 dark:text-primary-400" />
                                 @endif
                             </div>
@@ -135,11 +136,16 @@
                             @if($hasLink)
                                 <span class="inline-flex items-center mt-3 text-sm font-medium text-primary-600 dark:text-primary-400 group-hover:text-primary-700">
                                     Learn more
-                                    <x-heroicon-m-arrow-right class="w-4 h-4 ml-1" />
+                                    <x-heroicon-m-arrow-right class="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
                                 </span>
                             @endif
                         </div>
-                    </{{ $tag }}>
+
+                    @if($hasLink)
+                        </a>
+                    @else
+                        </div>
+                    @endif
                 @endforeach
             </div>
         @endif
