@@ -99,6 +99,19 @@ class PluginServiceProvider extends ServiceProvider
                     );
                 }
 
+                // Scan all src/ files for router usage (catches hidden route registration)
+                $srcRouterFile = $this->srcFilesContainRouterUsage($plugin);
+                if ($srcRouterFile) {
+                    Log::error("Plugin src/ file contains router usage - blocked: {$plugin->getFullSlug()}", [
+                        'file' => $srcRouterFile,
+                    ]);
+
+                    throw new \RuntimeException(
+                        "Plugin '{$plugin->getFullSlug()}' contains router usage in {$srcRouterFile}. ".
+                        'Routes must only be defined in routes/public.php or routes/web.php.'
+                    );
+                }
+
                 // Boot the plugin's service provider
                 $pluginManager->bootPlugin($plugin);
             } catch (\Throwable $e) {
@@ -108,7 +121,7 @@ class PluginServiceProvider extends ServiceProvider
                 ]);
 
                 // Re-throw to prevent plugin from loading with potentially unsafe state
-                if (str_contains($e->getMessage(), 'Route:: calls')) {
+                if (str_contains($e->getMessage(), 'Route:: calls') || str_contains($e->getMessage(), 'router usage')) {
                     throw $e;
                 }
             }
@@ -244,6 +257,75 @@ class PluginServiceProvider extends ServiceProvider
         }
 
         return false;
+    }
+
+    /**
+     * Router usage patterns to scan for in src/ files
+     */
+    protected const ROUTER_PATTERNS = [
+        '/\bRoute::/' => 'Route::',
+        '/\bapp\s*\(\s*[\'"]router[\'"]\s*\)/' => 'app(\'router\')',
+        '/\bresolve\s*\(\s*[\'"]router[\'"]\s*\)/' => 'resolve(\'router\')',
+        '/\$this\s*->\s*app\s*\[\s*[\'"]router[\'"]\s*\]/' => '$this->app[\'router\']',
+        '/\$this\s*->\s*app\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/' => '$this->app->make(\'router\')',
+        '/\bapp\s*\(\s*\)\s*->\s*make\s*\(\s*[\'"]router[\'"]\s*\)/' => 'app()->make(\'router\')',
+        '/\bapp\s*\(\s*\)\s*\[\s*[\'"]router[\'"]\s*\]/' => 'app()[\'router\']',
+        '/\bApp::\s*make\s*\(\s*[\'"]router[\'"]\s*\)/' => 'App::make(\'router\')',
+        '/\\\\Illuminate\\\\Routing\\\\Router\b/' => 'Illuminate\\Routing\\Router',
+        '/\buse\s+Illuminate\\\\Routing\\\\Router\b/' => 'Router class import',
+        '/\bRoute::class\b/' => 'Route::class',
+        '/\bRouter::class\b/' => 'Router::class',
+        '/\bRegistrar::class\b/' => 'Registrar::class',
+        '/\\\\?Illuminate\\\\Contracts\\\\Routing\\\\Registrar\b/' => 'Registrar contract',
+        '/[\'"]\\\\?Illuminate\\\\Support\\\\Facades\\\\Route[\'"]/' => 'Route facade class string',
+        '/\bcall_user_func(_array)?\s*\([^)]*Route/' => 'call_user_func with Route',
+    ];
+
+    /**
+     * Check if any src/ files contain router usage patterns
+     * Returns the relative path of the first offending file, or null if clean
+     */
+    protected function srcFilesContainRouterUsage(Plugin $plugin): ?string
+    {
+        $srcPath = $plugin->getSrcPath();
+
+        if (! File::exists($srcPath) || ! is_dir($srcPath)) {
+            return null;
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($srcPath, \RecursiveDirectoryIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $file) {
+            if (! $file->isFile() || $file->getExtension() !== 'php') {
+                continue;
+            }
+
+            $relativePath = 'src/'.str_replace($srcPath.'/', '', $file->getPathname());
+            $content = File::get($file->getPathname());
+
+            // Remove comments before checking
+            $contentWithoutComments = preg_replace('#//.*$#m', '', $content);
+            $contentWithoutComments = preg_replace('#/\*.*?\*/#s', '', $contentWithoutComments);
+
+            // Check for aliased Route facade
+            if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/', $contentWithoutComments, $matches)) {
+                $alias = $matches[1];
+                if (preg_match('/\b'.preg_quote($alias, '/').'::/', $contentWithoutComments)) {
+                    return $relativePath;
+                }
+            }
+
+            // Check all router patterns
+            foreach (self::ROUTER_PATTERNS as $pattern => $description) {
+                if (preg_match($pattern, $contentWithoutComments)) {
+                    return $relativePath;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**

@@ -155,7 +155,7 @@ class PluginMigrator
      */
     protected function rollbackBatch(Plugin $plugin, int $batch, array $files): void
     {
-        $migrations = $this->repository->getMigrationsByBatch($plugin->vendor, $plugin->slug, $batch);
+        $migrations = $this->repository->getMigrationsByBatch($plugin->vendor, $plugin->slug, $batch)->toArray();
 
         foreach (array_reverse($migrations) as $migrationName) {
             if (! isset($files[$migrationName])) {
