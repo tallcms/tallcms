@@ -667,6 +667,24 @@ class PluginServiceProvider extends ServiceProvider
             ];
         }
 
+        // Check for app(Router::class) direct resolution
+        if (preg_match('/\bapp\s*\(\s*\\\\?Router::class\s*\)/i', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'app(Router::class) usage detected. Only Route:: facade calls are allowed.',
+            ];
+        }
+
+        // Check for app(Registrar::class) direct resolution
+        if (preg_match('/\bapp\s*\(\s*\\\\?Registrar::class\s*\)/i', $contentWithoutComments)) {
+            return [
+                'routes' => [],
+                'valid' => false,
+                'error' => 'app(Registrar::class) usage detected. Only Route:: facade calls are allowed.',
+            ];
+        }
+
         // Check for Illuminate\Routing\Router usage (with or without leading backslash)
         if (preg_match('/\\\\?Illuminate\\\\Routing\\\\Router\b/i', $contentWithoutComments)) {
             return [
