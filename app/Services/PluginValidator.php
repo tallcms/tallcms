@@ -170,7 +170,8 @@ class PluginValidator
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $stat = $zip->statIndex($i);
                 // Check external attributes for symlink (Unix: 0120000)
-                if (($stat['external'] >> 16) === 0120000) {
+                // Note: 'external' key may not exist in all PHP/ZipArchive versions
+                if (isset($stat['external']) && (($stat['external'] >> 16) & 0170000) === 0120000) {
                     $errors[] = "Symlink detected in ZIP: {$stat['name']}";
                 }
             }
