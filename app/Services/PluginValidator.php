@@ -453,7 +453,7 @@ class PluginValidator
             // Check for aliased Route facade (case-insensitive)
             if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/i', $contentWithoutComments, $matches)) {
                 $alias = $matches[1];
-                if (preg_match('/\b'.preg_quote($alias, '/').'::/', $contentWithoutComments)) {
+                if (preg_match('/\b'.preg_quote($alias, '/').'::/'.'i', $contentWithoutComments)) {
                     $errors[] = "Aliased Route facade ({$alias}::) found in src/{$relativePath}. Routes must only be defined in routes/public.php or routes/web.php.";
 
                     continue;
@@ -533,7 +533,7 @@ class PluginValidator
             // Check for aliased Route facade (case-insensitive)
             if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/i', $contentWithoutComments, $matches)) {
                 $alias = $matches[1];
-                if (preg_match('/\b'.preg_quote($alias, '/').'::/', $contentWithoutComments)) {
+                if (preg_match('/\b'.preg_quote($alias, '/').'::/'.'i', $contentWithoutComments)) {
                     $errors[] = "Aliased Route facade ({$alias}::) found in {$relativePath}. Routes must only be defined in routes/public.php or routes/web.php.";
 
                     continue;
@@ -610,7 +610,7 @@ class PluginValidator
         // Check for aliased Route facade (e.g., "use ... Route as R;" then "R::get")
         if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/i', $contentWithoutComments, $matches)) {
             $alias = $matches[1];
-            if (preg_match('/\b'.preg_quote($alias, '/').'::/', $contentWithoutComments)) {
+            if (preg_match('/\b'.preg_quote($alias, '/').'::/'.'i', $contentWithoutComments)) {
                 $errors[] = "Plugin providers must not register routes directly. Found aliased Route facade usage ({$alias}::).";
 
                 return $errors;
