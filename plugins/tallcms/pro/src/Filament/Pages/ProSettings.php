@@ -3,13 +3,16 @@
 namespace Tallcms\Pro\Filament\Pages;
 
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Tabs;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Tabs;
 use Tallcms\Pro\Models\ProSetting;
+use Tallcms\Pro\Services\Analytics\AnalyticsManager;
 
 class ProSettings extends Page implements HasForms
 {
@@ -33,8 +36,10 @@ class ProSettings extends Page implements HasForms
     {
         $this->form->fill([
             // Analytics
-            'analytics_provider' => ProSetting::get('analytics_provider'),
+            'analytics_provider' => ProSetting::get('analytics_provider', 'google'),
             'google_analytics_id' => ProSetting::get('google_analytics_id'),
+            'ga4_property_id' => ProSetting::get('ga4_property_id'),
+            'ga4_credentials_json' => ProSetting::get('ga4_credentials_json'),
             'plausible_domain' => ProSetting::get('plausible_domain'),
             'plausible_api_key' => ProSetting::get('plausible_api_key'),
             'fathom_site_id' => ProSetting::get('fathom_site_id'),
@@ -68,18 +73,33 @@ class ProSettings extends Page implements HasForms
                                 ->label('Analytics Provider')
                                 ->options([
                                     '' => 'None',
-                                    'google_analytics' => 'Google Analytics 4',
+                                    'google' => 'Google Analytics 4',
                                     'plausible' => 'Plausible',
                                     'fathom' => 'Fathom',
                                 ])
+                                ->default('google')
                                 ->live()
                                 ->helperText('Choose your analytics provider for the dashboard widget'),
 
-                            TextInput::make('google_analytics_id')
-                                ->label('Google Analytics Measurement ID')
-                                ->placeholder('G-XXXXXXXXXX')
-                                ->visible(fn ($get) => $get('analytics_provider') === 'google_analytics')
-                                ->helperText('Your GA4 Measurement ID'),
+                            // Google Analytics 4 settings
+                            Group::make([
+                                TextInput::make('google_analytics_id')
+                                    ->label('Measurement ID (for tracking)')
+                                    ->placeholder('G-XXXXXXXXXX')
+                                    ->helperText('Optional: Add to your site for visitor tracking'),
+
+                                TextInput::make('ga4_property_id')
+                                    ->label('Property ID (for dashboard)')
+                                    ->placeholder('123456789')
+                                    ->helperText('Numeric property ID from GA4 Admin > Property Settings'),
+
+                                Textarea::make('ga4_credentials_json')
+                                    ->label('Service Account Credentials (JSON)')
+                                    ->rows(6)
+                                    ->placeholder('Paste your service account JSON key here...')
+                                    ->helperText('Create a service account in Google Cloud Console with Analytics Viewer role'),
+                            ])
+                                ->visible(fn ($get) => $get('analytics_provider') === 'google'),
 
                             TextInput::make('plausible_domain')
                                 ->label('Plausible Domain')
@@ -185,12 +205,21 @@ class ProSettings extends Page implements HasForms
         $data = $this->form->getState();
 
         // Analytics settings
-        ProSetting::set('analytics_provider', $data['analytics_provider'] ?? null);
+        ProSetting::set('analytics_provider', $data['analytics_provider'] ?? 'google');
         ProSetting::set('google_analytics_id', $data['google_analytics_id'] ?? null);
+        ProSetting::set('ga4_property_id', $data['ga4_property_id'] ?? null);
+        ProSetting::set('ga4_credentials_json', $data['ga4_credentials_json'] ?? null, 'text', 'analytics', true);
         ProSetting::set('plausible_domain', $data['plausible_domain'] ?? null);
         ProSetting::set('plausible_api_key', $data['plausible_api_key'] ?? null, 'text', 'analytics', true);
         ProSetting::set('fathom_site_id', $data['fathom_site_id'] ?? null);
         ProSetting::set('fathom_api_key', $data['fathom_api_key'] ?? null, 'text', 'analytics', true);
+
+        // Clear analytics cache when settings change
+        try {
+            app(AnalyticsManager::class)->clearCache();
+        } catch (\Throwable $e) {
+            // Ignore if manager not available
+        }
 
         // Email settings
         ProSetting::set('email_provider', $data['email_provider'] ?? null);

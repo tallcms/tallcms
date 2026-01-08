@@ -6,6 +6,7 @@ use Filament\Contracts\Plugin;
 use Filament\Panel;
 use Tallcms\Pro\Filament\Pages\ProLicense;
 use Tallcms\Pro\Filament\Pages\ProSettings;
+use Tallcms\Pro\Filament\Widgets\AnalyticsOverviewWidget;
 use Tallcms\Pro\Filament\Widgets\LicenseStatusWidget;
 
 class TallcmsProPlugin implements Plugin
@@ -24,6 +25,7 @@ class TallcmsProPlugin implements Plugin
             ])
             ->widgets([
                 LicenseStatusWidget::class,
+                AnalyticsOverviewWidget::class,
             ]);
     }
 
