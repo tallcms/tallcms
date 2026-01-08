@@ -93,15 +93,33 @@ class PluginMigrator
         $errors = [];
         $rolledBack = [];
 
+        Log::debug("Plugin rollback starting", [
+            'plugin' => $plugin->getFullSlug(),
+            'migrationPath' => $migrationPath,
+            'pathExists' => File::exists($migrationPath),
+        ]);
+
         if (! File::exists($migrationPath)) {
             // Still need to clean up migration records even if files don't exist
-            $this->repository->deleteAll($plugin->vendor, $plugin->slug);
+            $deletedCount = $this->repository->deleteAll($plugin->vendor, $plugin->slug);
+
+            Log::warning("Plugin rollback: migration path not found, cleared {$deletedCount} records", [
+                'plugin' => $plugin->getFullSlug(),
+                'migrationPath' => $migrationPath,
+            ]);
 
             return new MigrationResult(true, [], [], 'No migration files found');
         }
 
         $files = $this->getMigrationFiles($migrationPath);
         $ran = $this->repository->getRan($plugin->vendor, $plugin->slug)->toArray();
+
+        Log::debug("Plugin rollback: found migrations", [
+            'plugin' => $plugin->getFullSlug(),
+            'filesCount' => count($files),
+            'ranCount' => count($ran),
+            'ran' => $ran,
+        ]);
 
         if (empty($ran)) {
             return new MigrationResult(true, [], [], 'No migrations to rollback');
