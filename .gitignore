@@ -32,6 +32,3 @@ Homestead.yaml
 Thumbs.db
 .env.backup.*
 hello-world-plugin-v1.1.0.zip
-
-# Pro plugin (separate repo, symlinked for development)
-plugins/tallcms/pro
