@@ -138,6 +138,11 @@ class PluginMigrator
                     'trace' => $e->getTraceAsString(),
                 ]);
 
+                // Still delete the migration record to prevent orphaned entries
+                // The table may still exist, but reinstallation will recreate it
+                $this->repository->delete($plugin->vendor, $plugin->slug, $migrationName);
+                $rolledBack[] = $migrationName.' (record cleared, table may remain)';
+
                 // Continue with other rollbacks even if one fails
             }
         }
