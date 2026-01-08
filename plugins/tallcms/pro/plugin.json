@@ -1,0 +1,20 @@
+{
+    "name": "TallCMS Pro",
+    "slug": "pro",
+    "vendor": "tallcms",
+    "version": "1.0.0",
+    "description": "Advanced blocks, analytics, and integrations for TallCMS",
+    "author": "TallCMS",
+    "author_url": "https://tallcms.com",
+    "homepage": "https://tallcms.com/pro",
+    "license": "Proprietary",
+    "namespace": "Tallcms\\Pro",
+    "provider": "Tallcms\\Pro\\Providers\\TallcmsProServiceProvider",
+    "filament_plugin": "Tallcms\\Pro\\Filament\\TallcmsProPlugin",
+    "tags": ["pro", "premium", "blocks", "analytics", "integrations"],
+    "compatibility": {
+        "php": "^8.2",
+        "tallcms": "^1.0"
+    },
+    "public_routes": ["/tallcms-pro-webhook"]
+}
