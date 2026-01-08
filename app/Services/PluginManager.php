@@ -671,8 +671,8 @@ class PluginManager
 
             $migrationsRolledBack = $rollbackResult->migrations;
 
-            // Delete plugin directory
-            File::deleteDirectory($plugin->path);
+            // Delete plugin directory (safely handle symlinks)
+            $this->safeDeletePluginDirectory($plugin->path);
 
             // Clear all caches
             $this->clearAllCaches();
@@ -915,6 +915,28 @@ class PluginManager
     {
         if (File::exists($backupPath)) {
             File::deleteDirectory($backupPath);
+        }
+    }
+
+    /**
+     * Safely delete a plugin directory, handling symlinks properly.
+     *
+     * If the path is a symlink, only the symlink is removed (not the target).
+     * This protects against accidentally deleting source files when plugins
+     * are symlinked for local development.
+     */
+    protected function safeDeletePluginDirectory(string $path): void
+    {
+        if (is_link($path)) {
+            // Path is a symlink - just remove the symlink, not the target
+            unlink($path);
+            Log::info("Plugin symlink removed (source files preserved)", [
+                'symlink' => $path,
+                'target' => readlink($path),
+            ]);
+        } elseif (File::exists($path)) {
+            // Regular directory - delete it
+            File::deleteDirectory($path);
         }
     }
 
