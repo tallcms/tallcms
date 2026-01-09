@@ -52,7 +52,7 @@ class PluginLicenseService
 
         // Tier 2: Database cache - check if cached validation is still fresh
         $cacheTtl = config('plugin.license.cache_ttl', 86400);
-        if (! $license->needsRevalidation($cacheTtl) && $license->isActive()) {
+        if (! $license->needsRevalidation($cacheTtl) && $license->isActive() && ! $license->isExpired()) {
             $this->cachedValidStates[$pluginSlug] = true;
 
             return true;
@@ -91,7 +91,10 @@ class PluginLicenseService
 
         // Update license status if validation returned a specific status
         if ($result['status'] !== 'error') {
-            $license->status = $result['status'] === 'active' ? 'active' : 'invalid';
+            // Preserve specific statuses (active, expired) rather than coercing to invalid
+            $license->status = in_array($result['status'], ['active', 'expired'], true)
+                ? $result['status']
+                : 'invalid';
             $license->save();
         }
 
