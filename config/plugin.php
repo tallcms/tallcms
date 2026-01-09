@@ -56,4 +56,29 @@ return [
     |
     */
     'auto_migrate' => env('PLUGIN_AUTO_MIGRATE', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | License Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for plugin license management.
+    |
+    */
+    'license' => [
+        // License proxy URL for official TallCMS plugins
+        'proxy_url' => env('TALLCMS_LICENSE_PROXY_URL', 'https://tallcms.com'),
+
+        // How long to cache license validation results (in seconds)
+        // Default: 24 hours
+        'cache_ttl' => 86400,
+
+        // Number of days a license remains valid when the license server is unreachable
+        // Default: 7 days
+        'offline_grace_days' => 7,
+
+        // Test license key prefix (for development/testing only)
+        // Format: TALLCMS-{PRODUCT}-TEST-LICENSE
+        'test_license_prefix' => 'TALLCMS-',
+    ],
 ];

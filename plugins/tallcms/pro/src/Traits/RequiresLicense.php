@@ -2,20 +2,25 @@
 
 namespace Tallcms\Pro\Traits;
 
-use Tallcms\Pro\Services\LicenseService;
+use App\Services\PluginLicenseService;
 
 trait RequiresLicense
 {
+    /**
+     * The plugin slug for license validation
+     */
+    protected static string $licensePluginSlug = 'tallcms/pro';
+
     /**
      * Check if the Pro license is valid (includes grace period)
      */
     protected static function isLicenseActive(): bool
     {
         try {
-            $licenseService = app(LicenseService::class);
+            $licenseService = app(PluginLicenseService::class);
 
             // Use isValid() which handles caching, grace periods, etc.
-            return $licenseService->isValid();
+            return $licenseService->isValid(static::$licensePluginSlug);
         } catch (\Throwable $e) {
             return false;
         }

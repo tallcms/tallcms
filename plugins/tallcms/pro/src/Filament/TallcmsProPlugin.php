@@ -4,10 +4,8 @@ namespace Tallcms\Pro\Filament;
 
 use Filament\Contracts\Plugin;
 use Filament\Panel;
-use Tallcms\Pro\Filament\Pages\ProLicense;
 use Tallcms\Pro\Filament\Pages\ProSettings;
 use Tallcms\Pro\Filament\Widgets\AnalyticsOverviewWidget;
-use Tallcms\Pro\Filament\Widgets\LicenseStatusWidget;
 
 class TallcmsProPlugin implements Plugin
 {
@@ -18,13 +16,13 @@ class TallcmsProPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
+        // NOTE: License management is now handled by core TallCMS (Settings > Plugin Licenses)
+        // This plugin only registers Pro-specific pages and widgets
         $panel
             ->pages([
-                ProLicense::class,
                 ProSettings::class,
             ])
             ->widgets([
-                LicenseStatusWidget::class,
                 AnalyticsOverviewWidget::class,
             ]);
     }

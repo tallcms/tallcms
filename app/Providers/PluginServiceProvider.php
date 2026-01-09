@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Models\Plugin;
+use App\Services\LicenseProxyClient;
+use App\Services\PluginLicenseService;
 use App\Services\PluginManager;
 use App\Services\PluginMigrationRepository;
 use Illuminate\Support\Facades\File;
@@ -33,6 +35,24 @@ class PluginServiceProvider extends ServiceProvider
 
         // Register plugin manager alias
         $this->app->alias(PluginManager::class, 'plugin.manager');
+
+        // Register license proxy client
+        $this->app->singleton(LicenseProxyClient::class, function ($app) {
+            return new LicenseProxyClient(
+                config('plugin.license.proxy_url', 'https://tallcms.com')
+            );
+        });
+
+        // Register plugin license service
+        $this->app->singleton(PluginLicenseService::class, function ($app) {
+            return new PluginLicenseService(
+                $app->make(LicenseProxyClient::class),
+                $app->make(PluginManager::class)
+            );
+        });
+
+        // Alias for convenience
+        $this->app->alias(PluginLicenseService::class, 'plugin.license');
 
         // Register PSR-4 autoloading early so Filament can find plugin classes
         // This must happen during register() before AdminPanelProvider's panel() runs

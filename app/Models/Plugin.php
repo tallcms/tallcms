@@ -31,6 +31,8 @@ class Plugin
 
     public array $extras = [];
 
+    public bool $licenseRequired = false;
+
     public function __construct(array $data, string $path)
     {
         $this->name = $data['name'] ?? 'Untitled Plugin';
@@ -43,6 +45,7 @@ class Plugin
         $this->provider = $data['provider'] ?? '';
         $this->filamentPlugin = $data['filament_plugin'] ?? null;
         $this->tags = $data['tags'] ?? [];
+        $this->licenseRequired = (bool) ($data['license_required'] ?? false);
         $this->path = $path;
 
         // Store compatibility info in extras
@@ -182,6 +185,23 @@ class Plugin
     public function getFullSlug(): string
     {
         return "{$this->vendor}/{$this->slug}";
+    }
+
+    /**
+     * Check if plugin requires a license
+     */
+    public function requiresLicense(): bool
+    {
+        return $this->licenseRequired;
+    }
+
+    /**
+     * Get the license slug for this plugin
+     * Used for license activation/validation
+     */
+    public function getLicenseSlug(): string
+    {
+        return $this->getFullSlug();
     }
 
     /**

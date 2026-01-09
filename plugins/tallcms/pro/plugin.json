@@ -12,6 +12,7 @@
     "provider": "Tallcms\\Pro\\Providers\\TallcmsProServiceProvider",
     "filament_plugin": "Tallcms\\Pro\\Filament\\TallcmsProPlugin",
     "tags": ["pro", "premium", "blocks", "analytics", "integrations"],
+    "license_required": true,
     "compatibility": {
         "php": "^8.2",
         "tallcms": "^1.0"

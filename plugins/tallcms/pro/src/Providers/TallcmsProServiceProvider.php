@@ -3,8 +3,6 @@
 namespace Tallcms\Pro\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Tallcms\Pro\Services\AnystackClient;
-use Tallcms\Pro\Services\LicenseService;
 
 class TallcmsProServiceProvider extends ServiceProvider
 {
@@ -13,26 +11,14 @@ class TallcmsProServiceProvider extends ServiceProvider
      *
      * IMPORTANT: Do NOT register routes here - plugin routes are handled
      * by PluginServiceProvider via routes/public.php and routes/web.php
+     *
+     * NOTE: License services are now handled by core TallCMS PluginLicenseService.
+     * This plugin only needs to set "license_required": true in plugin.json.
      */
     public function register(): void
     {
         // Merge plugin configuration
         $this->mergeConfigFrom(__DIR__.'/../config.php', 'tallcms-pro');
-
-        // Register the Anystack client as a singleton
-        $this->app->singleton(AnystackClient::class, function ($app) {
-            return new AnystackClient(
-                config('tallcms-pro.anystack.api_url'),
-                config('tallcms-pro.anystack.product_id')
-            );
-        });
-
-        // Register the license service as a singleton
-        $this->app->singleton(LicenseService::class, function ($app) {
-            return new LicenseService(
-                $app->make(AnystackClient::class)
-            );
-        });
     }
 
     /**
