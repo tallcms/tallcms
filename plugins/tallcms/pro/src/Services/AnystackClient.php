@@ -169,16 +169,6 @@ class AnystackClient
     }
 
     /**
-     * Verify webhook signature from Anystack
-     */
-    public function verifyWebhookSignature(string $payload, string $signature, string $secret): bool
-    {
-        $expectedSignature = hash_hmac('sha256', $payload, $secret);
-
-        return hash_equals($expectedSignature, $signature);
-    }
-
-    /**
      * Parse the API response into a standard format
      */
     protected function parseResponse(Response $response): array

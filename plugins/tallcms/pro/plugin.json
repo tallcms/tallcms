@@ -15,6 +15,5 @@
     "compatibility": {
         "php": "^8.2",
         "tallcms": "^1.0"
-    },
-    "public_routes": ["/tallcms-pro-webhook"]
+    }
 }

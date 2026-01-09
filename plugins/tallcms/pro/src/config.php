@@ -30,11 +30,8 @@ return [
         // Anystack API base URL
         'api_url' => env('ANYSTACK_API_URL', 'https://api.anystack.sh'),
 
-        // Product ID (set in Anystack dashboard)
-        'product_id' => env('ANYSTACK_PRODUCT_ID'),
-
-        // Webhook secret for signature verification (env-only for security)
-        'webhook_secret' => env('ANYSTACK_WEBHOOK_SECRET'),
+        // Product ID for TallCMS Pro in Anystack
+        'product_id' => 'tallcms-pro',
     ],
 
     /*

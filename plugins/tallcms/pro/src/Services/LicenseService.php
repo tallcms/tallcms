@@ -208,45 +208,6 @@ class LicenseService
     }
 
     /**
-     * Handle webhook from Anystack (license updates)
-     */
-    public function handleWebhook(array $payload, string $event): void
-    {
-        $licenseKey = $payload['license_key'] ?? null;
-
-        if (! $licenseKey) {
-            return;
-        }
-
-        $license = ProLicense::where('license_key', $licenseKey)->first();
-
-        if (! $license) {
-            return;
-        }
-
-        match ($event) {
-            'license.expired' => $license->update(['status' => 'expired']),
-            'license.suspended' => $license->update(['status' => 'invalid']),
-            'license.renewed' => $license->update([
-                'status' => 'active',
-                'expires_at' => isset($payload['expires_at'])
-                    ? \Carbon\Carbon::parse($payload['expires_at'])
-                    : null,
-            ]),
-            default => null,
-        };
-
-        // Clear cache
-        $this->cachedValidState = null;
-        Cache::forget('tallcms_pro_license_valid');
-
-        Log::info('TallCMS Pro: Webhook processed', [
-            'event' => $event,
-            'license_key' => substr($licenseKey, 0, 8).'...',
-        ]);
-    }
-
-    /**
      * Mask a license key for display
      */
     protected function maskLicenseKey(string $key): string
