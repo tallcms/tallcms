@@ -127,17 +127,18 @@ class LicenseProxyClient
      */
     public function checkForUpdates(string $pluginSlug, string $licenseKey, string $domain, string $currentVersion): array
     {
-        // Test licenses can check for updates (in dev)
+        // Test licenses simulate expired - updates are blocked
         if ($this->isTestLicense($pluginSlug, $licenseKey)) {
             return [
-                'success' => true,
-                'license_valid' => true,
+                'success' => false,
+                'license_valid' => false,
                 'update_available' => false,
                 'current_version' => $currentVersion,
-                'latest_version' => $currentVersion,
+                'latest_version' => null,
                 'download_url' => null,
                 'changelog_url' => null,
-                'message' => 'Test license - no updates in development mode',
+                'purchase_url' => config("plugin.license.purchase_urls.{$pluginSlug}"),
+                'message' => 'License expired. Please renew to access updates. (Test license)',
             ];
         }
 
@@ -319,19 +320,24 @@ class LicenseProxyClient
 
     /**
      * Get a mock response for test license
+     *
+     * Test licenses simulate an EXPIRED license for testing:
+     * - License was activated a year ago
+     * - Expired 30 days ago (past the 14-day grace period)
+     * - Updates are blocked, but plugin still works (no watermark)
      */
     protected function getTestLicenseResponse(string $pluginSlug): array
     {
         return [
-            'valid' => true,
-            'status' => 'active',
-            'message' => 'Test license activated (development only)',
+            'valid' => false,
+            'status' => 'expired',
+            'message' => 'Test license expired (for testing expired scenarios)',
             'data' => [
                 'license_key' => $this->getTestLicenseKey($pluginSlug),
                 'plugin_slug' => $pluginSlug,
-                'status' => 'active',
-                'activated_at' => now()->toIso8601String(),
-                'expires_at' => now()->addYear()->toIso8601String(),
+                'status' => 'expired',
+                'activated_at' => now()->subYear()->toIso8601String(),
+                'expires_at' => now()->subDays(30)->toIso8601String(),
                 'is_test' => true,
             ],
         ];
