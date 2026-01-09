@@ -252,6 +252,7 @@ class PluginLicenseService
                 'status_label' => 'No License',
                 'status_color' => 'gray',
                 'message' => 'Enter your license key to activate this plugin',
+                'purchase_url' => config("plugin.license.purchase_urls.{$pluginSlug}"),
             ];
         }
 
@@ -433,6 +434,7 @@ class PluginLicenseService
     public function checkForUpdates(string $pluginSlug): array
     {
         $license = PluginLicense::findByPluginSlug($pluginSlug);
+        $purchaseUrl = config("plugin.license.purchase_urls.{$pluginSlug}");
 
         if (! $license) {
             return [
@@ -443,7 +445,8 @@ class PluginLicenseService
                 'latest_version' => null,
                 'download_url' => null,
                 'changelog_url' => null,
-                'message' => 'No license found. Please activate a license to check for updates.',
+                'purchase_url' => $purchaseUrl,
+                'message' => 'No license found. Please purchase and activate a license to check for updates.',
             ];
         }
 

@@ -178,6 +178,7 @@ class LicenseProxyClient
                     'latest_version' => $json['latest_version'] ?? $currentVersion,
                     'download_url' => $json['download_url'] ?? null,
                     'changelog_url' => $json['changelog_url'] ?? null,
+                    'purchase_url' => $json['purchase_url'] ?? null,
                     'requirements' => $json['requirements'] ?? [],
                     'message' => $json['update_available']
                         ? "Update available: v{$json['latest_version']}"
@@ -195,6 +196,7 @@ class LicenseProxyClient
                     'latest_version' => null,
                     'download_url' => null,
                     'changelog_url' => null,
+                    'purchase_url' => $json['purchase_url'] ?? null,
                     'message' => $json['message'] ?? 'Valid license required to check for updates',
                 ];
             }
@@ -208,6 +210,7 @@ class LicenseProxyClient
                 'latest_version' => null,
                 'download_url' => null,
                 'changelog_url' => null,
+                'purchase_url' => null,
                 'message' => $json['message'] ?? 'Unable to check for updates',
             ];
 

@@ -86,5 +86,11 @@ return [
         // Test license key prefix (for development/testing only)
         // Format: TALLCMS-{PRODUCT}-TEST-LICENSE
         'test_license_prefix' => 'TALLCMS-',
+
+        // Purchase URLs for plugins (shown when no license is active)
+        'purchase_urls' => [
+            'tallcms/pro' => 'https://checkout.anystack.sh/tallcms-pro-plugin',
+            // 'tallcms/seo' => 'https://checkout.anystack.sh/tallcms-seo-plugin',
+        ],
     ],
 ];
