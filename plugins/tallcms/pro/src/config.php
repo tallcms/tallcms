@@ -31,7 +31,7 @@ return [
         'api_url' => env('ANYSTACK_API_URL', 'https://api.anystack.sh'),
 
         // Product ID for TallCMS Pro in Anystack
-        'product_id' => 'tallcms-pro',
+        'product_id' => 'a0cb2ba1-5edc-4cdf-8134-48f8497f18bf',
     ],
 
     /*
