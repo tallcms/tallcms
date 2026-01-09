@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\Plugin;
+use App\Services\PluginLicenseService;
 use App\Services\PluginManager as PluginManagerService;
 use App\Services\PluginMigrator;
 use App\Services\PluginValidator;
@@ -45,6 +46,25 @@ class PluginManager extends Page implements HasForms
     public static function getNavigationSort(): ?int
     {
         return 60;
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $count = app(PluginLicenseService::class)->getAvailableUpdatesCount();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'warning';
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        $count = app(PluginLicenseService::class)->getAvailableUpdatesCount();
+
+        return $count > 0 ? "{$count} update(s) available" : null;
     }
 
     public ?string $selectedPlugin = null;

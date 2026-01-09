@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Services\PluginLicenseService;
 use App\Services\PluginManager;
 use App\Services\ThemeResolver;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
@@ -77,7 +78,18 @@ class AdminPanelProvider extends PanelProvider
                     ->label('View Site')
                     ->url('/', shouldOpenInNewTab: true)
                     ->icon('heroicon-o-globe-alt'),
-            ]);
+            ])
+            ->bootUsing(function () {
+                // Trigger automatic update check on admin panel load (rate-limited)
+                try {
+                    app(PluginLicenseService::class)->checkForUpdatesAutomatically();
+                } catch (\Throwable $e) {
+                    // Don't let update check failures break the admin panel
+                    \Illuminate\Support\Facades\Log::debug('Auto update check skipped', [
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            });
     }
 
     /**

@@ -98,6 +98,10 @@ return [
             'tallcms/pro' => 'https://anystack.sh/download/tallcms-pro-plugin',
             // 'tallcms/seo' => 'https://anystack.sh/download/tallcms-seo-plugin',
         ],
+
+        // How often to automatically check for updates (in seconds)
+        // Default: 24 hours. Set to 0 to disable automatic checking.
+        'update_check_interval' => 86400,
     ],
 
     /*

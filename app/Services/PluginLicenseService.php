@@ -528,4 +528,107 @@ class PluginLicenseService
             $this->cachedValidStates = [];
         }
     }
+
+    /**
+     * Check for updates automatically (rate-limited, cached)
+     *
+     * This is called on admin page loads to proactively check for updates
+     * without requiring user action. Results are cached to avoid excessive API calls.
+     */
+    public function checkForUpdatesAutomatically(): void
+    {
+        $cacheKey = 'plugin_updates_last_check';
+        $checkInterval = config('plugin.license.update_check_interval', 86400); // 24 hours default
+
+        // Check if we've already checked recently
+        $lastCheck = Cache::get($cacheKey);
+        if ($lastCheck && now()->diffInSeconds($lastCheck) < $checkInterval) {
+            return;
+        }
+
+        // Mark that we're checking now (prevents concurrent checks)
+        Cache::put($cacheKey, now(), $checkInterval);
+
+        // Get all licensable plugins with valid licenses
+        $licensablePlugins = $this->getLicensablePlugins();
+
+        if ($licensablePlugins->isEmpty()) {
+            return;
+        }
+
+        $updates = [];
+
+        foreach ($licensablePlugins as $plugin) {
+            $pluginSlug = $plugin->getLicenseSlug();
+            $license = PluginLicense::findByPluginSlug($pluginSlug);
+
+            // Only check if we have a license (don't waste API calls for unlicensed plugins)
+            if (! $license) {
+                continue;
+            }
+
+            try {
+                $result = $this->checkForUpdates($pluginSlug);
+
+                if ($result['update_available'] ?? false) {
+                    $updates[$pluginSlug] = [
+                        'plugin_name' => $plugin->name,
+                        'current_version' => $result['current_version'] ?? $plugin->version,
+                        'latest_version' => $result['latest_version'],
+                        'download_url' => $result['download_url'] ?? null,
+                        'changelog_url' => $result['changelog_url'] ?? null,
+                    ];
+                }
+            } catch (\Exception $e) {
+                Log::warning('PluginLicenseService: Auto update check failed', [
+                    'plugin_slug' => $pluginSlug,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Cache available updates
+        Cache::put('plugin_available_updates', $updates, $checkInterval);
+
+        if (! empty($updates)) {
+            Log::info('PluginLicenseService: Updates available', [
+                'plugins' => array_keys($updates),
+            ]);
+        }
+    }
+
+    /**
+     * Get cached available updates
+     *
+     * @return array<string, array{plugin_name: string, current_version: string, latest_version: string, download_url: ?string, changelog_url: ?string}>
+     */
+    public function getAvailableUpdates(): array
+    {
+        return Cache::get('plugin_available_updates', []);
+    }
+
+    /**
+     * Check if there are any available updates
+     */
+    public function hasAvailableUpdates(): bool
+    {
+        return ! empty($this->getAvailableUpdates());
+    }
+
+    /**
+     * Get count of available updates
+     */
+    public function getAvailableUpdatesCount(): int
+    {
+        return count($this->getAvailableUpdates());
+    }
+
+    /**
+     * Clear update cache (force re-check on next page load)
+     */
+    public function clearUpdateCache(): void
+    {
+        Cache::forget('plugin_updates_last_check');
+        Cache::forget('plugin_available_updates');
+    }
 }
