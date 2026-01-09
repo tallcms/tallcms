@@ -56,7 +56,7 @@ class LicenseProxyClient
             Log::info('LicenseProxyClient: Activate response', [
                 'plugin_slug' => $pluginSlug,
                 'status' => $response->status(),
-                'body' => $response->json(),
+                'success' => $response->json('success'),
             ]);
 
             return $this->parseActivateResponse($response);
@@ -103,7 +103,7 @@ class LicenseProxyClient
             Log::info('LicenseProxyClient: Validate response', [
                 'plugin_slug' => $pluginSlug,
                 'status' => $response->status(),
-                'body' => $response->json(),
+                'valid' => $response->json('valid'),
             ]);
 
             return $this->parseValidateResponse($response);

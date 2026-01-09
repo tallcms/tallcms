@@ -100,7 +100,8 @@ class PluginLicense extends Model
             return true;
         }
 
-        return $this->last_validated_at->addSeconds($cacheTtlSeconds)->isPast();
+        // Use copy() to avoid mutating the original Carbon instance
+        return $this->last_validated_at->copy()->addSeconds($cacheTtlSeconds)->isPast();
     }
 
     /**
@@ -112,7 +113,8 @@ class PluginLicense extends Model
             return false;
         }
 
-        return $this->last_validated_at->addDays($graceDays)->isFuture();
+        // Use copy() to avoid mutating the original Carbon instance
+        return $this->last_validated_at->copy()->addDays($graceDays)->isFuture();
     }
 
     /**
