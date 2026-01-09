@@ -253,6 +253,7 @@ class PluginLicenseService
                 'status_color' => 'gray',
                 'message' => 'Enter your license key to activate this plugin',
                 'purchase_url' => config("plugin.license.purchase_urls.{$pluginSlug}"),
+                'download_url' => config("plugin.license.download_urls.{$pluginSlug}"),
             ];
         }
 
@@ -281,6 +282,8 @@ class PluginLicenseService
             'last_validated' => $license->last_validated_at?->diffForHumans(),
             'message' => $message,
             'is_in_grace_period' => $inRenewalGrace,
+            'purchase_url' => config("plugin.license.purchase_urls.{$pluginSlug}"),
+            'download_url' => config("plugin.license.download_urls.{$pluginSlug}"),
         ];
     }
 

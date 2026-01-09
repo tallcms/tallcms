@@ -103,6 +103,21 @@ class PluginManager extends Page implements HasForms
     }
 
     /**
+     * Get available plugins from catalog (excluding installed ones)
+     */
+    #[Computed]
+    public function availablePlugins(): Collection
+    {
+        $catalog = config('plugin.catalog', []);
+        $installedSlugs = $this->plugins->pluck('fullSlug')->toArray();
+
+        return collect($catalog)
+            ->filter(fn ($plugin, $slug) => ! in_array($slug, $installedSlugs))
+            ->map(fn ($plugin, $slug) => array_merge($plugin, ['fullSlug' => $slug]))
+            ->values();
+    }
+
+    /**
      * Show plugin details in modal
      */
     public function showPluginDetails(string $vendor, string $slug): void

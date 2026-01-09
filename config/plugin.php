@@ -92,5 +92,44 @@ return [
             'tallcms/pro' => 'https://checkout.anystack.sh/tallcms-pro-plugin',
             // 'tallcms/seo' => 'https://checkout.anystack.sh/tallcms-seo-plugin',
         ],
+
+        // Download URLs for plugins (shown when license is valid)
+        'download_urls' => [
+            'tallcms/pro' => 'https://anystack.sh/download/tallcms-pro-plugin',
+            // 'tallcms/seo' => 'https://anystack.sh/download/tallcms-seo-plugin',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Available Plugins Catalog
+    |--------------------------------------------------------------------------
+    |
+    | Official and featured plugins shown in the Plugin Manager.
+    | In the future, this can be extended to fetch from a marketplace API.
+    |
+    */
+    'catalog' => [
+        'tallcms/pro' => [
+            'name' => 'TallCMS Pro',
+            'slug' => 'pro',
+            'vendor' => 'tallcms',
+            'description' => 'Advanced blocks, analytics, and integrations for TallCMS. Includes Google Analytics dashboard, premium content blocks, and more.',
+            'author' => 'TallCMS',
+            'homepage' => 'https://tallcms.com/pro',
+            'icon' => 'heroicon-o-sparkles',
+            'category' => 'official',
+            'featured' => true,
+            'download_url' => 'https://anystack.sh/download/tallcms-pro-plugin',
+            'purchase_url' => 'https://checkout.anystack.sh/tallcms-pro-plugin',
+        ],
+        // Future plugins:
+        // 'tallcms/seo' => [
+        //     'name' => 'TallCMS SEO',
+        //     'slug' => 'seo',
+        //     'vendor' => 'tallcms',
+        //     'description' => 'Advanced SEO tools for TallCMS.',
+        //     ...
+        // ],
     ],
 ];

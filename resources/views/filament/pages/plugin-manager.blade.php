@@ -1,4 +1,99 @@
 <x-filament-panels::page>
+    {{-- Available Plugins (not installed) --}}
+    @if($this->availablePlugins->isNotEmpty())
+        <div class="mb-8">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <x-heroicon-o-sparkles class="w-5 h-5 text-primary-500" />
+                Available Plugins
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @foreach($this->availablePlugins as $plugin)
+                    <div class="bg-gradient-to-br from-primary-50 to-white dark:from-primary-900/20 dark:to-gray-800 rounded-lg shadow-sm border border-primary-200 dark:border-primary-800 p-4 relative overflow-hidden">
+                        {{-- Featured badge --}}
+                        @if($plugin['featured'] ?? false)
+                            <div class="absolute top-0 right-0 bg-primary-500 text-white text-xs font-bold px-2 py-0.5 rounded-bl">
+                                Featured
+                            </div>
+                        @endif
+
+                        <div class="flex items-start gap-3">
+                            {{-- Icon --}}
+                            <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center">
+                                @if($plugin['icon'] ?? null)
+                                    <x-dynamic-component :component="$plugin['icon']" class="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                                @else
+                                    <x-heroicon-o-puzzle-piece class="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                                @endif
+                            </div>
+
+                            {{-- Info --}}
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                                    {{ $plugin['name'] }}
+                                </h3>
+                                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                                    {{ $plugin['description'] }}
+                                </p>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-500">
+                                    by {{ $plugin['author'] }}
+                                </p>
+                            </div>
+                        </div>
+
+                        {{-- Actions --}}
+                        <div class="mt-4 flex items-center gap-2">
+                            @if($plugin['download_url'] ?? null)
+                                <x-filament::button
+                                    tag="a"
+                                    href="{{ $plugin['download_url'] }}"
+                                    target="_blank"
+                                    color="primary"
+                                    size="sm"
+                                    icon="heroicon-o-arrow-down-tray"
+                                >
+                                    Download
+                                </x-filament::button>
+                            @endif
+                            @if($plugin['purchase_url'] ?? null)
+                                <x-filament::button
+                                    tag="a"
+                                    href="{{ $plugin['purchase_url'] }}"
+                                    target="_blank"
+                                    color="gray"
+                                    size="sm"
+                                    icon="heroicon-o-shopping-cart"
+                                    outlined
+                                >
+                                    Purchase License
+                                </x-filament::button>
+                            @endif
+                            @if($plugin['homepage'] ?? null)
+                                <x-filament::button
+                                    tag="a"
+                                    href="{{ $plugin['homepage'] }}"
+                                    target="_blank"
+                                    color="gray"
+                                    size="sm"
+                                    outlined
+                                >
+                                    Learn More
+                                </x-filament::button>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    {{-- Installed Plugins --}}
+    @if($this->plugins->isNotEmpty())
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <x-heroicon-o-check-circle class="w-5 h-5 text-success-500" />
+            Installed Plugins
+        </h2>
+    @endif
+
     {{-- Plugin List --}}
     <div class="space-y-4">
         @foreach($this->plugins as $plugin)
@@ -110,7 +205,11 @@
             <x-heroicon-o-puzzle-piece class="mx-auto h-12 w-12 text-gray-400" />
             <h3 class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No plugins installed</h3>
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Upload a plugin ZIP file to get started.
+                @if($this->availablePlugins->isNotEmpty())
+                    Download a plugin from above or upload a ZIP file to get started.
+                @else
+                    Upload a plugin ZIP file to get started.
+                @endif
             </p>
         </div>
     @endif

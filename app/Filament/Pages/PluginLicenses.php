@@ -72,7 +72,19 @@ class PluginLicenses extends Page implements HasForms
                 ->placeholder('XXXX-XXXX-XXXX-XXXX')
                 ->required()
                 ->helperText('Enter your license key from your purchase email')
-                ->visible(fn () => $this->selected_plugin && ! ($this->statuses[$this->selected_plugin]['has_license'] ?? false)),
+                ->visible(function () {
+                    if (! $this->selected_plugin) {
+                        return false;
+                    }
+
+                    $status = $this->statuses[$this->selected_plugin] ?? null;
+                    if (! $status) {
+                        return true;
+                    }
+
+                    // Show if no license OR license is invalid/expired
+                    return ! $status['has_license'] || ! ($status['is_valid'] ?? false);
+                }),
         ];
     }
 
@@ -168,6 +180,69 @@ class PluginLicenses extends Page implements HasForms
             ->send();
     }
 
+    public function checkForUpdates(string $pluginSlug): void
+    {
+        $licenseService = app(PluginLicenseService::class);
+        $result = $licenseService->checkForUpdates($pluginSlug);
+
+        if (! $result['success']) {
+            if ($result['purchase_url'] ?? null) {
+                Notification::make()
+                    ->title('License Required')
+                    ->body($result['message'])
+                    ->warning()
+                    ->actions([
+                        \Filament\Notifications\Actions\Action::make('purchase')
+                            ->label('Purchase License')
+                            ->url($result['purchase_url'])
+                            ->openUrlInNewTab(),
+                    ])
+                    ->send();
+            } else {
+                Notification::make()
+                    ->title('Update Check Failed')
+                    ->body($result['message'])
+                    ->danger()
+                    ->send();
+            }
+
+            return;
+        }
+
+        if ($result['update_available'] ?? false) {
+            $notification = Notification::make()
+                ->title('Update Available!')
+                ->body("Version {$result['latest_version']} is available. You have {$result['current_version']}.")
+                ->success();
+
+            if ($result['download_url'] ?? null) {
+                $notification->actions([
+                    \Filament\Notifications\Actions\Action::make('download')
+                        ->label('Download Update')
+                        ->url($result['download_url'])
+                        ->openUrlInNewTab(),
+                ]);
+            }
+
+            if ($result['changelog_url'] ?? null) {
+                $notification->actions([
+                    \Filament\Notifications\Actions\Action::make('changelog')
+                        ->label('View Changelog')
+                        ->url($result['changelog_url'])
+                        ->openUrlInNewTab(),
+                ]);
+            }
+
+            $notification->send();
+        } else {
+            Notification::make()
+                ->title('Up to Date')
+                ->body("You have the latest version ({$result['current_version']}).")
+                ->success()
+                ->send();
+        }
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -197,9 +272,29 @@ class PluginLicenses extends Page implements HasForms
 
     public static function shouldRegisterNavigation(): bool
     {
-        // Only show in navigation if there are licensable plugins
+        // Show if there are licensable plugins installed OR available in catalog
         $licenseService = app(PluginLicenseService::class);
 
-        return $licenseService->getLicensablePlugins()->isNotEmpty();
+        if ($licenseService->getLicensablePlugins()->isNotEmpty()) {
+            return true;
+        }
+
+        // Check if catalog has any plugins (they all require licenses)
+        return ! empty(config('plugin.catalog', []));
+    }
+
+    /**
+     * Get available plugins from catalog that aren't installed
+     */
+    public function getAvailablePlugins(): array
+    {
+        $catalog = config('plugin.catalog', []);
+        $installedSlugs = array_keys($this->statuses);
+
+        return collect($catalog)
+            ->filter(fn ($plugin, $slug) => ! in_array($slug, $installedSlugs))
+            ->map(fn ($plugin, $slug) => array_merge($plugin, ['fullSlug' => $slug]))
+            ->values()
+            ->toArray();
     }
 }

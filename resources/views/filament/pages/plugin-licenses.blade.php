@@ -1,7 +1,86 @@
 <x-filament-panels::page>
     <div class="space-y-6">
-        @if(empty($licensablePlugins))
-            {{-- No Licensable Plugins --}}
+        @php
+            $availablePlugins = $this->getAvailablePlugins();
+        @endphp
+
+        {{-- Available Plugins from Catalog --}}
+        @if(!empty($availablePlugins))
+            <x-filament::section>
+                <x-slot name="heading">
+                    <div class="flex items-center gap-2">
+                        <x-heroicon-o-sparkles class="w-5 h-5 text-primary-500" />
+                        Available Premium Plugins
+                    </div>
+                </x-slot>
+
+                <x-slot name="description">
+                    Download and install premium plugins to unlock advanced features.
+                </x-slot>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    @foreach($availablePlugins as $plugin)
+                        <div class="bg-gradient-to-br from-primary-50 to-white dark:from-primary-900/20 dark:to-gray-800 rounded-lg border border-primary-200 dark:border-primary-700 p-4 relative overflow-hidden">
+                            @if($plugin['featured'] ?? false)
+                                <div class="absolute top-0 right-0 bg-primary-500 text-white text-xs font-bold px-2 py-0.5 rounded-bl">
+                                    Featured
+                                </div>
+                            @endif
+
+                            <div class="flex items-start gap-3">
+                                <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center">
+                                    @if($plugin['icon'] ?? null)
+                                        <x-dynamic-component :component="$plugin['icon']" class="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                                    @else
+                                        <x-heroicon-o-puzzle-piece class="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                                    @endif
+                                </div>
+
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
+                                        {{ $plugin['name'] }}
+                                    </h4>
+                                    <p class="mt-1 text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                                        {{ $plugin['description'] }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="mt-3 flex items-center gap-2">
+                                @if($plugin['download_url'] ?? null)
+                                    <x-filament::button
+                                        tag="a"
+                                        href="{{ $plugin['download_url'] }}"
+                                        target="_blank"
+                                        color="primary"
+                                        size="xs"
+                                        icon="heroicon-o-arrow-down-tray"
+                                    >
+                                        Download
+                                    </x-filament::button>
+                                @endif
+                                @if($plugin['purchase_url'] ?? null)
+                                    <x-filament::button
+                                        tag="a"
+                                        href="{{ $plugin['purchase_url'] }}"
+                                        target="_blank"
+                                        color="gray"
+                                        size="xs"
+                                        icon="heroicon-o-shopping-cart"
+                                        outlined
+                                    >
+                                        Purchase
+                                    </x-filament::button>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </x-filament::section>
+        @endif
+
+        @if(empty($licensablePlugins) && empty($availablePlugins))
+            {{-- No Licensable Plugins at all --}}
             <x-filament::section>
                 <div class="text-center py-8">
                     <x-heroicon-o-key class="w-12 h-12 mx-auto text-gray-400" />
@@ -9,11 +88,11 @@
                         No Licensable Plugins
                     </h3>
                     <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                        No installed plugins require licensing.
+                        No plugins require licensing.
                     </p>
                 </div>
             </x-filament::section>
-        @else
+        @elseif(!empty($licensablePlugins))
             {{-- Plugin License Cards --}}
             @foreach($statuses as $pluginSlug => $status)
                 <x-filament::section>
@@ -59,8 +138,31 @@
                             </p>
                         </div>
 
-                        @if($status['has_license'])
-                            <div class="flex gap-2">
+                        <div class="flex gap-2">
+                            {{-- Download button - always shown if URL exists --}}
+                            @if($status['download_url'] ?? null)
+                                <x-filament::button
+                                    tag="a"
+                                    href="{{ $status['download_url'] }}"
+                                    target="_blank"
+                                    color="gray"
+                                    size="sm"
+                                    icon="heroicon-o-arrow-down-tray"
+                                >
+                                    Download
+                                </x-filament::button>
+                            @endif
+
+                            @if($status['has_license'] && ($status['is_valid'] ?? false))
+                                {{-- Valid license: Check Updates + Refresh --}}
+                                <x-filament::button
+                                    wire:click="checkForUpdates('{{ $pluginSlug }}')"
+                                    color="gray"
+                                    size="sm"
+                                    icon="heroicon-o-sparkles"
+                                >
+                                    Check Updates
+                                </x-filament::button>
                                 <x-filament::button
                                     wire:click="refreshLicenseStatus('{{ $pluginSlug }}')"
                                     color="gray"
@@ -69,8 +171,32 @@
                                 >
                                     Refresh
                                 </x-filament::button>
-                            </div>
-                        @endif
+                            @else
+                                {{-- No license or invalid: Purchase + optional Refresh --}}
+                                @if($status['purchase_url'] ?? null)
+                                    <x-filament::button
+                                        tag="a"
+                                        href="{{ $status['purchase_url'] }}"
+                                        target="_blank"
+                                        color="primary"
+                                        size="sm"
+                                        icon="heroicon-o-shopping-cart"
+                                    >
+                                        Purchase License
+                                    </x-filament::button>
+                                @endif
+                                @if($status['has_license'])
+                                    <x-filament::button
+                                        wire:click="refreshLicenseStatus('{{ $pluginSlug }}')"
+                                        color="gray"
+                                        size="sm"
+                                        icon="heroicon-o-arrow-path"
+                                    >
+                                        Refresh
+                                    </x-filament::button>
+                                @endif
+                            @endif
+                        </div>
                     </div>
 
                     @if($status['has_license'])
@@ -112,8 +238,8 @@
                 </x-filament::section>
             @endforeach
 
-            {{-- Activation Form --}}
-            @if(collect($statuses)->contains(fn($s) => !$s['has_license']))
+            {{-- Activation Form - show when no license OR license is invalid/expired --}}
+            @if(collect($statuses)->contains(fn($s) => !$s['has_license'] || !($s['is_valid'] ?? false)))
                 <x-filament::section>
                     <x-slot name="heading">
                         Activate License
