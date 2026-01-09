@@ -7,9 +7,21 @@
                 </div>
             </div>
             <div class="flex-1 min-w-0">
-                <h3 class="text-base font-semibold text-gray-900 dark:text-white">
-                    Plugin Updates Available
-                </h3>
+                <div class="flex items-center justify-between">
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                        Plugin Updates Available
+                    </h3>
+                    <button
+                        type="button"
+                        wire:click="refresh"
+                        wire:loading.attr="disabled"
+                        class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50"
+                    >
+                        <x-heroicon-m-arrow-path class="h-4 w-4" wire:loading.class="animate-spin" wire:target="refresh" />
+                        <span wire:loading.remove wire:target="refresh">Refresh</span>
+                        <span wire:loading wire:target="refresh">Checking...</span>
+                    </button>
+                </div>
                 <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
                     {{ count($updates) }} {{ Str::plural('plugin', count($updates)) }} {{ count($updates) === 1 ? 'has' : 'have' }} updates available.
                 </p>

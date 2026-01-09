@@ -3,6 +3,8 @@
 namespace App\Filament\Widgets;
 
 use App\Services\PluginLicenseService;
+use App\Services\PluginManager;
+use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
 
 class PluginUpdatesWidget extends Widget
@@ -15,9 +17,42 @@ class PluginUpdatesWidget extends Widget
 
     public array $updates = [];
 
+    public bool $isChecking = false;
+
     public function mount(): void
     {
         $this->updates = app(PluginLicenseService::class)->getAvailableUpdates();
+    }
+
+    public function refresh(): void
+    {
+        $this->isChecking = true;
+
+        // Clear all caches and re-check
+        $licenseService = app(PluginLicenseService::class);
+        app(PluginManager::class)->refreshCache();
+        $licenseService->clearUpdateCache();
+
+        // Force fresh check
+        $licenseService->checkForUpdatesAutomatically();
+
+        // Reload updates
+        $this->updates = $licenseService->getAvailableUpdates();
+
+        $this->isChecking = false;
+
+        if (empty($this->updates)) {
+            Notification::make()
+                ->title('All plugins are up to date')
+                ->success()
+                ->send();
+        } else {
+            Notification::make()
+                ->title('Update check complete')
+                ->body(count($this->updates) . ' update(s) available')
+                ->info()
+                ->send();
+        }
     }
 
     public static function canView(): bool
