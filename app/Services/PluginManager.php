@@ -727,6 +727,28 @@ class PluginManager
             ]);
         }
 
+        // Check license for plugins that require it
+        if ($existingPlugin->requiresLicense()) {
+            $licenseService = app(PluginLicenseService::class);
+            if (! $licenseService->isValid($existingPlugin->getLicenseSlug())) {
+                $status = $licenseService->getStatus($existingPlugin->getLicenseSlug());
+                $purchaseUrl = $status['purchase_url'] ?? null;
+
+                $message = 'A valid license is required to update this plugin.';
+                if ($status['status'] === 'expired') {
+                    $message = 'Your license has expired. Please renew your license to download updates.';
+                } elseif ($status['status'] === 'none' || ! $status['has_license']) {
+                    $message = 'Please purchase and activate a license to download updates.';
+                }
+
+                if ($purchaseUrl) {
+                    $message .= " Visit: {$purchaseUrl}";
+                }
+
+                return PluginInstallResult::failed([$message]);
+            }
+        }
+
         // Enforce version upgrade (block downgrades and same-version updates)
         $newVersion = $pluginData['version'] ?? '0.0.0';
         $currentVersion = $existingPlugin->version;
