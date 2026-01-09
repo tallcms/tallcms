@@ -7,7 +7,7 @@ use Filament\Widgets\Widget;
 
 class PluginUpdatesWidget extends Widget
 {
-    protected static string $view = 'filament.widgets.plugin-updates';
+    protected string $view = 'filament.widgets.plugin-updates';
 
     protected static ?int $sort = -1; // Show at top
 
