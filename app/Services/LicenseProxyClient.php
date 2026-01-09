@@ -261,6 +261,15 @@ class LicenseProxyClient
             ];
         }
 
+        // Handle 5xx server errors and 429 rate limiting as 'error'
+        if ($response->serverError() || $response->status() === 429) {
+            return $this->getErrorResponse(
+                $response->status() === 429
+                    ? 'License server is busy. Please try again later.'
+                    : 'License server temporarily unavailable'
+            );
+        }
+
         return [
             'valid' => false,
             'status' => 'invalid',
@@ -293,6 +302,15 @@ class LicenseProxyClient
                 'message' => 'This plugin does not support license validation',
                 'data' => [],
             ];
+        }
+
+        // Handle 5xx server errors and 429 rate limiting as 'error' so grace period applies
+        if ($response->serverError() || $response->status() === 429) {
+            return $this->getErrorResponse(
+                $response->status() === 429
+                    ? 'License server is busy. Please try again later.'
+                    : 'License server temporarily unavailable'
+            );
         }
 
         return [

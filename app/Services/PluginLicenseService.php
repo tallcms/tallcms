@@ -63,12 +63,19 @@ class PluginLicenseService
         $result = $this->client->validate($pluginSlug, $license->license_key, $domain);
 
         if ($result['valid']) {
-            // Update license record with fresh validation data
-            $license->updateFromValidation([
+            // Update license record with fresh validation data including expires_at for renewals
+            $updateData = [
                 'status' => 'active',
                 'domain' => $domain,
                 'metadata' => $result['data'],
-            ]);
+            ];
+
+            // Refresh expires_at from API response (handles renewals)
+            if (isset($result['data']['expires_at'])) {
+                $updateData['expires_at'] = Carbon::parse($result['data']['expires_at']);
+            }
+
+            $license->updateFromValidation($updateData);
 
             $this->cachedValidStates[$pluginSlug] = true;
 
@@ -91,10 +98,10 @@ class PluginLicenseService
 
         // Update license status if validation returned a specific status
         if ($result['status'] !== 'error') {
-            // Preserve specific statuses (active, expired) rather than coercing to invalid
-            $license->status = in_array($result['status'], ['active', 'expired'], true)
-                ? $result['status']
-                : 'invalid';
+            // Don't persist 'active' when valid=false (e.g., domain not activated)
+            // This would make the UI inconsistent - license shows "active" but doesn't work
+            // Preserve 'expired' as it's informative, otherwise mark as 'invalid'
+            $license->status = $result['status'] === 'expired' ? 'expired' : 'invalid';
             $license->save();
         }
 
@@ -181,17 +188,25 @@ class PluginLicenseService
         // Deactivate with license proxy
         $result = $this->client->deactivate($pluginSlug, $license->license_key, $domain);
 
-        // Mark license as invalid but keep the record (allows re-activation)
-        $license->status = 'invalid';
-        $license->save();
+        // Only mark license as invalid if proxy confirmed deactivation
+        // Don't invalidate locally if proxy call failed (network/500) - license may still be active
+        if ($result['success']) {
+            $license->status = 'invalid';
+            $license->save();
 
-        // Clear cached state
-        unset($this->cachedValidStates[$pluginSlug]);
-        Cache::forget("plugin_license_valid:{$pluginSlug}");
+            // Clear cached state
+            unset($this->cachedValidStates[$pluginSlug]);
+            Cache::forget("plugin_license_valid:{$pluginSlug}");
 
-        Log::info('PluginLicenseService: License deactivated', [
-            'plugin_slug' => $pluginSlug,
-        ]);
+            Log::info('PluginLicenseService: License deactivated', [
+                'plugin_slug' => $pluginSlug,
+            ]);
+        } else {
+            Log::warning('PluginLicenseService: Deactivation failed, license unchanged', [
+                'plugin_slug' => $pluginSlug,
+                'message' => $result['message'],
+            ]);
+        }
 
         return $result;
     }
