@@ -77,6 +77,11 @@ return [
         // Default: 7 days
         'offline_grace_days' => 7,
 
+        // Grace period after expiration before license is marked expired
+        // Allows time for billing webhooks and renewal processing
+        // Default: 14 days
+        'renewal_grace_days' => 14,
+
         // Test license key prefix (for development/testing only)
         // Format: TALLCMS-{PRODUCT}-TEST-LICENSE
         'test_license_prefix' => 'TALLCMS-',

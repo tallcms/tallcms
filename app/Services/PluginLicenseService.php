@@ -52,10 +52,17 @@ class PluginLicenseService
 
         // Tier 2: Database cache - check if cached validation is still fresh
         $cacheTtl = config('plugin.license.cache_ttl', 86400);
-        if (! $license->needsRevalidation($cacheTtl) && $license->isActive() && ! $license->isExpired()) {
-            $this->cachedValidStates[$pluginSlug] = true;
+        $renewalGraceDays = config('plugin.license.renewal_grace_days', 14);
 
-            return true;
+        // License is valid if:
+        // - Cache is fresh AND status is active AND not hard-expired (past grace period)
+        // - OR license is within renewal grace period (allows time for billing webhooks)
+        if (! $license->needsRevalidation($cacheTtl) && $license->isActive()) {
+            if (! $license->isHardExpired($renewalGraceDays)) {
+                $this->cachedValidStates[$pluginSlug] = true;
+
+                return true;
+            }
         }
 
         // Tier 3: Try to validate with license proxy
@@ -229,19 +236,23 @@ class PluginLicenseService
         }
 
         $isValid = $this->isValid($pluginSlug);
+        $renewalGraceDays = config('plugin.license.renewal_grace_days', 14);
+
+        // Determine detailed message based on license state
+        $message = $this->getLicenseMessage($license, $isValid, $renewalGraceDays);
 
         return [
             'has_license' => true,
             'status' => $license->status,
             'status_label' => match ($license->status) {
-                'active' => 'Active',
+                'active' => $license->isWithinRenewalGracePeriod($renewalGraceDays) ? 'Renewal Due' : 'Active',
                 'expired' => 'Expired',
                 'invalid' => 'Invalid',
                 'pending' => 'Pending',
                 default => 'Unknown',
             },
             'status_color' => match ($license->status) {
-                'active' => 'success',
+                'active' => $license->isWithinRenewalGracePeriod($renewalGraceDays) ? 'warning' : 'success',
                 'expired' => 'warning',
                 'invalid' => 'danger',
                 'pending' => 'info',
@@ -253,10 +264,51 @@ class PluginLicenseService
             'activated_at' => $license->activated_at?->format('M j, Y'),
             'expires_at' => $license->expires_at?->format('M j, Y'),
             'last_validated' => $license->last_validated_at?->diffForHumans(),
-            'message' => $isValid
-                ? 'Your license is active and valid'
-                : 'Your license needs attention',
+            'message' => $message,
+            'is_in_grace_period' => $license->isWithinRenewalGracePeriod($renewalGraceDays),
         ];
+    }
+
+    /**
+     * Get detailed license message based on current state
+     */
+    protected function getLicenseMessage(PluginLicense $license, bool $isValid, int $renewalGraceDays): string
+    {
+        // Invalid license (never activated, revoked, or tampered)
+        if ($license->status === 'invalid') {
+            return 'Your license is invalid. Please enter a valid license key to activate this plugin.';
+        }
+
+        // Pending activation
+        if ($license->status === 'pending') {
+            return 'Your license is pending activation. Please enter your license key.';
+        }
+
+        // Hard expired (past grace period) - site keeps working but no updates
+        if ($license->status === 'expired') {
+            return 'Your license has expired. Your site keeps working, but updates and support are paused. Renew to get the latest features and security updates.';
+        }
+
+        // Active but within renewal grace period
+        if ($license->isWithinRenewalGracePeriod($renewalGraceDays)) {
+            $daysLeft = now()->diffInDays($license->expires_at->copy()->addDays($renewalGraceDays));
+
+            return "Your license renewal is being processed. If you haven't renewed yet, please do so within {$daysLeft} days to maintain access to updates.";
+        }
+
+        // Active and valid
+        if ($isValid && $license->status === 'active') {
+            if ($license->expires_at) {
+                $daysUntilExpiry = now()->diffInDays($license->expires_at, false);
+                if ($daysUntilExpiry <= 30 && $daysUntilExpiry > 0) {
+                    return "Your license is active and expires in {$daysUntilExpiry} days. Consider renewing soon for uninterrupted updates.";
+                }
+            }
+
+            return 'Your license is active and valid. You have access to all features and updates.';
+        }
+
+        return 'Your license needs attention.';
     }
 
     /**

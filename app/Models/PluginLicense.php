@@ -76,7 +76,8 @@ class PluginLicense extends Model
     }
 
     /**
-     * Check if license is expired
+     * Check if license expiration date has passed
+     * Note: Use isHardExpired() to check if past the renewal grace period
      */
     public function isExpired(): bool
     {
@@ -89,6 +90,39 @@ class PluginLicense extends Model
         }
 
         return false;
+    }
+
+    /**
+     * Check if license is within the renewal grace period
+     * (expired but still within grace window for billing/webhook delays)
+     */
+    public function isWithinRenewalGracePeriod(int $graceDays = 14): bool
+    {
+        if (! $this->expires_at) {
+            return false;
+        }
+
+        // Not expired yet
+        if ($this->expires_at->isFuture()) {
+            return false;
+        }
+
+        // Check if within grace period after expiration
+        return $this->expires_at->copy()->addDays($graceDays)->isFuture();
+    }
+
+    /**
+     * Check if license is truly expired (past the renewal grace period)
+     * This is when the license should be marked as 'expired' status
+     */
+    public function isHardExpired(int $graceDays = 14): bool
+    {
+        if (! $this->expires_at) {
+            return false;
+        }
+
+        // Past expiration + grace period
+        return $this->expires_at->copy()->addDays($graceDays)->isPast();
     }
 
     /**
