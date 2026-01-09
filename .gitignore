@@ -31,8 +31,10 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 .env.backup.*
-hello-world-plugin-v1.1.0.zip
+# Plugin zip files
+*.zip
+tallcms-*.zip
 
 # Private/premium plugins (have their own repos)
-/plugins/tallcms/pro/
-/plugins/tallcms/license-proxy/
+/plugins/tallcms/pro
+/plugins/tallcms/license-proxy
