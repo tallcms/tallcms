@@ -89,25 +89,45 @@ class PluginLicenseService
             return true;
         }
 
-        // If validation failed due to connection error, check grace period
-        $graceDays = config('plugin.license.offline_grace_days', 7);
-        if ($result['status'] === 'error' && $license->isWithinGracePeriod($graceDays)) {
-            Log::warning('PluginLicenseService: Using offline grace period', [
-                'plugin_slug' => $pluginSlug,
-                'license_key' => $license->masked_key,
-                'last_validated' => $license->last_validated_at?->toDateTimeString(),
-            ]);
+        // If validation failed due to connection error, check grace periods
+        $offlineGraceDays = config('plugin.license.offline_grace_days', 7);
+        if ($result['status'] === 'error') {
+            // Honor either offline grace (7 days from last validation) OR renewal grace (14 days from expiry)
+            if ($license->isWithinGracePeriod($offlineGraceDays) || $license->isWithinRenewalGracePeriod($renewalGraceDays)) {
+                Log::warning('PluginLicenseService: Using grace period (proxy unreachable)', [
+                    'plugin_slug' => $pluginSlug,
+                    'license_key' => $license->masked_key,
+                    'last_validated' => $license->last_validated_at?->toDateTimeString(),
+                    'expires_at' => $license->expires_at?->toDateTimeString(),
+                ]);
 
-            $this->cachedValidStates[$pluginSlug] = true;
+                $this->cachedValidStates[$pluginSlug] = true;
 
-            return true;
+                return true;
+            }
         }
 
-        // Update license status if validation returned a specific status
+        // Proxy returned a definitive status (not a connection error)
         if ($result['status'] !== 'error') {
+            // If proxy says expired but we're within renewal grace period, honor the grace
+            // This gives customers 14 days after expiry to renew before features are restricted
+            if ($result['status'] === 'expired' && $license->isWithinRenewalGracePeriod($renewalGraceDays)) {
+                Log::info('PluginLicenseService: License expired but within renewal grace period', [
+                    'plugin_slug' => $pluginSlug,
+                    'license_key' => $license->masked_key,
+                    'expires_at' => $license->expires_at?->toDateTimeString(),
+                    'grace_ends' => $license->expires_at?->copy()->addDays($renewalGraceDays)->toDateTimeString(),
+                ]);
+
+                // Keep status as 'active' during grace period so UI shows "Renewal Due" not "Expired"
+                // Don't change status here - let it remain 'active'
+                $this->cachedValidStates[$pluginSlug] = true;
+
+                return true;
+            }
+
+            // Outside grace period or non-expired failure - update status
             // Don't persist 'active' when valid=false (e.g., domain not activated)
-            // This would make the UI inconsistent - license shows "active" but doesn't work
-            // Preserve 'expired' as it's informative, otherwise mark as 'invalid'
             $license->status = $result['status'] === 'expired' ? 'expired' : 'invalid';
             $license->save();
         }
@@ -237,27 +257,21 @@ class PluginLicenseService
 
         $isValid = $this->isValid($pluginSlug);
         $renewalGraceDays = config('plugin.license.renewal_grace_days', 14);
+        $inRenewalGrace = $license->isWithinRenewalGracePeriod($renewalGraceDays);
 
         // Determine detailed message based on license state
         $message = $this->getLicenseMessage($license, $isValid, $renewalGraceDays);
 
+        // Determine status label and color
+        // Grace period takes precedence - even if status is 'expired', show 'Renewal Due' during grace
+        $statusLabel = $this->getStatusLabel($license, $inRenewalGrace);
+        $statusColor = $this->getStatusColor($license, $inRenewalGrace);
+
         return [
             'has_license' => true,
             'status' => $license->status,
-            'status_label' => match ($license->status) {
-                'active' => $license->isWithinRenewalGracePeriod($renewalGraceDays) ? 'Renewal Due' : 'Active',
-                'expired' => 'Expired',
-                'invalid' => 'Invalid',
-                'pending' => 'Pending',
-                default => 'Unknown',
-            },
-            'status_color' => match ($license->status) {
-                'active' => $license->isWithinRenewalGracePeriod($renewalGraceDays) ? 'warning' : 'success',
-                'expired' => 'warning',
-                'invalid' => 'danger',
-                'pending' => 'info',
-                default => 'gray',
-            },
+            'status_label' => $statusLabel,
+            'status_color' => $statusColor,
             'is_valid' => $isValid,
             'license_key' => $license->masked_key,
             'domain' => $license->domain,
@@ -265,7 +279,7 @@ class PluginLicenseService
             'expires_at' => $license->expires_at?->format('M j, Y'),
             'last_validated' => $license->last_validated_at?->diffForHumans(),
             'message' => $message,
-            'is_in_grace_period' => $license->isWithinRenewalGracePeriod($renewalGraceDays),
+            'is_in_grace_period' => $inRenewalGrace,
         ];
     }
 
@@ -284,22 +298,23 @@ class PluginLicenseService
             return 'Your license is pending activation. Please enter your license key.';
         }
 
-        // Hard expired (past grace period) - site keeps working but no updates
-        if ($license->status === 'expired') {
-            return 'Your license has expired. Your site keeps working, but updates and support are paused. Renew to get the latest features and security updates.';
-        }
-
-        // Active but within renewal grace period
+        // Within renewal grace period - check this BEFORE checking 'expired' status
+        // This ensures "Renewal Due" message shows even if status got set to 'expired'
         if ($license->isWithinRenewalGracePeriod($renewalGraceDays)) {
-            $daysLeft = now()->diffInDays($license->expires_at->copy()->addDays($renewalGraceDays));
+            $daysLeft = (int) now()->diffInDays($license->expires_at->copy()->addDays($renewalGraceDays));
 
             return "Your license renewal is being processed. If you haven't renewed yet, please do so within {$daysLeft} days to maintain access to updates.";
+        }
+
+        // Hard expired (past grace period) - site keeps working but no updates
+        if ($license->status === 'expired' || $license->isHardExpired($renewalGraceDays)) {
+            return 'Your license has expired. Your site keeps working, but updates and support are paused. Renew to get the latest features and security updates.';
         }
 
         // Active and valid
         if ($isValid && $license->status === 'active') {
             if ($license->expires_at) {
-                $daysUntilExpiry = now()->diffInDays($license->expires_at, false);
+                $daysUntilExpiry = (int) now()->diffInDays($license->expires_at, false);
                 if ($daysUntilExpiry <= 30 && $daysUntilExpiry > 0) {
                     return "Your license is active and expires in {$daysUntilExpiry} days. Consider renewing soon for uninterrupted updates.";
                 }
@@ -309,6 +324,46 @@ class PluginLicenseService
         }
 
         return 'Your license needs attention.';
+    }
+
+    /**
+     * Get status label for display
+     * Grace period takes precedence over status
+     */
+    protected function getStatusLabel(PluginLicense $license, bool $inRenewalGrace): string
+    {
+        // Grace period takes precedence - show "Renewal Due" even if status is 'expired'
+        if ($inRenewalGrace) {
+            return 'Renewal Due';
+        }
+
+        return match ($license->status) {
+            'active' => 'Active',
+            'expired' => 'Expired',
+            'invalid' => 'Invalid',
+            'pending' => 'Pending',
+            default => 'Unknown',
+        };
+    }
+
+    /**
+     * Get status color for display
+     * Grace period takes precedence over status
+     */
+    protected function getStatusColor(PluginLicense $license, bool $inRenewalGrace): string
+    {
+        // Grace period takes precedence - show warning color even if status is 'expired'
+        if ($inRenewalGrace) {
+            return 'warning';
+        }
+
+        return match ($license->status) {
+            'active' => 'success',
+            'expired' => 'warning',
+            'invalid' => 'danger',
+            'pending' => 'info',
+            default => 'gray',
+        };
     }
 
     /**
