@@ -26,6 +26,20 @@ class PluginLicenseService
     }
 
     /**
+     * Check if a plugin has ever been licensed (activated_at exists)
+     *
+     * This is used for watermark logic - once a license has been activated,
+     * the watermark should never show again, even if the license expires.
+     * Expired licenses only lose access to updates, not functionality.
+     */
+    public function hasEverBeenLicensed(string $pluginSlug): bool
+    {
+        $license = PluginLicense::findByPluginSlug($pluginSlug);
+
+        return $license && $license->activated_at !== null;
+    }
+
+    /**
      * Check if a plugin's license is valid
      *
      * Uses 3-tier caching to minimize API calls:
