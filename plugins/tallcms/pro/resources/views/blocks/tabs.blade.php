@@ -107,7 +107,7 @@
                             class="tab-panel {{ $style === 'boxed' ? 'p-6' : 'pt-4' }}"
                         >
                             <div class="prose prose-sm dark:prose-invert max-w-none" style="color: var(--block-text-color);">
-                                {!! nl2br(e($tab['content'] ?? '')) !!}
+                                {!! $tab['content'] ?? '' !!}
                             </div>
                         </div>
                     @endforeach

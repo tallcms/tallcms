@@ -6,6 +6,7 @@ use App\Enums\ContentStatus;
 use App\Models\CmsCategory;
 use App\Models\CmsPost;
 use App\Models\User;
+use App\Services\CustomBlockDiscoveryService;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
@@ -60,8 +61,25 @@ class CmsPostForm
                                 RichEditor::make('content')
                                     ->columnSpanFull()
                                     ->fileAttachmentsDirectory('cms/posts/attachments')
+                                    ->activePanel('customBlocks')
+                                    ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
                                     ->extraInputAttributes([
                                         'style' => 'min-height: 40rem;',
+                                    ])
+                                     ->floatingToolbars([
+                                        'paragraph' => [
+                                            'bold', 'italic', 'underline', 'strike', 'subscript', 'superscript',
+                                        ],
+                                        'heading' => [
+                                            'h1', 'h2', 'h3',
+                                        ],
+                                        'table' => [
+                                            'tableAddColumnBefore', 'tableAddColumnAfter', 'tableDeleteColumn',
+                                            'tableAddRowBefore', 'tableAddRowAfter', 'tableDeleteRow',
+                                            'tableMergeCells', 'tableSplitCell',
+                                            'tableToggleHeaderRow', 'tableToggleHeaderCell',
+                                            'tableDelete',
+                                        ],
                                     ])
                                     ->helperText('Create rich post content using the editor toolbar.'),
                             ]),

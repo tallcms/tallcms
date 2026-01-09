@@ -52,16 +52,31 @@
 .content-block h5 { font-size: 1.125rem; }
 .content-block h6 { font-size: 1rem; }
 
-.content-block ul, 
+.content-block ul {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+    color: var(--block-text-color);
+    list-style-type: disc;
+}
+
 .content-block ol {
     margin: 1rem 0;
     padding-left: 1.5rem;
     color: var(--block-text-color);
+    list-style-type: decimal;
 }
 
 .content-block li {
     margin: 0.25rem 0;
     line-height: 1.6;
+}
+
+.content-block ul ul {
+    list-style-type: circle;
+}
+
+.content-block ul ul ul {
+    list-style-type: square;
 }
 
 .content-block blockquote {
@@ -754,15 +769,29 @@
 .post-content-body h5 { font-size: 1.125rem; }
 .post-content-body h6 { font-size: 1rem; }
 
-.post-content-body ul,
+.post-content-body ul {
+    margin: 1.5rem 0;
+    padding-left: 1.75rem;
+    list-style-type: disc;
+}
+
 .post-content-body ol {
     margin: 1.5rem 0;
     padding-left: 1.75rem;
+    list-style-type: decimal;
 }
 
 .post-content-body li {
     margin: 0.5rem 0;
     line-height: 1.7;
+}
+
+.post-content-body ul ul {
+    list-style-type: circle;
+}
+
+.post-content-body ul ul ul {
+    list-style-type: square;
 }
 
 .post-content-body blockquote {

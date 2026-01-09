@@ -4,6 +4,7 @@ namespace Tallcms\Pro\Blocks;
 
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -57,10 +58,16 @@ class TabsBlock extends RichContentCustomBlock
                                     ->placeholder('heroicon-o-star')
                                     ->helperText('Optional Heroicon class name'),
 
-                                Textarea::make('content')
+                                RichEditor::make('content')
                                     ->label('Tab Content')
                                     ->required()
-                                    ->rows(4),
+                                    ->toolbarButtons([
+                                        'bold',
+                                        'italic',
+                                        'link',
+                                        'bulletList',
+                                        'orderedList',
+                                    ]),
                             ])
                             ->defaultItems(3)
                             ->collapsible()
