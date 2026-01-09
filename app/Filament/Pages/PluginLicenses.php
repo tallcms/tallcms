@@ -192,7 +192,7 @@ class PluginLicenses extends Page implements HasForms
                     ->body($result['message'])
                     ->warning()
                     ->actions([
-                        \Filament\Notifications\Actions\Action::make('purchase')
+                        \Filament\Actions\Action::make('purchase')
                             ->label('Purchase License')
                             ->url($result['purchase_url'])
                             ->openUrlInNewTab(),
@@ -217,7 +217,7 @@ class PluginLicenses extends Page implements HasForms
 
             if ($result['download_url'] ?? null) {
                 $notification->actions([
-                    \Filament\Notifications\Actions\Action::make('download')
+                    \Filament\Actions\Action::make('download')
                         ->label('Download Update')
                         ->url($result['download_url'])
                         ->openUrlInNewTab(),
@@ -226,7 +226,7 @@ class PluginLicenses extends Page implements HasForms
 
             if ($result['changelog_url'] ?? null) {
                 $notification->actions([
-                    \Filament\Notifications\Actions\Action::make('changelog')
+                    \Filament\Actions\Action::make('changelog')
                         ->label('View Changelog')
                         ->url($result['changelog_url'])
                         ->openUrlInNewTab(),
