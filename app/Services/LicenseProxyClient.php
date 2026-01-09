@@ -119,6 +119,118 @@ class LicenseProxyClient
     }
 
     /**
+     * Check for plugin updates (requires valid license)
+     *
+     * This is the server-side update gate: updates are only available with a valid license.
+     *
+     * @return array{success: bool, update_available: bool, license_valid: bool, latest_version: ?string, download_url: ?string, message: string}
+     */
+    public function checkForUpdates(string $pluginSlug, string $licenseKey, string $domain, string $currentVersion): array
+    {
+        // Test licenses can check for updates (in dev)
+        if ($this->isTestLicense($pluginSlug, $licenseKey)) {
+            return [
+                'success' => true,
+                'license_valid' => true,
+                'update_available' => false,
+                'current_version' => $currentVersion,
+                'latest_version' => $currentVersion,
+                'download_url' => null,
+                'changelog_url' => null,
+                'message' => 'Test license - no updates in development mode',
+            ];
+        }
+
+        try {
+            $url = "{$this->proxyUrl}/license-proxy/updates";
+            $payload = [
+                'license_key' => $licenseKey,
+                'domain' => $domain,
+                'plugin_slug' => $pluginSlug,
+                'current_version' => $currentVersion,
+            ];
+
+            Log::info('LicenseProxyClient: Update check request', [
+                'url' => $url,
+                'plugin_slug' => $pluginSlug,
+                'current_version' => $currentVersion,
+            ]);
+
+            $response = Http::timeout(15)
+                ->acceptJson()
+                ->post($url, $payload);
+
+            $json = $response->json() ?? [];
+
+            Log::info('LicenseProxyClient: Update check response', [
+                'plugin_slug' => $pluginSlug,
+                'status' => $response->status(),
+                'update_available' => $json['update_available'] ?? false,
+            ]);
+
+            // Handle successful response
+            if ($response->successful() && ($json['success'] ?? false)) {
+                return [
+                    'success' => true,
+                    'license_valid' => $json['license_valid'] ?? true,
+                    'update_available' => $json['update_available'] ?? false,
+                    'current_version' => $json['current_version'] ?? $currentVersion,
+                    'latest_version' => $json['latest_version'] ?? $currentVersion,
+                    'download_url' => $json['download_url'] ?? null,
+                    'changelog_url' => $json['changelog_url'] ?? null,
+                    'requirements' => $json['requirements'] ?? [],
+                    'message' => $json['update_available']
+                        ? "Update available: v{$json['latest_version']}"
+                        : 'You have the latest version',
+                ];
+            }
+
+            // Handle 403 - license invalid/expired
+            if ($response->status() === 403) {
+                return [
+                    'success' => false,
+                    'license_valid' => false,
+                    'update_available' => false,
+                    'current_version' => $currentVersion,
+                    'latest_version' => null,
+                    'download_url' => null,
+                    'changelog_url' => null,
+                    'message' => $json['message'] ?? 'Valid license required to check for updates',
+                ];
+            }
+
+            // Handle other errors
+            return [
+                'success' => false,
+                'license_valid' => false,
+                'update_available' => false,
+                'current_version' => $currentVersion,
+                'latest_version' => null,
+                'download_url' => null,
+                'changelog_url' => null,
+                'message' => $json['message'] ?? 'Unable to check for updates',
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('LicenseProxyClient: Update check exception', [
+                'plugin_slug' => $pluginSlug,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'license_valid' => false,
+                'update_available' => false,
+                'current_version' => $currentVersion,
+                'latest_version' => null,
+                'download_url' => null,
+                'changelog_url' => null,
+                'message' => 'Unable to connect to update server',
+            ];
+        }
+    }
+
+    /**
      * Deactivate a license for a plugin
      *
      * @return array{success: bool, message: string}

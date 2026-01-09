@@ -70,8 +70,9 @@ return [
         'proxy_url' => env('TALLCMS_LICENSE_PROXY_URL', 'https://tallcms.com'),
 
         // How long to cache license validation results (in seconds)
-        // Default: 24 hours
-        'cache_ttl' => 86400,
+        // Shorter TTL limits the window for DB tampering on self-hosted systems
+        // Default: 6 hours
+        'cache_ttl' => 21600,
 
         // Number of days a license remains valid when the license server is unreachable
         // Default: 7 days

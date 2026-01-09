@@ -423,6 +423,80 @@ class PluginLicenseService
     }
 
     /**
+     * Check for plugin updates (requires valid license)
+     *
+     * This is the server-side update gate: the proxy validates the license
+     * before returning update information. No valid license = no updates.
+     *
+     * @return array{success: bool, update_available: bool, license_valid: bool, latest_version: ?string, download_url: ?string, message: string}
+     */
+    public function checkForUpdates(string $pluginSlug): array
+    {
+        $license = PluginLicense::findByPluginSlug($pluginSlug);
+
+        if (! $license) {
+            return [
+                'success' => false,
+                'license_valid' => false,
+                'update_available' => false,
+                'current_version' => null,
+                'latest_version' => null,
+                'download_url' => null,
+                'changelog_url' => null,
+                'message' => 'No license found. Please activate a license to check for updates.',
+            ];
+        }
+
+        // Get current installed version
+        $plugin = $this->pluginManager->getInstalledPlugins()
+            ->first(fn (Plugin $p) => $p->getLicenseSlug() === $pluginSlug);
+
+        $currentVersion = $plugin?->version ?? '0.0.0';
+        $domain = $this->getCurrentDomain();
+
+        // Call proxy to check for updates (proxy validates license)
+        $result = $this->client->checkForUpdates(
+            $pluginSlug,
+            $license->license_key,
+            $domain,
+            $currentVersion
+        );
+
+        // Log update check
+        Log::info('PluginLicenseService: Update check', [
+            'plugin_slug' => $pluginSlug,
+            'current_version' => $currentVersion,
+            'license_valid' => $result['license_valid'] ?? false,
+            'update_available' => $result['update_available'] ?? false,
+        ]);
+
+        return $result;
+    }
+
+    /**
+     * Check for updates across all licensable plugins
+     *
+     * @return array<string, array>
+     */
+    public function checkAllForUpdates(): array
+    {
+        $results = [];
+
+        foreach ($this->getLicensablePlugins() as $plugin) {
+            $pluginSlug = $plugin->getLicenseSlug();
+            $results[$pluginSlug] = array_merge(
+                $this->checkForUpdates($pluginSlug),
+                [
+                    'plugin_name' => $plugin->name,
+                    'plugin_vendor' => $plugin->vendor,
+                ]
+            );
+        }
+
+        return $results;
+    }
+
+    /**
      * Clear in-memory cache for testing
      */
     public function clearCache(?string $pluginSlug = null): void
