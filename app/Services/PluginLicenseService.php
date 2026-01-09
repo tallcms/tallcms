@@ -326,7 +326,7 @@ class PluginLicenseService
 
         // Hard expired (past grace period) - site keeps working but no updates
         if ($license->status === 'expired' || $license->isHardExpired($renewalGraceDays)) {
-            return 'Your license has expired. Your site keeps working, but updates and support are paused. Renew to get the latest features and security updates.';
+            return 'Your license has expired. This plugin keeps working, but updates and support are paused. Renew to get the latest features and security updates.';
         }
 
         // Active and valid
