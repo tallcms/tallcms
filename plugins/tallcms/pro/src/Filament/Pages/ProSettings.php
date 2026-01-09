@@ -61,6 +61,11 @@ class ProSettings extends Page implements HasForms
         ]);
     }
 
+    protected function getFormStatePath(): string
+    {
+        return 'data';
+    }
+
     protected function getFormSchema(): array
     {
         return [
@@ -173,27 +178,26 @@ class ProSettings extends Page implements HasForms
                         ->icon('heroicon-o-map')
                         ->schema([
                             Select::make('maps_provider')
-                                ->label('Maps Provider')
+                                ->label('Default Maps Provider')
                                 ->options([
-                                    'openstreetmap' => 'OpenStreetMap (Free)',
-                                    'google_maps' => 'Google Maps',
+                                    'openstreetmap' => 'OpenStreetMap (Free, no API key required)',
+                                    'google' => 'Google Maps',
                                     'mapbox' => 'Mapbox',
                                 ])
                                 ->default('openstreetmap')
-                                ->live()
-                                ->helperText('Choose your maps provider for the Map block'),
+                                ->helperText('Default provider for new Map blocks. Can be overridden per block.'),
 
                             TextInput::make('google_maps_api_key')
                                 ->label('Google Maps API Key')
                                 ->password()
-                                ->visible(fn ($get) => $get('maps_provider') === 'google_maps')
-                                ->helperText('Required for Google Maps integration'),
+                                ->revealable()
+                                ->helperText('Get your API key from Google Cloud Console. Required for Google Maps.'),
 
                             TextInput::make('mapbox_access_token')
                                 ->label('Mapbox Access Token')
                                 ->password()
-                                ->visible(fn ($get) => $get('maps_provider') === 'mapbox')
-                                ->helperText('Required for Mapbox integration'),
+                                ->revealable()
+                                ->helperText('Get your access token from Mapbox. Required for Mapbox maps.'),
                         ]),
                 ])
                 ->persistTabInQueryString(),
@@ -234,6 +238,9 @@ class ProSettings extends Page implements HasForms
         ProSetting::set('maps_provider', $data['maps_provider'] ?? 'openstreetmap');
         ProSetting::set('google_maps_api_key', $data['google_maps_api_key'] ?? null, 'text', 'maps', true);
         ProSetting::set('mapbox_access_token', $data['mapbox_access_token'] ?? null, 'text', 'maps', true);
+
+        // Clear all settings cache to ensure fresh values
+        ProSetting::clearAllCache();
 
         Notification::make()
             ->title('Settings Saved')

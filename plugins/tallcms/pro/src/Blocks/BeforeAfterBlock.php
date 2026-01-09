@@ -10,6 +10,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
+use Illuminate\Support\Facades\Storage;
 use Tallcms\Pro\Traits\RequiresLicense;
 
 class BeforeAfterBlock extends RichContentCustomBlock
@@ -45,31 +46,41 @@ class BeforeAfterBlock extends RichContentCustomBlock
                             ->rows(2),
                     ]),
 
-                Section::make('Images')
+                Section::make('Before Image')
                     ->schema([
-                        TextInput::make('before_image')
-                            ->label('Before Image URL')
-                            ->placeholder('https://example.com/before.jpg')
+                        FileUpload::make('before_image')
+                            ->label('Before Image')
+                            ->image()
                             ->required()
+                            ->directory('cms/blocks/before-after')
+                            ->disk(cms_media_disk())
+                            ->visibility(cms_media_visibility())
+                            ->imageEditor()
                             ->helperText('The "before" image (shown on the left)'),
 
                         TextInput::make('before_label')
                             ->label('Before Label')
                             ->placeholder('Before')
                             ->default('Before'),
+                    ]),
 
-                        TextInput::make('after_image')
-                            ->label('After Image URL')
-                            ->placeholder('https://example.com/after.jpg')
+                Section::make('After Image')
+                    ->schema([
+                        FileUpload::make('after_image')
+                            ->label('After Image')
+                            ->image()
                             ->required()
+                            ->directory('cms/blocks/before-after')
+                            ->disk(cms_media_disk())
+                            ->visibility(cms_media_visibility())
+                            ->imageEditor()
                             ->helperText('The "after" image (shown on the right)'),
 
                         TextInput::make('after_label')
                             ->label('After Label')
                             ->placeholder('After')
                             ->default('After'),
-                    ])
-                    ->columns(2),
+                    ]),
 
                 Section::make('Options')
                     ->schema([
@@ -120,14 +131,37 @@ class BeforeAfterBlock extends RichContentCustomBlock
             ])->slideOver();
     }
 
+    /**
+     * Convert uploaded file path to URL using configured media disk
+     */
+    protected static function getImageUrl(?string $path): string
+    {
+        if (empty($path)) {
+            return '';
+        }
+
+        // If it's already a full URL, return as-is
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        // Convert storage path to URL using configured media disk
+        $disk = cms_media_disk();
+        if (Storage::disk($disk)->exists($path)) {
+            return Storage::disk($disk)->url($path);
+        }
+
+        return '';
+    }
+
     public static function toPreviewHtml(array $config): string
     {
         $html = view('tallcms-pro::blocks.before-after', [
             'heading' => $config['heading'] ?? '',
             'subheading' => $config['subheading'] ?? '',
-            'before_image' => $config['before_image'] ?? '',
+            'before_image' => static::getImageUrl($config['before_image'] ?? ''),
             'before_label' => $config['before_label'] ?? 'Before',
-            'after_image' => $config['after_image'] ?? '',
+            'after_image' => static::getImageUrl($config['after_image'] ?? ''),
             'after_label' => $config['after_label'] ?? 'After',
             'initial_position' => $config['initial_position'] ?? 50,
             'orientation' => $config['orientation'] ?? 'horizontal',
@@ -146,9 +180,9 @@ class BeforeAfterBlock extends RichContentCustomBlock
         $html = view('tallcms-pro::blocks.before-after', [
             'heading' => $config['heading'] ?? '',
             'subheading' => $config['subheading'] ?? '',
-            'before_image' => $config['before_image'] ?? '',
+            'before_image' => static::getImageUrl($config['before_image'] ?? ''),
             'before_label' => $config['before_label'] ?? 'Before',
-            'after_image' => $config['after_image'] ?? '',
+            'after_image' => static::getImageUrl($config['after_image'] ?? ''),
             'after_label' => $config['after_label'] ?? 'After',
             'initial_position' => $config['initial_position'] ?? 50,
             'orientation' => $config['orientation'] ?? 'horizontal',

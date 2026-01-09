@@ -1,11 +1,16 @@
 @php
     $textPreset = function_exists('theme_text_presets') ? theme_text_presets()['primary'] ?? [] : [];
+    $isPreview = $is_preview ?? false;
 
     $customProperties = collect([
         '--block-heading-color: ' . ($textPreset['heading'] ?? '#111827'),
         '--block-text-color: ' . ($textPreset['description'] ?? '#4b5563'),
         '--block-primary-color: ' . ($textPreset['link'] ?? '#2563eb'),
     ])->join('; ') . ';';
+
+    $headingColor = $textPreset['heading'] ?? '#111827';
+    $textColor = $textPreset['description'] ?? '#4b5563';
+    $primaryColor = $textPreset['link'] ?? '#2563eb';
 
     $uniqueId = 'map-' . uniqid();
     $lat = floatval($latitude ?? 40.7128);
@@ -24,20 +29,36 @@
     };
 
     $roundedClass = ($rounded ?? true) ? 'rounded-xl' : '';
+    $roundedStyle = ($rounded ?? true) ? 'border-radius: 0.75rem;' : '';
 
     // Get API key from block config or Pro Settings
     $effectiveApiKey = $api_key ?? '';
     if (empty($effectiveApiKey)) {
-        // Try to get from Pro Settings
+        // Try to get from Pro Settings (bypass cache for reliability)
         $providerKey = match($provider ?? 'openstreetmap') {
             'google' => 'google_maps_api_key',
             'mapbox' => 'mapbox_access_token',
             default => null,
         };
         if ($providerKey) {
+            // First try cached value
             $effectiveApiKey = \Tallcms\Pro\Models\ProSetting::get($providerKey, '');
+
+            // If empty, try direct database query (bypass cache)
+            if (empty($effectiveApiKey)) {
+                $setting = \Tallcms\Pro\Models\ProSetting::where('key', $providerKey)->first();
+                if ($setting) {
+                    $effectiveApiKey = $setting->getValue() ?? '';
+                }
+            }
         }
     }
+
+    $providerLabel = match($provider ?? 'openstreetmap') {
+        'google' => 'Google Maps',
+        'mapbox' => 'Mapbox',
+        default => 'OpenStreetMap',
+    };
 
     // Build popup HTML safely for JS (use json_encode for XSS protection)
     $popupHtml = '';
@@ -55,6 +76,65 @@
     $markerTitleJson = json_encode($marker_title ?? '', JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
 @endphp
 
+@if($isPreview)
+{{-- Admin Preview: Show placeholder since maps require JavaScript --}}
+<section style="padding: 3rem 0;">
+    <div style="max-width: 72rem; margin: 0 auto; padding: 0 1rem;">
+        {{-- Section Header --}}
+        @if(!empty($heading) || !empty($subheading))
+            <div style="text-align: center; margin-bottom: 2rem;">
+                @if(!empty($heading))
+                    <h2 style="font-size: 1.5rem; font-weight: 700; color: {{ $headingColor }};">
+                        {{ $heading }}
+                    </h2>
+                @endif
+                @if(!empty($subheading))
+                    <p style="margin-top: 0.75rem; font-size: 1.125rem; color: {{ $textColor }};">
+                        {{ $subheading }}
+                    </p>
+                @endif
+            </div>
+        @endif
+
+        {{-- Map Placeholder --}}
+        <div style="box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); {{ $roundedStyle }} overflow: hidden;">
+            <div style="height: {{ $heightPx }}; background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #7dd3fc 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+                {{-- Map pin icon --}}
+                <svg style="width: 4rem; height: 4rem; color: {{ $primaryColor }}; margin-bottom: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+
+                @if($hasCoordinates)
+                    <p style="font-weight: 600; color: #0c4a6e; font-size: 1rem; margin-bottom: 0.25rem;">{{ $providerLabel }}</p>
+                    <p style="color: #0369a1; font-size: 0.875rem;">{{ $lat }}, {{ $lng }} (Zoom: {{ $zoomLevel }})</p>
+                    @if(!empty($marker_title))
+                        <p style="color: #0369a1; font-size: 0.875rem; margin-top: 0.5rem; font-weight: 500;">{{ $marker_title }}</p>
+                    @endif
+                @else
+                    <p style="color: #0c4a6e; font-size: 0.875rem;">No location configured</p>
+                @endif
+
+                <p style="position: absolute; bottom: 1rem; color: #0369a1; font-size: 0.75rem; opacity: 0.7;">Map preview only visible on frontend</p>
+            </div>
+        </div>
+
+        {{-- Contact Info --}}
+        @if(!empty($contact_info))
+            <div style="margin-top: 1.5rem; background: #f9fafb; {{ $roundedStyle }} padding: 1.5rem;">
+                <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                    <svg style="width: 1.5rem; height: 1.5rem; color: {{ $primaryColor }}; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <div style="font-size: 0.875rem; white-space: pre-line; color: {{ $textColor }};">{{ $contact_info }}</div>
+                </div>
+            </div>
+        @endif
+    </div>
+</section>
+@else
+{{-- Frontend: Full interactive map --}}
 @if(($provider ?? 'openstreetmap') === 'openstreetmap')
     @once
     {{-- Leaflet CSS & JS for OpenStreetMap --}}
@@ -266,3 +346,4 @@
         @endif
     </div>
 </section>
+@endif

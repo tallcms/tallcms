@@ -7,6 +7,7 @@ use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Tallcms\Pro\Traits\RequiresLicense;
@@ -110,12 +111,12 @@ class CodeSnippetBlock extends RichContentCustomBlock
                         Select::make('theme')
                             ->label('Theme')
                             ->options([
-                                'tomorrow' => 'Tomorrow (Light)',
                                 'okaidia' => 'Okaidia (Dark)',
+                                'tomorrow' => 'Tomorrow (Dark)',
                                 'twilight' => 'Twilight (Dark)',
+                                'dark' => 'Dark',
                                 'coy' => 'Coy (Light)',
                                 'solarizedlight' => 'Solarized Light',
-                                'dark' => 'Dark',
                             ])
                             ->default('okaidia'),
 
@@ -134,6 +135,11 @@ class CodeSnippetBlock extends RichContentCustomBlock
                                 'xl' => 'Extra Large (600px)',
                             ])
                             ->default('none'),
+
+                        Placeholder::make('syntax_note')
+                            ->label('')
+                            ->content('Note: Syntax highlighting (colored keywords, strings, etc.) is only visible on the frontend. The admin preview shows theme colors and formatting.')
+                            ->columnSpanFull(),
                     ])
                     ->columns(3),
             ])->slideOver();

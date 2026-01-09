@@ -3,6 +3,7 @@
 namespace Tallcms\Pro\Blocks;
 
 use Filament\Actions\Action;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -147,6 +148,11 @@ class MapBlock extends RichContentCustomBlock
                             ->placeholder("Hours: Mon-Fri 9am-5pm\nPhone: (555) 123-4567\nEmail: hello@example.com")
                             ->rows(4)
                             ->helperText('Shown below the map'),
+
+                        Placeholder::make('map_note')
+                            ->label('')
+                            ->content('Note: Maps require JavaScript to render and are only visible on the frontend. The admin preview shows a placeholder.')
+                            ->columnSpanFull(),
                     ]),
             ])->slideOver();
     }
