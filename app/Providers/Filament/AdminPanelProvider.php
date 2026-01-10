@@ -32,9 +32,13 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            // Note: preview.css loads daisyUI globally for block previews.
+            // daisyUI classes (btn, card, etc.) don't conflict with Filament's fi-* classes,
+            // but for stricter isolation, consider loading preview.css only in the
+            // RichEditor preview context via iframe or dynamic stylesheet injection.
             ->viteTheme([
                 'resources/css/filament/admin/theme.css',
-                'resources/css/filament/admin/preview.css', // daisyUI for block previews
+                'resources/css/filament/admin/preview.css',
             ])
             ->login()
             ->passwordReset()

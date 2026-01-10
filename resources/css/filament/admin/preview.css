@@ -17,6 +17,7 @@
 }
 
 /* Scan block templates for class discovery */
-@source '../../../resources/views/cms/blocks/**/*.blade.php';
-/* Pro plugin blocks */
-@source '../../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php';
+/* Path is relative to this file: resources/css/filament/admin/preview.css */
+@source '../../../views/cms/blocks/**/*.blade.php';
+/* Pro plugin blocks (path goes up to project root then into plugins) */
+@source '../../../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php';

@@ -390,11 +390,13 @@ class ThemeManager
         }
 
         // Build theme assets only if package.json exists AND theme is not already built
-        // Pre-built themes (uploaded ZIPs) should already have public/build/manifest.json
+        // Pre-built themes (uploaded ZIPs) should already have public/build/manifest.json or .vite/manifest.json
         $packageJsonPath = $theme->path.'/package.json';
-        $manifestPath = $theme->path.'/public/build/manifest.json';
+        $manifestPathVite7 = $theme->path.'/public/build/.vite/manifest.json';
+        $manifestPathLegacy = $theme->path.'/public/build/manifest.json';
+        $hasManifest = File::exists($manifestPathVite7) || File::exists($manifestPathLegacy);
 
-        if (File::exists($packageJsonPath) && ! File::exists($manifestPath)) {
+        if (File::exists($packageJsonPath) && ! $hasManifest) {
             if (! $this->buildThemeAssets($theme)) {
                 Log::error("installTheme: Failed to build theme assets for '{$slug}'");
                 $success = false;
@@ -791,7 +793,11 @@ class ThemeManager
 
             // Try each theme in hierarchy for this specific entry
             foreach ($activeTheme->getHierarchy() as $theme) {
-                $manifestPath = public_path("themes/{$theme->slug}/build/manifest.json");
+                // Vite 7 uses .vite/manifest.json, older versions use manifest.json
+                $manifestPath = public_path("themes/{$theme->slug}/build/.vite/manifest.json");
+                if (! File::exists($manifestPath)) {
+                    $manifestPath = public_path("themes/{$theme->slug}/build/manifest.json");
+                }
 
                 if (! File::exists($manifestPath)) {
                     continue;
@@ -934,7 +940,11 @@ class ThemeManager
      */
     protected function tryMainAppFallback(array &$assets, string $entry): void
     {
-        $mainManifestPath = public_path('build/manifest.json');
+        // Vite 7 uses .vite/manifest.json, older versions use manifest.json
+        $mainManifestPath = public_path('build/.vite/manifest.json');
+        if (! File::exists($mainManifestPath)) {
+            $mainManifestPath = public_path('build/manifest.json');
+        }
 
         if (! File::exists($mainManifestPath)) {
             return;

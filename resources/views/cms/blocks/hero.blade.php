@@ -54,7 +54,7 @@
                     background-size: cover;
                     background-position: center;
                     @if($parallax_effect ?? true) background-attachment: fixed; @endif">
-            <div class="absolute inset-0 bg-black/{{ intval($overlayOpacity * 100) }}"></div>
+            <div class="absolute inset-0" style="background-color: rgba(0, 0, 0, {{ $overlayOpacity }});"></div>
         </div>
     @else
         <div class="absolute inset-0 z-0 bg-gradient-to-br from-primary to-secondary"></div>
