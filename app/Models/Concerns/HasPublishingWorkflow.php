@@ -43,12 +43,12 @@ trait HasPublishingWorkflow
 
     /**
      * Check if content is published
+     * A null published_at means "publish immediately"
      */
     public function isPublished(): bool
     {
         return $this->status === ContentStatus::Published->value
-            && $this->published_at !== null
-            && $this->published_at->isPast();
+            && ($this->published_at === null || $this->published_at->isPast());
     }
 
     /**
@@ -138,14 +138,18 @@ trait HasPublishingWorkflow
 
     /**
      * Scope for actually visible/published content
-     * Status must be published AND published_at must be in the past
+     * Status must be published AND either:
+     * - published_at is null (publish immediately), OR
+     * - published_at is in the past
      */
     public function scopePublished(Builder $query): Builder
     {
         return $query
             ->where('status', ContentStatus::Published->value)
-            ->whereNotNull('published_at')
-            ->where('published_at', '<=', now());
+            ->where(function (Builder $q) {
+                $q->whereNull('published_at')
+                    ->orWhere('published_at', '<=', now());
+            });
     }
 
     /**

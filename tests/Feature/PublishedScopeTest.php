@@ -31,7 +31,7 @@ class PublishedScopeTest extends TestCase
      * | pending   | null         | NO                      |
      * | pending   | past         | NO                      |
      * | pending   | future       | NO                      |
-     * | published | null         | NO (published_at req.)  |
+     * | published | null         | YES (immediate publish) |
      * | published | past         | YES                     |
      * | published | future       | NO (scheduled)          |
      */
@@ -104,15 +104,16 @@ class PublishedScopeTest extends TestCase
         $this->assertFalse($post->isPublished());
     }
 
-    public function test_post_published_with_null_published_at_not_in_published_scope(): void
+    public function test_post_published_with_null_published_at_in_published_scope(): void
     {
+        // Null published_at means "publish immediately"
         $post = CmsPost::factory()->create([
             'status' => ContentStatus::Published->value,
             'published_at' => null,
         ]);
 
-        $this->assertFalse(CmsPost::published()->where('id', $post->id)->exists());
-        $this->assertFalse($post->isPublished());
+        $this->assertTrue(CmsPost::published()->where('id', $post->id)->exists());
+        $this->assertTrue($post->isPublished());
     }
 
     public function test_post_published_with_past_published_at_in_published_scope(): void
@@ -206,15 +207,16 @@ class PublishedScopeTest extends TestCase
         $this->assertFalse($page->isPublished());
     }
 
-    public function test_page_published_with_null_published_at_not_in_published_scope(): void
+    public function test_page_published_with_null_published_at_in_published_scope(): void
     {
+        // Null published_at means "publish immediately"
         $page = CmsPage::factory()->create([
             'status' => ContentStatus::Published->value,
             'published_at' => null,
         ]);
 
-        $this->assertFalse(CmsPage::published()->where('id', $page->id)->exists());
-        $this->assertFalse($page->isPublished());
+        $this->assertTrue(CmsPage::published()->where('id', $page->id)->exists());
+        $this->assertTrue($page->isPublished());
     }
 
     public function test_page_published_with_past_published_at_in_published_scope(): void
