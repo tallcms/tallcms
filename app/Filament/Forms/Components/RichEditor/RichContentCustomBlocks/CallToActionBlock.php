@@ -76,13 +76,45 @@ class CallToActionBlock extends RichContentCustomBlock
                                     ->placeholder('https://example.com or /contact or #section')
                                     ->visible(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom']))
                                     ->required(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom'])),
+
+                                TextInput::make('secondary_button_text')
+                                    ->maxLength(100)
+                                    ->placeholder('Secondary button text (optional)')
+                                    ->live(),
+
+                                Select::make('secondary_button_link_type')
+                                    ->label('Secondary Button Link Type')
+                                    ->options([
+                                        'page' => 'Page',
+                                        'external' => 'External URL',
+                                        'custom' => 'Custom URL',
+                                    ])
+                                    ->default('page')
+                                    ->live()
+                                    ->visible(fn (Get $get): bool => filled($get('secondary_button_text')))
+                                    ->required(fn (Get $get): bool => filled($get('secondary_button_text')))
+                                    ->afterStateUpdated(fn (callable $set) => $set('secondary_button_page_id', null))
+                                    ->afterStateUpdated(fn (callable $set) => $set('secondary_button_url', null)),
+
+                                Select::make('secondary_button_page_id')
+                                    ->label('Select Page')
+                                    ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
+                                    ->searchable()
+                                    ->visible(fn (Get $get): bool => $get('secondary_button_link_type') === 'page' && filled($get('secondary_button_text')))
+                                    ->required(fn (Get $get): bool => $get('secondary_button_link_type') === 'page' && filled($get('secondary_button_text'))),
+
+                                TextInput::make('secondary_button_url')
+                                    ->label('Secondary URL')
+                                    ->placeholder('https://example.com or /contact or #section')
+                                    ->visible(fn (Get $get): bool => in_array($get('secondary_button_link_type'), ['external', 'custom']) && filled($get('secondary_button_text')))
+                                    ->required(fn (Get $get): bool => in_array($get('secondary_button_link_type'), ['external', 'custom']) && filled($get('secondary_button_text'))),
                             ]),
 
                         Tab::make('Button Styling')
                             ->icon('heroicon-m-cursor-arrow-rays')
                             ->schema([
-                                Section::make('Button Styling')
-                                    ->description('Customize the button appearance. ⚠️ Note: Preview uses default theme colors - actual colors may differ with custom themes.')
+                                Section::make('Primary Button Styling')
+                                    ->description('Customize the primary button appearance.')
                                     ->schema([
                                         Select::make('button_style')
                                             ->label('Button Style')
@@ -116,6 +148,48 @@ class CallToActionBlock extends RichContentCustomBlock
                                             ->default('#ffffff')
                                             ->visible(fn (Get $get): bool => $get('button_style') === 'custom'),
                                     ])
+                                    ->columns(2),
+
+                                Section::make('Secondary Button Styling')
+                                    ->description('Customize the secondary button appearance.')
+                                    ->schema([
+                                        Select::make('secondary_button_style')
+                                            ->label('Button Style')
+                                            ->options([
+                                                'preset' => 'Use Preset Colors',
+                                                'custom' => 'Custom Colors',
+                                            ])
+                                            ->default('preset')
+                                            ->live(),
+
+                                        Select::make('secondary_button_preset')
+                                            ->label('Color Preset')
+                                            ->options([
+                                                'outline-primary' => 'Primary Outline',
+                                                'outline-secondary' => 'Secondary Outline',
+                                                'outline-neutral' => 'Neutral Outline',
+                                                'filled-secondary' => 'Filled Secondary',
+                                                'filled-neutral' => 'Filled Neutral',
+                                            ])
+                                            ->default('outline-primary')
+                                            ->visible(fn (Get $get): bool => $get('secondary_button_style') === 'preset'),
+
+                                        ColorPicker::make('secondary_button_bg_color')
+                                            ->label('Background Color')
+                                            ->default('#ffffff00')
+                                            ->visible(fn (Get $get): bool => $get('secondary_button_style') === 'custom'),
+
+                                        ColorPicker::make('secondary_button_text_color')
+                                            ->label('Text Color')
+                                            ->default('#3b82f6')
+                                            ->visible(fn (Get $get): bool => $get('secondary_button_style') === 'custom'),
+
+                                        ColorPicker::make('secondary_button_border_color')
+                                            ->label('Border Color')
+                                            ->default('#3b82f6')
+                                            ->visible(fn (Get $get): bool => $get('secondary_button_style') === 'custom'),
+                                    ])
+                                    ->visible(fn (Get $get): bool => filled($get('secondary_button_text')))
                                     ->columns(2),
                             ]),
 
@@ -216,8 +290,9 @@ class CallToActionBlock extends RichContentCustomBlock
 
     public static function toPreviewHtml(array $config): string
     {
-        // Pre-resolve URL to avoid DB hits in view
+        // Pre-resolve URLs to avoid DB hits in view
         $buttonUrl = BlockLinkResolver::resolveButtonUrl($config, 'button');
+        $secondaryButtonUrl = BlockLinkResolver::resolveButtonUrl($config, 'secondary_button');
 
         return view('cms.blocks.call-to-action', array_merge($config, [
             'id' => static::getId(),
@@ -225,11 +300,19 @@ class CallToActionBlock extends RichContentCustomBlock
             'description' => $config['description'] ?? 'Compelling description text',
             'button_text' => $config['button_text'] ?? 'Get Started',
             'button_url' => $buttonUrl,
-            // Button styling
+            // Primary button styling
             'button_style' => $config['button_style'] ?? 'preset',
             'button_preset' => $config['button_preset'] ?? 'primary',
             'button_bg_color' => $config['button_bg_color'] ?? '#3b82f6',
             'button_text_color' => $config['button_text_color'] ?? '#ffffff',
+            // Secondary button
+            'secondary_button_text' => $config['secondary_button_text'] ?? null,
+            'secondary_button_url' => $secondaryButtonUrl,
+            'secondary_button_style' => $config['secondary_button_style'] ?? 'preset',
+            'secondary_button_preset' => $config['secondary_button_preset'] ?? 'outline-primary',
+            'secondary_button_bg_color' => $config['secondary_button_bg_color'] ?? '#ffffff00',
+            'secondary_button_text_color' => $config['secondary_button_text_color'] ?? '#3b82f6',
+            'secondary_button_border_color' => $config['secondary_button_border_color'] ?? '#3b82f6',
             // Background styling
             'background_style' => $config['background_style'] ?? 'color',
             'background_color' => $config['background_color'] ?? '#f8fafc',
@@ -247,8 +330,9 @@ class CallToActionBlock extends RichContentCustomBlock
 
     public static function toHtml(array $config, array $data): string
     {
-        // Pre-resolve URL to avoid DB hit in view
+        // Pre-resolve URLs to avoid DB hit in view
         $buttonUrl = BlockLinkResolver::resolveButtonUrl($config, 'button');
+        $secondaryButtonUrl = BlockLinkResolver::resolveButtonUrl($config, 'secondary_button');
 
         return view('cms.blocks.call-to-action', array_merge($config, [
             'id' => static::getId(),
@@ -256,11 +340,19 @@ class CallToActionBlock extends RichContentCustomBlock
             'description' => $config['description'] ?? '',
             'button_text' => $config['button_text'] ?? '',
             'button_url' => $buttonUrl,
-            // Button styling
+            // Primary button styling
             'button_style' => $config['button_style'] ?? 'preset',
             'button_preset' => $config['button_preset'] ?? 'primary',
             'button_bg_color' => $config['button_bg_color'] ?? '#3b82f6',
             'button_text_color' => $config['button_text_color'] ?? '#ffffff',
+            // Secondary button
+            'secondary_button_text' => $config['secondary_button_text'] ?? null,
+            'secondary_button_url' => $secondaryButtonUrl,
+            'secondary_button_style' => $config['secondary_button_style'] ?? 'preset',
+            'secondary_button_preset' => $config['secondary_button_preset'] ?? 'outline-primary',
+            'secondary_button_bg_color' => $config['secondary_button_bg_color'] ?? '#ffffff00',
+            'secondary_button_text_color' => $config['secondary_button_text_color'] ?? '#3b82f6',
+            'secondary_button_border_color' => $config['secondary_button_border_color'] ?? '#3b82f6',
             // Background styling
             'background_style' => $config['background_style'] ?? 'color',
             'background_color' => $config['background_color'] ?? '#f8fafc',
