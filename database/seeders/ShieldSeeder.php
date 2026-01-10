@@ -50,6 +50,7 @@ class ShieldSeeder extends Seeder
             'ForceDeleteAny:Role', 'RestoreAny:Role', 'Replicate:Role', 'Reorder:Role',
             // Page permissions
             'View:MenuItemsManager', 'View:SiteSettings', 'View:ThemeManager', 'View:MenuOverviewWidget',
+            'View:PluginManager', 'View:PluginLicenses',
         ];
 
         // Administrator: Full content management + approval
