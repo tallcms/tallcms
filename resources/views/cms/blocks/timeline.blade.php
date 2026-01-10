@@ -1,11 +1,4 @@
 @php
-    $textPreset = function_exists('theme_text_presets') ? theme_text_presets()['primary'] ?? [] : [];
-
-    $customProperties = collect([
-        '--block-heading-color: ' . ($textPreset['heading'] ?? '#111827'),
-        '--block-text-color: ' . ($textPreset['description'] ?? '#4b5563'),
-    ])->join('; ') . ';';
-
     $textAlignClass = match($text_alignment ?? 'center') {
         'left' => 'text-left',
         'center' => 'text-center',
@@ -19,21 +12,18 @@
     $sectionSpacing = ($first_section ?? false) ? 'pt-0' : 'pt-16 sm:pt-24';
 @endphp
 
-<section
-    class="timeline-block {{ $sectionSpacing }} pb-16 sm:pb-24"
-    style="{{ $customProperties }}"
->
+<section class="timeline-block {{ $sectionSpacing }} pb-16 sm:pb-24 bg-base-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {{-- Section Header --}}
         @if(!empty($heading) || !empty($subheading))
             <div class="{{ $textAlignClass }} mb-12 sm:mb-16">
                 @if(!empty($heading))
-                    <h2 class="text-3xl sm:text-4xl font-bold tracking-tight" style="color: var(--block-heading-color);">
+                    <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-base-content">
                         {{ $heading }}
                     </h2>
                 @endif
                 @if(!empty($subheading))
-                    <p class="mt-4 text-lg sm:text-xl max-w-3xl {{ $textAlignClass === 'text-center' ? 'mx-auto' : '' }}" style="color: var(--block-text-color);">
+                    <p class="mt-4 text-lg sm:text-xl text-base-content/70 max-w-3xl {{ $textAlignClass === 'text-center' ? 'mx-auto' : '' }}">
                         {{ $subheading }}
                     </p>
                 @endif
@@ -47,7 +37,7 @@
                 <div class="relative {{ $isAlternating ? 'max-w-5xl mx-auto' : 'max-w-3xl mx-auto' }}">
                     {{-- Connector Line --}}
                     @if($showConnector)
-                        <div class="absolute {{ $isAlternating ? 'left-1/2 -translate-x-1/2' : 'left-6 sm:left-8' }} top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
+                        <div class="absolute {{ $isAlternating ? 'left-1/2 -translate-x-1/2' : 'left-6 sm:left-8' }} top-0 bottom-0 w-0.5 bg-base-300"></div>
                     @endif
 
                     <div class="space-y-8 sm:space-y-12">
@@ -126,19 +116,19 @@
 
                                 {{-- Connector --}}
                                 @if($showConnector && !$isLast)
-                                    <div class="absolute top-6 left-full w-8 sm:w-16 h-0.5 bg-gray-200 dark:bg-gray-700"></div>
+                                    <div class="absolute top-6 left-full w-8 sm:w-16 h-0.5 bg-base-300"></div>
                                 @endif
 
                                 {{-- Content --}}
                                 <div class="mt-4 text-center">
                                     @if(!empty($item['title']))
-                                        <h3 class="font-semibold text-base sm:text-lg" style="color: var(--block-heading-color);">
+                                        <h3 class="font-semibold text-base sm:text-lg text-base-content">
                                             {{ $item['title'] }}
                                         </h3>
                                     @endif
 
                                     @if(!empty($item['description']))
-                                        <p class="mt-2 text-sm leading-relaxed" style="color: var(--block-text-color);">
+                                        <p class="mt-2 text-sm leading-relaxed text-base-content/70">
                                             {{ $item['description'] }}
                                         </p>
                                     @endif

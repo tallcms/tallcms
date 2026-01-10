@@ -46,8 +46,8 @@
             style="background-image: url('{{ $imageUrl }}');"
         ></div>
     @else
-        {{-- Placeholder for preview --}}
-        <div class="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900"></div>
+        {{-- Placeholder gradient for preview --}}
+        <div class="absolute inset-0 bg-gradient-to-br from-neutral to-neutral-focus"></div>
     @endif
 
     {{-- Overlay --}}
@@ -61,15 +61,15 @@
     {{-- Content --}}
     @if($hasContent)
         <div class="relative z-10 h-full flex flex-col {{ $justifyClass }} {{ $textAlignClass }} px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-            <div class="max-w-4xl {{ $text_alignment === 'center' ? 'mx-auto' : ($text_alignment === 'right' ? 'ml-auto' : '') }}">
+            <div class="max-w-4xl {{ ($text_alignment ?? 'center') === 'center' ? 'mx-auto' : (($text_alignment ?? 'center') === 'right' ? 'ml-auto' : '') }}">
                 @if(!empty($heading))
-                    <h2 class="parallax-heading text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 drop-shadow-lg">
+                    <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 drop-shadow-lg">
                         {{ $heading }}
                     </h2>
                 @endif
 
                 @if(!empty($subheading))
-                    <p class="parallax-subheading text-lg sm:text-xl text-white/90 mb-8 max-w-2xl {{ $text_alignment === 'center' ? 'mx-auto' : '' }} drop-shadow">
+                    <p class="text-lg sm:text-xl text-white/90 mb-8 max-w-2xl {{ ($text_alignment ?? 'center') === 'center' ? 'mx-auto' : '' }} drop-shadow">
                         {{ $subheading }}
                     </p>
                 @endif
@@ -77,10 +77,10 @@
                 @if(!empty($cta_text) && !empty($cta_url))
                     <a
                         href="{{ e($cta_url) }}"
-                        class="parallax-cta inline-flex items-center px-6 py-3 text-base font-semibold rounded-lg bg-white text-gray-900 hover:bg-gray-100 transition-colors shadow-lg"
+                        class="btn btn-neutral bg-white text-gray-900 hover:bg-gray-100 border-white gap-2"
                     >
                         {{ $cta_text }}
-                        <x-heroicon-m-arrow-right class="w-5 h-5 ml-2" />
+                        <x-heroicon-m-arrow-right class="w-5 h-5" />
                     </a>
                 @endif
             </div>

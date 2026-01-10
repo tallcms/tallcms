@@ -1,6 +1,12 @@
+/**
+ * Filament Admin Theme CSS
+ *
+ * This stylesheet is for Filament chrome ONLY.
+ * daisyUI and block styles are in preview.css (loaded separately for block previews).
+ */
 @import '../../../../vendor/filament/filament/resources/css/theme.css';
-@import '../../blocks.css';
+@plugin "@tailwindcss/typography";
 
+/* Filament admin component sources */
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
-@source '../../../../resources/views/cms/blocks/**/*';

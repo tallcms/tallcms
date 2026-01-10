@@ -1,11 +1,4 @@
 @php
-    $textPreset = function_exists('theme_text_presets') ? theme_text_presets()['primary'] ?? [] : [];
-
-    $customProperties = collect([
-        '--block-heading-color: ' . ($textPreset['heading'] ?? '#111827'),
-        '--block-text-color: ' . ($textPreset['description'] ?? '#4b5563'),
-    ])->join('; ') . ';';
-
     $textAlignClass = match($text_alignment ?? 'center') {
         'left' => 'text-left',
         'center' => 'text-center',
@@ -20,10 +13,10 @@
     };
 
     $styleClasses = match($style ?? 'minimal') {
-        'cards' => 'bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6',
-        'bordered' => 'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6',
-        'minimal' => 'p-4',
-        default => 'p-4',
+        'cards' => 'stat bg-base-200 rounded-xl shadow-lg',
+        'bordered' => 'stat bg-base-100 rounded-xl border border-base-300',
+        'minimal' => 'stat',
+        default => 'stat',
     };
 
     $sectionSpacing = ($first_section ?? false) ? 'pt-0' : 'pt-16 sm:pt-24';
@@ -31,22 +24,17 @@
 @endphp
 
 <section
-    class="stats-block {{ $sectionSpacing }} pb-16 sm:pb-24"
-    style="{{ $customProperties }}"
+    class="stats-block {{ $sectionSpacing }} pb-16 sm:pb-24 bg-base-100"
     @if($shouldAnimate)
         x-data="{
             prefersReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
             animateValue(el, target, duration = 2000) {
-                // Only animate pure integers (no decimals, commas, or other characters)
                 const isPureInteger = /^\d+$/.test(target);
-
                 if (this.prefersReducedMotion || !isPureInteger) {
                     el.textContent = target;
                     return;
                 }
-
                 const numericTarget = parseInt(target, 10);
-
                 let startTime = null;
                 const step = (timestamp) => {
                     if (!startTime) startTime = timestamp;
@@ -70,35 +58,35 @@
         {{-- Section Header --}}
         @if(!empty($heading))
             <div class="{{ $textAlignClass }} mb-12">
-                <h2 class="text-3xl sm:text-4xl font-bold tracking-tight" style="color: var(--block-heading-color);">
+                <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-base-content">
                     {{ $heading }}
                 </h2>
             </div>
         @endif
 
-        {{-- Stats Grid --}}
+        {{-- Stats Grid using daisyUI stats component --}}
         @if(!empty($stats))
-            <div class="grid gap-6 sm:gap-8 {{ $columnsClass }}">
+            <div class="stats stats-vertical lg:stats-horizontal shadow w-full {{ $columnsClass }} grid">
                 @foreach($stats as $stat)
-                    <div class="stat-item {{ $styleClasses }} {{ $textAlignClass }}">
+                    <div class="{{ $styleClasses }} {{ $textAlignClass }} place-items-center">
                         {{-- Icon --}}
                         @if(!empty($stat['icon']))
-                            <div class="stat-icon mb-3 {{ $textAlignClass === 'text-center' ? 'flex justify-center' : '' }}">
+                            <div class="stat-figure text-primary">
                                 @php
                                     $iconName = str_replace(['heroicon-o-', 'heroicon-s-', 'heroicon-m-'], '', $stat['icon']);
                                     $iconStyle = str_starts_with($stat['icon'], 'heroicon-s-') ? 's' : 'o';
                                 @endphp
                                 <x-dynamic-component
                                     :component="'heroicon-' . $iconStyle . '-' . $iconName"
-                                    class="w-8 h-8 text-primary-600 dark:text-primary-400"
+                                    class="w-8 h-8"
                                 />
                             </div>
                         @endif
 
                         {{-- Value --}}
-                        <div class="stat-value text-3xl sm:text-4xl lg:text-5xl font-bold" style="color: var(--block-heading-color);">
+                        <div class="stat-value text-primary">
                             @if(!empty($stat['prefix']))
-                                <span class="stat-prefix">{{ $stat['prefix'] }}</span>
+                                <span>{{ $stat['prefix'] }}</span>
                             @endif
                             @if($shouldAnimate)
                                 <span data-stat-value="{{ $stat['value'] }}">0</span>
@@ -106,14 +94,14 @@
                                 <span>{{ $stat['value'] }}</span>
                             @endif
                             @if(!empty($stat['suffix']))
-                                <span class="stat-suffix">{{ $stat['suffix'] }}</span>
+                                <span>{{ $stat['suffix'] }}</span>
                             @endif
                         </div>
 
                         {{-- Label --}}
-                        <p class="stat-label text-sm sm:text-base mt-2" style="color: var(--block-text-color);">
+                        <div class="stat-title text-base-content/70">
                             {{ $stat['label'] }}
-                        </p>
+                        </div>
                     </div>
                 @endforeach
             </div>

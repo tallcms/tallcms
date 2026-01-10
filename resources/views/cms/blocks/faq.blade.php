@@ -1,11 +1,4 @@
 @php
-    $textPreset = function_exists('theme_text_presets') ? theme_text_presets()['primary'] ?? [] : [];
-
-    $customProperties = collect([
-        '--block-heading-color: ' . ($textPreset['heading'] ?? '#111827'),
-        '--block-text-color: ' . ($textPreset['description'] ?? '#4b5563'),
-    ])->join('; ') . ';';
-
     $textAlignClass = match($text_alignment ?? 'center') {
         'left' => 'text-left',
         'center' => 'text-center',
@@ -18,8 +11,7 @@
 @endphp
 
 <section
-    class="faq-block {{ $sectionSpacing }} pb-16 sm:pb-24"
-    style="{{ $customProperties }}"
+    class="faq-block {{ $sectionSpacing }} pb-16 sm:pb-24 bg-base-100"
     @if($isAccordion)
         x-data="{
             activeItem: {{ ($first_open ?? false) ? '0' : 'null' }},
@@ -48,12 +40,12 @@
         @if(!empty($heading) || !empty($subheading))
             <div class="{{ $textAlignClass }} mb-12">
                 @if(!empty($heading))
-                    <h2 class="text-3xl sm:text-4xl font-bold tracking-tight" style="color: var(--block-heading-color);">
+                    <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-base-content">
                         {{ $heading }}
                     </h2>
                 @endif
                 @if(!empty($subheading))
-                    <p class="mt-4 text-lg max-w-2xl {{ $textAlignClass === 'text-center' ? 'mx-auto' : '' }}" style="color: var(--block-text-color);">
+                    <p class="mt-4 text-lg text-base-content/70 max-w-2xl {{ $textAlignClass === 'text-center' ? 'mx-auto' : '' }}">
                         {{ $subheading }}
                     </p>
                 @endif
@@ -62,51 +54,37 @@
 
         {{-- FAQ Items --}}
         @if(!empty($items))
-            <div class="space-y-4">
+            <div class="join join-vertical w-full">
                 @foreach($items as $index => $item)
                     @if($isAccordion)
-                        {{-- Accordion Style --}}
-                        <div class="faq-item rounded-lg bg-white dark:bg-gray-800 overflow-hidden">
-                            <button
-                                type="button"
-                                class="faq-question w-full px-6 py-4 text-left flex items-center justify-between gap-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                                @click="toggle({{ $index }})"
-                                :aria-expanded="isOpen({{ $index }})"
-                                aria-controls="{{ $uniqueId }}-answer-{{ $index }}"
-                            >
-                                <span class="font-semibold text-base sm:text-lg" style="color: var(--block-heading-color);">
-                                    {{ $item['question'] }}
-                                </span>
-                                <span class="flex-shrink-0 ml-2">
-                                    <x-heroicon-o-chevron-down
-                                        class="w-5 h-5 transition-transform duration-200"
-                                        style="color: var(--block-text-color);"
-                                        x-bind:class="{ 'rotate-180': isOpen({{ $index }}) }"
-                                    />
-                                </span>
-                            </button>
-                            <div
-                                id="{{ $uniqueId }}-answer-{{ $index }}"
-                                x-show="isOpen({{ $index }})"
-                                x-collapse
-                                x-cloak
-                            >
-                                <div class="faq-answer px-6 pb-4 pt-0">
-                                    <p class="leading-relaxed" style="color: var(--block-text-color);">
-                                        {!! nl2br(e($item['answer'])) !!}
-                                    </p>
-                                </div>
+                        {{-- Accordion Style using daisyUI collapse --}}
+                        <div class="collapse collapse-arrow join-item border border-base-300 bg-base-200"
+                             :class="{ 'collapse-open': isOpen({{ $index }}) }">
+                            <input type="radio"
+                                   name="{{ $uniqueId }}"
+                                   @click="toggle({{ $index }})"
+                                   :checked="isOpen({{ $index }})"
+                            />
+                            <div class="collapse-title text-lg font-semibold text-base-content">
+                                {{ $item['question'] }}
+                            </div>
+                            <div class="collapse-content">
+                                <p class="text-base-content/80 leading-relaxed pt-2">
+                                    {!! nl2br(e($item['answer'])) !!}
+                                </p>
                             </div>
                         </div>
                     @else
                         {{-- List Style (Always Visible) --}}
-                        <div class="faq-item rounded-lg bg-white dark:bg-gray-800 p-6">
-                            <h3 class="faq-question font-semibold text-base sm:text-lg mb-3" style="color: var(--block-heading-color);">
-                                {{ $item['question'] }}
-                            </h3>
-                            <p class="faq-answer leading-relaxed" style="color: var(--block-text-color);">
-                                {!! nl2br(e($item['answer'])) !!}
-                            </p>
+                        <div class="card bg-base-200 mb-4">
+                            <div class="card-body">
+                                <h3 class="card-title text-base-content">
+                                    {{ $item['question'] }}
+                                </h3>
+                                <p class="text-base-content/80 leading-relaxed">
+                                    {!! nl2br(e($item['answer'])) !!}
+                                </p>
+                            </div>
                         </div>
                     @endif
                 @endforeach

@@ -1,11 +1,4 @@
 @php
-    $textPreset = function_exists('theme_text_presets') ? theme_text_presets()['primary'] ?? [] : [];
-
-    $customProperties = collect([
-        '--block-heading-color: ' . ($textPreset['heading'] ?? '#111827'),
-        '--block-text-color: ' . ($textPreset['description'] ?? '#4b5563'),
-    ])->join('; ') . ';';
-
     $isGrid = ($layout ?? 'grid') === 'grid';
 
     $columnsClass = match($columns ?? '5') {
@@ -28,15 +21,12 @@
     $sectionSpacing = ($first_section ?? false) ? 'pt-0' : 'pt-16 sm:pt-24';
 @endphp
 
-<section
-    class="logos-block {{ $sectionSpacing }} pb-16 sm:pb-24"
-    style="{{ $customProperties }}"
->
+<section class="logos-block {{ $sectionSpacing }} pb-16 sm:pb-24 bg-base-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {{-- Section Header --}}
         @if(!empty($heading))
             <div class="text-center mb-10">
-                <p class="text-sm sm:text-base font-medium uppercase tracking-wider" style="color: var(--block-text-color);">
+                <p class="text-sm sm:text-base font-medium uppercase tracking-wider text-base-content/70">
                     {{ $heading }}
                 </p>
             </div>
@@ -73,8 +63,8 @@
                             @endif
                         @else
                             {{-- Placeholder for preview --}}
-                            <div class="logo-placeholder flex items-center justify-center {{ $sizeClasses }} bg-gray-100 dark:bg-gray-800 rounded">
-                                <span class="text-xs text-gray-400">{{ $logo['alt'] ?? 'Logo' }}</span>
+                            <div class="logo-placeholder flex items-center justify-center {{ $sizeClasses }} bg-base-200 rounded">
+                                <span class="text-xs text-base-content/50">{{ $logo['alt'] ?? 'Logo' }}</span>
                             </div>
                         @endif
                     @endforeach
@@ -108,8 +98,8 @@
                             @endif
                         @else
                             {{-- Placeholder for preview --}}
-                            <div class="logo-placeholder flex items-center justify-center {{ $sizeClasses }} bg-gray-100 dark:bg-gray-800 rounded px-4">
-                                <span class="text-xs text-gray-400">{{ $logo['alt'] ?? 'Logo' }}</span>
+                            <div class="logo-placeholder flex items-center justify-center {{ $sizeClasses }} bg-base-200 rounded px-4">
+                                <span class="text-xs text-base-content/50">{{ $logo['alt'] ?? 'Logo' }}</span>
                             </div>
                         @endif
                     @endforeach

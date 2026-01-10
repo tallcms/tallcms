@@ -3,13 +3,6 @@
     use App\Models\CmsCategory;
     use Illuminate\Support\Facades\Storage;
 
-    // Get theme presets
-    $textPresets = theme_text_presets();
-    $textPreset = $textPresets['primary'] ?? [
-        'heading' => '#111827',
-        'description' => '#374151'
-    ];
-
     // Block configuration with defaults
     $configCategories = $categories ?? [];
     $layout = $layout ?? 'grid';
@@ -45,8 +38,6 @@
         : null;
 
     // Determine if we should show drafts (preview mode for authenticated users)
-    // $isPreview is set by PostsBlock::toPreviewHtml() in admin builder preview
-    // ?preview query param is for frontend preview routes/links
     $showDrafts = auth()->check() && ($isPreview || request()->has('preview'));
 
     // Build the base query
@@ -72,15 +63,12 @@
 
     // Handle sorting and retrieval
     if ($sortBy === 'manual' && !empty($pinnedPosts)) {
-        // Manual order: get pinned posts in specified order
-        // Still respect category filter and posts_count limit
         $manualQuery = CmsPost::query()->with(['categories', 'author']);
 
         if (!$showDrafts) {
             $manualQuery->published();
         }
 
-        // Apply category filter to manual selection too
         if (!empty($activeCategories)) {
             $manualQuery->whereHas('categories', function ($q) use ($activeCategories) {
                 $q->whereIn('tallcms_categories.id', $activeCategories);
@@ -97,7 +85,6 @@
             ->skip($offset)
             ->take($postsCount);
     } else {
-        // Apply sorting
         switch ($sortBy) {
             case 'oldest':
                 $query->orderBy('published_at', 'asc');
@@ -112,46 +99,24 @@
                 break;
         }
 
-        // Apply offset and limit
         $posts = $query->offset($offset)->limit($postsCount)->get();
     }
 
-    // Section classes with spacing
-    $sectionClasses = collect([
-        'w-full',
-        'px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16',
-        $firstSection ? 'pt-12 sm:pt-16 pb-12 sm:pb-16' : 'py-12 sm:py-16'
-    ])->filter()->join(' ');
+    // Section spacing
+    $sectionSpacing = $firstSection ? 'pt-0' : 'pt-16 sm:pt-24';
 
     // Grid column classes
     $gridColumnClass = match($columns) {
-        '2' => 'posts-grid--cols-2',
-        '4' => 'posts-grid--cols-4',
-        default => 'posts-grid--cols-3'
+        '2' => 'sm:grid-cols-2',
+        '4' => 'sm:grid-cols-2 lg:grid-cols-4',
+        default => 'sm:grid-cols-2 lg:grid-cols-3'
     };
 
-    // Layout container class
-    $layoutClass = match($layout) {
-        'list' => 'posts-list',
-        'compact-list' => 'posts-list posts-list--compact',
-        default => "posts-grid {$gridColumnClass}"
-    };
-
-    // Build inline CSS custom properties
-    $customProperties = collect([
-        '--block-heading-color: ' . $textPreset['heading'],
-        '--block-text-color: ' . $textPreset['description'],
-        '--block-link-color: ' . ($textPreset['link'] ?? '#2563eb'),
-        '--block-link-hover-color: ' . ($textPreset['link_hover'] ?? '#1d4ed8')
-    ])->join('; ') . ';';
-
-    // Helper to generate post URL using route helper
+    // Helper to generate post URL
     $getPostUrl = function($post) use ($parentSlug, $isPreview) {
         if ($isPreview) {
             return '#';
         }
-        // For homepage (empty slug), post links to /{post-slug}
-        // For other pages, links to /{page-slug}/{post-slug}
         $slug = empty($parentSlug) ? $post->slug : $parentSlug . '/' . $post->slug;
         return route('cms.page', ['slug' => $slug]);
     };
@@ -161,8 +126,6 @@
         if ($isPreview) {
             return '#';
         }
-        // For homepage, link to /?category=slug
-        // For other pages, link to /{page-slug}?category=slug
         if (empty($parentSlug)) {
             return route('cms.home') . '?category=' . $category->slug;
         }
@@ -181,25 +144,20 @@
     };
 @endphp
 
-<section class="posts-block {{ $sectionClasses }}" style="{{ $customProperties }}">
-    <div class="max-w-7xl mx-auto">
+<section class="posts-block {{ $sectionSpacing }} pb-16 sm:pb-24 bg-base-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {{-- Active filter indicator --}}
         @if($filterCategory)
             <div class="mb-6 flex items-center gap-2">
-                <span class="text-sm" style="color: var(--block-text-color);">Filtering by:</span>
-                <span
-                    class="inline-flex items-center gap-1 text-sm font-medium px-3 py-1 rounded-full"
-                    style="background-color: {{ $filterCategory->color ?? '#e5e7eb' }}20; color: {{ $filterCategory->color ?? '#374151' }};"
-                >
+                <span class="text-sm text-base-content/70">Filtering by:</span>
+                <span class="badge badge-lg gap-1" style="background-color: {{ $filterCategory->color ?? 'var(--p)' }}20; color: {{ $filterCategory->color ?? 'var(--p)' }};">
                     {{ $filterCategory->name }}
                     <a
                         href="{{ $getClearFilterUrl() }}"
                         class="ml-1 hover:opacity-70"
                         title="Clear filter"
                     >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <x-heroicon-m-x-mark class="w-4 h-4" />
                     </a>
                 </span>
             </div>
@@ -207,54 +165,48 @@
 
         @if($posts->isEmpty())
             {{-- Empty State --}}
-            <div class="posts-empty text-center py-12">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                </svg>
-                <p class="mt-4 text-lg" style="color: var(--block-text-color);">
+            <div class="text-center py-12">
+                <x-heroicon-o-document-text class="mx-auto h-12 w-12 text-base-content/40" />
+                <p class="mt-4 text-lg text-base-content/70">
                     {{ $emptyMessage }}
                 </p>
                 @if($filterCategory)
                     <a
                         href="{{ $getClearFilterUrl() }}"
-                        class="mt-4 inline-flex items-center text-sm font-medium"
-                        style="color: var(--block-link-color);"
+                        class="mt-4 inline-flex items-center link link-primary"
                     >
                         View all posts
                     </a>
                 @endif
             </div>
         @else
-            <div class="{{ $layoutClass }}">
-                @foreach($posts as $post)
-                    @php
-                        $postUrl = $getPostUrl($post);
-                    @endphp
-
-                    @if($layout === 'grid')
-                        {{-- Grid Card Layout --}}
-                        <article class="post-card bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
+            @if($layout === 'grid')
+                {{-- Grid Layout --}}
+                <div class="grid gap-6 sm:gap-8 {{ $gridColumnClass }}">
+                    @foreach($posts as $post)
+                        @php $postUrl = $getPostUrl($post); @endphp
+                        <article class="card bg-base-200 shadow-sm hover:shadow-md transition-shadow duration-200">
                             @if($showImage && $post->featured_image)
-                                <a href="{{ $postUrl }}" class="block">
-                                    <div class="post-card__image-wrapper">
+                                <figure>
+                                    <a href="{{ $postUrl }}" class="block">
                                         <img
                                             src="{{ Storage::disk(cms_media_disk())->url($post->featured_image) }}"
                                             alt="{{ $post->title }}"
-                                            class="post-card__image w-full h-48 object-cover"
+                                            class="w-full h-48 object-cover"
                                             loading="lazy"
                                         >
-                                    </div>
-                                </a>
+                                    </a>
+                                </figure>
                             @endif
 
-                            <div class="post-card__content p-5">
+                            <div class="card-body">
                                 @if($showCategories && $post->categories->isNotEmpty())
-                                    <div class="post-card__categories flex flex-wrap gap-2 mb-3">
+                                    <div class="flex flex-wrap gap-2 mb-2">
                                         @foreach($post->categories->take(3) as $category)
                                             <a
                                                 href="{{ $getCategoryFilterUrl($category) }}"
-                                                class="inline-block text-xs font-medium px-2 py-1 rounded-full hover:opacity-80 transition-opacity"
-                                                style="background-color: {{ $category->color ?? '#e5e7eb' }}20; color: {{ $category->color ?? '#374151' }};"
+                                                class="badge badge-sm hover:opacity-80 transition-opacity"
+                                                style="background-color: {{ $category->color ?? 'var(--p)' }}20; color: {{ $category->color ?? 'var(--p)' }};"
                                             >
                                                 {{ $category->name }}
                                             </a>
@@ -262,18 +214,14 @@
                                     </div>
                                 @endif
 
-                                <h3 class="post-card__title text-lg font-semibold mb-2 leading-tight">
-                                    <a
-                                        href="{{ $postUrl }}"
-                                        class="hover:underline"
-                                        style="color: var(--block-heading-color);"
-                                    >
+                                <h3 class="card-title text-lg">
+                                    <a href="{{ $postUrl }}" class="hover:underline text-base-content">
                                         {{ $post->title }}
                                     </a>
                                 </h3>
 
                                 @if($showDate || $showAuthor)
-                                    <div class="post-card__meta flex items-center gap-3 text-sm mb-3" style="color: var(--block-text-color); opacity: 0.7;">
+                                    <div class="flex items-center gap-2 text-sm text-base-content/60">
                                         @if($showDate && $post->published_at)
                                             <time datetime="{{ $post->published_at->toISOString() }}">
                                                 {{ $post->published_at->format('M j, Y') }}
@@ -289,48 +237,50 @@
                                 @endif
 
                                 @if($showExcerpt && $post->excerpt)
-                                    <p class="post-card__excerpt text-sm line-clamp-3" style="color: var(--block-text-color);">
+                                    <p class="text-sm text-base-content/70 line-clamp-3">
                                         {{ $post->excerpt }}
                                     </p>
                                 @endif
 
                                 @if($showReadMore)
-                                    <a
-                                        href="{{ $postUrl }}"
-                                        class="post-card__read-more inline-flex items-center mt-4 text-sm font-medium"
-                                        style="color: var(--block-link-color);"
-                                    >
-                                        Read more
-                                        <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </a>
+                                    <div class="card-actions justify-start mt-2">
+                                        <a href="{{ $postUrl }}" class="link link-primary link-hover text-sm inline-flex items-center">
+                                            Read more
+                                            <x-heroicon-m-arrow-right class="w-4 h-4 ml-1" />
+                                        </a>
+                                    </div>
                                 @endif
                             </div>
                         </article>
-
-                    @else
-                        {{-- List Layout --}}
-                        <article class="post-card post-card--list flex gap-6 {{ $layout === 'compact-list' ? 'py-4 border-b border-gray-100' : 'bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-shadow duration-200' }}">
+                    @endforeach
+                </div>
+            @else
+                {{-- List Layout --}}
+                <div class="space-y-6">
+                    @foreach($posts as $post)
+                        @php $postUrl = $getPostUrl($post); @endphp
+                        <article class="card card-side bg-base-200 shadow-sm hover:shadow-md transition-shadow duration-200 {{ $layout === 'compact-list' ? 'py-2 border-b border-base-300 bg-transparent shadow-none' : '' }}">
                             @if($showImage && $post->featured_image && $layout !== 'compact-list')
-                                <a href="{{ $postUrl }}" class="flex-shrink-0">
-                                    <img
-                                        src="{{ Storage::disk(cms_media_disk())->url($post->featured_image) }}"
-                                        alt="{{ $post->title }}"
-                                        class="post-card__image w-48 h-32 object-cover rounded-lg"
-                                        loading="lazy"
-                                    >
-                                </a>
+                                <figure class="flex-shrink-0">
+                                    <a href="{{ $postUrl }}">
+                                        <img
+                                            src="{{ Storage::disk(cms_media_disk())->url($post->featured_image) }}"
+                                            alt="{{ $post->title }}"
+                                            class="w-48 h-32 object-cover rounded-l-xl"
+                                            loading="lazy"
+                                        >
+                                    </a>
+                                </figure>
                             @endif
 
-                            <div class="post-card__content flex-1 min-w-0">
+                            <div class="card-body py-4">
                                 @if($showCategories && $post->categories->isNotEmpty() && $layout !== 'compact-list')
-                                    <div class="post-card__categories flex flex-wrap gap-2 mb-2">
+                                    <div class="flex flex-wrap gap-2 mb-1">
                                         @foreach($post->categories->take(3) as $category)
                                             <a
                                                 href="{{ $getCategoryFilterUrl($category) }}"
-                                                class="inline-block text-xs font-medium px-2 py-1 rounded-full hover:opacity-80 transition-opacity"
-                                                style="background-color: {{ $category->color ?? '#e5e7eb' }}20; color: {{ $category->color ?? '#374151' }};"
+                                                class="badge badge-sm hover:opacity-80 transition-opacity"
+                                                style="background-color: {{ $category->color ?? 'var(--p)' }}20; color: {{ $category->color ?? 'var(--p)' }};"
                                             >
                                                 {{ $category->name }}
                                             </a>
@@ -338,18 +288,14 @@
                                     </div>
                                 @endif
 
-                                <h3 class="post-card__title {{ $layout === 'compact-list' ? 'text-base' : 'text-xl' }} font-semibold mb-1 leading-tight">
-                                    <a
-                                        href="{{ $postUrl }}"
-                                        class="hover:underline"
-                                        style="color: var(--block-heading-color);"
-                                    >
+                                <h3 class="card-title {{ $layout === 'compact-list' ? 'text-base' : 'text-xl' }}">
+                                    <a href="{{ $postUrl }}" class="hover:underline text-base-content">
                                         {{ $post->title }}
                                     </a>
                                 </h3>
 
                                 @if($showDate || $showAuthor)
-                                    <div class="post-card__meta flex items-center gap-3 text-sm {{ $layout === 'compact-list' ? '' : 'mb-2' }}" style="color: var(--block-text-color); opacity: 0.7;">
+                                    <div class="flex items-center gap-2 text-sm text-base-content/60">
                                         @if($showDate && $post->published_at)
                                             <time datetime="{{ $post->published_at->toISOString() }}">
                                                 {{ $post->published_at->format('M j, Y') }}
@@ -365,28 +311,24 @@
                                 @endif
 
                                 @if($showExcerpt && $post->excerpt && $layout !== 'compact-list')
-                                    <p class="post-card__excerpt text-sm line-clamp-2" style="color: var(--block-text-color);">
+                                    <p class="text-sm text-base-content/70 line-clamp-2">
                                         {{ $post->excerpt }}
                                     </p>
                                 @endif
 
                                 @if($showReadMore && $layout !== 'compact-list')
-                                    <a
-                                        href="{{ $postUrl }}"
-                                        class="post-card__read-more inline-flex items-center mt-3 text-sm font-medium"
-                                        style="color: var(--block-link-color);"
-                                    >
-                                        Read more
-                                        <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </a>
+                                    <div class="card-actions justify-start mt-1">
+                                        <a href="{{ $postUrl }}" class="link link-primary link-hover text-sm inline-flex items-center">
+                                            Read more
+                                            <x-heroicon-m-arrow-right class="w-4 h-4 ml-1" />
+                                        </a>
+                                    </div>
                                 @endif
                             </div>
                         </article>
-                    @endif
-                @endforeach
-            </div>
+                    @endforeach
+                </div>
+            @endif
         @endif
     </div>
 </section>

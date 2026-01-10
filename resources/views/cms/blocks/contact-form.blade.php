@@ -1,30 +1,9 @@
 @php
-    // Get current theme presets for styling
-    $textPresets = theme_text_presets();
-    $buttonPresets = theme_button_presets();
-    $themeColors = theme_colors();
-
-    $textPreset = $textPresets['primary'] ?? [
-        'heading' => '#111827',
-        'description' => '#374151'
-    ];
-
-    $primaryButton = $buttonPresets['primary'] ?? [
-        'bg' => $themeColors['primary'][600] ?? '#2563eb',
-        'text' => '#ffffff'
-    ];
-
-    $customProperties = collect([
-        '--block-heading-color: ' . $textPreset['heading'],
-        '--block-text-color: ' . $textPreset['description'],
-        '--block-button-bg: ' . $primaryButton['bg'],
-        '--block-button-text: ' . $primaryButton['text'],
-    ])->join('; ') . ';';
-
     $fields = $config['fields'] ?? [];
     $submitButtonText = $config['submit_button_text'] ?? 'Send Message';
     $successMessage = $config['success_message'] ?? 'Thank you for your message! We\'ll be in touch soon.';
     $formId = 'contact-form-' . uniqid();
+    $sectionSpacing = ($first_section ?? false) ? 'pt-0' : 'pt-16 sm:pt-24';
 
     // Generate signature for security
     $pageUrl = request()->url();
@@ -41,16 +20,16 @@
     ];
 @endphp
 
-<section class="py-12 sm:py-16 px-4 sm:px-6 lg:px-8" style="{{ $customProperties }}">
-    <div class="max-w-2xl mx-auto">
+<section class="contact-form-block {{ $sectionSpacing }} pb-16 sm:pb-24 bg-base-100">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         @if($config['title'] ?? false)
-            <h2 class="text-3xl font-bold mb-4" style="color: var(--block-heading-color);">
+            <h2 class="text-3xl font-bold mb-4 text-base-content">
                 {{ $config['title'] }}
             </h2>
         @endif
 
         @if($config['description'] ?? false)
-            <p class="text-lg mb-8" style="color: var(--block-text-color);">
+            <p class="text-lg mb-8 text-base-content/70">
                 {{ $config['description'] }}
             </p>
         @endif
@@ -61,38 +40,40 @@
             data-contact-form-config='@json($jsConfig)'
             x-cloak
         >
-            <div x-show="formError" x-cloak class="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-700" role="alert" x-text="formError"></div>
-
-            <div x-show="submitted" x-cloak class="rounded-lg bg-green-50 p-6 text-center">
-                <svg class="mx-auto mb-4 h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <p class="text-lg font-medium text-green-800" x-text="successMessage"></p>
+            {{-- Error Alert --}}
+            <div x-show="formError" x-cloak class="alert alert-error mb-6" role="alert">
+                <x-heroicon-o-exclamation-circle class="w-6 h-6" />
+                <span x-text="formError"></span>
             </div>
 
+            {{-- Success Message --}}
+            <div x-show="submitted" x-cloak class="alert alert-success">
+                <x-heroicon-o-check-circle class="w-12 h-12" />
+                <span class="text-lg font-medium" x-text="successMessage"></span>
+            </div>
+
+            {{-- Form --}}
             <form x-show="!submitted" x-on:submit.prevent="submit" class="space-y-6">
                 @foreach($fields as $field)
                     <x-form.dynamic-field :field="$field" :form-id="$formId" />
                 @endforeach
 
+                {{-- Honeypot --}}
                 <div class="hidden" aria-hidden="true">
                     <label for="{{ $formId }}-website">Website</label>
                     <input type="text" id="{{ $formId }}-website" x-model="formData._honeypot" tabindex="-1" autocomplete="off">
                 </div>
 
+                {{-- Submit Button --}}
                 <div>
                     <button
                         type="submit"
-                        class="inline-flex w-full items-center justify-center rounded-lg px-6 py-3 text-base font-semibold text-white transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                        style="background-color: var(--block-button-bg, #2563eb); color: var(--block-button-text, white);"
+                        class="btn btn-primary w-full sm:w-auto"
                         x-bind:disabled="submitting"
                     >
                         <span x-show="!submitting">{{ $submitButtonText }}</span>
                         <span x-show="submitting" x-cloak class="inline-flex items-center">
-                            <svg class="-ml-1 mr-2 h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
+                            <span class="loading loading-spinner loading-sm mr-2"></span>
                             Sending...
                         </span>
                     </button>

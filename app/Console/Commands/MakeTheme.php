@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Theme;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -9,17 +10,18 @@ use Illuminate\Support\Str;
 class MakeTheme extends Command
 {
     protected $signature = 'make:theme {name? : The name of the theme}
-                            {--colors= : Primary colors (comma-separated)}
+                            {--preset= : DaisyUI preset (light, dark, cupcake, etc.)}
+                            {--prefers-dark= : Dark mode preset (optional)}
+                            {--all-presets : Include all daisyUI presets for theme-controller}
                             {--author= : Theme author name}
                             {--description= : Theme description}
                             {--theme-version= : Theme version}
                             {--interactive : Force interactive mode even with arguments}';
 
-    protected $description = 'Create a new TallCMS theme with complete Laravel structure';
+    protected $description = 'Create a new TallCMS theme with daisyUI integration';
 
     public function handle(): int
     {
-        // Collect theme information interactively or from arguments
         $themeInfo = $this->collectThemeInformation();
 
         $name = $themeInfo['name'];
@@ -48,163 +50,192 @@ class MakeTheme extends Command
         // Create vite.config.js
         $this->createViteConfig($themePath);
 
-        // Create tailwind.config.js
-        $this->createTailwindConfig($themePath, $themeInfo);
-
-        // Create starter CSS files (app.css only, blocks.css will fallback to main app)
-        $this->createCssFiles($themePath);
+        // Create CSS files with daisyUI config
+        $this->createCssFiles($themePath, $themeInfo);
 
         // Create starter JS files
         $this->createJsFiles($themePath);
 
         // Create starter view files
-        $this->createViewFiles($themePath, $studlyName);
+        $this->createViewFiles($themePath, $studlyName, $themeInfo);
 
         // Create .gitignore
         $this->createGitignore($themePath);
 
-        // Clear theme cache so the new theme is immediately discoverable
+        // Clear theme cache
         if (app()->bound('theme.manager')) {
             app('theme.manager')->clearCache();
-            $this->line('✅ Theme cache cleared - theme is now discoverable');
+            $this->line('Theme cache cleared - theme is now discoverable');
         }
 
         $this->newLine();
-        $this->info("✅ Theme '{$name}' created successfully!");
-        $this->line("📁 Location: themes/{$slug}");
+        $this->info("Theme '{$name}' created successfully!");
+        $this->line("Location: themes/{$slug}");
         $this->newLine();
         $this->comment('Next steps:');
-        $this->line("1. Add a screenshot: themes/{$slug}/public/screenshot.png (1200×900px recommended)");
+        $this->line("1. Add a screenshot: themes/{$slug}/public/screenshot.png (1200x900px recommended)");
         $this->line("2. cd themes/{$slug} && npm install && npm run build");
         $this->line('3. cd ../../  # Back to project root');
         $this->line("4. php artisan theme:activate {$slug}");
-        $this->newLine();
-        $this->comment('Or run everything from project root:');
-        $this->line("• cd themes/{$slug} && npm install && npm run build && cd ../../");
-        $this->line("• php artisan theme:activate {$slug}");
 
         return 0;
     }
 
     protected function collectThemeInformation(): array
     {
-        // Check if we should use interactive mode
         $useInteractive = $this->option('interactive') ||
                          (! $this->argument('name') && ! $this->option('author') && ! $this->option('description'));
 
         if ($useInteractive) {
-            $this->info('🎨 TallCMS Theme Creator');
-            $this->line('Let\'s create a beautiful theme! I\'ll ask you a few questions to get started.');
-            $this->newLine();
-
-            // Theme name
-            $name = $this->argument('name') ?: $this->ask('What is the name of your theme?', 'My Awesome Theme');
-
-            // Theme description
-            $description = $this->option('description') ?: $this->ask(
-                'Provide a brief description of your theme',
-                'A beautiful and modern theme for TallCMS'
-            );
-
-            // Theme author
-            $author = $this->option('author') ?: $this->ask('Who is the author of this theme?', 'Theme Developer');
-
-            // Theme version
-            $version = $this->option('theme-version') ?: $this->ask('What version should we start with?', '1.0.0');
-
-            // Parent theme selection
-            $this->newLine();
-            $this->line('🔗 Parent Theme (Optional):');
-            $availableThemes = \App\Models\Theme::all();
-            $parentOptions = ['None' => 'None (standalone theme)'];
-
-            foreach ($availableThemes as $theme) {
-                if ($theme->slug !== Str::slug($name)) { // Don't allow self as parent
-                    $parentOptions[$theme->slug] = "{$theme->name} ({$theme->slug})";
-                }
-            }
-
-            $parentChoice = 'None';
-            if (count($parentOptions) > 1) {
-                $parentChoice = $this->choice(
-                    'Select a parent theme (themes inherit views and assets from parents)',
-                    array_values($parentOptions),
-                    array_values($parentOptions)[0]
-                );
-            }
-
-            $parent = array_search($parentChoice, $parentOptions);
-            $parent = $parent === 'None' ? null : $parent;
-
-            // Color scheme selection
-            $colorSchemes = [
-                'blue' => 'Blue (Professional and trustworthy)',
-                'indigo' => 'Indigo (Modern and tech-focused)',
-                'purple' => 'Purple (Creative and innovative)',
-                'pink' => 'Pink (Playful and approachable)',
-                'red' => 'Red (Bold and energetic)',
-                'orange' => 'Orange (Warm and friendly)',
-                'yellow' => 'Yellow (Bright and optimistic)',
-                'green' => 'Green (Natural and sustainable)',
-                'teal' => 'Teal (Calm and sophisticated)',
-                'cyan' => 'Cyan (Fresh and modern)',
-                'gray' => 'Gray (Neutral and minimal)',
-                'custom' => 'Custom (I\'ll provide my own colors)',
-            ];
-
-            $this->newLine();
-            $this->line('🎨 Choose a primary color scheme for your theme:');
-            $colorChoice = $this->choice(
-                'Select your primary color',
-                array_values($colorSchemes),
-                array_values($colorSchemes)[0]
-            );
-
-            // Extract color name from choice
-            $primaryColor = array_search($colorChoice, $colorSchemes);
-
-            if ($primaryColor === 'custom') {
-                $primaryColor = $this->ask('Enter your primary color (hex code)', '#3b82f6');
-            }
-
-            return [
-                'name' => $name,
-                'slug' => Str::slug($name),
-                'description' => $description,
-                'author' => $author,
-                'version' => $version,
-                'parent' => $parent,
-                'primary_color' => $primaryColor,
-            ];
+            return $this->collectInteractively();
         }
 
-        // Non-interactive mode - use arguments and options
-        $name = $this->argument('name') ?: 'My Theme';
+        return $this->collectFromOptions();
+    }
+
+    protected function collectInteractively(): array
+    {
+        $this->info('TallCMS Theme Creator (daisyUI)');
+        $this->line('Create a theme with daisyUI presets for consistent styling.');
+        $this->newLine();
+
+        // Theme name
+        $name = $this->argument('name') ?: $this->ask('What is the name of your theme?', 'My Theme');
+
+        // Theme description
+        $description = $this->option('description') ?: $this->ask(
+            'Provide a brief description',
+            'A modern theme for TallCMS'
+        );
+
+        // Theme author
+        $author = $this->option('author') ?: $this->ask('Who is the author?', 'Theme Developer');
+
+        // Theme version
+        $version = $this->option('theme-version') ?: $this->ask('Starting version?', '1.0.0');
+
+        // DaisyUI mode selection
+        $this->newLine();
+        $this->line('DaisyUI Theme Mode:');
+        $modeChoice = $this->choice(
+            'How should this theme handle daisyUI presets?',
+            [
+                'single' => 'Single preset (one color scheme)',
+                'all' => 'All presets (theme-controller switcher)',
+            ],
+            'single'
+        );
+
+        $mode = array_search($modeChoice, [
+            'single' => 'Single preset (one color scheme)',
+            'all' => 'All presets (theme-controller switcher)',
+        ]);
+
+        // Preset selection
+        $preset = 'light';
+        $prefersDark = null;
+        $allPresets = false;
+
+        if ($mode === 'single') {
+            $this->newLine();
+            $this->line('Popular presets: light, dark, cupcake, bumblebee, emerald, corporate, synthwave, retro, cyberpunk, dracula, nord');
+            $preset = $this->askWithValidation(
+                'Which daisyUI preset?',
+                'light',
+                fn ($value) => $this->validatePreset($value)
+            );
+
+            // Dark mode option
+            $wantsDark = $this->confirm('Enable automatic dark mode?', false);
+            if ($wantsDark) {
+                $prefersDark = $this->askWithValidation(
+                    'Which preset for dark mode?',
+                    'dark',
+                    fn ($value) => $this->validatePreset($value)
+                );
+            }
+        } else {
+            $allPresets = true;
+            $preset = 'light';
+            $prefersDark = 'dark';
+        }
 
         return [
             'name' => $name,
             'slug' => Str::slug($name),
-            'description' => $this->option('description') ?: 'A beautiful TallCMS theme',
+            'description' => $description,
+            'author' => $author,
+            'version' => $version,
+            'preset' => $preset,
+            'prefersDark' => $prefersDark,
+            'allPresets' => $allPresets,
+        ];
+    }
+
+    protected function collectFromOptions(): array
+    {
+        $name = $this->argument('name') ?: 'My Theme';
+        $preset = $this->option('preset') ?: 'light';
+        $prefersDark = $this->option('prefers-dark');
+        $allPresets = $this->option('all-presets');
+
+        // Validate preset
+        if (! $this->validatePreset($preset)) {
+            $this->error("Invalid preset: {$preset}");
+            $this->line('Valid presets: '.implode(', ', Theme::ALL_DAISYUI_PRESETS));
+            exit(1);
+        }
+
+        // Validate prefersDark if provided
+        if ($prefersDark && ! $this->validatePreset($prefersDark)) {
+            $this->error("Invalid dark preset: {$prefersDark}");
+            $this->line('Valid presets: '.implode(', ', Theme::ALL_DAISYUI_PRESETS));
+            exit(1);
+        }
+
+        if ($allPresets) {
+            $preset = 'light';
+            $prefersDark = 'dark';
+        }
+
+        return [
+            'name' => $name,
+            'slug' => Str::slug($name),
+            'description' => $this->option('description') ?: 'A modern TallCMS theme',
             'author' => $this->option('author') ?: 'Theme Developer',
             'version' => $this->option('theme-version') ?: '1.0.0',
-            'parent' => null, // Non-interactive mode doesn't support parent selection
-            'primary_color' => 'blue',
+            'preset' => $preset,
+            'prefersDark' => $prefersDark,
+            'allPresets' => $allPresets,
         ];
+    }
+
+    protected function validatePreset(string $preset): bool
+    {
+        return in_array($preset, Theme::ALL_DAISYUI_PRESETS);
+    }
+
+    protected function askWithValidation(string $question, string $default, callable $validator): string
+    {
+        while (true) {
+            $value = $this->ask($question, $default);
+            if ($validator($value)) {
+                return $value;
+            }
+            $this->error("Invalid preset: {$value}");
+            $this->line('Valid presets: '.implode(', ', Theme::ALL_DAISYUI_PRESETS));
+        }
     }
 
     protected function createDirectoryStructure(string $themePath): void
     {
         $directories = [
-            'public/css',
-            'public/js',
-            'public/img',
             'public/build',
+            'public/img',
             'resources/views/layouts',
-            'resources/views/cms/blocks',
             'resources/views/components',
             'resources/css',
             'resources/js',
-            'resources/img',
         ];
 
         foreach ($directories as $dir) {
@@ -215,38 +246,35 @@ class MakeTheme extends Command
 
     protected function createThemeConfig(string $themePath, array $themeInfo): void
     {
-        $primaryColors = $this->getColorPalette($themeInfo['primary_color']);
-
         $config = [
             'name' => $themeInfo['name'],
             'slug' => $themeInfo['slug'],
             'version' => $themeInfo['version'],
             'description' => $themeInfo['description'],
             'author' => $themeInfo['author'],
-            'tailwind' => [
-                'colors' => [
-                    'primary' => $primaryColors,
-                ],
+            'daisyui' => [
+                'preset' => $themeInfo['preset'],
             ],
             'screenshots' => [
                 'primary' => 'screenshot.png',
             ],
             'supports' => [
-                'dark_mode' => true,
-                'responsive' => true,
-                'animations' => true,
-                'custom_fonts' => false,
+                'dark_mode' => $themeInfo['prefersDark'] !== null,
+                'theme_controller' => $themeInfo['allPresets'],
             ],
             'build' => [
-                'css' => 'resources/css/app.css',
-                'js' => 'resources/js/app.js',
-                'output' => 'public',
+                'entries' => ['resources/css/app.css', 'resources/js/app.js'],
             ],
         ];
 
-        // Add parent if specified
-        if (! empty($themeInfo['parent'])) {
-            $config['parent'] = $themeInfo['parent'];
+        // Add prefersDark only if explicitly set
+        if ($themeInfo['prefersDark']) {
+            $config['daisyui']['prefersDark'] = $themeInfo['prefersDark'];
+        }
+
+        // Add presets: "all" for theme-controller mode
+        if ($themeInfo['allPresets']) {
+            $config['daisyui']['presets'] = 'all';
         }
 
         File::put("{$themePath}/theme.json", json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
@@ -266,7 +294,9 @@ class MakeTheme extends Command
                 'build' => 'vite build',
             ],
             'devDependencies' => [
+                '@tailwindcss/typography' => '^0.5.16',
                 '@tailwindcss/vite' => '^4.1.18',
+                'daisyui' => '^5.0.0',
                 'laravel-vite-plugin' => '^2.0.0',
                 'tailwindcss' => '^4.1.18',
                 'vite' => '^7.0.7',
@@ -282,6 +312,7 @@ class MakeTheme extends Command
         $viteConfig = <<<'JS'
 import { defineConfig } from 'vite'
 import laravel from 'laravel-vite-plugin'
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
     build: {
@@ -295,6 +326,7 @@ export default defineConfig({
             ],
             publicDirectory: 'public',
         }),
+        tailwindcss(),
     ],
 })
 JS;
@@ -303,159 +335,120 @@ JS;
         $this->line('Created: vite.config.js');
     }
 
-    protected function createTailwindConfig(string $themePath, array $themeInfo): void
+    protected function createCssFiles(string $themePath, array $themeInfo): void
     {
-        $primaryColors = $this->getColorPalette($themeInfo['primary_color']);
+        $themesDirective = $this->buildThemesDirective($themeInfo);
 
-        $colorLines = [];
-        foreach ($primaryColors as $shade => $color) {
-            $colorLines[] = "                    {$shade}: '{$color}'";
-        }
-        $colorConfig = implode(",\n", $colorLines);
-
-        $tailwindConfig = <<<JS
-import defaultTheme from 'tailwindcss/defaultTheme'
-
-export default {
-    content: [
-        './resources/views/**/*.blade.php',
-        '../../resources/views/**/*.blade.php',
-        '../../app/Filament/**/*.php'
-    ],
-    theme: {
-        extend: {
-            colors: {
-                primary: {
-{$colorConfig}
-                }
-            },
-            fontFamily: {
-                sans: ['Inter', ...defaultTheme.fontFamily.sans],
-            },
-        }
-    }
+        $appCss = <<<CSS
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@plugin "daisyui" {
+  {$themesDirective}
 }
-JS;
 
-        File::put("{$themePath}/tailwind.config.js", $tailwindConfig);
-        $this->line('Created: tailwind.config.js');
-    }
+/* Import blocks CSS for consistent block styling */
+@import '../../../../resources/css/blocks.css';
 
-    protected function createCssFiles(string $themePath): void
-    {
-        // Main app.css
-        $appCss = <<<'CSS'
-@import 'tailwindcss';
+/* Scan paths for class discovery */
+@source '../views/**/*.blade.php';
+@source '../../../../resources/views/**/*.blade.php';
+/* Pro plugin - Tailwind v4 silently ignores missing paths */
+@source '../../../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php';
 
 /* Theme-specific styles */
-:root {
-    --theme-primary: theme('colors.primary.600');
-    --theme-primary-hover: theme('colors.primary.700');
-}
-
-/* Custom theme utilities */
-.theme-gradient {
-    background: linear-gradient(135deg, theme('colors.primary.500'), theme('colors.primary.600'));
-}
-
-.theme-text-gradient {
-    background: linear-gradient(135deg, theme('colors.primary.500'), theme('colors.primary.700'));
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
 CSS;
 
         File::put("{$themePath}/resources/css/app.css", $appCss);
         $this->line('Created: resources/css/app.css');
+    }
 
-        $this->comment('Note: blocks.css will automatically fallback to main app - no need to create theme-specific version');
+    protected function buildThemesDirective(array $themeInfo): string
+    {
+        if ($themeInfo['allPresets']) {
+            // All presets mode - include all 35 daisyUI presets
+            return 'themes: '.Theme::getPresetsCssString($themeInfo['preset'], $themeInfo['prefersDark']).';';
+        }
+
+        // Single preset mode
+        $themes = $themeInfo['preset'].' --default';
+        if ($themeInfo['prefersDark'] && $themeInfo['prefersDark'] !== $themeInfo['preset']) {
+            $themes .= ', '.$themeInfo['prefersDark'].' --prefersdark';
+        }
+
+        return "themes: {$themes};";
     }
 
     protected function createJsFiles(string $themePath): void
     {
         $appJs = <<<'JS'
-// Theme-specific JavaScript
+// Theme JavaScript
 
-// TallCMS Core Components - Required for native blocks (contact form, galleries, etc.)
-// Do not remove this import unless you're providing your own implementations
+// TallCMS Core Components - Required for native blocks
 import '../../../../resources/js/tallcms';
 
-// Add any theme-specific functionality here
-// For example: animations, interactions, custom Alpine components, etc.
+// Theme-specific functionality here
 JS;
 
         File::put("{$themePath}/resources/js/app.js", $appJs);
         $this->line('Created: resources/js/app.js');
     }
 
-    protected function createViewFiles(string $themePath, string $studlyName): void
+    protected function createViewFiles(string $themePath, string $studlyName, array $themeInfo): void
     {
-        // Create layout override
-        $layout = $this->getLayoutTemplate($studlyName);
+        // Create layout
+        $layout = $this->getLayoutTemplate($studlyName, $themeInfo);
         File::put("{$themePath}/resources/views/layouts/app.blade.php", $layout);
         $this->line('Created: resources/views/layouts/app.blade.php');
 
-        // Create sample component (optional)
-        $component = $this->getComponentTemplate($studlyName);
-        File::put("{$themePath}/resources/views/components/hero-section.blade.php", $component);
-        $this->line('Created: resources/views/components/hero-section.blade.php');
+        // Create theme-switcher component if all presets mode
+        if ($themeInfo['allPresets']) {
+            $switcher = $this->getThemeSwitcherTemplate();
+            File::put("{$themePath}/resources/views/components/theme-switcher.blade.php", $switcher);
+            $this->line('Created: resources/views/components/theme-switcher.blade.php');
+        }
     }
 
     protected function createGitignore(string $themePath): void
     {
         $gitignore = <<<'GITIGNORE'
-# Dependencies
 node_modules/
-
-# Build outputs
 public/build/
-public/css/
-public/js/
-
-# IDE files
-.vscode/
-.idea/
-
-# OS files
 .DS_Store
-Thumbs.db
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 GITIGNORE;
 
         File::put("{$themePath}/.gitignore", $gitignore);
         $this->line('Created: .gitignore');
     }
 
-    protected function getLayoutTemplate(string $studlyName): string
+    protected function getLayoutTemplate(string $studlyName, array $themeInfo): string
     {
+        $themeSwitcher = $themeInfo['allPresets']
+            ? "@if(supports_theme_controller())\n                @include('theme.{$themeInfo['slug']}::components.theme-switcher')\n            @endif"
+            : '{{-- Theme switcher: enable "all presets" mode to add theme-controller --}}';
+
         return <<<BLADE
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    
+
     <title>{{ \$title ?? config('app.name') }}</title>
-    
+
     @if(isset(\$description))
         <meta name="description" content="{{ \$description }}">
     @endif
-    
+
     @if(isset(\$featuredImage))
         <meta property="og:image" content="{{ Storage::url(\$featuredImage) }}">
         <meta property="twitter:image" content="{{ Storage::url(\$featuredImage) }}">
     @endif
-    
+
     <meta property="og:title" content="{{ \$title ?? config('app.name') }}">
     <meta property="og:description" content="{{ \$description ?? '' }}">
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ request()->url() }}">
-    
+
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ \$title ?? config('app.name') }}">
     <meta name="twitter:description" content="{{ \$description ?? '' }}">
@@ -466,360 +459,99 @@ GITIGNORE;
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
-    
+
     <!-- Theme Assets -->
-    @themeVite(['resources/css/app.css', 'resources/css/blocks.css', 'resources/js/app.js'])
+    @themeVite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
     <style>[x-cloak] { display: none !important; }</style>
 </head>
-<body class="font-inter antialiased bg-white">
-    <div class="min-h-screen">
-        <!-- Navigation -->
-        <nav x-data="{ open: false }" class="absolute top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-sm">
-            <div class="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-                <div class="flex justify-between h-20">
-                    
-                    <!-- Logo -->
-                    <div class="flex items-center">
-                        <a href="{{ url('/') }}" class="text-xl font-bold text-primary-600 hover:text-primary-700 transition-colors duration-200">
-                            {{ config('app.name') }}
-                        </a>
-                    </div>
-
-                    <!-- Desktop Menu -->
-                    <div class="hidden md:flex items-center space-x-8">
-                        <x-menu location="header" style="horizontal" class="flex items-center space-x-8" />
-                    </div>
-
-                    <!-- Mobile Menu Button -->
-                    <div class="md:hidden flex items-center">
-                        <button @click="open = !open" class="text-gray-700 hover:text-gray-900 p-2 transition-colors duration-200">
-                            <svg x-show="!open" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                            </svg>
-                            <svg x-show="open" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
+<body class="min-h-screen bg-base-100 text-base-content">
+    <!-- Navbar -->
+    <div class="navbar bg-base-100 shadow-sm sticky top-0 z-50">
+        <div class="navbar-start">
             <!-- Mobile Menu -->
-            <div x-show="open" 
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 transform -translate-y-2"
-                 x-transition:enter-end="opacity-100 transform translate-y-0"
-                 x-transition:leave="transition ease-in duration-150"
-                 x-transition:leave-start="opacity-100 transform translate-y-0"
-                 x-transition:leave-end="opacity-0 transform -translate-y-2"
-                 x-cloak 
-                 class="md:hidden bg-white/95 backdrop-blur-md shadow-lg border-t border-gray-100">
-                <div class="px-4 py-4 space-y-3">
+            <div class="dropdown lg:hidden">
+                <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </div>
+                <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-lg bg-base-100 rounded-box w-52">
                     <x-menu location="header" style="vertical" />
-                </div>
+                </ul>
             </div>
-        </nav>
-        
-        <!-- Main Content -->
-        <main class="pt-20">
-            {{ \$slot }}
-        </main>
-        
-        <!-- Theme Footer -->
-        <footer class="bg-gray-50">
-            <div class="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-16">
-                <div class="text-center">
-                    <h4 class="text-lg font-bold text-gray-900 mb-4">{{ config('app.name') }}</h4>
-                    <p class="text-gray-600 text-sm mb-6">
-                        Powered by TallCMS with {$studlyName} Theme
-                    </p>
-                    <div class="mt-8 pt-8 border-t border-gray-200">
-                        <p class="text-sm text-gray-500">
-                            &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </footer>
+            <!-- Logo -->
+            <a href="{{ url('/') }}" class="btn btn-ghost text-xl font-bold">
+                {{ config('app.name') }}
+            </a>
+        </div>
+
+        <!-- Desktop Menu -->
+        <div class="navbar-center hidden lg:flex">
+            <ul class="menu menu-horizontal px-1">
+                <x-menu location="header" style="horizontal" />
+            </ul>
+        </div>
+
+        <div class="navbar-end gap-2">
+            <!-- Theme Switcher -->
+            {$themeSwitcher}
+        </div>
     </div>
-    
+
+    <!-- Main Content -->
+    <main>
+        {{ \$slot }}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer footer-center bg-base-200 text-base-content p-10">
+        <aside>
+            <p class="font-bold text-lg">{{ config('app.name') }}</p>
+            <p>{$studlyName} theme for TallCMS</p>
+        </aside>
+        <nav>
+            <x-menu location="footer" style="footer" />
+        </nav>
+        <aside>
+            <p>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+        </aside>
+    </footer>
+
     @livewireScripts
 </body>
 </html>
 BLADE;
     }
 
-    protected function getBlockTemplate(string $blockName, string $studlyName): string
+    protected function getThemeSwitcherTemplate(): string
     {
-        $blockClass = Str::studly($blockName);
+        return <<<'BLADE'
+@props(['class' => ''])
 
-        return <<<BLADE
-{{-- {$studlyName} Theme Override for {$blockClass} --}}
-{{-- This template overrides the default block template --}}
-
-@php
-    // Get theme presets
-    \$textPresets = theme_text_presets();
-    \$textPreset = \$textPresets['primary'] ?? [
-        'heading' => '#111827',
-        'description' => '#374151'
-    ];
-    
-    // Theme-specific custom properties
-    \$customProperties = collect([
-        '--block-heading-color: ' . \$textPreset['heading'],
-        '--block-text-color: ' . \$textPreset['description'],
-    ])->join('; ') . ';';
-@endphp
-
-<section class="{$blockName} theme-section" style="{{ \$customProperties }}">
-    <div class="theme-container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {{-- Theme-specific block content --}}
-        <div class="theme-card p-8">
-            <div class="text-center">
-                <h2 class="text-3xl font-bold mb-4 theme-text-gradient">
-                    {$studlyName} Theme - {$blockClass}
-                </h2>
-                <p class="text-lg text-gray-600">
-                    This is a theme override for the {$blockClass}. 
-                    Customize this template to match your {$studlyName} theme design.
-                </p>
-            </div>
-        </div>
+<div class="dropdown dropdown-end {{ $class }}">
+    <div tabindex="0" role="button" class="btn btn-ghost btn-sm gap-1">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+        </svg>
+        <span class="hidden sm:inline">Theme</span>
+        <svg class="w-3 h-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
     </div>
-</section>
+    <ul tabindex="0" class="dropdown-content menu bg-base-200 rounded-box z-50 w-52 p-2 shadow-2xl max-h-96 overflow-y-auto">
+        @foreach(daisyui_presets() as $preset)
+            <li>
+                <input type="radio"
+                       name="theme-dropdown"
+                       class="theme-controller btn btn-sm btn-block btn-ghost justify-start"
+                       aria-label="{{ ucfirst($preset) }}"
+                       value="{{ $preset }}" />
+            </li>
+        @endforeach
+    </ul>
+</div>
 BLADE;
-    }
-
-    protected function getComponentTemplate(string $studlyName): string
-    {
-        return <<<BLADE
-{{-- {$studlyName} Theme - Hero Section Component --}}
-
-<section class="hero-section bg-gradient-to-r from-primary-600 to-primary-700">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <div class="text-center">
-            <h1 class="text-4xl md:text-6xl font-bold text-white mb-6">
-                Welcome to {$studlyName}
-            </h1>
-            <p class="text-xl text-primary-100 mb-8">
-                A beautiful theme for your TallCMS website
-            </p>
-            <div class="space-x-4">
-                <button class="theme-button-primary bg-white text-primary-600 hover:bg-gray-50">
-                    Get Started
-                </button>
-                <button class="theme-button-secondary bg-transparent border-2 border-white text-white hover:bg-white hover:text-primary-600">
-                    Learn More
-                </button>
-            </div>
-        </div>
-    </div>
-</section>
-BLADE;
-    }
-
-    protected function getColorPalette(string $colorName): array
-    {
-        // Define color palettes for different color schemes
-        $colorPalettes = [
-            'blue' => [
-                50 => '#eff6ff',
-                100 => '#dbeafe',
-                200 => '#bfdbfe',
-                300 => '#93c5fd',
-                400 => '#60a5fa',
-                500 => '#3b82f6',
-                600 => '#2563eb',
-                700 => '#1d4ed8',
-                800 => '#1e40af',
-                900 => '#1e3a8a',
-                950 => '#172554',
-            ],
-            'indigo' => [
-                50 => '#eef2ff',
-                100 => '#e0e7ff',
-                200 => '#c7d2fe',
-                300 => '#a5b4fc',
-                400 => '#818cf8',
-                500 => '#6366f1',
-                600 => '#4f46e5',
-                700 => '#4338ca',
-                800 => '#3730a3',
-                900 => '#312e81',
-                950 => '#1e1b4b',
-            ],
-            'purple' => [
-                50 => '#faf5ff',
-                100 => '#f3e8ff',
-                200 => '#e9d5ff',
-                300 => '#d8b4fe',
-                400 => '#c084fc',
-                500 => '#a855f7',
-                600 => '#9333ea',
-                700 => '#7c3aed',
-                800 => '#6b21a8',
-                900 => '#581c87',
-                950 => '#3b0764',
-            ],
-            'pink' => [
-                50 => '#fdf2f8',
-                100 => '#fce7f3',
-                200 => '#fbcfe8',
-                300 => '#f9a8d4',
-                400 => '#f472b6',
-                500 => '#ec4899',
-                600 => '#db2777',
-                700 => '#be185d',
-                800 => '#9d174d',
-                900 => '#831843',
-                950 => '#500724',
-            ],
-            'red' => [
-                50 => '#fef2f2',
-                100 => '#fee2e2',
-                200 => '#fecaca',
-                300 => '#fca5a5',
-                400 => '#f87171',
-                500 => '#ef4444',
-                600 => '#dc2626',
-                700 => '#b91c1c',
-                800 => '#991b1b',
-                900 => '#7f1d1d',
-                950 => '#450a0a',
-            ],
-            'orange' => [
-                50 => '#fff7ed',
-                100 => '#ffedd5',
-                200 => '#fed7aa',
-                300 => '#fdba74',
-                400 => '#fb923c',
-                500 => '#f97316',
-                600 => '#ea580c',
-                700 => '#c2410c',
-                800 => '#9a3412',
-                900 => '#7c2d12',
-                950 => '#431407',
-            ],
-            'yellow' => [
-                50 => '#fefce8',
-                100 => '#fef9c3',
-                200 => '#fef08a',
-                300 => '#fde047',
-                400 => '#facc15',
-                500 => '#eab308',
-                600 => '#ca8a04',
-                700 => '#a16207',
-                800 => '#854d0e',
-                900 => '#713f12',
-                950 => '#422006',
-            ],
-            'green' => [
-                50 => '#f0fdf4',
-                100 => '#dcfce7',
-                200 => '#bbf7d0',
-                300 => '#86efac',
-                400 => '#4ade80',
-                500 => '#22c55e',
-                600 => '#16a34a',
-                700 => '#15803d',
-                800 => '#166534',
-                900 => '#14532d',
-                950 => '#052e16',
-            ],
-            'teal' => [
-                50 => '#f0fdfa',
-                100 => '#ccfbf1',
-                200 => '#99f6e4',
-                300 => '#5eead4',
-                400 => '#2dd4bf',
-                500 => '#14b8a6',
-                600 => '#0d9488',
-                700 => '#0f766e',
-                800 => '#115e59',
-                900 => '#134e4a',
-                950 => '#042f2e',
-            ],
-            'cyan' => [
-                50 => '#ecfeff',
-                100 => '#cffafe',
-                200 => '#a5f3fc',
-                300 => '#67e8f9',
-                400 => '#22d3ee',
-                500 => '#06b6d4',
-                600 => '#0891b2',
-                700 => '#0e7490',
-                800 => '#155e75',
-                900 => '#164e63',
-                950 => '#083344',
-            ],
-            'gray' => [
-                50 => '#f9fafb',
-                100 => '#f3f4f6',
-                200 => '#e5e7eb',
-                300 => '#d1d5db',
-                400 => '#9ca3af',
-                500 => '#6b7280',
-                600 => '#4b5563',
-                700 => '#374151',
-                800 => '#1f2937',
-                900 => '#111827',
-                950 => '#030712',
-            ],
-        ];
-
-        // If it's a custom hex color, generate shades
-        if (str_starts_with($colorName, '#')) {
-            return $this->generateShadesFromHex($colorName);
-        }
-
-        return $colorPalettes[$colorName] ?? $colorPalettes['blue'];
-    }
-
-    protected function generateShadesFromHex(string $hex): array
-    {
-        // Simple shade generation from a base hex color
-        // This is a simplified version - in production you might want a more sophisticated algorithm
-        return [
-            50 => $this->adjustBrightness($hex, 0.95),
-            100 => $this->adjustBrightness($hex, 0.9),
-            200 => $this->adjustBrightness($hex, 0.8),
-            300 => $this->adjustBrightness($hex, 0.6),
-            400 => $this->adjustBrightness($hex, 0.4),
-            500 => $hex,
-            600 => $this->adjustBrightness($hex, -0.1),
-            700 => $this->adjustBrightness($hex, -0.2),
-            800 => $this->adjustBrightness($hex, -0.3),
-            900 => $this->adjustBrightness($hex, -0.4),
-            950 => $this->adjustBrightness($hex, -0.5),
-        ];
-    }
-
-    protected function adjustBrightness(string $hex, float $amount): string
-    {
-        $hex = ltrim($hex, '#');
-
-        if (strlen($hex) == 3) {
-            $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
-        }
-
-        $rgb = [
-            hexdec(substr($hex, 0, 2)),
-            hexdec(substr($hex, 2, 2)),
-            hexdec(substr($hex, 4, 2)),
-        ];
-
-        foreach ($rgb as &$channel) {
-            if ($amount > 0) {
-                // Lighten: mix with white
-                $channel = min(255, $channel + (255 - $channel) * $amount);
-            } else {
-                // Darken: reduce brightness
-                $channel = max(0, $channel * (1 + $amount));
-            }
-        }
-
-        return sprintf('#%02x%02x%02x', round($rgb[0]), round($rgb[1]), round($rgb[2]));
     }
 }

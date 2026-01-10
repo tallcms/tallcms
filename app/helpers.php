@@ -102,6 +102,48 @@ if (! function_exists('has_theme_override')) {
     }
 }
 
+// DaisyUI Theme Helper Functions
+
+if (! function_exists('daisyui_preset')) {
+    /**
+     * Get the active daisyUI preset name
+     */
+    function daisyui_preset(): string
+    {
+        return active_theme()?->getDaisyuiPreset() ?? 'light';
+    }
+}
+
+if (! function_exists('daisyui_dark_preset')) {
+    /**
+     * Get the dark mode preset name
+     */
+    function daisyui_dark_preset(): ?string
+    {
+        return active_theme()?->getDaisyuiPrefersDark();
+    }
+}
+
+if (! function_exists('daisyui_presets')) {
+    /**
+     * Get all available presets for theme-controller
+     */
+    function daisyui_presets(): array
+    {
+        return active_theme()?->getDaisyuiPresets() ?? ['light'];
+    }
+}
+
+if (! function_exists('supports_theme_controller')) {
+    /**
+     * Check if theme supports runtime theme switching
+     */
+    function supports_theme_controller(): bool
+    {
+        return active_theme()?->supportsThemeController() ?? false;
+    }
+}
+
 // AWS / Storage Helper Functions
 
 if (! function_exists('cms_media_disk')) {

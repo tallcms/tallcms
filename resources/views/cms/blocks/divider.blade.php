@@ -23,66 +23,41 @@
     };
 
     $dividerStyle = $style ?? 'line';
-    $lineColor = $color ?? null;
     $iconName = $icon ?? 'heroicon-o-star';
     $isValidIcon = !empty($iconName) && preg_match('/^heroicon-[oms]-[\w-]+$/', $iconName);
+
+    // Color class - daisyUI semantic or custom
+    $colorClass = match($color ?? 'base') {
+        'primary' => 'border-primary text-primary',
+        'secondary' => 'border-secondary text-secondary',
+        'accent' => 'border-accent text-accent',
+        'neutral' => 'border-neutral text-neutral',
+        default => 'border-base-300 text-base-content/50',
+    };
 @endphp
 
-<div class="divider-block {{ $heightClass }}">
+<div class="divider-block {{ $heightClass }} bg-base-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         @if($dividerStyle === 'space')
             {{-- Space only - no visible element --}}
         @elseif($dividerStyle === 'line')
-            {{-- Simple horizontal line --}}
-            <hr
-                class="divider-line {{ $widthClass }} {{ $lineStyleClass }} border-t-2 mx-auto"
-                @if($lineColor)
-                    style="border-color: {{ $lineColor }};"
-                @else
-                    style="border-color: var(--block-border-color, #e5e7eb);"
-                @endif
-            >
+            {{-- Simple horizontal line using daisyUI divider --}}
+            <div class="divider {{ $widthClass }} mx-auto {{ $colorClass }}"></div>
         @elseif($dividerStyle === 'line-icon')
             {{-- Line with centered icon --}}
             <div class="flex items-center justify-center {{ $widthClass }} mx-auto">
-                <hr
-                    class="divider-line flex-1 {{ $lineStyleClass }} border-t-2"
-                    @if($lineColor)
-                        style="border-color: {{ $lineColor }};"
-                    @else
-                        style="border-color: var(--block-border-color, #e5e7eb);"
-                    @endif
-                >
-                <div class="divider-icon mx-4">
+                <hr class="flex-1 {{ $lineStyleClass }} border-t-2 {{ $colorClass }}">
+                <div class="mx-4">
                     @if($isValidIcon)
                         <x-dynamic-component
                             :component="$iconName"
-                            class="w-6 h-6"
-                            @if($lineColor)
-                                style="color: {{ $lineColor }};"
-                            @else
-                                style="color: var(--block-text-color, #6b7280);"
-                            @endif
+                            class="w-6 h-6 {{ $colorClass }}"
                         />
                     @else
-                        <x-heroicon-o-star
-                            class="w-6 h-6"
-                            @if($lineColor)
-                                style="color: {{ $lineColor }};"
-                            @else
-                                style="color: var(--block-text-color, #6b7280);"
-                            @endif
-                        />
+                        <x-heroicon-o-star class="w-6 h-6 {{ $colorClass }}" />
                     @endif
                 </div>
-                <hr
-                    class="divider-line flex-1 {{ $lineStyleClass }} border-t-2"
-                    @if($lineColor)
-                        style="border-color: {{ $lineColor }};"
-                    @else
-                        style="border-color: var(--block-border-color, #e5e7eb);"
-                    @endif
-                >
+                <hr class="flex-1 {{ $lineStyleClass }} border-t-2 {{ $colorClass }}">
             </div>
         @endif
     </div>

@@ -1,0 +1,22 @@
+/**
+ * Block Preview CSS - daisyUI isolated for RichEditor previews
+ *
+ * This stylesheet provides daisyUI styling ONLY for block previews.
+ * It should be loaded separately from the main admin theme.css
+ *
+ * Loading strategy options:
+ * 1. Inline <style> injected via JavaScript when preview renders
+ * 2. Scoped to a wrapper element with [data-daisy-preview]
+ * 3. Loaded dynamically via <link> when RichEditor mounts
+ */
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@plugin "daisyui" {
+  /* Only light/dark - preview uses semantic classes, not theme-specific colors */
+  themes: light --default, dark --prefersdark;
+}
+
+/* Scan block templates for class discovery */
+@source '../../../resources/views/cms/blocks/**/*.blade.php';
+/* Pro plugin blocks */
+@source '../../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php';

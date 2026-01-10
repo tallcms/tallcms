@@ -32,7 +32,10 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->viteTheme('resources/css/filament/admin/theme.css')
+            ->viteTheme([
+                'resources/css/filament/admin/theme.css',
+                'resources/css/filament/admin/preview.css', // daisyUI for block previews
+            ])
             ->login()
             ->passwordReset()
             ->profile(isSimple: false)

@@ -7,6 +7,20 @@ use Illuminate\Support\Facades\File;
 
 class Theme
 {
+    /**
+     * CANONICAL PRESET LIST - single source of truth
+     * Update this when daisyUI adds/removes themes
+     * See: https://daisyui.com/docs/themes/
+     */
+    public const ALL_DAISYUI_PRESETS = [
+        'light', 'dark', 'cupcake', 'bumblebee', 'emerald', 'corporate',
+        'synthwave', 'retro', 'cyberpunk', 'valentine', 'halloween',
+        'garden', 'forest', 'aqua', 'lofi', 'pastel', 'fantasy',
+        'wireframe', 'black', 'luxury', 'dracula', 'cmyk', 'autumn',
+        'business', 'acid', 'lemonade', 'night', 'coffee', 'winter',
+        'dim', 'nord', 'sunset', 'caramellatte', 'abyss', 'silk',
+    ];
+
     public string $name;
 
     public string $slug;
@@ -63,6 +77,103 @@ class Theme
         $this->extras['author_url'] = $data['author_url'] ?? null;
         $this->extras['license'] = $data['license'] ?? null;
         $this->extras['homepage'] = $data['homepage'] ?? null;
+
+        // Store daisyUI configuration
+        $this->extras['daisyui'] = $data['daisyui'] ?? [];
+    }
+
+    // =========================================================================
+    // DaisyUI Theme Methods
+    // =========================================================================
+
+    /**
+     * Get the active daisyUI preset name
+     */
+    public function getDaisyuiPreset(): string
+    {
+        return $this->extras['daisyui']['preset'] ?? 'light';
+    }
+
+    /**
+     * Get the dark mode preset name (nullable)
+     */
+    public function getDaisyuiPrefersDark(): ?string
+    {
+        return $this->extras['daisyui']['prefersDark'] ?? null;
+    }
+
+    /**
+     * Get all available daisyUI presets for this theme
+     */
+    public function getDaisyuiPresets(): array
+    {
+        $presets = $this->extras['daisyui']['presets'] ?? null;
+
+        // Handle "all" string - return canonical list
+        if ($presets === 'all') {
+            return self::ALL_DAISYUI_PRESETS;
+        }
+
+        // Handle array
+        if (is_array($presets)) {
+            return $presets;
+        }
+
+        // Default: just the active preset (and dark if specified)
+        $result = [$this->getDaisyuiPreset()];
+        $dark = $this->getDaisyuiPrefersDark();
+        if ($dark && $dark !== $this->getDaisyuiPreset()) {
+            $result[] = $dark;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Check if theme has a custom daisyUI theme definition
+     */
+    public function hasCustomDaisyuiTheme(): bool
+    {
+        return isset($this->extras['daisyui']['custom']);
+    }
+
+    /**
+     * Get the custom daisyUI theme configuration
+     */
+    public function getDaisyuiCustomTheme(): ?array
+    {
+        return $this->extras['daisyui']['custom'] ?? null;
+    }
+
+    /**
+     * Check if theme supports runtime theme switching (theme-controller)
+     */
+    public function supportsThemeController(): bool
+    {
+        return count($this->getDaisyuiPresets()) > 1;
+    }
+
+    /**
+     * Get preset list as CSS string for @plugin "daisyui" themes: directive
+     *
+     * @param  string  $default  The default theme preset
+     * @param  string|null  $prefersDark  The dark mode preset (nullable)
+     */
+    public static function getPresetsCssString(string $default = 'light', ?string $prefersDark = null): string
+    {
+        $presets = collect(self::ALL_DAISYUI_PRESETS)
+            ->map(function ($preset) use ($default, $prefersDark) {
+                if ($preset === $default) {
+                    return "{$preset} --default";
+                }
+                if ($prefersDark && $preset === $prefersDark) {
+                    return "{$preset} --prefersdark";
+                }
+
+                return $preset;
+            });
+
+        return $presets->implode(', ');
     }
 
     /**

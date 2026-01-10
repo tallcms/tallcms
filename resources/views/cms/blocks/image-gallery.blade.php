@@ -4,149 +4,144 @@
         'grid-3' => 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
         'grid-4' => 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
         'masonry' => 'columns-1 md:columns-2 lg:columns-3',
-        'carousel' => 'flex space-x-4 overflow-x-auto',
+        'carousel' => 'flex gap-4 overflow-x-auto snap-x snap-mandatory',
     ];
-    
+
     $sizeClasses = [
         'small' => 'h-48',
         'medium' => 'h-64',
         'large' => 'h-80',
         'full' => 'h-auto',
     ];
-    
-    $gridClass = $layoutClasses[$layout] ?? $layoutClasses['grid-3'];
-    $sizeClass = $sizeClasses[$image_size] ?? $sizeClasses['medium'];
+
+    $gridClass = $layoutClasses[$layout ?? 'grid-3'] ?? $layoutClasses['grid-3'];
+    $sizeClass = $sizeClasses[$image_size ?? 'medium'] ?? $sizeClasses['medium'];
+    $sectionSpacing = ($first_section ?? false) ? 'pt-0' : 'pt-16 sm:pt-24';
+    $galleryId = 'gallery-' . uniqid();
 @endphp
 
-<div class="py-8" style="padding: 2rem 0;">
-    @if($title)
-        <h3 class="text-2xl font-bold text-gray-900 text-center mb-8" 
-            style="font-size: 1.5rem; font-weight: bold; color: #111827; text-align: center; margin-bottom: 2rem;">
-            {{ $title }}
-        </h3>
-    @endif
-    
-    @if($layout === 'masonry')
-        <div class="{{ $gridClass }} gap-4 space-y-4" 
-             style="columns: 3; column-gap: 1rem; row-gap: 1rem;">
-            @foreach($images as $image)
-                @if(Storage::disk(cms_media_disk())->exists($image))
-                <div class="break-inside-avoid" style="break-inside: avoid; margin-bottom: 1rem;">
-                    <img src="{{ Storage::disk(cms_media_disk())->url($image) }}" 
-                         alt="Gallery image" 
-                         class="w-full rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                         style="width: 100%; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); cursor: pointer; transition: box-shadow 0.3s ease;"
-                         onclick="openLightbox(this)">
-                </div>
-                @endif
-            @endforeach
-        </div>
-    @elseif($layout === 'carousel')
-        <div class="relative" style="position: relative;">
-            <div class="{{ $gridClass }} pb-4" 
-                 style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem; scroll-snap-type: x mandatory;">
+<section
+    class="image-gallery-block {{ $sectionSpacing }} pb-16 sm:pb-24 bg-base-100"
+    x-data="{
+        images: @js(collect($images)->filter(fn($img) => Storage::disk(cms_media_disk())->exists($img))->map(fn($img) => Storage::disk(cms_media_disk())->url($img))->values()->all()),
+        currentIndex: 0,
+        isOpen: false,
+        open(index) {
+            this.currentIndex = index;
+            this.isOpen = true;
+        },
+        close() {
+            this.isOpen = false;
+        },
+        next() {
+            this.currentIndex = (this.currentIndex + 1) % this.images.length;
+        },
+        prev() {
+            this.currentIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
+        }
+    }"
+    @keydown.escape.window="close()"
+    @keydown.left.window="isOpen && prev()"
+    @keydown.right.window="isOpen && next()"
+>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        @if($title ?? false)
+            <h3 class="text-2xl font-bold text-base-content text-center mb-8">
+                {{ $title }}
+            </h3>
+        @endif
+
+        @if(($layout ?? 'grid-3') === 'masonry')
+            <div class="{{ $gridClass }} gap-4">
+                @php $imageIndex = 0; @endphp
                 @foreach($images as $image)
                     @if(Storage::disk(cms_media_disk())->exists($image))
-                    <div class="flex-none w-80"
-                         style="flex: none; width: 20rem; scroll-snap-align: start;">
-                        <img src="{{ Storage::disk(cms_media_disk())->url($image) }}" 
-                             alt="Gallery image" 
-                             class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                             style="width: 100%; height: 16rem; object-fit: cover; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); cursor: pointer; transition: box-shadow 0.3s ease;"
-                             onclick="openLightbox(this)">
-                    </div>
+                        <div class="break-inside-avoid mb-4">
+                            <img
+                                src="{{ Storage::disk(cms_media_disk())->url($image) }}"
+                                alt="Gallery image"
+                                class="w-full rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                                @click="open({{ $imageIndex }})"
+                            >
+                        </div>
+                        @php $imageIndex++; @endphp
                     @endif
                 @endforeach
             </div>
-        </div>
-    @else
-        <div class="grid {{ $gridClass }} gap-6" 
-             style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
-            @foreach($images as $image)
-                @if(Storage::disk(cms_media_disk())->exists($image))
-                <div class="group" style="position: relative;">
-                    <img src="{{ Storage::disk(cms_media_disk())->url($image) }}" 
-                         alt="Gallery image" 
-                         class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md group-hover:shadow-lg transition-shadow cursor-pointer"
-                         style="width: 100%; height: 16rem; object-fit: cover; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); cursor: pointer; transition: box-shadow 0.3s ease;"
-                         onclick="openLightbox(this)">
-                </div>
-                @endif
-            @endforeach
-        </div>
-    @endif
-</div>
-
-<!-- Lightbox Modal -->
-<div id="lightbox" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden flex items-center justify-center"
-     style="position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.9); z-index: 50; display: none; align-items: center; justify-content: center;">
-    <div class="relative max-w-4xl max-h-full p-4"
-         style="position: relative; max-width: 56rem; max-height: 100%; padding: 1rem;">
-        <img id="lightbox-image" src="" alt="Enlarged image" 
-             class="max-w-full max-h-full rounded-lg"
-             style="max-width: 100%; max-height: 100%; border-radius: 0.5rem;">
-        <button onclick="closeLightbox()" 
-                class="absolute top-4 right-4 text-white text-4xl font-bold hover:text-gray-300"
-                style="position: absolute; top: 1rem; right: 1rem; color: white; font-size: 2.25rem; font-weight: bold; background: none; border: none; cursor: pointer;">
-            &times;
-        </button>
-        <button onclick="previousImage()" 
-                class="absolute left-4 top-1/2 transform -translate-y-1/2 text-white text-3xl font-bold hover:text-gray-300"
-                style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: white; font-size: 1.875rem; font-weight: bold; background: none; border: none; cursor: pointer;">
-            &#8249;
-        </button>
-        <button onclick="nextImage()" 
-                class="absolute right-4 top-1/2 transform -translate-y-1/2 text-white text-3xl font-bold hover:text-gray-300"
-                style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); color: white; font-size: 1.875rem; font-weight: bold; background: none; border: none; cursor: pointer;">
-            &#8250;
-        </button>
+        @elseif(($layout ?? 'grid-3') === 'carousel')
+            <div class="{{ $gridClass }} pb-4">
+                @php $imageIndex = 0; @endphp
+                @foreach($images as $image)
+                    @if(Storage::disk(cms_media_disk())->exists($image))
+                        <div class="flex-none w-80 snap-start">
+                            <img
+                                src="{{ Storage::disk(cms_media_disk())->url($image) }}"
+                                alt="Gallery image"
+                                class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                                @click="open({{ $imageIndex }})"
+                            >
+                        </div>
+                        @php $imageIndex++; @endphp
+                    @endif
+                @endforeach
+            </div>
+        @else
+            <div class="grid {{ $gridClass }} gap-6">
+                @php $imageIndex = 0; @endphp
+                @foreach($images as $image)
+                    @if(Storage::disk(cms_media_disk())->exists($image))
+                        <div>
+                            <img
+                                src="{{ Storage::disk(cms_media_disk())->url($image) }}"
+                                alt="Gallery image"
+                                class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                                @click="open({{ $imageIndex }})"
+                            >
+                        </div>
+                        @php $imageIndex++; @endphp
+                    @endif
+                @endforeach
+            </div>
+        @endif
     </div>
-</div>
 
-<script>
-let currentImages = [];
-let currentImageIndex = 0;
+    {{-- Lightbox Modal --}}
+    <div
+        x-show="isOpen"
+        x-cloak
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+        @click.self="close()"
+    >
+        <div class="relative max-w-4xl max-h-full p-4">
+            <img
+                :src="images[currentIndex]"
+                alt="Enlarged image"
+                class="max-w-full max-h-[90vh] rounded-lg"
+            >
 
-function openLightbox(imgElement) {
-    const gallery = imgElement.closest('div').parentElement;
-    currentImages = Array.from(gallery.querySelectorAll('img')).map(img => img.src);
-    currentImageIndex = currentImages.indexOf(imgElement.src);
-    
-    document.getElementById('lightbox-image').src = imgElement.src;
-    document.getElementById('lightbox').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-}
+            {{-- Close Button --}}
+            <button
+                @click="close()"
+                class="btn btn-circle btn-ghost text-white absolute top-4 right-4"
+            >
+                <x-heroicon-o-x-mark class="w-8 h-8" />
+            </button>
 
-function closeLightbox() {
-    document.getElementById('lightbox').classList.add('hidden');
-    document.body.style.overflow = '';
-}
+            {{-- Previous Button --}}
+            <button
+                @click="prev()"
+                class="btn btn-circle btn-ghost text-white absolute left-4 top-1/2 -translate-y-1/2"
+            >
+                <x-heroicon-o-chevron-left class="w-8 h-8" />
+            </button>
 
-function previousImage() {
-    currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
-    document.getElementById('lightbox-image').src = currentImages[currentImageIndex];
-}
-
-function nextImage() {
-    currentImageIndex = (currentImageIndex + 1) % currentImages.length;
-    document.getElementById('lightbox-image').src = currentImages[currentImageIndex];
-}
-
-// Close lightbox on escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeLightbox();
-    } else if (e.key === 'ArrowLeft') {
-        previousImage();
-    } else if (e.key === 'ArrowRight') {
-        nextImage();
-    }
-});
-
-// Close lightbox when clicking outside the image
-document.getElementById('lightbox').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeLightbox();
-    }
-});
-</script>
+            {{-- Next Button --}}
+            <button
+                @click="next()"
+                class="btn btn-circle btn-ghost text-white absolute right-4 top-1/2 -translate-y-1/2"
+            >
+                <x-heroicon-o-chevron-right class="w-8 h-8" />
+            </button>
+        </div>
+    </div>
+</section>
