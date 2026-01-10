@@ -1,0 +1,109 @@
+import Chart from 'chart.js/auto'
+
+export default function statsOverviewStatChart({
+    dataChecksum,
+    labels,
+    values,
+}) {
+    return {
+        dataChecksum,
+
+        init() {
+            Alpine.effect(() => {
+                Alpine.store('theme')
+
+                const chart = this.getChart()
+
+                if (chart) {
+                    chart.destroy()
+                }
+
+                this.initChart()
+            })
+
+            window
+                .matchMedia('(prefers-color-scheme: dark)')
+                .addEventListener('change', () => {
+                    if (Alpine.store('theme') !== 'system') {
+                        return
+                    }
+
+                    this.$nextTick(() => {
+                        const chart = this.getChart()
+
+                        if (chart) {
+                            chart.destroy()
+                        }
+
+                        this.initChart()
+                    })
+                })
+        },
+
+        initChart() {
+            if (
+                !this.$refs.canvas ||
+                !this.$refs.backgroundColorElement ||
+                !this.$refs.borderColorElement
+            ) {
+                return
+            }
+
+            return new Chart(this.$refs.canvas, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            data: values,
+                            borderWidth: 2,
+                            fill: 'start',
+                            tension: 0.5,
+                            backgroundColor: getComputedStyle(
+                                this.$refs.backgroundColorElement,
+                            ).color,
+                            borderColor: getComputedStyle(
+                                this.$refs.borderColorElement,
+                            ).color,
+                        },
+                    ],
+                },
+                options: {
+                    animation: {
+                        duration: 0,
+                    },
+                    elements: {
+                        point: {
+                            radius: 0,
+                        },
+                    },
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false,
+                        },
+                    },
+                    scales: {
+                        x: {
+                            display: false,
+                        },
+                        y: {
+                            display: false,
+                        },
+                    },
+                    tooltips: {
+                        enabled: false,
+                    },
+                },
+            })
+        },
+
+        getChart() {
+            if (!this.$refs.canvas) {
+                return null
+            }
+
+            return Chart.getChart(this.$refs.canvas)
+        },
+    }
+}

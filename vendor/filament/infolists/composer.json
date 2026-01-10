@@ -1,0 +1,33 @@
+{
+    "name": "filament/infolists",
+    "description": "Easily add beautiful read-only infolists to any Livewire component.",
+    "license": "MIT",
+    "homepage": "https://github.com/filamentphp/filament",
+    "support": {
+        "issues": "https://github.com/filamentphp/filament/issues",
+        "source": "https://github.com/filamentphp/filament"
+    },
+    "require": {
+        "php": "^8.2",
+        "filament/actions": "self.version",
+        "filament/schemas": "self.version",
+        "filament/support": "self.version"
+    },
+    "autoload": {
+        "psr-4": {
+            "Filament\\Infolists\\": "src"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Filament\\Infolists\\InfolistsServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

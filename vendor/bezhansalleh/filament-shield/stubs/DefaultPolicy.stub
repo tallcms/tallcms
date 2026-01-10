@@ -1,0 +1,15 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use {{ auth_model_fqcn }};
+use {{ model_fqcn }};
+use Illuminate\Auth\Access\HandlesAuthorization;
+
+class {{ modelPolicy }}
+{
+    use HandlesAuthorization;
+    {{ methods }}
+}

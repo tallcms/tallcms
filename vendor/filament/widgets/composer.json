@@ -1,0 +1,32 @@
+{
+    "name": "filament/widgets",
+    "description": "Easily add beautiful dashboard widgets to any Livewire component.",
+    "license": "MIT",
+    "homepage": "https://github.com/filamentphp/filament",
+    "support": {
+        "issues": "https://github.com/filamentphp/filament/issues",
+        "source": "https://github.com/filamentphp/filament"
+    },
+    "require": {
+        "php": "^8.2",
+        "filament/schemas": "self.version",
+        "filament/support": "self.version"
+    },
+    "autoload": {
+        "psr-4": {
+            "Filament\\Widgets\\": "src"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Filament\\Widgets\\WidgetsServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

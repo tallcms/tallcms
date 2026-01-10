@@ -1,0 +1,29 @@
+<?php
+
+namespace {{ namespace }};
+
+{{ clusterImport }}use Kalnoy\Nestedset\QueryBuilder;
+use Wsmallnews\FilamentNestedset\Pages\NestedsetPage;
+
+class {{ class }} extends NestedsetPage
+{
+
+    protected static ?string $model = {{ model }}{{ clusterAssignment }}
+
+    protected static string $recordTitleAttribute = 'name';
+
+    protected function schema(array $arguments): array
+    {
+        return [
+            // 
+        ];
+    }
+
+
+    public function infolistSchema(): array
+    {
+        return [
+            //
+        ];
+    }
+}

@@ -1,0 +1,35 @@
+{
+    "name": "filament/notifications",
+    "description": "Easily add beautiful notifications to any Livewire app.",
+    "license": "MIT",
+    "homepage": "https://github.com/filamentphp/filament",
+    "support": {
+        "issues": "https://github.com/filamentphp/filament/issues",
+        "source": "https://github.com/filamentphp/filament"
+    },
+    "require": {
+        "php": "^8.2",
+        "filament/actions": "self.version",
+        "filament/support": "self.version"
+    },
+    "autoload": {
+        "psr-4": {
+            "Filament\\Notifications\\": "src"
+        },
+        "files": [
+            "src/Testing/helpers.php"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Filament\\Notifications\\NotificationsServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

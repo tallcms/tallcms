@@ -1,0 +1,34 @@
+{
+    "name": "filament/tables",
+    "description": "Easily add beautiful tables to any Livewire component.",
+    "license": "MIT",
+    "homepage": "https://github.com/filamentphp/filament",
+    "support": {
+        "issues": "https://github.com/filamentphp/filament/issues",
+        "source": "https://github.com/filamentphp/filament"
+    },
+    "require": {
+        "php": "^8.2",
+        "filament/actions": "self.version",
+        "filament/forms": "self.version",
+        "filament/query-builder": "self.version",
+        "filament/support": "self.version"
+    },
+    "autoload": {
+        "psr-4": {
+            "Filament\\Tables\\": "src"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Filament\\Tables\\TablesServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

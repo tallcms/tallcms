@@ -1,0 +1,37 @@
+{
+    "name": "filament/actions",
+    "description": "Easily add beautiful action modals to any Livewire component.",
+    "license": "MIT",
+    "homepage": "https://github.com/filamentphp/filament",
+    "support": {
+        "issues": "https://github.com/filamentphp/filament/issues",
+        "source": "https://github.com/filamentphp/filament"
+    },
+    "require": {
+        "php": "^8.2",
+        "anourvalar/eloquent-serialize": "^1.2",
+        "filament/forms": "self.version",
+        "filament/infolists": "self.version",
+        "filament/notifications": "self.version",
+        "filament/support": "self.version",
+        "league/csv": "^9.27",
+        "openspout/openspout": "^4.23"
+    },
+    "autoload": {
+        "psr-4": {
+            "Filament\\Actions\\": "src"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Filament\\Actions\\ActionsServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

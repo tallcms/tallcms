@@ -1,0 +1,38 @@
+{
+    "name": "filament/forms",
+    "description": "Easily add beautiful forms to any Livewire component.",
+    "license": "MIT",
+    "homepage": "https://github.com/filamentphp/filament",
+    "support": {
+        "issues": "https://github.com/filamentphp/filament/issues",
+        "source": "https://github.com/filamentphp/filament"
+    },
+    "require": {
+        "php": "^8.2",
+        "danharrin/date-format-converter": "^0.3",
+        "filament/actions": "self.version",
+        "filament/schemas": "self.version",
+        "filament/support": "self.version",
+        "ueberdosis/tiptap-php": "^2.0"
+    },
+    "autoload": {
+        "files": [
+            "src/helpers.php"
+        ],
+        "psr-4": {
+            "Filament\\Forms\\": "src"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Filament\\Forms\\FormsServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

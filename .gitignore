@@ -13,14 +13,12 @@
 /.zed
 /auth.json
 /node_modules
-/public/build
 /public/hot
 /public/storage
 /storage/*.key
 /storage/pail
 # Installer lock
 installer.lock
-/vendor
 
 # User-created themes (keep only default theme)
 /themes/*
