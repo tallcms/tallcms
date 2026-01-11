@@ -734,20 +734,177 @@ class TallcmsWebsiteSeeder extends Seeder
                     ],
                 ],
             ],
-            // CTA for Pro
+            // Accordion Block (Pro)
+            [
+                'type' => 'customBlock',
+                'data' => [
+                    'type' => 'pro-accordion',
+                    'values' => [
+                        'heading' => 'Accordion Block',
+                        'subheading' => 'Expandable content sections - perfect for FAQs and documentation',
+                        'items' => [
+                            ['title' => 'What is TallCMS?', 'content' => 'TallCMS is a modern content management system built on the TALL stack (Tailwind, Alpine.js, Laravel, Livewire) with Filament 4 as the admin panel.'],
+                            ['title' => 'Is it really free?', 'content' => 'Yes! TallCMS Core is 100% free and open source under the MIT license. Use it for unlimited personal and commercial projects.'],
+                            ['title' => 'What\'s in Pro?', 'content' => 'Pro includes 8 additional blocks (like this one!), priority support, and access to Pro-exclusive updates.'],
+                        ],
+                        'allow_multiple' => false,
+                        'first_open' => true,
+                    ],
+                ],
+            ],
+            // Tabs Block (Pro)
+            [
+                'type' => 'customBlock',
+                'data' => [
+                    'type' => 'pro-tabs',
+                    'values' => [
+                        'heading' => 'Tabs Block',
+                        'subheading' => 'Organize content into tabbed sections',
+                        'tabs' => [
+                            ['title' => 'Features', 'content' => '<p>TallCMS comes packed with features: 24 content blocks, visual page builder, multi-theme system, and much more.</p>'],
+                            ['title' => 'Tech Stack', 'content' => '<p>Built on Laravel 12, Livewire 3, Alpine.js, Tailwind CSS 4, Filament 4, and DaisyUI 5.</p>'],
+                            ['title' => 'Getting Started', 'content' => '<p>Install via Composer, run the installer, and start building. It takes less than 5 minutes.</p>'],
+                        ],
+                        'style' => 'boxed',
+                    ],
+                ],
+            ],
+            // Video Block (Pro)
+            [
+                'type' => 'customBlock',
+                'data' => [
+                    'type' => 'pro-video',
+                    'values' => [
+                        'heading' => 'Video Block',
+                        'subheading' => 'Embed videos from YouTube, Vimeo, or self-hosted sources',
+                        'video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                        'aspect_ratio' => '16:9',
+                        'autoplay' => false,
+                    ],
+                ],
+            ],
+            // Code Snippet Block (Pro)
+            [
+                'type' => 'customBlock',
+                'data' => [
+                    'type' => 'pro-code-snippet',
+                    'values' => [
+                        'heading' => 'Code Snippet Block',
+                        'subheading' => 'Display code with syntax highlighting',
+                        'code' => "<?php\n\nuse Tallcms\\Cms\\Models\\Page;\n\n// Create a new page\n\$page = Page::create([\n    'title' => 'Hello World',\n    'slug' => 'hello-world',\n    'content' => 'Welcome to TallCMS!',\n]);",
+                        'language' => 'php',
+                        'show_line_numbers' => true,
+                        'filename' => 'CreatePage.php',
+                    ],
+                ],
+            ],
+            // Table Block (Pro)
+            [
+                'type' => 'customBlock',
+                'data' => [
+                    'type' => 'pro-table',
+                    'values' => [
+                        'heading' => 'Table Block',
+                        'subheading' => 'Display data in beautiful, responsive tables',
+                        'headers' => ['Feature', 'Core', 'Pro'],
+                        'rows' => [
+                            ['Content Blocks', '16', '24'],
+                            ['DaisyUI Themes', '30+', '30+'],
+                            ['Priority Support', 'No', 'Yes'],
+                            ['Pro Updates', 'No', 'Yes'],
+                        ],
+                        'striped' => true,
+                        'hoverable' => true,
+                    ],
+                ],
+            ],
+            // Before/After Block (Pro)
+            [
+                'type' => 'customBlock',
+                'data' => [
+                    'type' => 'pro-before-after',
+                    'values' => [
+                        'heading' => 'Before/After Block',
+                        'subheading' => 'Interactive comparison slider for images or text',
+                        'mode' => 'text',
+                        'before_text' => 'BEFORE',
+                        'after_text' => 'AFTER',
+                        'before_style' => 'bg-base-300 text-base-content',
+                        'after_style' => 'bg-primary text-primary-content',
+                        'text_size' => 'text-4xl lg:text-6xl',
+                        'rounded' => true,
+                    ],
+                ],
+            ],
+            // Comparison Block (Pro)
+            [
+                'type' => 'customBlock',
+                'data' => [
+                    'type' => 'pro-comparison',
+                    'values' => [
+                        'heading' => 'Comparison Block',
+                        'subheading' => 'Side-by-side feature comparison tables',
+                        'columns' => [
+                            ['title' => 'Core', 'highlighted' => false],
+                            ['title' => 'Pro', 'highlighted' => true],
+                        ],
+                        'features' => [
+                            ['name' => 'Content Blocks', 'values' => ['16 blocks', '24 blocks']],
+                            ['name' => 'Theme Support', 'values' => ['30+ themes', '30+ themes']],
+                            ['name' => 'Support', 'values' => ['Community', 'Priority Email']],
+                            ['name' => 'License', 'values' => ['MIT', 'Commercial']],
+                        ],
+                    ],
+                ],
+            ],
+            // Counter Block (Pro)
+            [
+                'type' => 'customBlock',
+                'data' => [
+                    'type' => 'pro-counter',
+                    'values' => [
+                        'heading' => 'Counter Block',
+                        'subheading' => 'Animated counting statistics',
+                        'counters' => [
+                            ['value' => 24, 'label' => 'Content Blocks', 'suffix' => ''],
+                            ['value' => 30, 'label' => 'DaisyUI Themes', 'suffix' => '+'],
+                            ['value' => 100, 'label' => 'Open Source', 'suffix' => '%'],
+                            ['value' => 5, 'label' => 'Minute Setup', 'suffix' => ' min'],
+                        ],
+                        'duration' => 2000,
+                        'columns' => 4,
+                    ],
+                ],
+            ],
+            // Map Block (Pro)
+            [
+                'type' => 'customBlock',
+                'data' => [
+                    'type' => 'pro-map',
+                    'values' => [
+                        'heading' => 'Map Block',
+                        'subheading' => 'Embed interactive maps for locations and directions',
+                        'address' => 'San Francisco, CA',
+                        'zoom' => 12,
+                        'height' => '400px',
+                    ],
+                ],
+            ],
+            // Final CTA
             [
                 'type' => 'customBlock',
                 'data' => [
                     'type' => 'call_to_action',
                     'values' => [
-                        'title' => 'Want to See Pro Blocks?',
-                        'description' => 'Upgrade to TallCMS Pro to unlock 8 additional blocks including Accordion, Tabs, Video, Code Snippets, and more.',
-                        'button_text' => 'Get TallCMS Pro',
+                        'title' => 'Ready to Unlock All Blocks?',
+                        'description' => 'Get TallCMS Pro and access all 24 blocks, priority support, and exclusive updates.',
+                        'button_text' => 'Get TallCMS Pro - $99/year',
                         'button_link_type' => 'custom',
                         'button_url' => '/pricing',
                         'button_variant' => 'btn-primary',
                         'button_size' => 'btn-lg',
                         'text_alignment' => 'text-center',
+                        'background' => 'bg-primary',
                     ],
                 ],
             ],
