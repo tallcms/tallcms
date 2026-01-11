@@ -11,7 +11,7 @@ TallCMS uses a **file-based theme system** where each theme is a self-contained 
 - **File-Based Themes**: Themes live in `themes/{slug}/` directories with Laravel-compliant structure
 - **Template Override Resolution**: Themes override templates by path priority (theme → app default)
 - **Asset Management**: Each theme has its own Vite build process with automatic asset compilation
-- **Configuration**: Themes use `theme.json` for metadata and Tailwind/Vite configs for build setup
+- **Configuration**: Themes use `theme.json` for metadata and daisyUI/Tailwind v4 CSS config in `resources/css/app.css`
 - **Zero Code Changes**: Existing blocks and templates work unchanged with theme overrides
 
 ### Directory Structure
@@ -21,7 +21,6 @@ themes/{slug}/                       # Theme root directory
 ├── theme.json                       # Theme metadata and configuration
 ├── package.json                     # NPM dependencies and build scripts  
 ├── vite.config.js                   # Vite build configuration
-├── tailwind.config.js               # Theme-specific Tailwind configuration
 ├── public/                          # Static assets (images, fonts, etc.)
 │   ├── css/
 │   ├── js/
@@ -35,8 +34,7 @@ themes/{slug}/                       # Theme root directory
     │   ├── cms/blocks/              # Block template overrides
     │   └── components/              # Component overrides
     ├── css/
-    │   ├── app.css                  # Main stylesheet
-    │   └── blocks.css               # Block-specific styles
+    │   └── app.css                  # Main stylesheet (Tailwind v4 + daisyUI)
     ├── js/
     │   └── app.js                   # JavaScript entry point
     └── img/                         # Source images
@@ -54,9 +52,8 @@ php artisan make:theme
 The interactive mode will guide you through creating a theme with prompts for:
 - Theme name and description
 - Author information
-- Color scheme selection (11 built-in palettes + custom hex)
-- Feature selection (dark mode, animations, custom fonts)
-- Supported blocks selection
+- daisyUI mode (single preset, all presets with theme-controller, or custom)
+- Optional dark mode preset (explicit opt-in)
 
 #### Non-Interactive Mode
 ```bash
@@ -74,10 +71,8 @@ php artisan make:theme my-theme --interactive
 This creates a complete theme structure with:
 - Complete Laravel-compliant directory layout
 - Properly populated theme metadata (`theme.json`)
-- Package configuration with proper Vite/Tailwind versions
-- Complete block styles copied from main application
-- Color palette based on your selection
-- Feature-based dependency management
+- Package configuration with Vite + Tailwind v4
+- daisyUI-ready CSS entry (`resources/css/app.css`)
 - Example templates and components
 - Proper build configuration
 
@@ -92,37 +87,14 @@ Edit `themes/my-awesome-theme/theme.json`:
     "version": "1.0.0",
     "description": "A modern, clean theme for business websites",
     "author": "Your Name",
-    "tailwind": {
-        "colors": {
-            "primary": {
-                "50": "#f0f9ff",
-                "100": "#e0f2fe", 
-                "200": "#bae6fd",
-                "300": "#7dd3fc",
-                "400": "#38bdf8",
-                "500": "#0ea5e9",
-                "600": "#0284c7",
-                "700": "#0369a1",
-                "800": "#075985",
-                "900": "#0c4a6e",
-                "950": "#082f49"
-            },
-            "secondary": {
-                "500": "#6b7280",
-                "600": "#4b5563"
-            }
-        }
+    "daisyui": {
+        "preset": "corporate",
+        "prefersDark": "business"
     },
     "supports": {
         "dark_mode": true,
         "responsive": true,
-        "blocks": [
-            "content",
-            "hero", 
-            "pricing",
-            "call-to-action",
-            "gallery"
-        ]
+        "theme_controller": false
     },
     "build": {
         "css": "resources/css/app.css",
@@ -132,49 +104,65 @@ Edit `themes/my-awesome-theme/theme.json`:
 }
 ```
 
-### 3. Customize Colors
+### 3. Customize daisyUI Theme Colors
 
-Update your theme's Tailwind configuration (`themes/my-awesome-theme/tailwind.config.js`):
+Use a custom daisyUI theme in `resources/css/app.css`. Custom themes must define all required variables (20 color variables + 8 design tokens).
 
-```javascript
-import { defineConfig } from 'vite'
-import laravel from 'laravel-vite-plugin'
-import tailwindcss from '@tailwindcss/vite'
+```css
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
-export default defineConfig({
-    content: [
-        './resources/**/*.blade.php',
-        './resources/**/*.js',
-        '../../resources/views/**/*.blade.php', // Include main app views
-    ],
-    theme: {
-        extend: {
-            colors: {
-                primary: {
-                    50: '#f0f9ff',
-                    500: '#0ea5e9',
-                    600: '#0284c7',
-                    700: '#0369a1',
-                    900: '#0c4a6e',
-                },
-                // Add more custom colors
-            },
-            fontFamily: {
-                sans: ['Inter', 'system-ui', 'sans-serif'],
-            },
-        },
-    },
-})
+@plugin "daisyui" {
+    themes: mybrand --default;
+}
+
+@plugin "daisyui/theme" {
+    name: "mybrand";
+    default: true;
+    color-scheme: light;
+
+    --color-base-100: oklch(98% 0.02 240);
+    --color-base-200: oklch(95% 0.03 240);
+    --color-base-300: oklch(92% 0.04 240);
+    --color-base-content: oklch(20% 0.05 240);
+    --color-primary: oklch(55% 0.3 240);
+    --color-primary-content: oklch(98% 0.01 240);
+    --color-secondary: oklch(70% 0.25 200);
+    --color-secondary-content: oklch(98% 0.01 200);
+    --color-accent: oklch(65% 0.25 160);
+    --color-accent-content: oklch(98% 0.01 160);
+    --color-neutral: oklch(50% 0.05 240);
+    --color-neutral-content: oklch(98% 0.01 240);
+    --color-info: oklch(70% 0.2 220);
+    --color-info-content: oklch(98% 0.01 220);
+    --color-success: oklch(65% 0.25 140);
+    --color-success-content: oklch(98% 0.01 140);
+    --color-warning: oklch(80% 0.25 80);
+    --color-warning-content: oklch(20% 0.05 80);
+    --color-error: oklch(65% 0.3 30);
+    --color-error-content: oklch(98% 0.01 30);
+
+    --radius-selector: 1rem;
+    --radius-field: 0.25rem;
+    --radius-box: 0.5rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 1px;
+    --depth: 1;
+    --noise: 0;
+}
 ```
+
+Tip: Use the daisyUI theme generator to produce the full variable set.
 
 ### 4. Build and Activate
 
 ```bash
+# Install dependencies once at the project root
+npm install
+
 # Navigate to theme directory
 cd themes/my-awesome-theme
-
-# Install dependencies
-npm install
 
 # Build assets
 npm run build
@@ -209,40 +197,21 @@ themes/my-theme/resources/views/components/hero-section.blade.php
 
 ### Block Styling
 
-Customize block appearance by editing `themes/my-theme/resources/css/blocks.css`:
+Blocks are daisyUI-first. Prefer component classes and semantic color utilities in Blade templates:
 
-```css
-/* Theme-specific block customizations */
-
-/* Content Block Styling */
-.content-block {
-    /* Your custom styles here */
-    @apply bg-white rounded-lg shadow-sm;
-}
-
-.content-block h2 {
-    /* Override heading styles */
-    @apply text-3xl font-bold text-primary-900 mb-6;
-}
-
-/* Hero Block Styling */
-.hero-block {
-    @apply bg-gradient-to-br from-primary-50 to-primary-100;
-}
-
-.hero-block .hero-heading {
-    @apply text-5xl font-extrabold text-primary-900;
-}
-
-/* Pricing Block Styling */
-.pricing-block .pricing-card {
-    @apply bg-white border border-primary-200 rounded-xl shadow-sm hover:shadow-md transition-shadow;
-}
-
-.pricing-block .pricing-card.featured {
-    @apply border-primary-500 shadow-lg scale-105;
-}
+```blade
+<div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+        <h2 class="card-title">Pricing</h2>
+        <p class="text-base-content">Simple, predictable pricing.</p>
+        <div class="card-actions">
+            <a href="#" class="btn btn-primary">Get started</a>
+        </div>
+    </div>
+</div>
 ```
+
+Use Tailwind utilities for layout and spacing. Avoid custom block CSS unless a layout cannot be achieved with daisyUI + utilities.
 
 ### Asset Management
 
@@ -259,27 +228,16 @@ Use theme-specific assets in templates:
 <img src="{{ theme_asset('images/hero-bg.jpg') }}" alt="Hero Background">
 ```
 
-### CSS Custom Properties Integration
+### Semantic Color Usage
 
-Themes automatically integrate with the CSS custom properties system:
+Use daisyUI semantic colors so themes adjust automatically:
 
 ```blade
-{{-- In block templates --}}
-@php
-    $textPreset = theme_text_presets()['primary'];
-    $customProperties = collect([
-        '--block-heading-color: ' . $textPreset['heading'],
-        '--block-text-color: ' . $textPreset['description'], 
-        '--block-link-color: ' . ($textPreset['link'] ?? '#2563eb'),
-        '--block-link-hover-color: ' . ($textPreset['link_hover'] ?? '#1d4ed8')
-    ])->join('; ') . ';';
-@endphp
-
-<article class="content-block" style="{{ $customProperties }}">
-    <h2 style="color: var(--block-heading-color);">{{ $heading }}</h2>
-    <p style="color: var(--block-text-color);">{{ $content }}</p>
-    <a href="#" style="color: var(--block-link-color);">Read more</a>
-</article>
+<section class="bg-base-200 text-base-content">
+    <h2 class="text-primary">Heading</h2>
+    <p class="text-base-content/80">Body text</p>
+    <a class="link link-accent">Learn more</a>
+</section>
 ```
 
 ## 🛠️ Development Workflow
@@ -294,6 +252,7 @@ npm run dev
 ```
 
 This starts Vite's development server with hot module replacement for rapid iteration.
+Make sure dependencies are installed at the project root (`npm install`).
 
 ### Production Build
 
@@ -305,6 +264,7 @@ npm run build
 ```
 
 This creates optimized, hashed assets in the `public/build/` directory.
+Make sure dependencies are installed at the project root (`npm install`).
 
 ### Theme Commands
 
@@ -325,7 +285,7 @@ php artisan theme:activate my-theme
 
 ### Design Guidelines
 
-1. **Tailwind-First Approach**: Use utility classes for rapid development and consistency
+1. **daisyUI-First Approach**: Use component classes; add Tailwind utilities only for layout and spacing
 2. **Semantic HTML Structure**: Follow proper heading hierarchy (H1 → H2 → H3 → H4)
 3. **Responsive Design**: Design mobile-first, enhance for larger screens
 4. **Accessibility**: Ensure proper contrast ratios and keyboard navigation
@@ -335,7 +295,7 @@ php artisan theme:activate my-theme
 
 1. **Follow Laravel Conventions**: Use standard directory structure and naming
 2. **Theme Inheritance**: Override only what needs to change, inherit the rest
-3. **CSS Custom Properties**: Use the theme system for colors and spacing
+3. **Semantic Colors**: Prefer `bg-base-*`, `text-base-content`, `btn-primary`, etc.
 4. **Asset Optimization**: Leverage Vite for efficient asset compilation
 5. **Testing**: Test theme in both admin preview and frontend display
 
@@ -346,8 +306,7 @@ php artisan theme:activate my-theme
 resources/
 ├── css/
 │   ├── app.css              # Main entry point
-│   ├── blocks.css           # Block-specific styles
-│   └── components/          # Component-specific styles
+│   └── components/          # Optional component-specific styles
 │       ├── hero.css
 │       └── navigation.css
 ├── js/
@@ -369,35 +328,21 @@ Extend the default Vite setup for advanced needs:
 // themes/my-theme/vite.config.js
 import { defineConfig } from 'vite'
 import laravel from 'laravel-vite-plugin'
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
     plugins: [
         laravel({
             input: [
-                'resources/css/app.css', 
-                'resources/css/blocks.css',
+                'resources/css/app.css',
                 'resources/js/app.js'
             ],
             publicDirectory: 'public',
         }),
+        tailwindcss(),
     ],
     build: {
         outDir: 'public/build',
-        manifest: true,
-        rollupOptions: {
-            output: {
-                manualChunks: {
-                    vendor: ['alpinejs'],
-                },
-            },
-        },
-    },
-    css: {
-        postcss: {
-            plugins: [
-                require('autoprefixer'),
-            ],
-        },
     },
 });
 ```
@@ -452,8 +397,8 @@ Alpine.start()
 
 **Asset compilation errors:**
 - Check Node.js version compatibility
-- Clear node_modules and reinstall: `rm -rf node_modules && npm install`
-- Verify Tailwind configuration is valid
+- Clear root node_modules and reinstall: `rm -rf node_modules && npm install`
+- Verify `resources/css/app.css` includes `@import "tailwindcss";` and `@plugin "daisyui"`
 
 ### Debug Commands
 
@@ -484,11 +429,10 @@ $themeManager = app('theme.manager');
 $activeTheme = active_theme();
 $themeAssetUrl = theme_asset('images/logo.png');
 
-// Theme Presets (automatically uses file-based theme)
-$textPresets = theme_text_presets();
-$buttonPresets = theme_button_presets(); 
-$colorPalette = theme_colors();
-$paddingPresets = theme_padding_presets();
+// daisyUI helpers
+$preset = daisyui_preset();
+$presets = daisyui_presets();
+$supportsController = supports_theme_controller();
 ```
 
 ### Blade Directives
@@ -511,7 +455,6 @@ themes/my-theme/
 ├── theme.json                       # Required: Theme metadata
 ├── package.json                     # Required: NPM configuration
 ├── vite.config.js                   # Required: Build configuration  
-├── tailwind.config.js               # Required: Tailwind configuration
 ├── .gitignore                       # Recommended: Git ignore rules
 ├── public/                          # Static assets
 │   ├── build/                       # Generated: Compiled assets
@@ -519,8 +462,7 @@ themes/my-theme/
 │   └── fonts/                       # Custom fonts
 └── resources/                       # Source files
     ├── css/
-    │   ├── app.css                  # Required: Main stylesheet
-    │   └── blocks.css               # Required: Block styles  
+    │   └── app.css                  # Required: Main stylesheet
     ├── js/
     │   └── app.js                   # Required: JavaScript entry
     └── views/                       # Optional: Template overrides
