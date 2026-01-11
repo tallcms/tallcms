@@ -1,5 +1,5 @@
 {{-- Vertical Menu Style (typically for sidebars) --}}
-<ul class="space-y-2 text-gray-700">
+<ul class="menu w-full">
     @foreach($items as $item)
         <x-menu-item :item="$item" :level="0" />
     @endforeach
