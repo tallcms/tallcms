@@ -7,6 +7,7 @@ use App\Models\CmsPage;
 use App\Services\BlockLinkResolver;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Slider;
@@ -71,13 +72,42 @@ class HeroBlock extends RichContentCustomBlock
                         Tab::make('Content')
                             ->icon('heroicon-m-document-text')
                             ->schema([
-                                TextInput::make('heading')
+                                RichEditor::make('heading')
                                     ->maxLength(255)
-                                    ->placeholder('Enter hero heading'),
-
-                                Textarea::make('subheading')
+                                    ->placeholder('Enter hero heading')
+                                    ->toolbarButtons([
+                                        'bold',
+                                        'italic',
+                                        'textColor',
+                                    ])
+                                    ->textColors([
+                                        'text-primary' => 'Primary',
+                                        'text-secondary' => 'Secondary',
+                                        'text-accent' => 'Accent',
+                                        'text-info' => 'Info',
+                                        'text-success' => 'Success',
+                                        'text-warning' => 'Warning',
+                                        'text-error' => 'Error',
+                                        'text-white' => 'White',
+                                    ]),
+                                RichEditor::make('subheading')
                                     ->maxLength(500)
-                                    ->placeholder('Enter hero subheading or description'),
+                                    ->placeholder('Enter hero subheading or description')
+                                    ->toolbarButtons([
+                                        'bold',
+                                        'italic',
+                                        'textColor',
+                                    ])
+                                    ->textColors([
+                                        'text-primary' => 'Primary',
+                                        'text-secondary' => 'Secondary',
+                                        'text-accent' => 'Accent',
+                                        'text-info' => 'Info',
+                                        'text-success' => 'Success',
+                                        'text-warning' => 'Warning',
+                                        'text-error' => 'Error',
+                                        'text-white' => 'White',
+                                    ]),
 
                                 Section::make('Primary Button')
                                     ->schema([

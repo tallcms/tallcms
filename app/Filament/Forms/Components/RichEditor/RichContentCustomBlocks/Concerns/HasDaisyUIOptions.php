@@ -108,6 +108,32 @@ trait HasDaisyUIOptions
     }
 
     /**
+     * Get text color options (semantic daisyUI colors)
+     */
+    protected static function getTextColorOptions(): array
+    {
+        return [
+            'text-base-content' => 'Base (Default)',
+            'text-primary' => 'Primary',
+            'text-secondary' => 'Secondary',
+            'text-accent' => 'Accent',
+            'text-neutral' => 'Neutral',
+            'text-info' => 'Info',
+            'text-success' => 'Success',
+            'text-warning' => 'Warning',
+            'text-error' => 'Error',
+            'text-white' => 'White',
+            'text-white/90' => 'White (90%)',
+            'text-white/80' => 'White (80%)',
+            'text-white/70' => 'White (70%)',
+            'text-primary-content' => 'Primary Content',
+            'text-secondary-content' => 'Secondary Content',
+            'text-accent-content' => 'Accent Content',
+            'text-neutral-content' => 'Neutral Content',
+        ];
+    }
+
+    /**
      * Get padding/spacing options
      */
     protected static function getPaddingOptions(): array

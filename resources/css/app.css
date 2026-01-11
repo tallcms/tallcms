@@ -1,15 +1,20 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 @plugin "@tailwindcss/typography";
-@plugin "daisyui" {
-  themes: light --default, dark --prefersdark;
-}
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+@source "../**/*.blade.php";
+@source "../**/*.js";
+@source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php";
+@source "../../storage/framework/views/*.php";
 /* Pro plugin - Tailwind v4 silently ignores missing paths */
-@source '../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php';
+@source "../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php";
+
+@plugin "daisyui" {
+  themes: light --default, dark --prefersdark, cupcake, bumblebee, emerald,
+          corporate, synthwave, retro, cyberpunk, valentine, halloween,
+          garden, forest, aqua, lofi, pastel, fantasy, wireframe, black,
+          luxury, dracula, cmyk, autumn, business, acid, lemonade, night,
+          coffee, winter, dim, nord, sunset, caramellatte, abyss, silk;
+}
 
 @theme {
     --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',

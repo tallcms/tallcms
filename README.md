@@ -1,6 +1,6 @@
 # TallCMS™
 
-A modern Content Management System built on the **TALL stack** (Tailwind CSS, Alpine.js, Laravel, Livewire) with Filament v4 admin panel.
+A modern Content Management System built on the **TALL stack** (Tailwind CSS, Alpine.js, Laravel, Livewire) with a Filament v4 admin panel and a daisyUI-powered block system.
 
 ---
 
@@ -15,12 +15,13 @@ This project demonstrates what's possible when human creativity meets AI capabil
 ## Features
 
 - **Web Installer** - WordPress-style setup wizard, no command line required
-- **Rich Content Editor** - Custom blocks with merge tags and device preview
+- **Rich Content Editor** - daisyUI-first blocks with merge tags and device preview
 - **Hierarchical Pages & Posts** - SEO optimization and revision history
 - **Drag & Drop Menu Builder** - Nested navigation with multiple locations
 - **Role-Based Permissions** - Super Admin, Administrator, Editor, Author
 - **Plugin System** - Extend functionality with installable plugins
-- **Theme System** - Multiple themes with template overrides
+- **Theme System** - daisyUI presets or custom themes with template overrides
+- **Theme Controller** - Optional runtime theme switching
 - **Cloud Storage** - S3-compatible storage (AWS, DigitalOcean, Cloudflare R2)
 - **Maintenance Mode** - Built-in site maintenance with custom messaging
 
@@ -116,15 +117,18 @@ See [Plugin Development Guide](docs/PLUGIN_DEVELOPMENT.md) for details.
 
 ## Theme Development
 
-Create custom themes with template overrides:
+Create custom themes with daisyUI and template overrides:
 
 ```
 themes/your-theme/
 ├── theme.json
+├── resources/css/app.css
 ├── resources/views/
 ├── public/
-└── tailwind.config.js
+└── vite.config.js
 ```
+
+See [Theme Development Guide](docs/THEME_DEVELOPMENT.md) for details.
 
 ## Troubleshooting
 
@@ -162,6 +166,7 @@ themes/your-theme/
 - [Filament v4](https://filamentphp.com/) - Admin panel framework
 - [Livewire](https://laravel-livewire.com/) - Dynamic frontend
 - [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS
+- [daisyUI](https://daisyui.com/) - Tailwind component classes and themes
 - [Alpine.js](https://alpinejs.dev/) - Lightweight JavaScript
 
 ## License

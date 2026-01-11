@@ -995,16 +995,42 @@ class PluginValidator
     }
 
     /**
+     * Known plugin directories that should NOT be stripped as wrapper directories
+     */
+    protected array $knownPluginDirectories = [
+        'src',
+        'database',
+        'routes',
+        'resources',
+        'config',
+        'public',
+        'tests',
+        'lang',
+    ];
+
+    /**
      * Normalize ZIP path (remove leading directory if nested)
+     *
+     * Only strips wrapper directories (like GitHub's repo-name-branch/ prefix),
+     * NOT legitimate plugin directories like src/, database/, routes/, etc.
      */
     protected function normalizeZipPath(string $path): string
     {
-        // If path starts with a single directory, remove it
+        // If path starts with a single directory, check if it's a wrapper
         if (preg_match('/^([^\/]+)\/(.+)$/', $path, $matches)) {
-            // Check if this looks like a wrapper directory
             $firstDir = $matches[1];
-            // Common patterns for wrapper directories
-            if (preg_match('/^[a-z0-9-]+(-[a-z0-9]+)*$/i', $firstDir)) {
+
+            // Don't strip known plugin directories - these are NOT wrappers
+            if (in_array(strtolower($firstDir), $this->knownPluginDirectories)) {
+                return $path;
+            }
+
+            // Also don't strip if first dir is a file (no remaining path after it)
+            // This handles root-level files like plugin.json, README.md, etc.
+
+            // Strip wrapper directories (like project-name-main/, vendor-plugin-v1.0.0/)
+            // These typically contain hyphens and look like repo/package names
+            if (preg_match('/^[a-z0-9]+-[a-z0-9-]+$/i', $firstDir)) {
                 return $matches[2];
             }
         }

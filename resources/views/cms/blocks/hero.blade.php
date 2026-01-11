@@ -9,6 +9,18 @@
         'text-right' => 'justify-end',
         default => 'justify-center',
     };
+
+    // Convert data-color attributes to class attributes for daisyUI text colors
+    $processedHeading = preg_replace(
+        '/data-color="([^"]+)"/',
+        'class="$1"',
+        $heading ?? ''
+    );
+    $processedSubheading = preg_replace(
+        '/data-color="([^"]+)"/',
+        'class="$1"',
+        $subheading ?? ''
+    );
 @endphp
 
 <section class="hero {{ $height ?? 'min-h-[70vh]' }} {{ $isPreview ? '' : '-mt-20' }} relative overflow-hidden">
@@ -31,15 +43,15 @@
             {{-- Main Heading --}}
             @if($heading ?? null)
                 <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-tight mb-6 drop-shadow-lg">
-                    {{ $heading }}
+                    {!! $processedHeading !!}
                 </h1>
             @endif
 
             {{-- Subheading --}}
             @if($subheading ?? null)
-                <p class="text-lg sm:text-xl lg:text-2xl text-white/85 leading-relaxed mb-10 {{ ($text_alignment ?? 'text-center') === 'text-center' ? 'max-w-3xl mx-auto' : 'max-w-3xl' }}">
-                    {{ $subheading }}
-                </p>
+                <div class="text-lg sm:text-xl lg:text-2xl text-white/85 leading-relaxed mb-10 {{ ($text_alignment ?? 'text-center') === 'text-center' ? 'max-w-3xl mx-auto' : 'max-w-3xl' }}">
+                    {!! $processedSubheading !!}
+                </div>
             @endif
 
             {{-- Call to Action Buttons --}}
