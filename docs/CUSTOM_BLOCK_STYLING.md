@@ -1,82 +1,60 @@
-# Custom Block Styling Approach
+# Custom Block Styling (daisyUI)
 
 ## Overview
 
-Our CMS uses a **hybrid styling approach** for custom blocks that ensures consistent rendering across both admin preview and frontend contexts while maintaining the flexibility for future theming systems.
+TallCMS blocks now use **daisyUI component classes** plus Tailwind utilities. This keeps block templates small, semantic, and theme-aware without inline style fallbacks.
 
 ## Architecture Principles
 
 ### 1. Single Template Philosophy
-- **One template per block**: Both `toPreviewHtml()` and `toHtml()` methods use the same Blade template
-- **No duplication**: Eliminates the need to maintain separate preview and frontend templates
-- **Perfect accuracy**: Admin previews show exactly what the frontend will render
+- **One template per block**: Both `toPreviewHtml()` and `toHtml()` render the same Blade file
+- **No duplication**: Avoids preview/frontend template drift
+- **Semantic parity**: Admin preview and frontend use identical markup
 
-### 2. Hybrid Styling Strategy
-Each element uses both Tailwind CSS classes and inline styles:
+### 2. daisyUI-First Styling
+- **Component classes**: Use `btn`, `card`, `hero`, `collapse`, etc.
+- **Semantic colors**: Prefer `bg-base-*`, `text-base-content`, `btn-primary` over hard-coded colors
+- **Tailwind utilities**: Use utilities for layout, spacing, and responsiveness
+- **Avoid inline styles**: Only use inline styles when a value is truly dynamic (e.g., user-defined image URL)
 
+### 3. Predictable Class Scanning
+Tailwind v4 scans templates to discover classes. Avoid dynamic class interpolation.
+
+**Bad (not scanned):**
 ```blade
-<div class="bg-gray-50 py-16 px-6" 
-     style="background-color: #f9fafb; padding: 4rem 1.5rem;">
+<a class="btn btn-{{ $style }}">
 ```
 
-**Why both?**
-- **Tailwind classes**: Primary styling for environments with full Tailwind CSS support
-- **Inline styles**: Fallback styling ensuring consistent rendering in any context
-- **Future-proof**: Theming systems can override either approach
-
-### 3. TALL Stack Native
-- **Tailwind CSS**: All styling uses native Tailwind utility classes
-- **Alpine.js**: Interactive components use Alpine.js directives when needed
-- **Vanilla JavaScript**: Complex interactions (like lightboxes) use clean vanilla JS
-- **Laravel Blade**: Template logic handled through Blade directives
-
-## Implementation Pattern
-
-### Basic Structure
+**Good (explicit mapping):**
 ```blade
-<div class="tailwind-classes" style="fallback-css-properties;">
-    @if($variable)
-        <h2 class="text-classes" style="fallback-typography;">
-            {{ $variable }}
-        </h2>
-    @endif
-</div>
+<a @class([
+    'btn',
+    'btn-primary' => ($style ?? 'primary') === 'primary',
+    'btn-secondary' => $style === 'secondary',
+    'btn-accent' => $style === 'accent',
+    'btn-neutral' => $style === 'neutral',
+    'btn-ghost' => $style === 'ghost',
+])>
 ```
 
-### Color Variations
-For components with multiple styles (like buttons):
+## Admin Preview Behavior
 
-```php
-@php
-    $styleClasses = [
-        'primary' => 'bg-blue-600 hover:bg-blue-700 text-white',
-        'secondary' => 'bg-gray-600 hover:bg-gray-700 text-white',
-        // ...
-    ];
-    
-    $styleInlines = [
-        'primary' => 'background-color: #2563eb; color: white;',
-        'secondary' => 'background-color: #4b5563; color: white;',
-        // ...
-    ];
-    
-    $buttonClass = $styleClasses[$style] ?? $styleClasses['primary'];
-    $buttonStyle = $styleInlines[$style] ?? $styleInlines['primary'];
-@endphp
-```
+- Admin preview loads daisyUI styles for blocks only
+- Preview focuses on **semantic consistency** (structure/layout) rather than pixel-perfect theme matching
+- Colors may differ from the active frontend theme depending on preview configuration
 
 ## File Structure
 
 ```
 resources/views/cms/blocks/
-├── hero.blade.php              # Hero section with background images
-├── call-to-action.blade.php    # CTA with multiple button styles
-└── image-gallery.blade.php     # Gallery with layouts & lightbox
+├── hero.blade.php
+├── call-to-action.blade.php
+└── image-gallery.blade.php
 ```
 
 ## Block Class Pattern
 
-Each custom block follows this structure:
+Each custom block uses the same template for preview and frontend:
 
 ```php
 class CustomBlock extends RichContentCustomBlock
@@ -85,7 +63,6 @@ class CustomBlock extends RichContentCustomBlock
     {
         return view('cms.blocks.block-name', [
             'variable' => $config['variable'] ?? 'default',
-            // ... all variables
         ])->render();
     }
 
@@ -93,7 +70,6 @@ class CustomBlock extends RichContentCustomBlock
     {
         return view('cms.blocks.block-name', [
             'variable' => $config['variable'] ?? '',
-            // ... same template, different defaults
         ])->render();
     }
 }
@@ -102,96 +78,63 @@ class CustomBlock extends RichContentCustomBlock
 ## Benefits
 
 ### For Developers
-1. **Single source of truth**: One template to maintain per block
-2. **Predictable styling**: Inline styles ensure consistent rendering
-3. **Responsive design**: Tailwind classes handle breakpoints
-4. **Clean codebase**: No duplicate template logic
+1. **Single source of truth**: One template per block
+2. **Theme-friendly**: Semantic classes adapt to any daisyUI theme
+3. **Predictable builds**: Explicit class maps keep Tailwind scanning reliable
+4. **Clean templates**: Minimal inline styles and custom CSS
 
 ### For Content Creators
-1. **Accurate previews**: Admin interface shows exact frontend appearance
-2. **Immediate feedback**: Changes are visible instantly in preview
-3. **Professional output**: Consistent styling across all contexts
+1. **Consistent previews**: Admin preview matches frontend structure
+2. **Immediate feedback**: Changes appear instantly in preview
+3. **Stable design system**: Blocks look consistent across pages
 
-### For Future Theming
-1. **Override flexibility**: Themes can target classes or inline styles
-2. **Clean foundation**: Pure Tailwind makes customization straightforward
-3. **Backward compatibility**: Inline styles provide safe fallbacks
-4. **Template replacement**: Complete template override possible
+### For Theming
+1. **Preset or custom**: Works with built-in daisyUI themes or custom themes
+2. **Semantic color tokens**: One template adapts to multiple palettes
+3. **No inline overrides**: Themes remain in control
 
 ## Adding New Blocks
 
 ### Using the TallCMS Command (Recommended)
 
-Use our custom Artisan command to generate blocks following the TallCMS pattern:
-
 ```bash
 php artisan make:tallcms-block MyCustomBlock
 ```
 
-This will create:
-- `app/Filament/Forms/Components/RichEditor/RichContentCustomBlocks/MyCustomBlockBlock.php`
-- `resources/views/cms/blocks/my-custom-block.blade.php`
+Generated files include:
+- Block class in `app/Filament/Forms/Components/RichEditor/RichContentCustomBlocks/`
+- Template in `resources/views/cms/blocks/`
 
-The generated files include:
-- ✅ Hybrid styling approach already implemented
-- ✅ Proper class structure with slideOver modal
-- ✅ Both `toPreviewHtml()` and `toHtml()` using same template
-- ✅ Inline documentation and customization guide
+### Manual Creation Guidelines
 
-### Manual Creation
-
-When creating new custom blocks manually:
-
-1. **Create single template** in `resources/views/cms/blocks/`
-2. **Use hybrid styling** with both classes and inline styles
-3. **Follow TALL stack** principles for interactivity
-4. **Maintain consistency** with existing block patterns
-5. **Test both contexts** - admin preview and frontend rendering
-
-### Auto-Discovery (No Registration Required!)
-
-TallCMS automatically discovers and registers all custom blocks! Simply create your block using the command above, and it will be immediately available in the rich editor.
-
-**How it works:**
-- `CustomBlockDiscoveryService` scans the custom blocks directory
-- Automatically finds all classes extending `RichContentCustomBlock`
-- Registers them in all RichEditor instances
-- Caches results for performance
-
-**No manual registration needed!** ✨
+1. **Use a single template** for preview + frontend
+2. **Use daisyUI component classes** for UI elements
+3. **Map dynamic variants** with `@class([...])`
+4. **Use Tailwind utilities** for layout and spacing
+5. **Avoid inline styles** unless the value is truly dynamic
 
 ## Example: Simple Text Block
 
 ```blade
 {{-- resources/views/cms/blocks/text-block.blade.php --}}
-<div class="py-8 px-4 max-w-4xl mx-auto" 
-     style="padding: 2rem 1rem; max-width: 56rem; margin: 0 auto;">
-    @if($title)
-        <h2 class="text-2xl font-bold text-gray-900 mb-4" 
-            style="font-size: 1.5rem; font-weight: bold; color: #111827; margin-bottom: 1rem;">
-            {{ $title }}
-        </h2>
-    @endif
-    
-    @if($content)
-        <div class="prose prose-lg text-gray-700" 
-             style="line-height: 1.75; color: #374151;">
-            {!! $content !!}
+<section class="py-10">
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            @if($title)
+                <h2 class="card-title text-base-content">
+                    {{ $title }}
+                </h2>
+            @endif
+
+            @if($content)
+                <div class="prose max-w-none text-base-content/90">
+                    {!! $content !!}
+                </div>
+            @endif
         </div>
-    @endif
-</div>
+    </div>
+</section>
 ```
-
-## Color Reference
-
-Common colors used in inline styles:
-- **Gray-50**: `#f9fafb` (backgrounds)
-- **Gray-600**: `#4b5563` (secondary text)
-- **Gray-900**: `#111827` (primary text)
-- **Blue-600**: `#2563eb` (primary buttons)
-- **White**: `#ffffff` (button text, overlays)
-
-This approach ensures consistent, beautiful rendering across all contexts while maintaining the flexibility needed for future enhancements.
 
 ## Quick Reference
 
@@ -199,9 +142,6 @@ This approach ensures consistent, beautiful rendering across all contexts while 
 ```bash
 # Create a new TallCMS block
 php artisan make:tallcms-block BlockName
-
-# Old Filament command (creates unused files)
-php artisan make:filament-rich-content-custom-block BlockName
 ```
 
 ### File Locations
@@ -211,13 +151,9 @@ resources/views/cms/blocks/                                        # Block templ
 ```
 
 ### Key Differences from Standard Filament Blocks
-- ❌ **No separate preview templates** - Uses single template for both contexts
-- ✅ **Hybrid styling** - Tailwind classes + inline styles for compatibility
-- ✅ **slideOver modals** - Better UX for block configuration
-- ✅ **Consistent patterns** - All blocks follow same structure
+- ✅ Single template for preview + frontend
+- ✅ daisyUI component classes
+- ✅ Explicit `@class` mappings for dynamic variants
+- ✅ No inline styling fallbacks
 
-### Benefits Over Default Filament Approach
-1. **No file duplication** - Single template maintained
-2. **Perfect previews** - Inline styles ensure admin previews always render correctly
-3. **Future-ready** - Easy to extend with theming systems
-4. **Developer-friendly** - Clear patterns and automated generation
+If you need a custom component style that daisyUI does not provide, use Tailwind utilities directly.
