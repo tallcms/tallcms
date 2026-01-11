@@ -1,10 +1,4 @@
 @php
-    $textAlignClass = match($text_alignment ?? 'center') {
-        'left' => 'text-left',
-        'center' => 'text-center',
-        default => 'text-center',
-    };
-
     $columnsClass = match($columns ?? '3') {
         '1' => 'max-w-2xl mx-auto',
         '2' => 'sm:grid-cols-2 max-w-4xl mx-auto',
@@ -12,31 +6,25 @@
         default => 'sm:grid-cols-2 lg:grid-cols-3',
     };
 
-    $styleClasses = match($style ?? 'cards') {
-        'cards' => 'card bg-base-200 shadow-lg',
-        'bordered' => 'card bg-base-100 border border-base-300',
-        'minimal' => 'card bg-base-100/50',
-        'quote-marks' => 'card bg-base-200 shadow-lg relative',
-        default => 'card bg-base-200 shadow-lg',
-    };
-
-    $isQuoteMarks = ($style ?? 'cards') === 'quote-marks';
+    $styleClasses = $card_style ?? 'card bg-base-200 shadow-lg';
+    $isQuoteMarks = str_contains($styleClasses, 'quote-marks');
+    $styleClasses = str_replace('quote-marks', 'relative', $styleClasses);
     $isSingleLayout = ($layout ?? 'grid') === 'single';
-    $sectionSpacing = ($first_section ?? false) ? 'pt-0' : 'pt-16 sm:pt-24';
+    $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
 @endphp
 
-<section class="testimonials-block {{ $sectionSpacing }} pb-16 sm:pb-24 bg-base-100">
+<section class="testimonials-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }}">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {{-- Section Header --}}
         @if(!empty($heading) || !empty($subheading))
-            <div class="{{ $textAlignClass }} mb-12 sm:mb-16">
+            <div class="{{ $text_alignment ?? 'text-center' }} mb-12 sm:mb-16">
                 @if(!empty($heading))
                     <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-base-content">
                         {{ $heading }}
                     </h2>
                 @endif
                 @if(!empty($subheading))
-                    <p class="mt-4 text-lg sm:text-xl text-base-content/70 max-w-3xl {{ $textAlignClass === 'text-center' ? 'mx-auto' : '' }}">
+                    <p class="mt-4 text-lg sm:text-xl text-base-content/70 max-w-3xl {{ ($text_alignment ?? 'text-center') === 'text-center' ? 'mx-auto' : '' }}">
                         {{ $subheading }}
                     </p>
                 @endif

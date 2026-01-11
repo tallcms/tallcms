@@ -2,6 +2,7 @@
 
 namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
+use App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
@@ -15,6 +16,8 @@ use Filament\Schemas\Components\Tabs\Tab;
 
 class ParallaxBlock extends RichContentCustomBlock
 {
+    use HasDaisyUIOptions;
+
     public static function getId(): string
     {
         return 'parallax';
@@ -87,12 +90,8 @@ class ParallaxBlock extends RichContentCustomBlock
 
                                         Select::make('text_alignment')
                                             ->label('Text Alignment')
-                                            ->options([
-                                                'left' => 'Left',
-                                                'center' => 'Center',
-                                                'right' => 'Right',
-                                            ])
-                                            ->default('center'),
+                                            ->options(static::getTextAlignmentOptions())
+                                            ->default('text-center'),
                                     ])
                                     ->columns(2),
 
@@ -125,18 +124,10 @@ class ParallaxBlock extends RichContentCustomBlock
 
     public static function toPreviewHtml(array $config): string
     {
-        return view('cms.blocks.parallax', [
-            'id' => static::getId(),
-            'image' => $config['image'] ?? null,
+        return static::renderBlock(array_merge($config, [
             'heading' => $config['heading'] ?? 'Inspiring Parallax Section',
             'subheading' => $config['subheading'] ?? 'Create beautiful, immersive experiences with parallax scrolling',
-            'cta_text' => $config['cta_text'] ?? '',
-            'cta_url' => $config['cta_url'] ?? '',
-            'height' => $config['height'] ?? 'medium',
-            'text_alignment' => $config['text_alignment'] ?? 'center',
-            'overlay_color' => $config['overlay_color'] ?? '#000000',
-            'overlay_opacity' => $config['overlay_opacity'] ?? '50',
-        ])->render();
+        ]));
     }
 
     public static function toHtml(array $config, array $data): string
@@ -146,15 +137,20 @@ class ParallaxBlock extends RichContentCustomBlock
             return '';
         }
 
+        return static::renderBlock($config);
+    }
+
+    protected static function renderBlock(array $config): string
+    {
         return view('cms.blocks.parallax', [
             'id' => static::getId(),
-            'image' => $config['image'],
+            'image' => $config['image'] ?? null,
             'heading' => $config['heading'] ?? '',
             'subheading' => $config['subheading'] ?? '',
             'cta_text' => $config['cta_text'] ?? '',
             'cta_url' => $config['cta_url'] ?? '',
             'height' => $config['height'] ?? 'medium',
-            'text_alignment' => $config['text_alignment'] ?? 'center',
+            'text_alignment' => $config['text_alignment'] ?? 'text-center',
             'overlay_color' => $config['overlay_color'] ?? '#000000',
             'overlay_opacity' => $config['overlay_opacity'] ?? '50',
         ])->render();

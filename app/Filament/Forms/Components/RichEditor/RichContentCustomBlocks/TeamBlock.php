@@ -2,6 +2,7 @@
 
 namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
+use App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
@@ -16,6 +17,17 @@ use Filament\Schemas\Components\Tabs\Tab;
 
 class TeamBlock extends RichContentCustomBlock
 {
+    use HasDaisyUIOptions;
+
+    protected static function getTeamCardStyleOptions(): array
+    {
+        return [
+            'card bg-base-200 shadow-lg' => 'Cards with Shadow',
+            'card bg-base-100 border border-base-300' => 'Bordered',
+            'p-4' => 'Minimal',
+        ];
+    }
+
     public static function getId(): string
     {
         return 'team';
@@ -130,7 +142,7 @@ class TeamBlock extends RichContentCustomBlock
                         Tab::make('Layout')
                             ->icon('heroicon-m-squares-2x2')
                             ->schema([
-                                Section::make('Display Options')
+                                Section::make('Grid Layout')
                                     ->schema([
                                         Select::make('columns')
                                             ->label('Columns')
@@ -141,31 +153,38 @@ class TeamBlock extends RichContentCustomBlock
                                             ])
                                             ->default('3'),
 
-                                        Select::make('style')
+                                        Select::make('card_style')
                                             ->label('Card Style')
-                                            ->options([
-                                                'cards' => 'Cards with Shadow',
-                                                'minimal' => 'Minimal',
-                                                'bordered' => 'Bordered',
-                                            ])
-                                            ->default('cards'),
+                                            ->options(static::getTeamCardStyleOptions())
+                                            ->default('card bg-base-200 shadow-lg'),
 
                                         Select::make('image_style')
                                             ->label('Photo Style')
                                             ->options([
-                                                'circle' => 'Circle',
-                                                'rounded' => 'Rounded Square',
-                                                'square' => 'Square',
+                                                'rounded-full' => 'Circle',
+                                                'rounded-xl' => 'Rounded Square',
+                                                'rounded-none' => 'Square',
                                             ])
-                                            ->default('circle'),
+                                            ->default('rounded-full'),
 
                                         Select::make('text_alignment')
                                             ->label('Text Alignment')
-                                            ->options([
-                                                'left' => 'Left',
-                                                'center' => 'Center',
-                                            ])
-                                            ->default('center'),
+                                            ->options(static::getTextAlignmentOptions())
+                                            ->default('text-center'),
+                                    ])
+                                    ->columns(2),
+
+                                Section::make('Appearance')
+                                    ->schema([
+                                        Select::make('background')
+                                            ->label('Background')
+                                            ->options(static::getBackgroundOptions())
+                                            ->default('bg-base-100'),
+
+                                        Select::make('padding')
+                                            ->label('Section Padding')
+                                            ->options(static::getPaddingOptions())
+                                            ->default('py-16'),
                                     ])
                                     ->columns(2),
 
@@ -181,7 +200,8 @@ class TeamBlock extends RichContentCustomBlock
                                             ->default(true),
 
                                         Toggle::make('first_section')
-                                            ->label('First Section (Remove Top Spacing)')
+                                            ->label('First Section (Remove Top Padding)')
+                                            ->helperText('Overrides padding setting above')
                                             ->default(false),
                                     ])
                                     ->columns(3),
@@ -194,22 +214,19 @@ class TeamBlock extends RichContentCustomBlock
     {
         $members = $config['members'] ?? self::getSampleMembers();
 
-        return view('cms.blocks.team', [
-            'id' => static::getId(),
+        return static::renderBlock(array_merge($config, [
+            'members' => $members,
             'heading' => $config['heading'] ?? 'Meet Our Team',
             'subheading' => $config['subheading'] ?? 'The talented people behind our success',
-            'members' => $members,
-            'columns' => $config['columns'] ?? '3',
-            'style' => $config['style'] ?? 'cards',
-            'image_style' => $config['image_style'] ?? 'circle',
-            'text_alignment' => $config['text_alignment'] ?? 'center',
-            'show_bio' => $config['show_bio'] ?? true,
-            'show_social' => $config['show_social'] ?? true,
-            'first_section' => $config['first_section'] ?? false,
-        ])->render();
+        ]));
     }
 
     public static function toHtml(array $config, array $data): string
+    {
+        return static::renderBlock($config);
+    }
+
+    protected static function renderBlock(array $config): string
     {
         return view('cms.blocks.team', [
             'id' => static::getId(),
@@ -217,9 +234,11 @@ class TeamBlock extends RichContentCustomBlock
             'subheading' => $config['subheading'] ?? '',
             'members' => $config['members'] ?? [],
             'columns' => $config['columns'] ?? '3',
-            'style' => $config['style'] ?? 'cards',
-            'image_style' => $config['image_style'] ?? 'circle',
-            'text_alignment' => $config['text_alignment'] ?? 'center',
+            'card_style' => $config['card_style'] ?? 'card bg-base-200 shadow-lg',
+            'image_style' => $config['image_style'] ?? 'rounded-full',
+            'text_alignment' => $config['text_alignment'] ?? 'text-center',
+            'background' => $config['background'] ?? 'bg-base-100',
+            'padding' => $config['padding'] ?? 'py-16',
             'show_bio' => $config['show_bio'] ?? true,
             'show_social' => $config['show_social'] ?? true,
             'first_section' => $config['first_section'] ?? false,

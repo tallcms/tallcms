@@ -9,15 +9,10 @@
         default => 'max-w-4xl mx-auto'
     };
 
-    // Section spacing
-    $sectionClasses = collect([
-        'w-full',
-        'px-4 sm:px-6 lg:px-8',
-        ($first_section ?? false) ? 'pt-12 sm:pt-16 pb-12 sm:pb-16' : 'py-12 sm:py-16'
-    ])->filter()->join(' ');
+    $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
 @endphp
 
-<article class="{{ $sectionClasses }} bg-base-100">
+<article class="w-full px-4 sm:px-6 lg:px-8 {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }}">
     <div class="{{ $contentWidthClasses }}">
 
         @if(($title ?? null) || ($subtitle ?? null))

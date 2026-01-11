@@ -2,6 +2,7 @@
 
 namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
+use App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
@@ -15,6 +16,7 @@ use Filament\Schemas\Components\Tabs\Tab;
 
 class FaqBlock extends RichContentCustomBlock
 {
+    use HasDaisyUIOptions;
     public static function getId(): string
     {
         return 'faq';
@@ -96,11 +98,22 @@ class FaqBlock extends RichContentCustomBlock
 
                                         Select::make('text_alignment')
                                             ->label('Header Alignment')
-                                            ->options([
-                                                'left' => 'Left',
-                                                'center' => 'Center',
-                                            ])
-                                            ->default('center'),
+                                            ->options(static::getTextAlignmentOptions())
+                                            ->default('text-center'),
+                                    ])
+                                    ->columns(2),
+
+                                Section::make('Appearance')
+                                    ->schema([
+                                        Select::make('background')
+                                            ->label('Background')
+                                            ->options(static::getBackgroundOptions())
+                                            ->default('bg-base-100'),
+
+                                        Select::make('padding')
+                                            ->label('Section Padding')
+                                            ->options(static::getPaddingOptions())
+                                            ->default('py-16'),
                                     ])
                                     ->columns(2),
 
@@ -115,7 +128,8 @@ class FaqBlock extends RichContentCustomBlock
                                 Section::make('Spacing')
                                     ->schema([
                                         Toggle::make('first_section')
-                                            ->label('First Section (Remove Top Spacing)')
+                                            ->label('First Section (Remove Top Padding)')
+                                            ->helperText('Overrides padding setting above')
                                             ->default(false),
                                     ]),
                             ]),
@@ -127,21 +141,19 @@ class FaqBlock extends RichContentCustomBlock
     {
         $items = $config['items'] ?? self::getSampleItems();
 
-        return view('cms.blocks.faq', [
-            'id' => static::getId(),
+        return static::renderBlock(array_merge($config, [
+            'items' => $items,
             'heading' => $config['heading'] ?? 'Frequently Asked Questions',
             'subheading' => $config['subheading'] ?? 'Find answers to common questions about our products and services',
-            'items' => $items,
-            'style' => $config['style'] ?? 'accordion',
-            'first_open' => $config['first_open'] ?? false,
-            'allow_multiple' => $config['allow_multiple'] ?? false,
-            'text_alignment' => $config['text_alignment'] ?? 'center',
-            'show_schema' => $config['show_schema'] ?? true,
-            'first_section' => $config['first_section'] ?? false,
-        ])->render();
+        ]));
     }
 
     public static function toHtml(array $config, array $data): string
+    {
+        return static::renderBlock($config);
+    }
+
+    protected static function renderBlock(array $config): string
     {
         return view('cms.blocks.faq', [
             'id' => static::getId(),
@@ -151,7 +163,9 @@ class FaqBlock extends RichContentCustomBlock
             'style' => $config['style'] ?? 'accordion',
             'first_open' => $config['first_open'] ?? false,
             'allow_multiple' => $config['allow_multiple'] ?? false,
-            'text_alignment' => $config['text_alignment'] ?? 'center',
+            'text_alignment' => $config['text_alignment'] ?? 'text-center',
+            'background' => $config['background'] ?? 'bg-base-100',
+            'padding' => $config['padding'] ?? 'py-16',
             'show_schema' => $config['show_schema'] ?? true,
             'first_section' => $config['first_section'] ?? false,
         ])->render();

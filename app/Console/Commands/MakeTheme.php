@@ -342,9 +342,6 @@ JS;
   {$themesDirective}
 }
 
-/* Import blocks CSS for consistent block styling */
-@import '../../../../resources/css/blocks.css';
-
 /* Scan paths for class discovery */
 @source '../views/**/*.blade.php';
 @source '../../../../resources/views/**/*.blade.php';

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
+use App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\Concerns\HasDaisyUIOptions;
 use App\Models\CmsCategory;
 use App\Models\CmsPost;
 use Filament\Actions\Action;
@@ -9,10 +10,12 @@ use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 
 class PostsBlock extends RichContentCustomBlock
 {
+    use HasDaisyUIOptions;
     public static function getId(): string
     {
         return 'posts';
@@ -131,30 +134,53 @@ class PostsBlock extends RichContentCustomBlock
                     ->placeholder('No posts found.')
                     ->helperText('Message shown when no posts match the filters'),
 
-                // Spacing
-                Toggle::make('first_section')
-                    ->label('First Section')
-                    ->helperText('Add top spacing if this is the first content after navigation')
-                    ->default(false),
+                Section::make('Appearance')
+                    ->schema([
+                        Select::make('background')
+                            ->label('Background')
+                            ->options(static::getBackgroundOptions())
+                            ->default('bg-base-100'),
+
+                        Select::make('padding')
+                            ->label('Section Padding')
+                            ->options(static::getPaddingOptions())
+                            ->default('py-16'),
+
+                        Toggle::make('first_section')
+                            ->label('First Section (Remove Top Padding)')
+                            ->helperText('Overrides padding setting above')
+                            ->default(false),
+                    ])
+                    ->columns(3),
             ])->slideOver();
     }
 
     public static function toPreviewHtml(array $config): string
     {
-        return view('cms.blocks.posts', [
-            ...$config,
-            'isPreview' => true,
-            'parentSlug' => 'preview',
-        ])->render();
+        return static::renderBlock($config, true, 'preview');
     }
 
     public static function toHtml(array $config, array $data): string
     {
         // Don't pass parentSlug - let the template resolve it from request()->route('slug')
         // This ensures correct URL generation when viewing the page
-        return view('cms.blocks.posts', [
+        return static::renderBlock($config, false);
+    }
+
+    protected static function renderBlock(array $config, bool $isPreview, ?string $parentSlug = null): string
+    {
+        $params = [
             ...$config,
-            'isPreview' => false,
-        ])->render();
+            'isPreview' => $isPreview,
+            'background' => $config['background'] ?? 'bg-base-100',
+            'padding' => $config['padding'] ?? 'py-16',
+            'first_section' => $config['first_section'] ?? false,
+        ];
+
+        if ($parentSlug !== null) {
+            $params['parentSlug'] = $parentSlug;
+        }
+
+        return view('cms.blocks.posts', $params)->render();
     }
 }

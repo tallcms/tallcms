@@ -3,7 +3,6 @@
 @plugin "daisyui" {
   themes: light --default, dark --prefersdark;
 }
-@import './blocks.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';

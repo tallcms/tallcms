@@ -2,10 +2,10 @@
 
 namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
+use App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\Concerns\HasDaisyUIOptions;
 use App\Models\CmsPage;
 use App\Services\BlockLinkResolver;
 use Filament\Actions\Action;
-use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
 use Filament\Forms\Components\Select;
@@ -21,6 +21,8 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class HeroBlock extends RichContentCustomBlock
 {
+    use HasDaisyUIOptions;
+
     public static function getId(): string
     {
         return 'hero';
@@ -29,6 +31,34 @@ class HeroBlock extends RichContentCustomBlock
     public static function getLabel(): string
     {
         return 'Hero';
+    }
+
+    /**
+     * Get hero-specific button variants (designed for dark backgrounds)
+     */
+    protected static function getHeroButtonVariantOptions(): array
+    {
+        return [
+            'btn-primary' => 'Primary',
+            'btn-secondary' => 'Secondary',
+            'btn-accent' => 'Accent',
+            'btn-neutral' => 'Neutral',
+            'btn-ghost text-white hover:bg-white/20' => 'Ghost (Light)',
+            'btn-outline btn-primary' => 'Primary Outline',
+        ];
+    }
+
+    /**
+     * Get hero secondary button variants
+     */
+    protected static function getHeroSecondaryButtonVariantOptions(): array
+    {
+        return [
+            'btn-ghost text-white hover:bg-white/20' => 'Ghost (Light)',
+            'btn-outline border-white text-white hover:bg-white hover:text-base-content' => 'White Outline',
+            'btn-link text-white' => 'Link (Light)',
+            'btn-outline btn-primary' => 'Primary Outline',
+        ];
     }
 
     public static function configureEditorAction(Action $action): Action
@@ -49,171 +79,82 @@ class HeroBlock extends RichContentCustomBlock
                                     ->maxLength(500)
                                     ->placeholder('Enter hero subheading or description'),
 
-                                TextInput::make('button_text')
-                                    ->maxLength(100)
-                                    ->placeholder('Call to action button text')
-                                    ->live(),
+                                Section::make('Primary Button')
+                                    ->schema([
+                                        TextInput::make('button_text')
+                                            ->maxLength(100)
+                                            ->placeholder('Call to action button text')
+                                            ->live()
+                                            ->columnSpan(1),
 
-                                Select::make('button_link_type')
-                                    ->label('Button Link Type')
-                                    ->options([
-                                        'page' => 'Page',
-                                        'external' => 'External URL',
-                                        'custom' => 'Custom URL',
+                                        Select::make('button_link_type')
+                                            ->label('Link Type')
+                                            ->options([
+                                                'page' => 'Page',
+                                                'external' => 'External URL',
+                                                'custom' => 'Custom URL',
+                                            ])
+                                            ->default('page')
+                                            ->live()
+                                            ->columnSpan(1),
+
+                                        Select::make('button_page_id')
+                                            ->label('Select Page')
+                                            ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
+                                            ->searchable()
+                                            ->visible(fn (Get $get): bool => $get('button_link_type') === 'page')
+                                            ->columnSpanFull(),
+
+                                        TextInput::make('button_url')
+                                            ->label('URL')
+                                            ->placeholder('https://example.com or /contact')
+                                            ->visible(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom']))
+                                            ->columnSpanFull(),
                                     ])
-                                    ->default('page')
-                                    ->live()
-                                    ->visible(fn (Get $get): bool => filled($get('button_text')))
-                                    ->required(fn (Get $get): bool => filled($get('button_text')))
-                                    ->afterStateUpdated(fn (callable $set) => $set('button_page_id', null))
-                                    ->afterStateUpdated(fn (callable $set) => $set('button_url', null)),
+                                    ->columns(2)
+                                    ->compact(),
 
-                                Select::make('button_page_id')
-                                    ->label('Select Page')
-                                    ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
-                                    ->searchable()
-                                    ->visible(fn (Get $get): bool => $get('button_link_type') === 'page' && filled($get('button_text')))
-                                    ->required(fn (Get $get): bool => $get('button_link_type') === 'page' && filled($get('button_text'))),
+                                Section::make('Secondary Button (Optional)')
+                                    ->schema([
+                                        TextInput::make('secondary_button_text')
+                                            ->label('Button Text')
+                                            ->maxLength(100)
+                                            ->placeholder('Learn More')
+                                            ->live()
+                                            ->columnSpan(1),
 
-                                TextInput::make('button_url')
-                                    ->label('URL')
-                                    ->placeholder('https://example.com or /contact or #section')
-                                    ->visible(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom']) && filled($get('button_text')))
-                                    ->required(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom']) && filled($get('button_text'))),
+                                        Select::make('secondary_button_link_type')
+                                            ->label('Link Type')
+                                            ->options([
+                                                'page' => 'Page',
+                                                'external' => 'External URL',
+                                                'custom' => 'Custom URL',
+                                            ])
+                                            ->default('page')
+                                            ->visible(fn (Get $get): bool => filled($get('secondary_button_text')))
+                                            ->columnSpan(1),
 
-                                TextInput::make('secondary_button_text')
-                                    ->maxLength(100)
-                                    ->placeholder('Secondary button text (optional)')
-                                    ->live(),
+                                        Select::make('secondary_button_page_id')
+                                            ->label('Select Page')
+                                            ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
+                                            ->searchable()
+                                            ->visible(fn (Get $get): bool => $get('secondary_button_link_type') === 'page' && filled($get('secondary_button_text')))
+                                            ->columnSpanFull(),
 
-                                Select::make('secondary_button_link_type')
-                                    ->label('Secondary Button Link Type')
-                                    ->options([
-                                        'page' => 'Page',
-                                        'external' => 'External URL',
-                                        'custom' => 'Custom URL',
+                                        TextInput::make('secondary_button_url')
+                                            ->label('URL')
+                                            ->placeholder('https://example.com')
+                                            ->visible(fn (Get $get): bool => in_array($get('secondary_button_link_type'), ['external', 'custom']) && filled($get('secondary_button_text')))
+                                            ->columnSpanFull(),
                                     ])
-                                    ->default('page')
-                                    ->live()
-                                    ->visible(fn (Get $get): bool => filled($get('secondary_button_text')))
-                                    ->required(fn (Get $get): bool => filled($get('secondary_button_text')))
-                                    ->afterStateUpdated(fn (callable $set) => $set('secondary_button_page_id', null))
-                                    ->afterStateUpdated(fn (callable $set) => $set('secondary_button_url', null)),
-
-                                Select::make('secondary_button_page_id')
-                                    ->label('Select Page')
-                                    ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
-                                    ->searchable()
-                                    ->visible(fn (Get $get): bool => $get('secondary_button_link_type') === 'page' && filled($get('secondary_button_text')))
-                                    ->required(fn (Get $get): bool => $get('secondary_button_link_type') === 'page' && filled($get('secondary_button_text'))),
-
-                                TextInput::make('secondary_button_url')
-                                    ->label('Secondary URL')
-                                    ->placeholder('https://example.com or /contact or #section')
-                                    ->visible(fn (Get $get): bool => in_array($get('secondary_button_link_type'), ['external', 'custom']) && filled($get('secondary_button_text')))
-                                    ->required(fn (Get $get): bool => in_array($get('secondary_button_link_type'), ['external', 'custom']) && filled($get('secondary_button_text'))),
+                                    ->columns(2)
+                                    ->compact()
+                                    ->collapsible(),
                             ]),
 
-                        Tab::make('Button Styling')
-                            ->icon('heroicon-m-cursor-arrow-rays')
-                            ->schema([
-                                Section::make('Primary Button Styling')
-                                    ->description('Customize the primary button colors')
-                                    ->schema([
-                                        Select::make('primary_button_style')
-                                            ->label('Button Style')
-                                            ->options([
-                                                'preset' => 'Use Preset Colors',
-                                                'custom' => 'Custom Colors',
-                                            ])
-                                            ->default('preset')
-                                            ->live(),
-
-                                        Select::make('primary_button_preset')
-                                            ->label('Color Preset')
-                                            ->options([
-                                                'white' => 'White (Default)',
-                                                'primary' => 'Primary Blue',
-                                                'success' => 'Success Green',
-                                                'warning' => 'Warning Orange',
-                                                'danger' => 'Danger Red',
-                                                'dark' => 'Dark',
-                                            ])
-                                            ->default('white')
-                                            ->visible(fn (Get $get): bool => $get('primary_button_style') === 'preset'),
-
-                                        ColorPicker::make('primary_button_bg_color')
-                                            ->label('Background Color')
-                                            ->default('#ffffff')
-                                            ->visible(fn (Get $get): bool => $get('primary_button_style') === 'custom'),
-
-                                        ColorPicker::make('primary_button_text_color')
-                                            ->label('Text Color')
-                                            ->default('#111827')
-                                            ->visible(fn (Get $get): bool => $get('primary_button_style') === 'custom'),
-                                    ])
-                                    ->visible(fn (Get $get): bool => filled($get('button_text')))
-                                    ->columns(2),
-
-                                Section::make('Secondary Button Styling')
-                                    ->description('Customize the secondary button colors')
-                                    ->schema([
-                                        Select::make('secondary_button_style')
-                                            ->label('Button Style')
-                                            ->options([
-                                                'preset' => 'Use Preset Colors',
-                                                'custom' => 'Custom Colors',
-                                            ])
-                                            ->default('preset')
-                                            ->live(),
-
-                                        Select::make('secondary_button_preset')
-                                            ->label('Color Preset')
-                                            ->options([
-                                                'outline-white' => 'White Outline (Default)',
-                                                'outline-primary' => 'Primary Blue Outline',
-                                                'outline-success' => 'Success Green Outline',
-                                                'outline-warning' => 'Warning Orange Outline',
-                                                'outline-danger' => 'Danger Red Outline',
-                                                'filled-white' => 'Filled White',
-                                                'filled-primary' => 'Filled Primary Blue',
-                                            ])
-                                            ->default('outline-white')
-                                            ->visible(fn (Get $get): bool => $get('secondary_button_style') === 'preset'),
-
-                                        ColorPicker::make('secondary_button_bg_color')
-                                            ->label('Background Color')
-                                            ->default('#ffffff00') // Transparent
-                                            ->visible(fn (Get $get): bool => $get('secondary_button_style') === 'custom'),
-
-                                        ColorPicker::make('secondary_button_text_color')
-                                            ->label('Text Color')
-                                            ->default('#ffffff')
-                                            ->visible(fn (Get $get): bool => $get('secondary_button_style') === 'custom'),
-
-                                        ColorPicker::make('secondary_button_border_color')
-                                            ->label('Border Color')
-                                            ->default('#ffffff')
-                                            ->visible(fn (Get $get): bool => $get('secondary_button_style') === 'custom'),
-                                    ])
-                                    ->visible(fn (Get $get): bool => filled($get('secondary_button_text')))
-                                    ->columns(2),
-                            ]),
-
-                        Tab::make('Background & Layout')
+                        Tab::make('Background')
                             ->icon('heroicon-m-photo')
                             ->schema([
-                                Select::make('height')
-                                    ->label('Section Height')
-                                    ->options([
-                                        'small' => 'Small (50vh)',
-                                        'medium' => 'Medium (70vh)',
-                                        'large' => 'Large (90vh)',
-                                        'full' => 'Full screen (100vh)',
-                                    ])
-                                    ->default('medium')
-                                    ->live(),
-
                                 FileUpload::make('background_image')
                                     ->image()
                                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
@@ -222,80 +163,108 @@ class HeroBlock extends RichContentCustomBlock
                                     ->disk(cms_media_disk())
                                     ->visibility(cms_media_visibility())
                                     ->nullable()
-                                    ->helperText(fn (Get $get): string => match ($get('height')) {
-                                        'small' => 'Recommended: 2560×800px (21:9 panoramic). Keep focal point centered. Max 5MB.',
-                                        'medium' => 'Recommended: 2560×1100px (21:9). Keep focal point centered. Max 5MB.',
-                                        default => 'Recommended: 2560×1440px (16:9). Keep focal point centered. Max 5MB.',
-                                    }),
+                                    ->helperText('Recommended: 2560×1440px (16:9). Keep focal point centered. Max 5MB.'),
+
+                                Select::make('height')
+                                    ->label('Section Height')
+                                    ->options([
+                                        'min-h-[50vh]' => 'Small (50vh)',
+                                        'min-h-[70vh]' => 'Medium (70vh)',
+                                        'min-h-[90vh]' => 'Large (90vh)',
+                                        'min-h-screen' => 'Full screen',
+                                    ])
+                                    ->default('min-h-[70vh]'),
 
                                 Toggle::make('parallax_effect')
                                     ->label('Enable Parallax Effect')
                                     ->default(true)
-                                    ->helperText('Creates a scrolling effect where the background moves slower than content'),
+                                    ->helperText('Background moves slower than content when scrolling'),
 
                                 Slider::make('overlay_opacity')
-                                    ->label('Background Overlay Opacity')
+                                    ->label('Overlay Darkness')
                                     ->range(minValue: 0, maxValue: 100)
                                     ->step(5)
                                     ->tooltips(true)
                                     ->pips(PipsMode::Positions)
                                     ->pipsValues([0, 25, 50, 75, 100])
                                     ->fillTrack()
-                                    ->helperText('Controls the darkness of the overlay on background images (0% = no overlay, 100% = full dark)'),
+                                    ->helperText('Controls dark overlay on background (0% = none, 100% = full dark)'),
+                            ]),
 
-                                Select::make('text_alignment')
-                                    ->label('Text Alignment')
-                                    ->options([
-                                        'left' => 'Left',
-                                        'center' => 'Center',
-                                        'right' => 'Right',
+                        Tab::make('Styling')
+                            ->icon('heroicon-m-paint-brush')
+                            ->schema([
+                                Section::make('Button Styles')
+                                    ->description('Choose button styles for the hero section')
+                                    ->schema([
+                                        Select::make('button_variant')
+                                            ->label('Primary Button')
+                                            ->options(static::getHeroButtonVariantOptions())
+                                            ->default('btn-primary'),
+
+                                        Select::make('secondary_button_variant')
+                                            ->label('Secondary Button')
+                                            ->options(static::getHeroSecondaryButtonVariantOptions())
+                                            ->default('btn-ghost text-white hover:bg-white/20'),
+
+                                        Select::make('button_size')
+                                            ->label('Button Size')
+                                            ->options(static::getButtonSizeOptions())
+                                            ->default('btn-lg'),
                                     ])
-                                    ->default('center'),
+                                    ->columns(3),
+
+                                Section::make('Text Alignment')
+                                    ->schema([
+                                        Select::make('text_alignment')
+                                            ->label('Alignment')
+                                            ->options(static::getTextAlignmentOptions())
+                                            ->default('text-center'),
+                                    ]),
                             ]),
                     ]),
             ])->slideOver();
     }
 
-    private static function buildViewData(array $config, bool $isPreview = false): array
+    public static function toPreviewHtml(array $config): string
+    {
+        return static::renderBlock($config, true);
+    }
+
+    public static function toHtml(array $config, array $data): string
+    {
+        return static::renderBlock($config, false);
+    }
+
+    protected static function renderBlock(array $config, bool $isPreview = false): string
     {
         $buttonUrl = BlockLinkResolver::resolveButtonUrl($config, 'button');
         $secondaryButtonUrl = BlockLinkResolver::resolveButtonUrl($config, 'secondary_button');
 
-        return array_merge($config, [
+        // Build button classes
+        $buttonVariant = $config['button_variant'] ?? 'btn-primary';
+        $buttonSize = $config['button_size'] ?? 'btn-lg';
+        $buttonClasses = "btn {$buttonVariant} {$buttonSize}";
+
+        $secondaryVariant = $config['secondary_button_variant'] ?? 'btn-ghost text-white hover:bg-white/20';
+        $secondaryClasses = "btn {$secondaryVariant} {$buttonSize}";
+
+        return view('cms.blocks.hero', [
             'id' => static::getId(),
             'isPreview' => $isPreview,
             'heading' => $config['heading'] ?? '',
             'subheading' => $config['subheading'] ?? '',
             'button_text' => $config['button_text'] ?? null,
             'button_url' => $buttonUrl,
+            'button_classes' => $buttonClasses,
             'secondary_button_text' => $config['secondary_button_text'] ?? null,
             'secondary_button_url' => $secondaryButtonUrl,
+            'secondary_button_classes' => $secondaryClasses,
             'background_image' => $config['background_image'] ?? null,
             'parallax_effect' => $config['parallax_effect'] ?? true,
-            'overlay_opacity' => $config['overlay_opacity'] ?? '40',
-            'text_alignment' => $config['text_alignment'] ?? 'center',
-            'height' => $config['height'] ?? 'medium',
-            // Primary button styling
-            'primary_button_style' => $config['primary_button_style'] ?? 'preset',
-            'primary_button_preset' => $config['primary_button_preset'] ?? 'white',
-            'primary_button_bg_color' => $config['primary_button_bg_color'] ?? '#ffffff',
-            'primary_button_text_color' => $config['primary_button_text_color'] ?? '#111827',
-            // Secondary button styling
-            'secondary_button_style' => $config['secondary_button_style'] ?? 'preset',
-            'secondary_button_preset' => $config['secondary_button_preset'] ?? 'outline-white',
-            'secondary_button_bg_color' => $config['secondary_button_bg_color'] ?? '#ffffff00',
-            'secondary_button_text_color' => $config['secondary_button_text_color'] ?? '#ffffff',
-            'secondary_button_border_color' => $config['secondary_button_border_color'] ?? '#ffffff',
-        ]);
-    }
-
-    public static function toPreviewHtml(array $config): string
-    {
-        return view('cms.blocks.hero', self::buildViewData($config, true))->render();
-    }
-
-    public static function toHtml(array $config, array $data): string
-    {
-        return view('cms.blocks.hero', self::buildViewData($config, false))->render();
+            'overlay_opacity' => ($config['overlay_opacity'] ?? 40) / 100,
+            'text_alignment' => $config['text_alignment'] ?? 'text-center',
+            'height' => $config['height'] ?? 'min-h-[70vh]',
+        ])->render();
     }
 }

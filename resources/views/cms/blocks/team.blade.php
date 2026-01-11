@@ -1,10 +1,4 @@
 @php
-    $textAlignClass = match($text_alignment ?? 'center') {
-        'left' => 'text-left',
-        'center' => 'text-center',
-        default => 'text-center',
-    };
-
     $columnsClass = match($columns ?? '3') {
         '2' => 'sm:grid-cols-2 max-w-4xl mx-auto',
         '3' => 'sm:grid-cols-2 lg:grid-cols-3',
@@ -12,21 +6,7 @@
         default => 'sm:grid-cols-2 lg:grid-cols-3',
     };
 
-    $styleClasses = match($style ?? 'cards') {
-        'cards' => 'card bg-base-200 shadow-lg',
-        'bordered' => 'card bg-base-100 border border-base-300',
-        'minimal' => 'p-4',
-        default => 'card bg-base-200 shadow-lg',
-    };
-
-    $imageClasses = match($image_style ?? 'circle') {
-        'circle' => 'rounded-full',
-        'rounded' => 'rounded-xl',
-        'square' => 'rounded-none',
-        default => 'rounded-full',
-    };
-
-    $sectionSpacing = ($first_section ?? false) ? 'pt-0' : 'pt-16 sm:pt-24';
+    $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
 
     // Platform display labels for accessibility
     $platformLabels = [
@@ -40,18 +20,18 @@
     ];
 @endphp
 
-<section class="team-block {{ $sectionSpacing }} pb-16 sm:pb-24 bg-base-100">
+<section class="team-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }}">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {{-- Section Header --}}
         @if(!empty($heading) || !empty($subheading))
-            <div class="{{ $textAlignClass }} mb-12 sm:mb-16">
+            <div class="{{ $text_alignment ?? 'text-center' }} mb-12 sm:mb-16">
                 @if(!empty($heading))
                     <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-base-content">
                         {{ $heading }}
                     </h2>
                 @endif
                 @if(!empty($subheading))
-                    <p class="mt-4 text-lg sm:text-xl text-base-content/70 max-w-3xl {{ $textAlignClass === 'text-center' ? 'mx-auto' : '' }}">
+                    <p class="mt-4 text-lg sm:text-xl text-base-content/70 max-w-3xl {{ ($text_alignment ?? 'text-center') === 'text-center' ? 'mx-auto' : '' }}">
                         {{ $subheading }}
                     </p>
                 @endif
@@ -62,13 +42,13 @@
         @if(!empty($members))
             <div class="grid gap-8 {{ $columnsClass }}">
                 @foreach($members as $member)
-                    <div class="{{ $styleClasses }} {{ $textAlignClass }}">
+                    <div class="{{ $card_style ?? 'card bg-base-200 shadow-lg' }} {{ $text_alignment ?? 'text-center' }}">
                         <div class="card-body">
                             {{-- Photo --}}
-                            <div class="mb-4 {{ $textAlignClass === 'text-center' ? 'flex justify-center' : '' }}">
+                            <div class="mb-4 {{ ($text_alignment ?? 'text-center') === 'text-center' ? 'flex justify-center' : '' }}">
                                 @if(!empty($member['photo']))
                                     <div class="avatar">
-                                        <div class="w-24 sm:w-32 {{ $imageClasses }}">
+                                        <div class="w-24 sm:w-32 {{ $image_style ?? 'rounded-full' }}">
                                             <img
                                                 src="{{ Storage::disk(cms_media_disk())->url($member['photo']) }}"
                                                 alt="{{ $member['name'] ?? '' }}"
@@ -77,7 +57,7 @@
                                     </div>
                                 @else
                                     <div class="avatar placeholder">
-                                        <div class="w-24 sm:w-32 {{ $imageClasses }} bg-primary/10 text-primary">
+                                        <div class="w-24 sm:w-32 {{ $image_style ?? 'rounded-full' }} bg-primary/10 text-primary">
                                             <span class="text-3xl sm:text-4xl font-semibold">
                                                 {{ substr($member['name'] ?? 'T', 0, 1) }}
                                             </span>
@@ -103,7 +83,7 @@
 
                             {{-- Social Links --}}
                             @if(($show_social ?? true) && !empty($member['social_links']))
-                                <div class="flex items-center gap-3 mt-4 {{ $textAlignClass === 'text-center' ? 'justify-center' : '' }}">
+                                <div class="flex items-center gap-3 mt-4 {{ ($text_alignment ?? 'text-center') === 'text-center' ? 'justify-center' : '' }}">
                                     @foreach($member['social_links'] as $social)
                                         <a
                                             href="{{ $social['url'] }}"

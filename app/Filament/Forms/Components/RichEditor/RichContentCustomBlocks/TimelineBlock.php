@@ -2,6 +2,7 @@
 
 namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
+use App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
@@ -16,6 +17,8 @@ use Filament\Schemas\Components\Tabs\Tab;
 
 class TimelineBlock extends RichContentCustomBlock
 {
+    use HasDaisyUIOptions;
+
     public static function getId(): string
     {
         return 'timeline';
@@ -140,18 +143,26 @@ class TimelineBlock extends RichContentCustomBlock
                                     ])
                                     ->columns(2),
 
-                                Section::make('Spacing')
+                                Section::make('Appearance')
                                     ->schema([
                                         Select::make('text_alignment')
                                             ->label('Header Alignment')
-                                            ->options([
-                                                'left' => 'Left',
-                                                'center' => 'Center',
-                                            ])
-                                            ->default('center'),
+                                            ->options(static::getTextAlignmentOptions())
+                                            ->default('text-center'),
+
+                                        Select::make('background')
+                                            ->label('Background')
+                                            ->options(static::getBackgroundOptions())
+                                            ->default('bg-base-100'),
+
+                                        Select::make('padding')
+                                            ->label('Section Padding')
+                                            ->options(static::getPaddingOptions())
+                                            ->default('py-16'),
 
                                         Toggle::make('first_section')
-                                            ->label('First Section (Remove Top Spacing)')
+                                            ->label('First Section (Remove Top Padding)')
+                                            ->helperText('Overrides padding setting above')
                                             ->default(false),
                                     ])
                                     ->columns(2),
@@ -164,21 +175,19 @@ class TimelineBlock extends RichContentCustomBlock
     {
         $items = $config['items'] ?? self::getSampleItems();
 
-        return view('cms.blocks.timeline', [
-            'id' => static::getId(),
+        return static::renderBlock(array_merge($config, [
+            'items' => $items,
             'heading' => $config['heading'] ?? 'Our Journey',
             'subheading' => $config['subheading'] ?? 'Key milestones that shaped who we are today',
-            'items' => $items,
-            'style' => $config['style'] ?? 'vertical',
-            'alternating' => $config['alternating'] ?? true,
-            'show_connector' => $config['show_connector'] ?? true,
-            'numbered' => $config['numbered'] ?? false,
-            'text_alignment' => $config['text_alignment'] ?? 'center',
-            'first_section' => $config['first_section'] ?? false,
-        ])->render();
+        ]));
     }
 
     public static function toHtml(array $config, array $data): string
+    {
+        return static::renderBlock($config);
+    }
+
+    protected static function renderBlock(array $config): string
     {
         return view('cms.blocks.timeline', [
             'id' => static::getId(),
@@ -189,7 +198,9 @@ class TimelineBlock extends RichContentCustomBlock
             'alternating' => $config['alternating'] ?? true,
             'show_connector' => $config['show_connector'] ?? true,
             'numbered' => $config['numbered'] ?? false,
-            'text_alignment' => $config['text_alignment'] ?? 'center',
+            'text_alignment' => $config['text_alignment'] ?? 'text-center',
+            'background' => $config['background'] ?? 'bg-base-100',
+            'padding' => $config['padding'] ?? 'py-16',
             'first_section' => $config['first_section'] ?? false,
         ])->render();
     }

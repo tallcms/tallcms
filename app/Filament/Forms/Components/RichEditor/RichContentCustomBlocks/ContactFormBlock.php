@@ -2,6 +2,7 @@
 
 namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
+use App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
@@ -15,6 +16,7 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class ContactFormBlock extends RichContentCustomBlock
 {
+    use HasDaisyUIOptions;
     public static function getId(): string
     {
         return 'contact_form';
@@ -130,6 +132,31 @@ class ContactFormBlock extends RichContentCustomBlock
                             ->helperText('Shown after successful form submission'),
                     ])
                     ->collapsible(),
+
+                Section::make('Appearance')
+                    ->schema([
+                        Select::make('button_style')
+                            ->label('Submit Button Style')
+                            ->options(static::getButtonVariantOptions())
+                            ->default('btn-primary'),
+
+                        Select::make('background')
+                            ->label('Background')
+                            ->options(static::getBackgroundOptions())
+                            ->default('bg-base-100'),
+
+                        Select::make('padding')
+                            ->label('Section Padding')
+                            ->options(static::getPaddingOptions())
+                            ->default('py-16'),
+
+                        Toggle::make('first_section')
+                            ->label('First Section (Remove Top Padding)')
+                            ->helperText('Overrides padding setting above')
+                            ->default(false),
+                    ])
+                    ->columns(2)
+                    ->collapsible(),
             ])
             ->slideOver();
     }
@@ -146,19 +173,26 @@ class ContactFormBlock extends RichContentCustomBlock
             'fields' => self::getDefaultFields(),
             'submit_button_text' => 'Send Message',
             'success_message' => 'Thank you for your message! We\'ll be in touch soon.',
+            'button_style' => 'btn-primary',
+            'background' => 'bg-base-100',
+            'padding' => 'py-16',
+            'first_section' => false,
         ], $config, ['fields' => $fields]);
     }
 
     public static function toPreviewHtml(array $config): string
     {
-        return view('cms.blocks.contact-form-preview', [
-            'config' => self::normalizeConfig($config),
-        ])->render();
+        return static::renderBlock($config, 'cms.blocks.contact-form-preview');
     }
 
     public static function toHtml(array $config, array $data): string
     {
-        return view('cms.blocks.contact-form', [
+        return static::renderBlock($config, 'cms.blocks.contact-form');
+    }
+
+    protected static function renderBlock(array $config, string $view): string
+    {
+        return view($view, [
             'config' => self::normalizeConfig($config),
         ])->render();
     }

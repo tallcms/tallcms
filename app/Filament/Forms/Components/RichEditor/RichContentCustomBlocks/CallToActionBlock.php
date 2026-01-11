@@ -2,10 +2,10 @@
 
 namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
+use App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\Concerns\HasDaisyUIOptions;
 use App\Models\CmsPage;
 use App\Services\BlockLinkResolver;
 use Filament\Actions\Action;
-use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -17,6 +17,8 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class CallToActionBlock extends RichContentCustomBlock
 {
+    use HasDaisyUIOptions;
+
     public static function getId(): string
     {
         return 'call_to_action';
@@ -30,7 +32,7 @@ class CallToActionBlock extends RichContentCustomBlock
     public static function configureEditorAction(Action $action): Action
     {
         return $action
-            ->modalDescription('Create a compelling call to action section with custom styling')
+            ->modalDescription('Create a compelling call to action section')
             ->schema([
                 Tabs::make('CTA Configuration')
                     ->tabs([
@@ -46,243 +48,120 @@ class CallToActionBlock extends RichContentCustomBlock
                                     ->maxLength(500)
                                     ->placeholder('Enter CTA description'),
 
-                                TextInput::make('button_text')
-                                    ->required()
-                                    ->maxLength(100)
-                                    ->placeholder('Get Started')
-                                    ->live(),
+                                Section::make('Primary Button')
+                                    ->schema([
+                                        TextInput::make('button_text')
+                                            ->required()
+                                            ->maxLength(100)
+                                            ->placeholder('Get Started')
+                                            ->columnSpan(1),
 
-                                Select::make('button_link_type')
-                                    ->label('Button Link Type')
-                                    ->options([
-                                        'page' => 'Page',
-                                        'external' => 'External URL',
-                                        'custom' => 'Custom URL',
+                                        Select::make('button_link_type')
+                                            ->label('Link Type')
+                                            ->options([
+                                                'page' => 'Page',
+                                                'external' => 'External URL',
+                                                'custom' => 'Custom URL',
+                                            ])
+                                            ->default('page')
+                                            ->live()
+                                            ->columnSpan(1),
+
+                                        Select::make('button_page_id')
+                                            ->label('Select Page')
+                                            ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
+                                            ->searchable()
+                                            ->visible(fn (Get $get): bool => $get('button_link_type') === 'page')
+                                            ->columnSpanFull(),
+
+                                        TextInput::make('button_url')
+                                            ->label('URL')
+                                            ->placeholder('https://example.com or /contact')
+                                            ->visible(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom']))
+                                            ->columnSpanFull(),
                                     ])
-                                    ->default('page')
-                                    ->live()
-                                    ->afterStateUpdated(fn (callable $set) => $set('button_page_id', null))
-                                    ->afterStateUpdated(fn (callable $set) => $set('button_url', null)),
+                                    ->columns(2)
+                                    ->compact(),
 
-                                Select::make('button_page_id')
-                                    ->label('Select Page')
-                                    ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
-                                    ->searchable()
-                                    ->visible(fn (Get $get): bool => $get('button_link_type') === 'page')
-                                    ->required(fn (Get $get): bool => $get('button_link_type') === 'page'),
+                                Section::make('Secondary Button (Optional)')
+                                    ->schema([
+                                        TextInput::make('secondary_button_text')
+                                            ->label('Button Text')
+                                            ->maxLength(100)
+                                            ->placeholder('Learn More')
+                                            ->live()
+                                            ->columnSpan(1),
 
-                                TextInput::make('button_url')
-                                    ->label('URL')
-                                    ->placeholder('https://example.com or /contact or #section')
-                                    ->visible(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom']))
-                                    ->required(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom'])),
+                                        Select::make('secondary_button_link_type')
+                                            ->label('Link Type')
+                                            ->options([
+                                                'page' => 'Page',
+                                                'external' => 'External URL',
+                                                'custom' => 'Custom URL',
+                                            ])
+                                            ->default('page')
+                                            ->visible(fn (Get $get): bool => filled($get('secondary_button_text')))
+                                            ->columnSpan(1),
 
-                                TextInput::make('secondary_button_text')
-                                    ->maxLength(100)
-                                    ->placeholder('Secondary button text (optional)')
-                                    ->live(),
+                                        Select::make('secondary_button_page_id')
+                                            ->label('Select Page')
+                                            ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
+                                            ->searchable()
+                                            ->visible(fn (Get $get): bool => $get('secondary_button_link_type') === 'page' && filled($get('secondary_button_text')))
+                                            ->columnSpanFull(),
 
-                                Select::make('secondary_button_link_type')
-                                    ->label('Secondary Button Link Type')
-                                    ->options([
-                                        'page' => 'Page',
-                                        'external' => 'External URL',
-                                        'custom' => 'Custom URL',
+                                        TextInput::make('secondary_button_url')
+                                            ->label('URL')
+                                            ->placeholder('https://example.com')
+                                            ->visible(fn (Get $get): bool => in_array($get('secondary_button_link_type'), ['external', 'custom']) && filled($get('secondary_button_text')))
+                                            ->columnSpanFull(),
                                     ])
-                                    ->default('page')
-                                    ->live()
-                                    ->visible(fn (Get $get): bool => filled($get('secondary_button_text')))
-                                    ->required(fn (Get $get): bool => filled($get('secondary_button_text')))
-                                    ->afterStateUpdated(fn (callable $set) => $set('secondary_button_page_id', null))
-                                    ->afterStateUpdated(fn (callable $set) => $set('secondary_button_url', null)),
-
-                                Select::make('secondary_button_page_id')
-                                    ->label('Select Page')
-                                    ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
-                                    ->searchable()
-                                    ->visible(fn (Get $get): bool => $get('secondary_button_link_type') === 'page' && filled($get('secondary_button_text')))
-                                    ->required(fn (Get $get): bool => $get('secondary_button_link_type') === 'page' && filled($get('secondary_button_text'))),
-
-                                TextInput::make('secondary_button_url')
-                                    ->label('Secondary URL')
-                                    ->placeholder('https://example.com or /contact or #section')
-                                    ->visible(fn (Get $get): bool => in_array($get('secondary_button_link_type'), ['external', 'custom']) && filled($get('secondary_button_text')))
-                                    ->required(fn (Get $get): bool => in_array($get('secondary_button_link_type'), ['external', 'custom']) && filled($get('secondary_button_text'))),
+                                    ->columns(2)
+                                    ->compact()
+                                    ->collapsible(),
                             ]),
 
-                        Tab::make('Button Styling')
-                            ->icon('heroicon-m-cursor-arrow-rays')
-                            ->schema([
-                                Section::make('Primary Button Styling')
-                                    ->description('Customize the primary button appearance.')
-                                    ->schema([
-                                        Select::make('button_style')
-                                            ->label('Button Style')
-                                            ->options([
-                                                'preset' => 'Use Preset Colors',
-                                                'custom' => 'Custom Colors',
-                                            ])
-                                            ->default('preset')
-                                            ->live(),
-
-                                        Select::make('button_preset')
-                                            ->label('Color Preset')
-                                            ->options([
-                                                'primary' => 'Primary',
-                                                'secondary' => 'Secondary',
-                                                'success' => 'Success',
-                                                'warning' => 'Warning',
-                                                'danger' => 'Danger',
-                                                'neutral' => 'Neutral',
-                                            ])
-                                            ->default('primary')
-                                            ->visible(fn (Get $get): bool => $get('button_style') === 'preset'),
-
-                                        ColorPicker::make('button_bg_color')
-                                            ->label('Background Color')
-                                            ->default('#3b82f6')
-                                            ->visible(fn (Get $get): bool => $get('button_style') === 'custom'),
-
-                                        ColorPicker::make('button_text_color')
-                                            ->label('Text Color')
-                                            ->default('#ffffff')
-                                            ->visible(fn (Get $get): bool => $get('button_style') === 'custom'),
-                                    ])
-                                    ->columns(2),
-
-                                Section::make('Secondary Button Styling')
-                                    ->description('Customize the secondary button appearance.')
-                                    ->schema([
-                                        Select::make('secondary_button_style')
-                                            ->label('Button Style')
-                                            ->options([
-                                                'preset' => 'Use Preset Colors',
-                                                'custom' => 'Custom Colors',
-                                            ])
-                                            ->default('preset')
-                                            ->live(),
-
-                                        Select::make('secondary_button_preset')
-                                            ->label('Color Preset')
-                                            ->options([
-                                                'outline-primary' => 'Primary Outline',
-                                                'outline-secondary' => 'Secondary Outline',
-                                                'outline-neutral' => 'Neutral Outline',
-                                                'filled-secondary' => 'Filled Secondary',
-                                                'filled-neutral' => 'Filled Neutral',
-                                            ])
-                                            ->default('outline-primary')
-                                            ->visible(fn (Get $get): bool => $get('secondary_button_style') === 'preset'),
-
-                                        ColorPicker::make('secondary_button_bg_color')
-                                            ->label('Background Color')
-                                            ->default('#ffffff00')
-                                            ->visible(fn (Get $get): bool => $get('secondary_button_style') === 'custom'),
-
-                                        ColorPicker::make('secondary_button_text_color')
-                                            ->label('Text Color')
-                                            ->default('#3b82f6')
-                                            ->visible(fn (Get $get): bool => $get('secondary_button_style') === 'custom'),
-
-                                        ColorPicker::make('secondary_button_border_color')
-                                            ->label('Border Color')
-                                            ->default('#3b82f6')
-                                            ->visible(fn (Get $get): bool => $get('secondary_button_style') === 'custom'),
-                                    ])
-                                    ->visible(fn (Get $get): bool => filled($get('secondary_button_text')))
-                                    ->columns(2),
-                            ]),
-
-                        Tab::make('Background & Layout')
+                        Tab::make('Styling')
                             ->icon('heroicon-m-paint-brush')
                             ->schema([
-                                Section::make('Background Styling')
-                                    ->description('Configure the section background. 💡 Colors work with default theme - custom themes may override these settings.')
+                                Section::make('Button Styles')
+                                    ->description('Choose button styles from daisyUI presets')
                                     ->schema([
-                                        Select::make('background_style')
-                                            ->label('Background Style')
-                                            ->options([
-                                                'color' => 'Solid Color',
-                                                'gradient' => 'Gradient',
-                                            ])
-                                            ->default('color')
-                                            ->live(),
+                                        Select::make('button_variant')
+                                            ->label('Primary Button')
+                                            ->options(static::getButtonVariantOptions())
+                                            ->default('btn-primary'),
 
-                                        ColorPicker::make('background_color')
-                                            ->label('Background Color')
-                                            ->default('#f8fafc')
-                                            ->visible(fn (Get $get): bool => $get('background_style') === 'color'),
+                                        Select::make('button_size')
+                                            ->label('Button Size')
+                                            ->options(static::getButtonSizeOptions())
+                                            ->default('btn-lg'),
 
-                                        ColorPicker::make('gradient_from')
-                                            ->label('Gradient From')
-                                            ->default('#3b82f6')
-                                            ->visible(fn (Get $get): bool => $get('background_style') === 'gradient'),
-
-                                        ColorPicker::make('gradient_to')
-                                            ->label('Gradient To')
-                                            ->default('#8b5cf6')
-                                            ->visible(fn (Get $get): bool => $get('background_style') === 'gradient'),
+                                        Select::make('secondary_button_variant')
+                                            ->label('Secondary Button')
+                                            ->options(static::getSecondaryButtonVariantOptions())
+                                            ->default('btn-ghost'),
                                     ])
-                                    ->columns(2),
+                                    ->columns(3),
 
-                                Section::make('Text Colors')
-                                    ->description('Configure text colors for proper contrast. ℹ️ Theme presets adapt to your site\'s color scheme automatically.')
+                                Section::make('Section Appearance')
                                     ->schema([
-                                        Select::make('text_color_style')
-                                            ->label('Text Color Style')
-                                            ->options([
-                                                'theme' => 'Use Theme Colors',
-                                                'custom' => 'Custom Colors',
-                                            ])
-                                            ->default('theme')
-                                            ->live(),
+                                        Select::make('background')
+                                            ->label('Background')
+                                            ->options(static::getBackgroundOptions())
+                                            ->default('bg-base-200'),
 
-                                        Select::make('text_preset')
-                                            ->label('Text Color Preset')
-                                            ->options([
-                                                'primary' => 'Primary Text (Dark on Light)',
-                                                'secondary' => 'Secondary Text (Medium Contrast)',
-                                                'muted' => 'Muted Text (Light Contrast)',
-                                                'inverse' => 'Inverse Text (Light on Dark)',
-                                            ])
-                                            ->default('primary')
-                                            ->visible(fn (Get $get): bool => $get('text_color_style') === 'theme'),
-
-                                        ColorPicker::make('heading_color')
-                                            ->label('Heading Color')
-                                            ->default('#111827')
-                                            ->visible(fn (Get $get): bool => $get('text_color_style') === 'custom'),
-
-                                        ColorPicker::make('description_color')
-                                            ->label('Description Color')
-                                            ->default('#4b5563')
-                                            ->visible(fn (Get $get): bool => $get('text_color_style') === 'custom'),
-                                    ])
-                                    ->columns(2),
-
-                                Section::make('Layout Options')
-                                    ->description('Configure alignment and spacing. ℹ️ Padding sizes show approximate values in preview - actual spacing adapts to screen size.')
-                                    ->schema([
                                         Select::make('text_alignment')
                                             ->label('Text Alignment')
-                                            ->options([
-                                                'left' => 'Left',
-                                                'center' => 'Center',
-                                                'right' => 'Right',
-                                            ])
-                                            ->default('center'),
+                                            ->options(static::getTextAlignmentOptions())
+                                            ->default('text-center'),
 
                                         Select::make('padding')
-                                            ->label('Padding Size')
-                                            ->options([
-                                                'small' => 'Small',
-                                                'medium' => 'Medium',
-                                                'large' => 'Large',
-                                                'xl' => 'Extra Large',
-                                            ])
-                                            ->default('medium'),
+                                            ->label('Padding')
+                                            ->options(static::getPaddingOptions())
+                                            ->default('py-16'),
                                     ])
-                                    ->columns(2),
+                                    ->columns(3),
                             ]),
                     ]),
             ])->slideOver();
@@ -290,81 +169,32 @@ class CallToActionBlock extends RichContentCustomBlock
 
     public static function toPreviewHtml(array $config): string
     {
-        // Pre-resolve URLs to avoid DB hits in view
-        $buttonUrl = BlockLinkResolver::resolveButtonUrl($config, 'button');
-        $secondaryButtonUrl = BlockLinkResolver::resolveButtonUrl($config, 'secondary_button');
-
-        return view('cms.blocks.call-to-action', array_merge($config, [
-            'id' => static::getId(),
-            'title' => $config['title'] ?? 'Call to Action Title',
-            'description' => $config['description'] ?? 'Compelling description text',
-            'button_text' => $config['button_text'] ?? 'Get Started',
-            'button_url' => $buttonUrl,
-            // Primary button styling
-            'button_style' => $config['button_style'] ?? 'preset',
-            'button_preset' => $config['button_preset'] ?? 'primary',
-            'button_bg_color' => $config['button_bg_color'] ?? '#3b82f6',
-            'button_text_color' => $config['button_text_color'] ?? '#ffffff',
-            // Secondary button
-            'secondary_button_text' => $config['secondary_button_text'] ?? null,
-            'secondary_button_url' => $secondaryButtonUrl,
-            'secondary_button_style' => $config['secondary_button_style'] ?? 'preset',
-            'secondary_button_preset' => $config['secondary_button_preset'] ?? 'outline-primary',
-            'secondary_button_bg_color' => $config['secondary_button_bg_color'] ?? '#ffffff00',
-            'secondary_button_text_color' => $config['secondary_button_text_color'] ?? '#3b82f6',
-            'secondary_button_border_color' => $config['secondary_button_border_color'] ?? '#3b82f6',
-            // Background styling
-            'background_style' => $config['background_style'] ?? 'color',
-            'background_color' => $config['background_color'] ?? '#f8fafc',
-            'gradient_from' => $config['gradient_from'] ?? '#3b82f6',
-            'gradient_to' => $config['gradient_to'] ?? '#8b5cf6',
-            // Text colors
-            'text_color_style' => $config['text_color_style'] ?? 'theme',
-            'text_preset' => $config['text_preset'] ?? 'primary',
-            'heading_color' => $config['heading_color'] ?? '#111827',
-            'description_color' => $config['description_color'] ?? '#4b5563',
-            'text_alignment' => $config['text_alignment'] ?? 'center',
-            'padding' => $config['padding'] ?? 'medium',
-        ]))->render();
+        return static::renderBlock($config);
     }
 
     public static function toHtml(array $config, array $data): string
     {
-        // Pre-resolve URLs to avoid DB hit in view
+        return static::renderBlock($config);
+    }
+
+    protected static function renderBlock(array $config): string
+    {
         $buttonUrl = BlockLinkResolver::resolveButtonUrl($config, 'button');
         $secondaryButtonUrl = BlockLinkResolver::resolveButtonUrl($config, 'secondary_button');
 
-        return view('cms.blocks.call-to-action', array_merge($config, [
+        return view('cms.blocks.call-to-action', [
             'id' => static::getId(),
-            'title' => $config['title'] ?? '',
+            'title' => $config['title'] ?? 'Call to Action Title',
             'description' => $config['description'] ?? '',
-            'button_text' => $config['button_text'] ?? '',
+            'button_text' => $config['button_text'] ?? 'Get Started',
             'button_url' => $buttonUrl,
-            // Primary button styling
-            'button_style' => $config['button_style'] ?? 'preset',
-            'button_preset' => $config['button_preset'] ?? 'primary',
-            'button_bg_color' => $config['button_bg_color'] ?? '#3b82f6',
-            'button_text_color' => $config['button_text_color'] ?? '#ffffff',
-            // Secondary button
+            'button_classes' => static::buildButtonClasses($config),
             'secondary_button_text' => $config['secondary_button_text'] ?? null,
             'secondary_button_url' => $secondaryButtonUrl,
-            'secondary_button_style' => $config['secondary_button_style'] ?? 'preset',
-            'secondary_button_preset' => $config['secondary_button_preset'] ?? 'outline-primary',
-            'secondary_button_bg_color' => $config['secondary_button_bg_color'] ?? '#ffffff00',
-            'secondary_button_text_color' => $config['secondary_button_text_color'] ?? '#3b82f6',
-            'secondary_button_border_color' => $config['secondary_button_border_color'] ?? '#3b82f6',
-            // Background styling
-            'background_style' => $config['background_style'] ?? 'color',
-            'background_color' => $config['background_color'] ?? '#f8fafc',
-            'gradient_from' => $config['gradient_from'] ?? '#3b82f6',
-            'gradient_to' => $config['gradient_to'] ?? '#8b5cf6',
-            // Text colors
-            'text_color_style' => $config['text_color_style'] ?? 'theme',
-            'text_preset' => $config['text_preset'] ?? 'primary',
-            'heading_color' => $config['heading_color'] ?? '#111827',
-            'description_color' => $config['description_color'] ?? '#4b5563',
-            'text_alignment' => $config['text_alignment'] ?? 'center',
-            'padding' => $config['padding'] ?? 'medium',
-        ]))->render();
+            'secondary_button_classes' => static::buildButtonClasses($config, 'secondary_button'),
+            'background' => $config['background'] ?? 'bg-base-200',
+            'text_alignment' => $config['text_alignment'] ?? 'text-center',
+            'padding' => $config['padding'] ?? 'py-16',
+        ])->render();
     }
 }

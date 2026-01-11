@@ -7,17 +7,17 @@
         default => 'min-h-[500px]',
     };
 
-    $textAlignClass = match($text_alignment ?? 'center') {
-        'left' => 'text-left items-start',
-        'center' => 'text-center items-center',
-        'right' => 'text-right items-end',
-        default => 'text-center items-center',
+    // text_alignment now comes as a class like 'text-center'
+    $textAlign = $text_alignment ?? 'text-center';
+    $itemsClass = match($textAlign) {
+        'text-left' => 'items-start',
+        'text-right' => 'items-end',
+        default => 'items-center',
     };
 
-    $justifyClass = match($text_alignment ?? 'center') {
-        'left' => 'justify-start',
-        'center' => 'justify-center',
-        'right' => 'justify-end',
+    $justifyClass = match($textAlign) {
+        'text-left' => 'justify-start',
+        'text-right' => 'justify-end',
         default => 'justify-center',
     };
 
@@ -60,8 +60,8 @@
 
     {{-- Content --}}
     @if($hasContent)
-        <div class="relative z-10 h-full flex flex-col {{ $justifyClass }} {{ $textAlignClass }} px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-            <div class="max-w-4xl {{ ($text_alignment ?? 'center') === 'center' ? 'mx-auto' : (($text_alignment ?? 'center') === 'right' ? 'ml-auto' : '') }}">
+        <div class="relative z-10 h-full flex flex-col {{ $justifyClass }} {{ $itemsClass }} {{ $textAlign }} px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+            <div class="max-w-4xl {{ $textAlign === 'text-center' ? 'mx-auto' : ($textAlign === 'text-right' ? 'ml-auto' : '') }}">
                 @if(!empty($heading))
                     <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 drop-shadow-lg">
                         {{ $heading }}
@@ -69,7 +69,7 @@
                 @endif
 
                 @if(!empty($subheading))
-                    <p class="text-lg sm:text-xl text-white/90 mb-8 max-w-2xl {{ ($text_alignment ?? 'center') === 'center' ? 'mx-auto' : '' }} drop-shadow">
+                    <p class="text-lg sm:text-xl text-white/90 mb-8 max-w-2xl {{ $textAlign === 'text-center' ? 'mx-auto' : '' }} drop-shadow">
                         {{ $subheading }}
                     </p>
                 @endif

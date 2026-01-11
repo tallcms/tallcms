@@ -2,6 +2,7 @@
 
 namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
+use App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
@@ -16,6 +17,18 @@ use Filament\Schemas\Components\Tabs\Tab;
 
 class TestimonialsBlock extends RichContentCustomBlock
 {
+    use HasDaisyUIOptions;
+
+    protected static function getTestimonialCardStyleOptions(): array
+    {
+        return [
+            'card bg-base-200 shadow-lg' => 'Cards with Shadow',
+            'card bg-base-100 border border-base-300' => 'Bordered Cards',
+            'card bg-base-100/50' => 'Minimal',
+            'card bg-base-200 shadow-lg quote-marks' => 'Large Quote Marks',
+        ];
+    }
+
     public static function getId(): string
     {
         return 'testimonials';
@@ -127,23 +140,29 @@ class TestimonialsBlock extends RichContentCustomBlock
                                             ])
                                             ->default('3'),
 
-                                        Select::make('style')
+                                        Select::make('card_style')
                                             ->label('Card Style')
-                                            ->options([
-                                                'cards' => 'Cards with Shadow',
-                                                'bordered' => 'Bordered Cards',
-                                                'minimal' => 'Minimal',
-                                                'quote-marks' => 'Large Quote Marks',
-                                            ])
-                                            ->default('cards'),
+                                            ->options(static::getTestimonialCardStyleOptions())
+                                            ->default('card bg-base-200 shadow-lg'),
 
                                         Select::make('text_alignment')
                                             ->label('Header Alignment')
-                                            ->options([
-                                                'left' => 'Left',
-                                                'center' => 'Center',
-                                            ])
-                                            ->default('center'),
+                                            ->options(static::getTextAlignmentOptions())
+                                            ->default('text-center'),
+                                    ])
+                                    ->columns(2),
+
+                                Section::make('Appearance')
+                                    ->schema([
+                                        Select::make('background')
+                                            ->label('Background')
+                                            ->options(static::getBackgroundOptions())
+                                            ->default('bg-base-100'),
+
+                                        Select::make('padding')
+                                            ->label('Section Padding')
+                                            ->options(static::getPaddingOptions())
+                                            ->default('py-16'),
                                     ])
                                     ->columns(2),
 
@@ -158,7 +177,8 @@ class TestimonialsBlock extends RichContentCustomBlock
                                             ->default(false),
 
                                         Toggle::make('first_section')
-                                            ->label('First Section (Remove Top Spacing)')
+                                            ->label('First Section (Remove Top Padding)')
+                                            ->helperText('Overrides padding setting above')
                                             ->default(false),
                                     ])
                                     ->columns(3),
@@ -171,22 +191,19 @@ class TestimonialsBlock extends RichContentCustomBlock
     {
         $testimonials = $config['testimonials'] ?? self::getSampleTestimonials();
 
-        return view('cms.blocks.testimonials', [
-            'id' => static::getId(),
+        return static::renderBlock(array_merge($config, [
+            'testimonials' => $testimonials,
             'heading' => $config['heading'] ?? 'What Our Customers Say',
             'subheading' => $config['subheading'] ?? 'Trusted by thousands of happy customers worldwide',
-            'testimonials' => $testimonials,
-            'layout' => $config['layout'] ?? 'grid',
-            'columns' => $config['columns'] ?? '3',
-            'style' => $config['style'] ?? 'cards',
-            'text_alignment' => $config['text_alignment'] ?? 'center',
-            'show_rating' => $config['show_rating'] ?? true,
-            'show_company_logo' => $config['show_company_logo'] ?? false,
-            'first_section' => $config['first_section'] ?? false,
-        ])->render();
+        ]));
     }
 
     public static function toHtml(array $config, array $data): string
+    {
+        return static::renderBlock($config);
+    }
+
+    protected static function renderBlock(array $config): string
     {
         return view('cms.blocks.testimonials', [
             'id' => static::getId(),
@@ -195,8 +212,10 @@ class TestimonialsBlock extends RichContentCustomBlock
             'testimonials' => $config['testimonials'] ?? [],
             'layout' => $config['layout'] ?? 'grid',
             'columns' => $config['columns'] ?? '3',
-            'style' => $config['style'] ?? 'cards',
-            'text_alignment' => $config['text_alignment'] ?? 'center',
+            'card_style' => $config['card_style'] ?? 'card bg-base-200 shadow-lg',
+            'text_alignment' => $config['text_alignment'] ?? 'text-center',
+            'background' => $config['background'] ?? 'bg-base-100',
+            'padding' => $config['padding'] ?? 'py-16',
             'show_rating' => $config['show_rating'] ?? true,
             'show_company_logo' => $config['show_company_logo'] ?? false,
             'first_section' => $config['first_section'] ?? false,

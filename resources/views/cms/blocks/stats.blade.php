@@ -1,10 +1,4 @@
 @php
-    $textAlignClass = match($text_alignment ?? 'center') {
-        'left' => 'text-left',
-        'center' => 'text-center',
-        default => 'text-center',
-    };
-
     $columnsClass = match($columns ?? '4') {
         '2' => 'sm:grid-cols-2 max-w-3xl mx-auto',
         '3' => 'sm:grid-cols-3 max-w-5xl mx-auto',
@@ -12,19 +6,12 @@
         default => 'sm:grid-cols-2 lg:grid-cols-4',
     };
 
-    $styleClasses = match($style ?? 'minimal') {
-        'cards' => 'stat bg-base-200 rounded-xl shadow-lg',
-        'bordered' => 'stat bg-base-100 rounded-xl border border-base-300',
-        'minimal' => 'stat',
-        default => 'stat',
-    };
-
-    $sectionSpacing = ($first_section ?? false) ? 'pt-0' : 'pt-16 sm:pt-24';
+    $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
     $shouldAnimate = $animate ?? false;
 @endphp
 
 <section
-    class="stats-block {{ $sectionSpacing }} pb-16 sm:pb-24 bg-base-100"
+    class="stats-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }}"
     @if($shouldAnimate)
         x-data="{
             prefersReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
@@ -57,7 +44,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {{-- Section Header --}}
         @if(!empty($heading))
-            <div class="{{ $textAlignClass }} mb-12">
+            <div class="{{ $text_alignment ?? 'text-center' }} mb-12">
                 <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-base-content">
                     {{ $heading }}
                 </h2>
@@ -68,7 +55,7 @@
         @if(!empty($stats))
             <div class="stats stats-vertical lg:stats-horizontal shadow w-full {{ $columnsClass }} grid">
                 @foreach($stats as $stat)
-                    <div class="{{ $styleClasses }} {{ $textAlignClass }} place-items-center">
+                    <div class="{{ $stat_style ?? 'stat' }} {{ $text_alignment ?? 'text-center' }} place-items-center">
                         {{-- Icon --}}
                         @if(!empty($stat['icon']))
                             <div class="stat-figure text-primary">

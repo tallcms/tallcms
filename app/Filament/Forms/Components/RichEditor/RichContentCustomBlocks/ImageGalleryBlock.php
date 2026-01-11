@@ -2,14 +2,18 @@
 
 namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
+use App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Section;
 
 class ImageGalleryBlock extends RichContentCustomBlock
 {
+    use HasDaisyUIOptions;
     public static function getId(): string
     {
         return 'image_gallery';
@@ -69,26 +73,49 @@ class ImageGalleryBlock extends RichContentCustomBlock
                         'full' => 'Full width',
                     ])
                     ->default('medium'),
+
+                Section::make('Appearance')
+                    ->schema([
+                        Select::make('background')
+                            ->label('Background')
+                            ->options(static::getBackgroundOptions())
+                            ->default('bg-base-100'),
+
+                        Select::make('padding')
+                            ->label('Section Padding')
+                            ->options(static::getPaddingOptions())
+                            ->default('py-16'),
+
+                        Toggle::make('first_section')
+                            ->label('First Section (Remove Top Padding)')
+                            ->helperText('Overrides padding setting above')
+                            ->default(false),
+                    ])
+                    ->columns(3),
             ])->slideOver();
     }
 
     public static function toPreviewHtml(array $config): string
     {
-        return view('cms.blocks.image-gallery', [
-            'title' => $config['title'] ?? '',
-            'images' => $config['images'] ?? [],
-            'layout' => $config['layout'] ?? 'grid-3',
-            'image_size' => $config['image_size'] ?? 'medium',
-        ])->render();
+        return static::renderBlock($config);
     }
 
     public static function toHtml(array $config, array $data): string
     {
+        return static::renderBlock($config);
+    }
+
+    protected static function renderBlock(array $config): string
+    {
         return view('cms.blocks.image-gallery', [
-            'title' => $config['title'] ?? null,
+            'id' => static::getId(),
+            'title' => $config['title'] ?? '',
             'images' => $config['images'] ?? [],
             'layout' => $config['layout'] ?? 'grid-3',
             'image_size' => $config['image_size'] ?? 'medium',
+            'background' => $config['background'] ?? 'bg-base-100',
+            'padding' => $config['padding'] ?? 'py-16',
+            'first_section' => $config['first_section'] ?? false,
         ])->render();
     }
 }

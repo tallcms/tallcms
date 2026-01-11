@@ -2,6 +2,7 @@
 
 namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
+use App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
@@ -17,6 +18,8 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class FeaturesBlock extends RichContentCustomBlock
 {
+    use HasDaisyUIOptions;
+
     public static function getId(): string
     {
         return 'features';
@@ -25,6 +28,17 @@ class FeaturesBlock extends RichContentCustomBlock
     public static function getLabel(): string
     {
         return 'Features';
+    }
+
+    protected static function getCardStyleOptions(): array
+    {
+        return [
+            'card bg-base-100 shadow-md' => 'Cards with Shadow',
+            'card bg-base-100 border border-base-300' => 'Bordered Cards',
+            'bg-base-100' => 'Minimal (No Border)',
+            'card bg-base-200' => 'Subtle Background',
+            'card bg-primary text-primary-content' => 'Primary Cards',
+        ];
     }
 
     public static function configureEditorAction(Action $action): Action
@@ -123,14 +137,10 @@ class FeaturesBlock extends RichContentCustomBlock
                                             ])
                                             ->default('3'),
 
-                                        Select::make('style')
+                                        Select::make('card_style')
                                             ->label('Card Style')
-                                            ->options([
-                                                'cards' => 'Cards with Shadow',
-                                                'bordered' => 'Bordered Cards',
-                                                'minimal' => 'Minimal (No Border)',
-                                            ])
-                                            ->default('cards'),
+                                            ->options(static::getCardStyleOptions())
+                                            ->default('card bg-base-100 shadow-md'),
 
                                         Select::make('icon_position')
                                             ->label('Icon Position')
@@ -143,32 +153,28 @@ class FeaturesBlock extends RichContentCustomBlock
                                         Select::make('text_alignment')
                                             ->label('Text Alignment')
                                             ->options([
-                                                'left' => 'Left',
-                                                'center' => 'Center',
+                                                'text-left' => 'Left',
+                                                'text-center' => 'Center',
                                             ])
-                                            ->default('center'),
+                                            ->default('text-center'),
                                     ])
                                     ->columns(2),
 
-                                Section::make('Spacing')
+                                Section::make('Appearance')
                                     ->schema([
                                         Select::make('icon_size')
                                             ->label('Icon Size')
                                             ->options([
-                                                'small' => 'Small',
-                                                'medium' => 'Medium',
-                                                'large' => 'Large',
+                                                'w-8 h-8' => 'Small',
+                                                'w-10 h-10' => 'Medium',
+                                                'w-12 h-12' => 'Large',
                                             ])
-                                            ->default('medium'),
+                                            ->default('w-10 h-10'),
 
                                         Select::make('padding')
-                                            ->label('Card Padding')
-                                            ->options([
-                                                'small' => 'Small',
-                                                'medium' => 'Medium',
-                                                'large' => 'Large',
-                                            ])
-                                            ->default('medium'),
+                                            ->label('Section Padding')
+                                            ->options(static::getPaddingOptions())
+                                            ->default('py-16'),
 
                                         Toggle::make('first_section')
                                             ->label('First Section (Remove Top Spacing)')
@@ -184,22 +190,15 @@ class FeaturesBlock extends RichContentCustomBlock
     {
         $features = $config['features'] ?? self::getSampleFeatures();
 
-        return view('cms.blocks.features', [
-            'id' => static::getId(),
-            'heading' => $config['heading'] ?? 'Our Features',
-            'subheading' => $config['subheading'] ?? 'Everything you need to build amazing products',
-            'features' => $features,
-            'columns' => $config['columns'] ?? '3',
-            'style' => $config['style'] ?? 'cards',
-            'icon_position' => $config['icon_position'] ?? 'top',
-            'text_alignment' => $config['text_alignment'] ?? 'center',
-            'icon_size' => $config['icon_size'] ?? 'medium',
-            'padding' => $config['padding'] ?? 'medium',
-            'first_section' => $config['first_section'] ?? false,
-        ])->render();
+        return static::renderBlock(array_merge($config, ['features' => $features]));
     }
 
     public static function toHtml(array $config, array $data): string
+    {
+        return static::renderBlock($config);
+    }
+
+    protected static function renderBlock(array $config): string
     {
         return view('cms.blocks.features', [
             'id' => static::getId(),
@@ -207,11 +206,11 @@ class FeaturesBlock extends RichContentCustomBlock
             'subheading' => $config['subheading'] ?? '',
             'features' => $config['features'] ?? [],
             'columns' => $config['columns'] ?? '3',
-            'style' => $config['style'] ?? 'cards',
+            'card_style' => $config['card_style'] ?? 'card bg-base-100 shadow-md',
             'icon_position' => $config['icon_position'] ?? 'top',
-            'text_alignment' => $config['text_alignment'] ?? 'center',
-            'icon_size' => $config['icon_size'] ?? 'medium',
-            'padding' => $config['padding'] ?? 'medium',
+            'text_alignment' => $config['text_alignment'] ?? 'text-center',
+            'icon_size' => $config['icon_size'] ?? 'w-10 h-10',
+            'padding' => $config['padding'] ?? 'py-16',
             'first_section' => $config['first_section'] ?? false,
         ])->render();
     }

@@ -1,17 +1,11 @@
 @php
-    $textAlignClass = match($text_alignment ?? 'center') {
-        'left' => 'text-left',
-        'center' => 'text-center',
-        default => 'text-center',
-    };
-
     $isAccordion = ($style ?? 'accordion') === 'accordion';
-    $sectionSpacing = ($first_section ?? false) ? 'pt-0' : 'pt-16 sm:pt-24';
+    $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
     $uniqueId = 'faq-' . uniqid();
 @endphp
 
 <section
-    class="faq-block {{ $sectionSpacing }} pb-16 sm:pb-24 bg-base-100"
+    class="faq-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }}"
     @if($isAccordion)
         x-data="{
             activeItem: {{ ($first_open ?? false) ? '0' : 'null' }},
@@ -38,14 +32,14 @@
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {{-- Section Header --}}
         @if(!empty($heading) || !empty($subheading))
-            <div class="{{ $textAlignClass }} mb-12">
+            <div class="{{ $text_alignment ?? 'text-center' }} mb-12">
                 @if(!empty($heading))
                     <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-base-content">
                         {{ $heading }}
                     </h2>
                 @endif
                 @if(!empty($subheading))
-                    <p class="mt-4 text-lg text-base-content/70 max-w-2xl {{ $textAlignClass === 'text-center' ? 'mx-auto' : '' }}">
+                    <p class="mt-4 text-lg text-base-content/70 max-w-2xl {{ ($text_alignment ?? 'text-center') === 'text-center' ? 'mx-auto' : '' }}">
                         {{ $subheading }}
                     </p>
                 @endif

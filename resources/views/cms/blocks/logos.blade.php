@@ -18,10 +18,10 @@
     $grayscaleClass = ($grayscale ?? true) ? 'grayscale opacity-60' : '';
     $hoverColorClass = (($grayscale ?? true) && ($hover_color ?? true)) ? 'hover:grayscale-0 hover:opacity-100' : '';
 
-    $sectionSpacing = ($first_section ?? false) ? 'pt-0' : 'pt-16 sm:pt-24';
+    $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
 @endphp
 
-<section class="logos-block {{ $sectionSpacing }} pb-16 sm:pb-24 bg-base-100">
+<section class="logos-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }}">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {{-- Section Header --}}
         @if(!empty($heading))

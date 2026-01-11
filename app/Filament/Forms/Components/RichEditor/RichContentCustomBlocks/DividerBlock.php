@@ -2,6 +2,7 @@
 
 namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
+use App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
@@ -11,6 +12,8 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class DividerBlock extends RichContentCustomBlock
 {
+    use HasDaisyUIOptions;
+
     public static function getId(): string
     {
         return 'divider';
@@ -102,18 +105,15 @@ class DividerBlock extends RichContentCustomBlock
 
     public static function toPreviewHtml(array $config): string
     {
-        return view('cms.blocks.divider', [
-            'id' => static::getId(),
-            'style' => $config['style'] ?? 'line',
-            'height' => $config['height'] ?? 'medium',
-            'line_style' => $config['line_style'] ?? 'solid',
-            'width' => $config['width'] ?? 'medium',
-            'color' => $config['color'] ?? null,
-            'icon' => $config['icon'] ?? 'heroicon-o-star',
-        ])->render();
+        return static::renderBlock($config);
     }
 
     public static function toHtml(array $config, array $data): string
+    {
+        return static::renderBlock($config);
+    }
+
+    protected static function renderBlock(array $config): string
     {
         return view('cms.blocks.divider', [
             'id' => static::getId(),

@@ -3,11 +3,10 @@
     $plans = $plans ?? [];
     $section_title = $section_title ?? '';
     $section_subtitle = $section_subtitle ?? '';
-    $text_alignment = $text_alignment ?? 'center';
     $columns = $columns ?? '3';
     $card_style = $card_style ?? 'shadow';
     $spacing = $spacing ?? 'normal';
-    $sectionSpacing = ($first_section ?? false) ? 'pt-0' : 'pt-16 sm:pt-24';
+    $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
 
     // Grid classes based on columns
     $gridClasses = match($columns) {
@@ -16,14 +15,6 @@
         '3' => 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
         '4' => 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
         default => 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-    };
-
-    // Text alignment classes
-    $alignmentClass = match($text_alignment) {
-        'left' => 'text-left',
-        'center' => 'text-center',
-        'right' => 'text-right',
-        default => 'text-center'
     };
 
     // Spacing classes
@@ -35,12 +26,12 @@
     };
 @endphp
 
-<section class="pricing-block {{ $sectionSpacing }} pb-16 sm:pb-24 bg-base-100">
+<section class="pricing-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }}">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {{-- Header Section --}}
         @if($section_title || $section_subtitle)
-            <div class="mb-12 {{ $alignmentClass }}">
+            <div class="mb-12 {{ $text_alignment ?? 'text-center' }}">
                 @if($section_title)
                     <h2 class="text-3xl md:text-4xl font-bold mb-4 text-base-content">
                         {{ $section_title }}
@@ -48,7 +39,7 @@
                 @endif
 
                 @if($section_subtitle)
-                    <p class="text-lg md:text-xl text-base-content/70 max-w-3xl {{ $text_alignment === 'center' ? 'mx-auto' : '' }}">
+                    <p class="text-lg md:text-xl text-base-content/70 max-w-3xl {{ ($text_alignment ?? 'text-center') === 'text-center' ? 'mx-auto' : '' }}">
                         {{ $section_subtitle }}
                     </p>
                 @endif
@@ -71,7 +62,7 @@
                         $features = $plan['features'] ?? [];
                         $buttonText = $plan['button_text'] ?? 'Get Started';
                         $buttonUrl = $plan['button_url'] ?? '#';
-                        $buttonStyle = $plan['button_style'] ?? 'primary';
+                        $buttonStyle = $plan['button_style'] ?? 'btn-primary';
                         $trialText = $plan['trial_text'] ?? '';
 
                         // Card classes using daisyUI
@@ -87,12 +78,8 @@
                                 : 'card bg-base-200 shadow-lg',
                         };
 
-                        // Button classes using daisyUI
-                        $buttonClasses = match($buttonStyle) {
-                            'secondary' => 'btn btn-secondary btn-block',
-                            'outline' => 'btn btn-outline btn-primary btn-block',
-                            default => 'btn btn-primary btn-block',
-                        };
+                        // Button classes - use style from config directly
+                        $buttonClasses = 'btn btn-block ' . $buttonStyle;
                     @endphp
 
                     <div class="{{ $cardClasses }}">

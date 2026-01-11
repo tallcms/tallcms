@@ -2,8 +2,9 @@
     $fields = $config['fields'] ?? [];
     $submitButtonText = $config['submit_button_text'] ?? 'Send Message';
     $successMessage = $config['success_message'] ?? 'Thank you for your message! We\'ll be in touch soon.';
+    $buttonStyle = $config['button_style'] ?? 'btn-primary';
     $formId = 'contact-form-' . uniqid();
-    $sectionSpacing = ($first_section ?? false) ? 'pt-0' : 'pt-16 sm:pt-24';
+    $sectionPadding = ($config['first_section'] ?? false) ? 'pb-16' : ($config['padding'] ?? 'py-16');
 
     // Generate signature for security
     $pageUrl = request()->url();
@@ -20,7 +21,7 @@
     ];
 @endphp
 
-<section class="contact-form-block {{ $sectionSpacing }} pb-16 sm:pb-24 bg-base-100">
+<section class="contact-form-block {{ $sectionPadding }} {{ $config['background'] ?? 'bg-base-100' }}">
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         @if($config['title'] ?? false)
             <h2 class="text-3xl font-bold mb-4 text-base-content">
@@ -68,7 +69,7 @@
                 <div>
                     <button
                         type="submit"
-                        class="btn btn-primary w-full sm:w-auto"
+                        class="btn {{ $buttonStyle }} w-full sm:w-auto"
                         x-bind:disabled="submitting"
                     >
                         <span x-show="!submitting">{{ $submitButtonText }}</span>

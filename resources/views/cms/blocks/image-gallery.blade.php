@@ -16,12 +16,12 @@
 
     $gridClass = $layoutClasses[$layout ?? 'grid-3'] ?? $layoutClasses['grid-3'];
     $sizeClass = $sizeClasses[$image_size ?? 'medium'] ?? $sizeClasses['medium'];
-    $sectionSpacing = ($first_section ?? false) ? 'pt-0' : 'pt-16 sm:pt-24';
+    $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
     $galleryId = 'gallery-' . uniqid();
 @endphp
 
 <section
-    class="image-gallery-block {{ $sectionSpacing }} pb-16 sm:pb-24 bg-base-100"
+    class="image-gallery-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }}"
     x-data="{
         images: @js(collect($images)->filter(fn($img) => Storage::disk(cms_media_disk())->exists($img))->map(fn($img) => Storage::disk(cms_media_disk())->url($img))->values()->all()),
         currentIndex: 0,

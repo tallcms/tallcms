@@ -2,6 +2,7 @@
 
 namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
+use App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
@@ -15,6 +16,8 @@ use Filament\Schemas\Components\Tabs\Tab;
 
 class PricingBlock extends RichContentCustomBlock
 {
+    use HasDaisyUIOptions;
+
     public static function getId(): string
     {
         return 'pricing';
@@ -23,6 +26,26 @@ class PricingBlock extends RichContentCustomBlock
     public static function getLabel(): string
     {
         return 'Pricing Block';
+    }
+
+    protected static function getPricingCardStyleOptions(): array
+    {
+        return [
+            'shadow' => 'Shadow',
+            'bordered' => 'Bordered',
+            'elevated' => 'Elevated',
+        ];
+    }
+
+    protected static function getPlanButtonStyleOptions(): array
+    {
+        return [
+            'btn-primary' => 'Primary',
+            'btn-secondary' => 'Secondary',
+            'btn-outline btn-primary' => 'Outline Primary',
+            'btn-accent' => 'Accent',
+            'btn-neutral' => 'Neutral',
+        ];
     }
 
     public static function configureEditorAction(Action $action): Action
@@ -50,12 +73,8 @@ class PricingBlock extends RichContentCustomBlock
 
                                 Select::make('text_alignment')
                                     ->label('Text Alignment')
-                                    ->options([
-                                        'left' => 'Left',
-                                        'center' => 'Center',
-                                        'right' => 'Right',
-                                    ])
-                                    ->default('center'),
+                                    ->options(static::getTextAlignmentOptions())
+                                    ->default('text-center'),
                             ]),
 
                         Tab::make('Plans')
@@ -159,12 +178,8 @@ class PricingBlock extends RichContentCustomBlock
 
                                                 Select::make('button_style')
                                                     ->label('Button Style')
-                                                    ->options([
-                                                        'primary' => 'Primary',
-                                                        'secondary' => 'Secondary',
-                                                        'outline' => 'Outline',
-                                                    ])
-                                                    ->default('primary'),
+                                                    ->options(static::getPlanButtonStyleOptions())
+                                                    ->default('btn-primary'),
 
                                                 TextInput::make('trial_text')
                                                     ->label('Trial Text (Optional)')
@@ -183,35 +198,53 @@ class PricingBlock extends RichContentCustomBlock
                         Tab::make('Layout')
                             ->icon('heroicon-m-squares-2x2')
                             ->schema([
-                                Select::make('columns')
-                                    ->label('Number of Columns')
-                                    ->options([
-                                        '1' => '1 Column',
-                                        '2' => '2 Columns',
-                                        '3' => '3 Columns',
-                                        '4' => '4 Columns',
-                                    ])
-                                    ->default('3'),
+                                Section::make('Grid Layout')
+                                    ->schema([
+                                        Select::make('columns')
+                                            ->label('Number of Columns')
+                                            ->options([
+                                                '1' => '1 Column',
+                                                '2' => '2 Columns',
+                                                '3' => '3 Columns',
+                                                '4' => '4 Columns',
+                                            ])
+                                            ->default('3'),
 
-                                Select::make('card_style')
-                                    ->label('Card Style')
-                                    ->options([
-                                        'default' => 'Default',
-                                        'bordered' => 'Bordered',
-                                        'shadow' => 'Shadow',
-                                        'elevated' => 'Elevated',
-                                    ])
-                                    ->default('shadow'),
+                                        Select::make('card_style')
+                                            ->label('Card Style')
+                                            ->options(static::getPricingCardStyleOptions())
+                                            ->default('shadow'),
 
-                                Select::make('spacing')
-                                    ->label('Card Spacing')
-                                    ->options([
-                                        'tight' => 'Tight',
-                                        'normal' => 'Normal',
-                                        'relaxed' => 'Relaxed',
+                                        Select::make('spacing')
+                                            ->label('Card Spacing')
+                                            ->options([
+                                                'tight' => 'Tight (gap-4)',
+                                                'normal' => 'Normal (gap-6)',
+                                                'relaxed' => 'Relaxed (gap-8)',
+                                            ])
+                                            ->default('normal'),
                                     ])
-                                    ->default('normal'),
-                            ])->columns(3),
+                                    ->columns(3),
+
+                                Section::make('Appearance')
+                                    ->schema([
+                                        Select::make('background')
+                                            ->label('Background')
+                                            ->options(static::getBackgroundOptions())
+                                            ->default('bg-base-100'),
+
+                                        Select::make('padding')
+                                            ->label('Section Padding')
+                                            ->options(static::getPaddingOptions())
+                                            ->default('py-16'),
+
+                                        Toggle::make('first_section')
+                                            ->label('First Section (Remove Top Padding)')
+                                            ->helperText('Overrides padding setting above')
+                                            ->default(false),
+                                    ])
+                                    ->columns(3),
+                            ]),
                     ]),
             ])
             ->slideOver();
@@ -219,72 +252,89 @@ class PricingBlock extends RichContentCustomBlock
 
     public static function toPreviewHtml(array $config): string
     {
-        // Provide sample data for preview
-        $sampleConfig = array_merge([
-            'section_title' => 'Choose Your Plan',
-            'section_subtitle' => 'Select the perfect plan for your needs',
-            'text_alignment' => 'center',
-            'columns' => '3',
-            'card_style' => 'shadow',
-            'spacing' => 'normal',
-            'plans' => [
-                [
-                    'name' => 'Basic',
-                    'description' => 'Perfect for individuals',
-                    'currency_symbol' => '$',
-                    'price' => '9',
-                    'billing_period' => 'month',
-                    'is_popular' => false,
-                    'button_text' => 'Get Started',
-                    'button_style' => 'outline',
-                    'features' => [
-                        ['text' => '5 Projects', 'included' => true],
-                        ['text' => '10GB Storage', 'included' => true],
-                        ['text' => 'Email Support', 'included' => true],
-                    ],
-                ],
-                [
-                    'name' => 'Professional',
-                    'description' => 'Perfect for growing teams',
-                    'currency_symbol' => '$',
-                    'price' => '29',
-                    'billing_period' => 'month',
-                    'is_popular' => true,
-                    'popular_badge_text' => 'Most Popular',
-                    'button_text' => 'Get Started',
-                    'button_style' => 'primary',
-                    'features' => [
-                        ['text' => 'Unlimited Projects', 'included' => true],
-                        ['text' => '100GB Storage', 'included' => true],
-                        ['text' => 'Priority Support', 'included' => true],
-                        ['text' => 'Advanced Analytics', 'included' => true],
-                    ],
-                ],
-                [
-                    'name' => 'Enterprise',
-                    'description' => 'For large organizations',
-                    'currency_symbol' => '$',
-                    'price' => '99',
-                    'billing_period' => 'month',
-                    'is_popular' => false,
-                    'button_text' => 'Contact Sales',
-                    'button_style' => 'secondary',
-                    'features' => [
-                        ['text' => 'Everything in Pro', 'included' => true],
-                        ['text' => 'Unlimited Storage', 'included' => true],
-                        ['text' => '24/7 Phone Support', 'included' => true],
-                        ['text' => 'Custom Integrations', 'included' => true],
-                        ['text' => 'Dedicated Manager', 'included' => true],
-                    ],
-                ],
-            ],
-        ], $config);
+        $plans = $config['plans'] ?? self::getSamplePlans();
 
-        return view('cms.blocks.pricing', $sampleConfig)->render();
+        return static::renderBlock(array_merge($config, [
+            'plans' => $plans,
+            'section_title' => $config['section_title'] ?? 'Choose Your Plan',
+            'section_subtitle' => $config['section_subtitle'] ?? 'Select the perfect plan for your needs',
+        ]));
     }
 
     public static function toHtml(array $config, array $data): string
     {
-        return view('cms.blocks.pricing', $config)->render();
+        return static::renderBlock($config);
+    }
+
+    protected static function renderBlock(array $config): string
+    {
+        return view('cms.blocks.pricing', [
+            'id' => static::getId(),
+            'section_title' => $config['section_title'] ?? '',
+            'section_subtitle' => $config['section_subtitle'] ?? '',
+            'text_alignment' => $config['text_alignment'] ?? 'text-center',
+            'plans' => $config['plans'] ?? [],
+            'columns' => $config['columns'] ?? '3',
+            'card_style' => $config['card_style'] ?? 'shadow',
+            'spacing' => $config['spacing'] ?? 'normal',
+            'background' => $config['background'] ?? 'bg-base-100',
+            'padding' => $config['padding'] ?? 'py-16',
+            'first_section' => $config['first_section'] ?? false,
+        ])->render();
+    }
+
+    private static function getSamplePlans(): array
+    {
+        return [
+            [
+                'name' => 'Basic',
+                'description' => 'Perfect for individuals',
+                'currency_symbol' => '$',
+                'price' => '9',
+                'billing_period' => 'month',
+                'is_popular' => false,
+                'button_text' => 'Get Started',
+                'button_style' => 'btn-outline btn-primary',
+                'features' => [
+                    ['text' => '5 Projects', 'included' => true],
+                    ['text' => '10GB Storage', 'included' => true],
+                    ['text' => 'Email Support', 'included' => true],
+                ],
+            ],
+            [
+                'name' => 'Professional',
+                'description' => 'Perfect for growing teams',
+                'currency_symbol' => '$',
+                'price' => '29',
+                'billing_period' => 'month',
+                'is_popular' => true,
+                'popular_badge_text' => 'Most Popular',
+                'button_text' => 'Get Started',
+                'button_style' => 'btn-primary',
+                'features' => [
+                    ['text' => 'Unlimited Projects', 'included' => true],
+                    ['text' => '100GB Storage', 'included' => true],
+                    ['text' => 'Priority Support', 'included' => true],
+                    ['text' => 'Advanced Analytics', 'included' => true],
+                ],
+            ],
+            [
+                'name' => 'Enterprise',
+                'description' => 'For large organizations',
+                'currency_symbol' => '$',
+                'price' => '99',
+                'billing_period' => 'month',
+                'is_popular' => false,
+                'button_text' => 'Contact Sales',
+                'button_style' => 'btn-secondary',
+                'features' => [
+                    ['text' => 'Everything in Pro', 'included' => true],
+                    ['text' => 'Unlimited Storage', 'included' => true],
+                    ['text' => '24/7 Phone Support', 'included' => true],
+                    ['text' => 'Custom Integrations', 'included' => true],
+                    ['text' => 'Dedicated Manager', 'included' => true],
+                ],
+            ],
+        ];
     }
 }

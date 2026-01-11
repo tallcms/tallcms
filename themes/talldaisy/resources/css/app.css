@@ -8,7 +8,6 @@
           luxury, dracula, cmyk, autumn, business, acid, lemonade, night,
           coffee, winter, dim, nord, sunset, caramellatte, abyss, silk;
 }
-@import '../../../../resources/css/blocks.css';
 
 /* Paths relative from themes/talldaisy/resources/css/app.css */
 @source '../views/**/*.blade.php';

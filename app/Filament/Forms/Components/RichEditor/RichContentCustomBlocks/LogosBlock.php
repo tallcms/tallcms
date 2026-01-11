@@ -2,6 +2,7 @@
 
 namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
+use App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\Concerns\HasDaisyUIOptions;
 use App\Models\MediaCollection;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -16,6 +17,8 @@ use Filament\Schemas\Components\Tabs\Tab;
 
 class LogosBlock extends RichContentCustomBlock
 {
+    use HasDaisyUIOptions;
+
     public static function getId(): string
     {
         return 'logos';
@@ -136,9 +139,24 @@ class LogosBlock extends RichContentCustomBlock
                                             ->label('Color on Hover')
                                             ->helperText('Show color when hovering (only if grayscale is enabled)')
                                             ->default(true),
+                                    ])
+                                    ->columns(2),
+
+                                Section::make('Appearance')
+                                    ->schema([
+                                        Select::make('background')
+                                            ->label('Background')
+                                            ->options(static::getBackgroundOptions())
+                                            ->default('bg-base-100'),
+
+                                        Select::make('padding')
+                                            ->label('Section Padding')
+                                            ->options(static::getPaddingOptions())
+                                            ->default('py-16'),
 
                                         Toggle::make('first_section')
-                                            ->label('First Section (Remove Top Spacing)')
+                                            ->label('First Section (Remove Top Padding)')
+                                            ->helperText('Overrides padding setting above')
                                             ->default(false),
                                     ])
                                     ->columns(3),
@@ -151,17 +169,10 @@ class LogosBlock extends RichContentCustomBlock
     {
         $logos = self::resolveLogos($config, forPreview: true);
 
-        return view('cms.blocks.logos', [
-            'id' => static::getId(),
-            'heading' => $config['heading'] ?? 'Trusted by leading companies',
+        return static::renderBlock(array_merge($config, [
             'logos' => $logos,
-            'layout' => $config['layout'] ?? 'grid',
-            'columns' => $config['columns'] ?? '5',
-            'size' => $config['size'] ?? 'medium',
-            'grayscale' => $config['grayscale'] ?? true,
-            'hover_color' => $config['hover_color'] ?? true,
-            'first_section' => $config['first_section'] ?? false,
-        ])->render();
+            'heading' => $config['heading'] ?? 'Trusted by leading companies',
+        ]));
     }
 
     public static function toHtml(array $config, array $data): string
@@ -173,15 +184,22 @@ class LogosBlock extends RichContentCustomBlock
             return '';
         }
 
+        return static::renderBlock(array_merge($config, ['logos' => $logos]));
+    }
+
+    protected static function renderBlock(array $config): string
+    {
         return view('cms.blocks.logos', [
             'id' => static::getId(),
             'heading' => $config['heading'] ?? '',
-            'logos' => $logos,
+            'logos' => $config['logos'] ?? [],
             'layout' => $config['layout'] ?? 'grid',
             'columns' => $config['columns'] ?? '5',
             'size' => $config['size'] ?? 'medium',
             'grayscale' => $config['grayscale'] ?? true,
             'hover_color' => $config['hover_color'] ?? true,
+            'background' => $config['background'] ?? 'bg-base-100',
+            'padding' => $config['padding'] ?? 'py-16',
             'first_section' => $config['first_section'] ?? false,
         ])->render();
     }

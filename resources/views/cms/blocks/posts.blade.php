@@ -20,6 +20,8 @@
     $showReadMore = $show_read_more ?? true;
     $emptyMessage = $empty_message ?? 'No posts found.';
     $firstSection = $first_section ?? false;
+    $sectionBackground = $background ?? 'bg-base-100';
+    $sectionPaddingClass = $padding ?? 'py-16';
     $isPreview = $isPreview ?? false;
 
     // Get parent slug - try multiple sources in order of preference:
@@ -103,7 +105,7 @@
     }
 
     // Section spacing
-    $sectionSpacing = $firstSection ? 'pt-0' : 'pt-16 sm:pt-24';
+    $sectionPadding = $firstSection ? 'pb-16' : $sectionPaddingClass;
 
     // Grid column classes
     $gridColumnClass = match($columns) {
@@ -144,7 +146,7 @@
     };
 @endphp
 
-<section class="posts-block {{ $sectionSpacing }} pb-16 sm:pb-24 bg-base-100">
+<section class="posts-block {{ $sectionPadding }} {{ $sectionBackground }}">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {{-- Active filter indicator --}}
         @if($filterCategory)

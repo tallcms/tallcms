@@ -2,6 +2,7 @@
 
 namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
 
+use App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
@@ -14,6 +15,8 @@ use Filament\Schemas\Components\Tabs\Tab;
 
 class StatsBlock extends RichContentCustomBlock
 {
+    use HasDaisyUIOptions;
+
     public static function getId(): string
     {
         return 'stats';
@@ -22,6 +25,15 @@ class StatsBlock extends RichContentCustomBlock
     public static function getLabel(): string
     {
         return 'Stats';
+    }
+
+    protected static function getStatsStyleOptions(): array
+    {
+        return [
+            'stat' => 'Minimal',
+            'stat bg-base-200 rounded-xl shadow-lg' => 'Cards with Shadow',
+            'stat bg-base-100 rounded-xl border border-base-300' => 'Bordered',
+        ];
     }
 
     public static function configureEditorAction(Action $action): Action
@@ -101,7 +113,7 @@ class StatsBlock extends RichContentCustomBlock
                         Tab::make('Layout')
                             ->icon('heroicon-m-squares-2x2')
                             ->schema([
-                                Section::make('Display Options')
+                                Section::make('Grid Layout')
                                     ->schema([
                                         Select::make('columns')
                                             ->label('Columns')
@@ -112,26 +124,33 @@ class StatsBlock extends RichContentCustomBlock
                                             ])
                                             ->default('4'),
 
-                                        Select::make('style')
-                                            ->label('Style')
-                                            ->options([
-                                                'minimal' => 'Minimal',
-                                                'cards' => 'Cards with Shadow',
-                                                'bordered' => 'Bordered',
-                                            ])
-                                            ->default('minimal'),
+                                        Select::make('stat_style')
+                                            ->label('Stat Style')
+                                            ->options(static::getStatsStyleOptions())
+                                            ->default('stat'),
 
                                         Select::make('text_alignment')
                                             ->label('Text Alignment')
-                                            ->options([
-                                                'left' => 'Left',
-                                                'center' => 'Center',
-                                            ])
-                                            ->default('center'),
+                                            ->options(static::getTextAlignmentOptions())
+                                            ->default('text-center'),
                                     ])
                                     ->columns(3),
 
-                                Section::make('Animation')
+                                Section::make('Appearance')
+                                    ->schema([
+                                        Select::make('background')
+                                            ->label('Background')
+                                            ->options(static::getBackgroundOptions())
+                                            ->default('bg-base-100'),
+
+                                        Select::make('padding')
+                                            ->label('Section Padding')
+                                            ->options(static::getPaddingOptions())
+                                            ->default('py-16'),
+                                    ])
+                                    ->columns(2),
+
+                                Section::make('Animation & Spacing')
                                     ->schema([
                                         Toggle::make('animate')
                                             ->label('Count-Up Animation')
@@ -139,7 +158,8 @@ class StatsBlock extends RichContentCustomBlock
                                             ->default(false),
 
                                         Toggle::make('first_section')
-                                            ->label('First Section (Remove Top Spacing)')
+                                            ->label('First Section (Remove Top Padding)')
+                                            ->helperText('Overrides padding setting above')
                                             ->default(false),
                                     ])
                                     ->columns(2),
@@ -152,27 +172,25 @@ class StatsBlock extends RichContentCustomBlock
     {
         $stats = $config['stats'] ?? self::getSampleStats();
 
-        return view('cms.blocks.stats', [
-            'id' => static::getId(),
-            'heading' => $config['heading'] ?? '',
-            'stats' => $stats,
-            'columns' => $config['columns'] ?? '4',
-            'style' => $config['style'] ?? 'minimal',
-            'text_alignment' => $config['text_alignment'] ?? 'center',
-            'animate' => $config['animate'] ?? false,
-            'first_section' => $config['first_section'] ?? false,
-        ])->render();
+        return static::renderBlock(array_merge($config, ['stats' => $stats]));
     }
 
     public static function toHtml(array $config, array $data): string
+    {
+        return static::renderBlock($config);
+    }
+
+    protected static function renderBlock(array $config): string
     {
         return view('cms.blocks.stats', [
             'id' => static::getId(),
             'heading' => $config['heading'] ?? '',
             'stats' => $config['stats'] ?? [],
             'columns' => $config['columns'] ?? '4',
-            'style' => $config['style'] ?? 'minimal',
-            'text_alignment' => $config['text_alignment'] ?? 'center',
+            'stat_style' => $config['stat_style'] ?? 'stat',
+            'text_alignment' => $config['text_alignment'] ?? 'text-center',
+            'background' => $config['background'] ?? 'bg-base-100',
+            'padding' => $config['padding'] ?? 'py-16',
             'animate' => $config['animate'] ?? false,
             'first_section' => $config['first_section'] ?? false,
         ])->render();

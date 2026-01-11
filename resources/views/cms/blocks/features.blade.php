@@ -6,49 +6,29 @@
         default => 'sm:grid-cols-2 lg:grid-cols-3',
     };
 
-    $styleClass = match($style ?? 'cards') {
-        'cards' => 'card bg-base-200 shadow-lg',
-        'bordered' => 'card bg-base-100 border border-base-300',
-        'minimal' => 'bg-transparent',
-        default => 'card bg-base-200 shadow-lg',
-    };
-
-    $iconSizeClass = match($icon_size ?? 'medium') {
-        'small' => 'w-8 h-8',
-        'medium' => 'w-12 h-12',
-        'large' => 'w-16 h-16',
-        default => 'w-12 h-12',
-    };
-
-    $iconContainerClass = match($icon_size ?? 'medium') {
-        'small' => 'w-12 h-12',
-        'medium' => 'w-16 h-16',
-        'large' => 'w-20 h-20',
+    $iconContainerClass = match($icon_size ?? 'w-10 h-10') {
+        'w-8 h-8' => 'w-12 h-12',
+        'w-10 h-10' => 'w-16 h-16',
+        'w-12 h-12' => 'w-20 h-20',
         default => 'w-16 h-16',
     };
 
-    $textAlignClass = match($text_alignment ?? 'center') {
-        'left' => 'text-left',
-        'center' => 'text-center',
-        default => 'text-center',
-    };
-
     $isIconLeft = ($icon_position ?? 'top') === 'left';
-    $sectionSpacing = ($first_section ?? false) ? 'pt-0' : 'pt-16 sm:pt-24';
+    $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
 @endphp
 
-<section class="features-block {{ $sectionSpacing }} pb-16 sm:pb-24 bg-base-100">
+<section class="features-block {{ $sectionPadding }} bg-base-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {{-- Section Header --}}
         @if(!empty($heading) || !empty($subheading))
-            <div class="{{ $textAlignClass }} mb-12 sm:mb-16">
+            <div class="{{ $text_alignment ?? 'text-center' }} mb-12 sm:mb-16">
                 @if(!empty($heading))
                     <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-base-content">
                         {{ $heading }}
                     </h2>
                 @endif
                 @if(!empty($subheading))
-                    <p class="mt-4 text-lg sm:text-xl text-base-content/70 max-w-3xl {{ $textAlignClass === 'text-center' ? 'mx-auto' : '' }}">
+                    <p class="mt-4 text-lg sm:text-xl text-base-content/70 max-w-3xl {{ ($text_alignment ?? 'text-center') === 'text-center' ? 'mx-auto' : '' }}">
                         {{ $subheading }}
                     </p>
                 @endif
@@ -70,9 +50,9 @@
 
                     @if($hasLink)
                         <a href="{{ e($feature['link']) }}"
-                           class="{{ $styleClass }} {{ $textAlignClass }} transition-all duration-200 hover:shadow-xl hover:-translate-y-1 cursor-pointer {{ $isIconLeft ? 'card-side' : '' }}">
+                           class="{{ $card_style ?? 'card bg-base-100 shadow-md' }} {{ $text_alignment ?? 'text-center' }} transition-all duration-200 hover:shadow-xl hover:-translate-y-1 cursor-pointer {{ $isIconLeft ? 'card-side' : '' }}">
                     @else
-                        <div class="{{ $styleClass }} {{ $textAlignClass }} transition-all duration-200 {{ $isIconLeft ? 'card-side' : '' }}">
+                        <div class="{{ $card_style ?? 'card bg-base-100 shadow-md' }} {{ $text_alignment ?? 'text-center' }} transition-all duration-200 {{ $isIconLeft ? 'card-side' : '' }}">
                     @endif
 
                         <div class="card-body {{ $isIconLeft ? 'flex-row items-start gap-4' : '' }}">
@@ -82,18 +62,18 @@
                                     @if($isValidHeroicon)
                                         <x-dynamic-component
                                             :component="$iconName"
-                                            class="{{ $iconSizeClass }} text-primary"
+                                            class="{{ $icon_size ?? 'w-10 h-10' }} text-primary"
                                         />
                                     @elseif($iconType === 'image' && !empty($feature['icon_image']))
                                         <img
                                             src="{{ Storage::disk(cms_media_disk())->url($feature['icon_image']) }}"
                                             alt="{{ $feature['title'] ?? '' }}"
-                                            class="{{ $iconSizeClass }} object-contain"
+                                            class="{{ $icon_size ?? 'w-10 h-10' }} object-contain"
                                         >
                                     @elseif($iconType === 'emoji' && !empty($feature['emoji']))
                                         <span class="text-3xl">{{ $feature['emoji'] }}</span>
                                     @else
-                                        <x-heroicon-o-star class="{{ $iconSizeClass }} text-primary" />
+                                        <x-heroicon-o-star class="{{ $icon_size ?? 'w-10 h-10' }} text-primary" />
                                     @endif
                                 </div>
                             </div>
@@ -101,7 +81,7 @@
                             {{-- Content --}}
                             <div class="{{ $isIconLeft ? 'flex-1' : '' }}">
                                 @if(!empty($feature['title']))
-                                    <h3 class="card-title text-lg font-semibold text-base-content {{ $textAlignClass === 'text-center' && !$isIconLeft ? 'justify-center' : '' }}">
+                                    <h3 class="card-title text-lg font-semibold text-base-content {{ ($text_alignment ?? 'text-center') === 'text-center' && !$isIconLeft ? 'justify-center' : '' }}">
                                         {{ $feature['title'] }}
                                     </h3>
                                 @endif
@@ -113,7 +93,7 @@
                                 @endif
 
                                 @if($hasLink)
-                                    <div class="card-actions {{ $textAlignClass === 'text-center' && !$isIconLeft ? 'justify-center' : '' }} mt-4">
+                                    <div class="card-actions {{ ($text_alignment ?? 'text-center') === 'text-center' && !$isIconLeft ? 'justify-center' : '' }} mt-4">
                                         <span class="link link-primary link-hover inline-flex items-center text-sm font-medium">
                                             Learn more
                                             <x-heroicon-m-arrow-right class="w-4 h-4 ml-1" />
