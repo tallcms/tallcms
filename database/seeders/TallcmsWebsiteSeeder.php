@@ -319,7 +319,7 @@ class TallcmsWebsiteSeeder extends Seeder
                             [
                                 'name' => 'Pro',
                                 'description' => 'Advanced blocks and priority support',
-                                'price' => '99',
+                                'price' => '30',
                                 'currency' => '$',
                                 'billing_period' => '/year',
                                 'is_popular' => true,
@@ -668,7 +668,7 @@ class TallcmsWebsiteSeeder extends Seeder
                             ],
                             [
                                 'name' => 'Enterprise',
-                                'price' => '99',
+                                'price' => '30',
                                 'currency' => '$',
                                 'billing_period' => '/month',
                                 'features' => [
@@ -898,7 +898,7 @@ class TallcmsWebsiteSeeder extends Seeder
                     'values' => [
                         'title' => 'Ready to Unlock All Blocks?',
                         'description' => 'Get TallCMS Pro and access all 24 blocks, priority support, and exclusive updates.',
-                        'button_text' => 'Get TallCMS Pro - $99/year',
+                        'button_text' => 'Get TallCMS Pro - $30/year',
                         'button_link_type' => 'custom',
                         'button_url' => '/pricing',
                         'button_variant' => 'btn-primary',
@@ -962,7 +962,7 @@ class TallcmsWebsiteSeeder extends Seeder
                             [
                                 'name' => 'Pro',
                                 'description' => 'Advanced blocks and priority support',
-                                'price' => '99',
+                                'price' => '30',
                                 'currency' => '$',
                                 'billing_period' => '/year',
                                 'is_popular' => true,
