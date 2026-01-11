@@ -11,74 +11,87 @@
     $fieldLabel = $field['label'] ?? $field['name'];
     $required = $field['required'] ?? false;
     $options = $field['options'] ?? [];
-
-    // Build common attributes
-    $baseClass = 'border-gray-300' . ($preview ? ' bg-gray-50' : '');
 @endphp
 
-<div>
-    <x-form.label
-        :for="$fieldId"
-        :required="$required"
-        :style="$preview ? '' : 'color: var(--block-text-color, #374151);'"
-    >
-        {{ $fieldLabel }}
-    </x-form.label>
+<div class="form-control w-full">
+    <label for="{{ $fieldId }}" class="label">
+        <span class="label-text">
+            {{ $fieldLabel }}
+            @if($required)
+                <span class="text-error">*</span>
+            @endif
+        </span>
+    </label>
 
     @if($fieldType === 'textarea')
         @if($preview)
-            <x-form.textarea
-                :id="$fieldId"
+            <textarea
+                id="{{ $fieldId }}"
+                class="textarea textarea-bordered w-full bg-base-200"
                 disabled
                 placeholder="Text area input..."
-                :class="$baseClass"
-            />
+            ></textarea>
         @else
-            <x-form.textarea
-                :id="$fieldId"
-                :required="$required"
+            <textarea
+                id="{{ $fieldId }}"
+                class="textarea textarea-bordered w-full"
                 x-model="formData.{{ $fieldName }}"
-                x-bind:class="errors.{{ $fieldName }} ? 'border-red-500' : 'border-gray-300'"
-            />
+                x-bind:class="errors.{{ $fieldName }} ? 'textarea-error' : ''"
+                @if($required) required @endif
+            ></textarea>
         @endif
     @elseif($fieldType === 'select')
         @if($preview)
-            <x-form.select
-                :id="$fieldId"
-                :options="$options"
+            <select
+                id="{{ $fieldId }}"
+                class="select select-bordered w-full bg-base-200"
                 disabled
-                :class="$baseClass"
-            />
+            >
+                <option value="">Select...</option>
+                @foreach($options as $option)
+                    <option value="{{ $option }}">{{ $option }}</option>
+                @endforeach
+            </select>
         @else
-            <x-form.select
-                :id="$fieldId"
-                :options="$options"
-                :required="$required"
+            <select
+                id="{{ $fieldId }}"
+                class="select select-bordered w-full"
                 x-model="formData.{{ $fieldName }}"
-                x-bind:class="errors.{{ $fieldName }} ? 'border-red-500' : 'border-gray-300'"
-            />
+                x-bind:class="errors.{{ $fieldName }} ? 'select-error' : ''"
+                @if($required) required @endif
+            >
+                <option value="">Select...</option>
+                @foreach($options as $option)
+                    <option value="{{ $option }}">{{ $option }}</option>
+                @endforeach
+            </select>
         @endif
     @else
         @if($preview)
-            <x-form.input
-                :type="$fieldType"
-                :id="$fieldId"
+            <input
+                type="{{ $fieldType }}"
+                id="{{ $fieldId }}"
+                class="input input-bordered w-full bg-base-200"
                 disabled
-                :placeholder="$fieldType === 'email' ? 'email@example.com' : ($fieldType === 'tel' ? '(555) 123-4567' : 'Enter ' . strtolower($fieldLabel) . '...')"
-                :class="$baseClass"
-            />
+                placeholder="{{ $fieldType === 'email' ? 'email@example.com' : ($fieldType === 'tel' ? '(555) 123-4567' : 'Enter ' . strtolower($fieldLabel) . '...') }}"
+            >
         @else
-            <x-form.input
-                :type="$fieldType"
-                :id="$fieldId"
-                :required="$required"
+            <input
+                type="{{ $fieldType }}"
+                id="{{ $fieldId }}"
+                class="input input-bordered w-full"
                 x-model="formData.{{ $fieldName }}"
-                x-bind:class="errors.{{ $fieldName }} ? 'border-red-500' : 'border-gray-300'"
-            />
+                x-bind:class="errors.{{ $fieldName }} ? 'input-error' : ''"
+                @if($required) required @endif
+            >
         @endif
     @endif
 
     @if(!$preview)
-        <x-form.error :field="$fieldName" />
+        <template x-if="errors.{{ $fieldName }}">
+            <label class="label">
+                <span class="label-text-alt text-error" x-text="errors.{{ $fieldName }}"></span>
+            </label>
+        </template>
     @endif
 </div>
