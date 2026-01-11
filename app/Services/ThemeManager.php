@@ -734,21 +734,27 @@ class ThemeManager
 
     /**
      * Build theme assets using npm
+     *
+     * Themes share the root project's node_modules via NODE_PATH.
+     * This eliminates duplicate dependencies and ensures consistent versions.
      */
     public function buildThemeAssets(Theme $theme): bool
     {
         $themePath = $theme->path;
+        $rootNodeModules = base_path('node_modules');
 
-        // Check if node_modules exists, if not run npm install
-        if (! File::exists($themePath.'/node_modules')) {
-            $result = Process::path($themePath)->run('npm install');
-            if ($result->failed()) {
-                return false;
-            }
+        // Ensure root node_modules exists
+        if (! File::exists($rootNodeModules)) {
+            Log::warning("Root node_modules not found. Run 'npm install' from project root.");
+
+            return false;
         }
 
-        // Run build command
-        $result = Process::path($themePath)->run('npm run build');
+        // Run build command with NODE_PATH pointing to root node_modules
+        // This allows themes to share dependencies with the main project
+        $result = Process::path($themePath)
+            ->env(['NODE_PATH' => $rootNodeModules])
+            ->run('npm run build');
 
         return $result->successful();
     }

@@ -20,11 +20,13 @@
 # Installer lock
 installer.lock
 
-# User-created themes (keep only default theme)
+# User-created themes (keep official themes only)
 /themes/*
 !/themes/default/
+!/themes/talldaisy/
 /public/themes/*
 !/public/themes/default
+!/public/themes/talldaisy
 Homestead.json
 Homestead.yaml
 Thumbs.db

@@ -283,24 +283,20 @@ class MakeTheme extends Command
 
     protected function createPackageJson(string $themePath, array $themeInfo): void
     {
+        // Themes share the root project's node_modules via NODE_PATH
+        // This eliminates duplicate dependencies and ensures consistent versions
         $packageJson = [
             'name' => "tallcms-theme-{$themeInfo['slug']}",
             'version' => $themeInfo['version'],
             'description' => $themeInfo['description'],
             'author' => $themeInfo['author'],
+            'private' => true,
             'type' => 'module',
             'scripts' => [
-                'dev' => 'vite',
-                'build' => 'vite build',
+                'dev' => 'NODE_PATH=../../node_modules vite',
+                'build' => 'NODE_PATH=../../node_modules vite build',
             ],
-            'devDependencies' => [
-                '@tailwindcss/typography' => '^0.5.16',
-                '@tailwindcss/vite' => '^4.1.18',
-                'daisyui' => '^5.0.0',
-                'laravel-vite-plugin' => '^2.0.0',
-                'tailwindcss' => '^4.1.18',
-                'vite' => '^7.0.7',
-            ],
+            'note' => "This theme uses the root project's node_modules. Run 'npm install' from the project root, not from this directory.",
         ];
 
         File::put("{$themePath}/package.json", json_encode($packageJson, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));

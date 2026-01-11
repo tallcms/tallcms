@@ -10,8 +10,7 @@ use Illuminate\Support\Facades\File;
 class ThemeBuild extends Command
 {
     protected $signature = 'theme:build {slug? : The theme slug to build (optional, builds active theme if not specified)}
-                            {--force : Force rebuild even if assets exist}
-                            {--install : Install theme dependencies first}';
+                            {--force : Force rebuild even if assets exist}';
 
     protected $description = 'Build TallCMS theme assets';
 
@@ -25,7 +24,6 @@ class ThemeBuild extends Command
     {
         $slug = $this->argument('slug');
         $force = $this->option('force');
-        $install = $this->option('install');
 
         // Determine which theme to build
         if ($slug) {
@@ -40,10 +38,10 @@ class ThemeBuild extends Command
             $this->info("Building active theme: {$theme->name}");
         }
 
-        return $this->buildTheme($theme, $force, $install);
+        return $this->buildTheme($theme, $force);
     }
 
-    protected function buildTheme(Theme $theme, bool $force = false, bool $install = false): int
+    protected function buildTheme(Theme $theme, bool $force = false): int
     {
         $this->info("Building theme: {$theme->name} ({$theme->slug})");
 
@@ -63,19 +61,19 @@ class ThemeBuild extends Command
             return 1;
         }
 
-        // Install dependencies if requested or node_modules doesn't exist
-        if ($install || ! File::exists($theme->path.'/node_modules')) {
-            $this->line('Installing dependencies...');
-            if (! $this->installDependencies($theme)) {
-                return 1;
-            }
+        // Check if root node_modules exists
+        if (! File::exists(base_path('node_modules'))) {
+            $this->error('Root node_modules not found!');
+            $this->line("Run 'npm install' from the project root first.");
+
+            return 1;
         }
 
         // Create symlinks for public assets
         $this->line('Publishing theme assets...');
         $this->themeManager->publishThemeAssets($theme);
 
-        // Build assets
+        // Build assets (uses root node_modules via NODE_PATH)
         $this->line('Building theme assets...');
         if ($this->themeManager->buildThemeAssets($theme)) {
             $this->info("✅ Theme '{$theme->name}' built successfully!");
@@ -90,35 +88,6 @@ class ThemeBuild extends Command
         $this->line("Check the theme's build configuration and try again.");
 
         return 1;
-    }
-
-    protected function installDependencies(Theme $theme): bool
-    {
-        $this->withProgressBar(range(1, 3), function ($step) {
-            match ($step) {
-                1 => $this->line('  Checking package.json...'),
-                2 => $this->line('  Running npm install...'),
-                3 => $this->line('  Finalizing installation...'),
-            };
-            sleep(1);
-        });
-
-        $this->newLine(2);
-
-        // Run npm install in theme directory
-        $process = \Illuminate\Support\Facades\Process::path($theme->path)->run('npm install');
-
-        if ($process->failed()) {
-            $this->error('Failed to install dependencies!');
-            $this->line('Error output:');
-            $this->line($process->errorOutput());
-
-            return false;
-        }
-
-        $this->info('Dependencies installed successfully!');
-
-        return true;
     }
 
     protected function showBuildInfo(Theme $theme): void
