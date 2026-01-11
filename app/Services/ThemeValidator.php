@@ -117,9 +117,13 @@ class ThemeValidator
         // Check if theme is prebuilt and has manifest with valid asset references
         $isPrebuilt = $themeData['compatibility']['prebuilt'] ?? true;
         if ($isPrebuilt) {
-            $manifestPath = "{$theme->path}/public/build/manifest.json";
+            // Vite 7 puts manifest in .vite/ subdirectory, Vite 6 and earlier put it directly in build/
+            $vite7ManifestPath = "{$theme->path}/public/build/.vite/manifest.json";
+            $legacyManifestPath = "{$theme->path}/public/build/manifest.json";
+            $manifestPath = File::exists($vite7ManifestPath) ? $vite7ManifestPath : $legacyManifestPath;
+
             if (! File::exists($manifestPath)) {
-                $errors[] = 'Theme is marked as prebuilt but public/build/manifest.json is missing. Run "npm run build" in the theme directory.';
+                $errors[] = 'Theme assets have not been built. Run "npm run build" in the theme directory.';
             } else {
                 // Verify files referenced in manifest actually exist
                 $manifestErrors = $this->validateManifestFiles($theme->path, $manifestPath);
@@ -576,7 +580,11 @@ class ThemeValidator
                 return ['Manifest must be an associative array with entry keys'];
             }
 
-            $buildPath = dirname($manifestPath);
+            // Vite 7 puts manifest in .vite/ but assets are still in build/
+            $manifestDir = dirname($manifestPath);
+            $buildPath = str_ends_with($manifestDir, '.vite')
+                ? dirname($manifestDir)
+                : $manifestDir;
 
             // Check for expected entry points
             foreach ($this->expectedManifestEntries as $expectedEntry) {

@@ -508,9 +508,11 @@ class Theme
      */
     public function isBuilt(): bool
     {
-        $manifestPath = $this->path.'/public/build/manifest.json';
+        // Vite 7 puts manifest in .vite/ subdirectory, Vite 6 and earlier put it directly in build/
+        $vite7ManifestPath = $this->path.'/public/build/.vite/manifest.json';
+        $legacyManifestPath = $this->path.'/public/build/manifest.json';
 
-        return File::exists($manifestPath);
+        return File::exists($vite7ManifestPath) || File::exists($legacyManifestPath);
     }
 
     /**
