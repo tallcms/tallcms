@@ -146,9 +146,34 @@ class TallcmsWebsiteSeeder extends Seeder
         $this->command->info('Created 8 pages');
     }
 
+    /**
+     * Wrap content blocks in Tiptap document structure
+     */
+    protected function wrapContent(array $blocks): array
+    {
+        // Transform blocks to correct Tiptap/RichEditor format
+        $transformedBlocks = array_map(function ($block) {
+            if ($block['type'] === 'customBlock' && isset($block['data'])) {
+                return [
+                    'type' => 'customBlock',
+                    'attrs' => [
+                        'id' => $block['data']['type'],
+                        'config' => $block['data']['values'] ?? [],
+                    ],
+                ];
+            }
+            return $block;
+        }, $blocks);
+
+        return [
+            'type' => 'doc',
+            'content' => $transformedBlocks,
+        ];
+    }
+
     protected function getHomepageContent(): array
     {
-        return [
+        return $this->wrapContent([
             // Hero Block
             [
                 'type' => 'customBlock',
@@ -339,12 +364,12 @@ class TallcmsWebsiteSeeder extends Seeder
                     ],
                 ],
             ],
-        ];
+        ]);
     }
 
     protected function getFeaturesContent(): array
     {
-        return [
+        return $this->wrapContent([
             // Hero
             [
                 'type' => 'customBlock',
@@ -449,12 +474,12 @@ class TallcmsWebsiteSeeder extends Seeder
                     ],
                 ],
             ],
-        ];
+        ]);
     }
 
     protected function getBlocksShowcaseContent(): array
     {
-        return [
+        return $this->wrapContent([
             // Hero
             [
                 'type' => 'customBlock',
@@ -726,12 +751,12 @@ class TallcmsWebsiteSeeder extends Seeder
                     ],
                 ],
             ],
-        ];
+        ]);
     }
 
     protected function getPricingContent(): array
     {
-        return [
+        return $this->wrapContent([
             // Hero
             [
                 'type' => 'customBlock',
@@ -868,12 +893,12 @@ class TallcmsWebsiteSeeder extends Seeder
                     ],
                 ],
             ],
-        ];
+        ]);
     }
 
     protected function getDocsContent(): array
     {
-        return [
+        return $this->wrapContent([
             // Hero
             [
                 'type' => 'customBlock',
@@ -966,12 +991,12 @@ class TallcmsWebsiteSeeder extends Seeder
                     ],
                 ],
             ],
-        ];
+        ]);
     }
 
     protected function getAboutContent(): array
     {
-        return [
+        return $this->wrapContent([
             // Hero
             [
                 'type' => 'customBlock',
@@ -1104,12 +1129,12 @@ class TallcmsWebsiteSeeder extends Seeder
                     ],
                 ],
             ],
-        ];
+        ]);
     }
 
     protected function getContactContent(): array
     {
-        return [
+        return $this->wrapContent([
             // Hero
             [
                 'type' => 'customBlock',
@@ -1175,12 +1200,12 @@ class TallcmsWebsiteSeeder extends Seeder
                     ],
                 ],
             ],
-        ];
+        ]);
     }
 
     protected function getBlogContent(): array
     {
-        return [
+        return $this->wrapContent([
             // Hero
             [
                 'type' => 'customBlock',
@@ -1214,7 +1239,7 @@ class TallcmsWebsiteSeeder extends Seeder
                     ],
                 ],
             ],
-        ];
+        ]);
     }
 
     protected function createBlogPosts(): void
@@ -1225,7 +1250,7 @@ class TallcmsWebsiteSeeder extends Seeder
             [
                 'title' => 'Introducing TallCMS 1.1: DaisyUI Integration',
                 'excerpt' => 'We\'re excited to announce TallCMS 1.1, featuring full DaisyUI integration with 30+ themes and semantic styling across all blocks.',
-                'content' => [
+                'content' => $this->wrapContent([
                     [
                         'type' => 'customBlock',
                         'data' => [
@@ -1237,7 +1262,7 @@ class TallcmsWebsiteSeeder extends Seeder
                             ],
                         ],
                     ],
-                ],
+                ]),
                 'meta_title' => 'Introducing TallCMS 1.1: DaisyUI Integration',
                 'meta_description' => 'TallCMS 1.1 brings full DaisyUI integration with 30+ themes and semantic styling.',
                 'status' => ContentStatus::Published->value,
@@ -1253,7 +1278,7 @@ class TallcmsWebsiteSeeder extends Seeder
             [
                 'title' => 'Getting Started with TallCMS in 5 Minutes',
                 'excerpt' => 'Learn how to install TallCMS and create your first page in just 5 minutes.',
-                'content' => [
+                'content' => $this->wrapContent([
                     [
                         'type' => 'customBlock',
                         'data' => [
@@ -1265,7 +1290,7 @@ class TallcmsWebsiteSeeder extends Seeder
                             ],
                         ],
                     ],
-                ],
+                ]),
                 'meta_title' => 'Getting Started with TallCMS in 5 Minutes',
                 'meta_description' => 'A quick-start guide to installing TallCMS and creating your first page.',
                 'status' => ContentStatus::Published->value,
@@ -1280,7 +1305,7 @@ class TallcmsWebsiteSeeder extends Seeder
             [
                 'title' => 'Why We Chose the TALL Stack for TallCMS',
                 'excerpt' => 'The story behind our decision to build TallCMS on Tailwind, Alpine.js, Laravel, and Livewire.',
-                'content' => [
+                'content' => $this->wrapContent([
                     [
                         'type' => 'customBlock',
                         'data' => [
@@ -1292,7 +1317,7 @@ class TallcmsWebsiteSeeder extends Seeder
                             ],
                         ],
                     ],
-                ],
+                ]),
                 'meta_title' => 'Why We Chose the TALL Stack for TallCMS',
                 'meta_description' => 'Learn why TallCMS is built on Tailwind, Alpine.js, Laravel, and Livewire.',
                 'status' => ContentStatus::Published->value,

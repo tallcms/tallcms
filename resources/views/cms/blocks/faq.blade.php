@@ -88,23 +88,21 @@
 
     {{-- Schema.org FAQPage Structured Data --}}
     @if(($show_schema ?? true) && !empty($items))
-        <script type="application/ld+json">
-            {
-                "@context": "https://schema.org",
-                "@type": "FAQPage",
-                "mainEntity": [
-                    @foreach($items as $index => $item)
-                    {
-                        "@type": "Question",
-                        "name": @json($item['question']),
-                        "acceptedAnswer": {
-                            "@type": "Answer",
-                            "text": @json($item['answer'])
-                        }
-                    }@if(!$loop->last),@endif
-                    @endforeach
-                ]
-            }
-        </script>
+        @php
+            $schemaItems = array_map(fn($item) => [
+                '@type' => 'Question',
+                'name' => $item['question'],
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => $item['answer'],
+                ],
+            ], $items);
+            $schema = [
+                '@context' => 'https://schema.org',
+                '@type' => 'FAQPage',
+                'mainEntity' => $schemaItems,
+            ];
+        @endphp
+        <script type="application/ld+json">{!! json_encode($schema, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) !!}</script>
     @endif
 </section>
