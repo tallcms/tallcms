@@ -56,12 +56,12 @@ If you're contributing or developing locally:
 ```bash
 git clone https://github.com/tallcms/tallcms.git
 cd tallcms
-composer setup          # Install deps, migrate, build assets
-php artisan tallcms:setup   # Create roles, permissions, admin user
+composer install
+npm install && npm run build
 composer dev            # Start dev server with hot reload
 ```
 
-Visit `http://localhost:8000` to access your site.
+Visit `http://localhost:8000` to complete the web installer, then access your site.
 
 ## Built-in Blocks
 
