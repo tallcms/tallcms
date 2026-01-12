@@ -1,7 +1,0 @@
-.fi-dropdown-list {
-    @apply grid gap-px p-1;
-
-    & > .fi-grid {
-        @apply overflow-x-hidden;
-    }
-}

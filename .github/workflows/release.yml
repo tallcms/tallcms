@@ -1,0 +1,123 @@
+name: Build Release Package
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, json, bcmath, curl, zip, gd, sqlite3
+          coverage: none
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies (production)
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+      - name: Install NPM dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Build default theme
+        working-directory: themes/default
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build talldaisy theme
+        working-directory: themes/talldaisy
+        run: |
+          npm ci
+          npm run build
+
+      - name: Prepare release directory
+        run: |
+          mkdir -p release
+
+          # Copy all files except excluded ones
+          rsync -av --progress . release/ \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='release' \
+            --exclude='node_modules' \
+            --exclude='themes/*/node_modules' \
+            --exclude='tests' \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='phpunit.xml' \
+            --exclude='.phpunit.cache' \
+            --exclude='storage/logs/*.log' \
+            --exclude='storage/framework/cache/data/*' \
+            --exclude='storage/framework/sessions/*' \
+            --exclude='storage/framework/views/*' \
+            --exclude='*.zip' \
+            --exclude='.DS_Store' \
+            --exclude='Thumbs.db'
+
+      - name: Create empty directories and placeholder files
+        run: |
+          cd release
+
+          # Ensure storage directories exist with .gitkeep
+          mkdir -p storage/app/public
+          mkdir -p storage/framework/cache/data
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/framework/views
+          mkdir -p storage/logs
+          mkdir -p bootstrap/cache
+
+          touch storage/app/.gitkeep
+          touch storage/app/public/.gitkeep
+          touch storage/framework/.gitkeep
+          touch storage/framework/cache/.gitkeep
+          touch storage/framework/cache/data/.gitkeep
+          touch storage/framework/sessions/.gitkeep
+          touch storage/framework/views/.gitkeep
+          touch storage/logs/.gitkeep
+          touch bootstrap/cache/.gitkeep
+
+      - name: Get version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create ZIP archive
+        run: |
+          cd release
+          zip -r ../tallcms-${{ steps.version.outputs.version }}.zip .
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: tallcms-${{ steps.version.outputs.version }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

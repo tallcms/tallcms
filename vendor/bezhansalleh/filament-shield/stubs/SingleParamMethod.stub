@@ -1,5 +1,0 @@
-
-    public function {{ methodName }}({{ auth_model_name }} ${{ auth_model_variable }}): bool
-    {
-        return ${{ auth_model_variable }}->can('{{ permission }}');
-    }
