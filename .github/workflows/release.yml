@@ -63,8 +63,6 @@ jobs:
             --exclude='.git' \
             --exclude='.github' \
             --exclude='release' \
-            --exclude='node_modules' \
-            --exclude='themes/*/node_modules' \
             --exclude='tests' \
             --exclude='.env' \
             --exclude='.env.*' \
