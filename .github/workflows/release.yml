@@ -48,12 +48,6 @@ jobs:
       - name: Build frontend assets
         run: npm run build
 
-      - name: Build default theme
-        working-directory: themes/default
-        run: |
-          npm ci
-          npm run build
-
       - name: Build talldaisy theme
         working-directory: themes/talldaisy
         run: |
