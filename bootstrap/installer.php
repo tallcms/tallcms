@@ -138,11 +138,6 @@ if (! function_exists('createMinimalEnvForInstaller')) {
     }
 }
 
-// Skip installer logic for CLI commands (artisan)
-if (php_sapi_name() === 'cli' || defined('STDIN')) {
-    return;
-}
-
 // Check if we're in installer mode
 $requestUri = $_SERVER['REQUEST_URI'] ?? '';
 $isInstallerRequest = str_starts_with($requestUri, '/install');
