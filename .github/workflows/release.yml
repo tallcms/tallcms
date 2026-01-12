@@ -51,7 +51,7 @@ jobs:
       - name: Build talldaisy theme
         working-directory: themes/talldaisy
         run: |
-          npm ci
+          npm install
           npm run build
 
       - name: Prepare release directory
