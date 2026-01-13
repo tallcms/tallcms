@@ -4,6 +4,19 @@ This roadmap outlines our vision for TallCMS development. We're committed to bui
 
 > **Note:** This roadmap reflects our current plans and priorities. Items may be added, removed, or reordered based on community feedback and technical considerations.
 
+## Quick Navigation
+
+- [v1.0 - Foundation](#v10---foundation) ✅
+- [v1.1 - UI Polish](#v11---ui-polish-current-release) 🟢
+- [v1.2 - Content & SEO](#v12---content--seo) 🔜
+- [v1.3 - Multilingual](#v13---multilingual-support) 📋
+- [v1.4 - Developer Experience](#v14---developer-experience) 📋
+- [v1.5 - AI-Powered Content](#v15---ai-powered-content-creation) 📋
+- [v1.6 - Community & Users](#v16---community--users) 📋
+- [v1.7 - Marketplace](#v17---marketplace-integration) 📋
+- [Future Considerations](#future-considerations)
+- [How to Contribute](#how-to-contribute)
+
 ---
 
 ## v1.0 - Foundation
@@ -203,7 +216,7 @@ Focus: Leverage AI to help creators produce better content faster.
 - [ ] Related content suggestions
 
 ### AI Configuration
-- [ ] Bring your own API key (OpenAI, Anthropic, etc.)
+- [ ] Bring your own API key (OpenAI, Anthropic, Google Gemini)
 - [ ] Custom AI prompts
 - [ ] Usage limits and monitoring
 - [ ] Privacy controls (opt-in/opt-out)
@@ -308,14 +321,23 @@ We welcome community input on our roadmap:
 
 | Version | Status | Theme | Highlights |
 |---------|--------|-------|------------|
-| v1.0 | Released | Foundation | Core CMS, Themes, Plugins, Permissions |
-| v1.1 | Current | UI Polish | daisyUI 5, semantic CSS classes |
-| v1.2 | Next | Content & SEO | Blog frontend, RSS, Search, Sitemap |
-| v1.3 | Planned | Global | Multilingual support, RTL |
-| v1.4 | Planned | Developers | REST API, CLI tools, Webhooks |
-| v1.5 | Planned | AI | Content generation, Auto-optimization |
-| v1.6 | Planned | Community | Comments, User profiles, Analytics |
-| v1.7 | Planned | Ecosystem | Marketplace integration |
+| v1.0 | ✅ Released | Foundation | Core CMS, Themes, Plugins, Permissions |
+| v1.1 | 🟢 Current | UI Polish | daisyUI 5, semantic CSS classes |
+| v1.2 | 🔜 Next | Content & SEO | Blog frontend, RSS, Search, Sitemap |
+| v1.3 | 📋 Planned | Global | Multilingual support, RTL |
+| v1.4 | 📋 Planned | Developers | REST API, CLI tools, Webhooks |
+| v1.5 | 📋 Planned | AI | Content generation, Auto-optimization |
+| v1.6 | 📋 Planned | Community | Comments, User profiles, Analytics |
+| v1.7 | 📋 Planned | Ecosystem | Marketplace integration |
+
+---
+
+## Community
+
+- 🌐 **Website**: [tallcms.com](https://tallcms.com)
+- 💬 **Discord**: [Join our community](https://discord.gg/tallcms)
+- 🐙 **GitHub**: [github.com/tallcms/tallcms](https://github.com/tallcms/tallcms)
+- 🐦 **Twitter/X**: [@tallcms](https://twitter.com/tallcms)
 
 ---
 
