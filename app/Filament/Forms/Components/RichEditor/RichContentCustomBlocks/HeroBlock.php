@@ -140,6 +140,14 @@ class HeroBlock extends RichContentCustomBlock
                                             ->placeholder('https://example.com or /contact')
                                             ->visible(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom']))
                                             ->columnSpanFull(),
+
+                                        TextInput::make('button_microcopy')
+                                            ->label('Microcopy')
+                                            ->maxLength(50)
+                                            ->placeholder('e.g., No terminal required')
+                                            ->helperText('Small supporting text below button to reduce hesitation')
+                                            ->visible(fn (Get $get): bool => filled($get('button_text')))
+                                            ->columnSpanFull(),
                                     ])
                                     ->columns(2)
                                     ->compact(),
@@ -175,6 +183,14 @@ class HeroBlock extends RichContentCustomBlock
                                             ->label('URL')
                                             ->placeholder('https://example.com')
                                             ->visible(fn (Get $get): bool => in_array($get('secondary_button_link_type'), ['external', 'custom']) && filled($get('secondary_button_text')))
+                                            ->columnSpanFull(),
+
+                                        TextInput::make('secondary_button_microcopy')
+                                            ->label('Microcopy')
+                                            ->maxLength(50)
+                                            ->placeholder('e.g., Open source on GitHub')
+                                            ->helperText('Small supporting text below button')
+                                            ->visible(fn (Get $get): bool => filled($get('secondary_button_text')))
                                             ->columnSpanFull(),
                                     ])
                                     ->columns(2)
@@ -287,9 +303,11 @@ class HeroBlock extends RichContentCustomBlock
             'button_text' => $config['button_text'] ?? null,
             'button_url' => $buttonUrl,
             'button_classes' => $buttonClasses,
+            'button_microcopy' => $config['button_microcopy'] ?? null,
             'secondary_button_text' => $config['secondary_button_text'] ?? null,
             'secondary_button_url' => $secondaryButtonUrl,
             'secondary_button_classes' => $secondaryClasses,
+            'secondary_button_microcopy' => $config['secondary_button_microcopy'] ?? null,
             'background_image' => $config['background_image'] ?? null,
             'parallax_effect' => $config['parallax_effect'] ?? true,
             'overlay_opacity' => ($config['overlay_opacity'] ?? 40) / 100,

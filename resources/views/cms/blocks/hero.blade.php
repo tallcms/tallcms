@@ -57,19 +57,29 @@
             {{-- Call to Action Buttons --}}
             @if(BlockLinkResolver::shouldRenderButton(get_defined_vars()))
                 <div class="flex flex-col sm:flex-row gap-4 {{ $buttonAlignClass }}">
-                    {{-- Primary Button --}}
-                    <a href="{{ e($button_url) }}" class="{{ $button_classes ?? 'btn btn-primary btn-lg' }} gap-2">
-                        {{ $button_text }}
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                        </svg>
-                    </a>
-
-                    {{-- Secondary Button --}}
-                    @if(BlockLinkResolver::shouldRenderButton(get_defined_vars(), 'secondary_button'))
-                        <a href="{{ e($secondary_button_url) }}" class="{{ $secondary_button_classes ?? 'btn btn-ghost text-white btn-lg' }}">
-                            {{ $secondary_button_text }}
+                    {{-- Primary Button with Microcopy --}}
+                    <div class="flex flex-col items-center gap-2">
+                        <a href="{{ e($button_url) }}" class="{{ $button_classes ?? 'btn btn-primary btn-lg' }} gap-2">
+                            {{ $button_text }}
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                            </svg>
                         </a>
+                        @if($button_microcopy ?? null)
+                            <span class="text-sm text-white/70">{{ $button_microcopy }}</span>
+                        @endif
+                    </div>
+
+                    {{-- Secondary Button with Microcopy --}}
+                    @if(BlockLinkResolver::shouldRenderButton(get_defined_vars(), 'secondary_button'))
+                        <div class="flex flex-col items-center gap-2">
+                            <a href="{{ e($secondary_button_url) }}" class="{{ $secondary_button_classes ?? 'btn btn-ghost text-white btn-lg' }}">
+                                {{ $secondary_button_text }}
+                            </a>
+                            @if($secondary_button_microcopy ?? null)
+                                <span class="text-sm text-white/70">{{ $secondary_button_microcopy }}</span>
+                            @endif
+                        </div>
                     @endif
                 </div>
             @endif
