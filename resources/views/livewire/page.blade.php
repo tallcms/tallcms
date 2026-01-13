@@ -9,7 +9,7 @@
     ])
 @else
     {{-- Block Canvas - All content is composed of blocks --}}
-    <div class="w-full">
+    <div class="cms-content w-full">
         {!! $renderedContent !!}
     </div>
 @endif

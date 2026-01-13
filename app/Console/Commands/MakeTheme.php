@@ -400,6 +400,9 @@ JS;
 /* Pro plugin - Tailwind v4 silently ignores missing paths */
 @source '../../../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php';
 
+/* TallCMS Core Styles */
+@import "../../../../resources/css/tallcms.css";
+
 /* Theme-specific styles */
 CSS;
         }
@@ -471,6 +474,9 @@ CSS;
 @source '../../../../resources/views/**/*.blade.php';
 /* Pro plugin - Tailwind v4 silently ignores missing paths */
 @source '../../../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php';
+
+/* TallCMS Core Styles */
+@import "../../../../resources/css/tallcms.css";
 
 /* Theme-specific styles */
 CSS;

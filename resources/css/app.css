@@ -106,3 +106,6 @@
 .grid-layout-col > section > div {
     height: 100%;
 }
+
+/* TallCMS Core Styles */
+@import "./tallcms.css";
