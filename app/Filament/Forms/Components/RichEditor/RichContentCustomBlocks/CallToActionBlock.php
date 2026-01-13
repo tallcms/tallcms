@@ -79,6 +79,13 @@ class CallToActionBlock extends RichContentCustomBlock
                                             ->placeholder('https://example.com or /contact')
                                             ->visible(fn (Get $get): bool => in_array($get('button_link_type'), ['external', 'custom']))
                                             ->columnSpanFull(),
+
+                                        TextInput::make('button_microcopy')
+                                            ->label('Microcopy')
+                                            ->placeholder('e.g., No credit card required')
+                                            ->helperText('Short reassurance text below the button')
+                                            ->maxLength(100)
+                                            ->columnSpanFull(),
                                     ])
                                     ->columns(2)
                                     ->compact(),
@@ -100,6 +107,7 @@ class CallToActionBlock extends RichContentCustomBlock
                                                 'custom' => 'Custom URL',
                                             ])
                                             ->default('page')
+                                            ->live()
                                             ->visible(fn (Get $get): bool => filled($get('secondary_button_text')))
                                             ->columnSpan(1),
 
@@ -114,6 +122,14 @@ class CallToActionBlock extends RichContentCustomBlock
                                             ->label('URL')
                                             ->placeholder('https://example.com')
                                             ->visible(fn (Get $get): bool => in_array($get('secondary_button_link_type'), ['external', 'custom']) && filled($get('secondary_button_text')))
+                                            ->columnSpanFull(),
+
+                                        TextInput::make('secondary_button_microcopy')
+                                            ->label('Microcopy')
+                                            ->placeholder('e.g., Free to try')
+                                            ->helperText('Short reassurance text below the button')
+                                            ->maxLength(100)
+                                            ->visible(fn (Get $get): bool => filled($get('secondary_button_text')))
                                             ->columnSpanFull(),
                                     ])
                                     ->columns(2)
@@ -189,9 +205,11 @@ class CallToActionBlock extends RichContentCustomBlock
             'button_text' => $config['button_text'] ?? 'Get Started',
             'button_url' => $buttonUrl,
             'button_classes' => static::buildButtonClasses($config),
+            'button_microcopy' => $config['button_microcopy'] ?? null,
             'secondary_button_text' => $config['secondary_button_text'] ?? null,
             'secondary_button_url' => $secondaryButtonUrl,
             'secondary_button_classes' => static::buildButtonClasses($config, 'secondary_button'),
+            'secondary_button_microcopy' => $config['secondary_button_microcopy'] ?? null,
             'background' => $config['background'] ?? 'bg-base-200',
             'text_alignment' => $config['text_alignment'] ?? 'text-center',
             'padding' => $config['padding'] ?? 'py-16',
