@@ -26,9 +26,11 @@ installer.lock
 /themes/*
 !/themes/default/
 !/themes/talldaisy/
+!/themes/corporate/
 /public/themes/*
 !/public/themes/default
 !/public/themes/talldaisy
+!/public/themes/corporate
 Homestead.json
 Homestead.yaml
 Thumbs.db

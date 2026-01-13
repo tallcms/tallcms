@@ -117,7 +117,7 @@ class MakeTheme extends Command
         // DaisyUI mode selection
         $this->newLine();
         $this->line('DaisyUI Theme Mode:');
-        $modeChoice = $this->choice(
+        $mode = $this->choice(
             'How should this theme handle daisyUI presets?',
             [
                 'single' => 'Single preset (one color scheme)',
@@ -125,11 +125,6 @@ class MakeTheme extends Command
             ],
             'single'
         );
-
-        $mode = array_search($modeChoice, [
-            'single' => 'Single preset (one color scheme)',
-            'all' => 'All presets (theme-controller switcher)',
-        ]);
 
         // Preset selection
         $preset = 'light';

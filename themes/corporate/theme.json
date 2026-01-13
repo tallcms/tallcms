@@ -1,0 +1,25 @@
+{
+    "name": "Corporate",
+    "slug": "corporate",
+    "version": "1.0.0",
+    "description": "Clean, professional look for businesses and agencies",
+    "author": "TallCMS",
+    "daisyui": {
+        "preset": "corporate",
+        "prefersDark": "business",
+        "presets": ["corporate", "business"]
+    },
+    "screenshots": {
+        "primary": "screenshot.png"
+    },
+    "supports": {
+        "dark_mode": true,
+        "theme_controller": false
+    },
+    "build": {
+        "entries": [
+            "resources/css/app.css",
+            "resources/js/app.js"
+        ]
+    }
+}
