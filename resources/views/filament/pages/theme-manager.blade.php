@@ -2,12 +2,13 @@
     {{-- Theme Gallery Grid --}}
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         @foreach($this->themes as $theme)
-            <div
-                class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border overflow-hidden transition-all duration-200 hover:shadow-md
-                       {{ $theme['isActive'] ? 'border-primary-500 ring-2 ring-primary-500/20' : 'border-gray-200 dark:border-gray-700' }} h-full flex flex-col"
+            <x-filament::section
+                :class="$theme['isActive'] ? 'ring-2 ring-primary-500' : ''"
+                class="!p-0 overflow-hidden h-full"
             >
+                <div class="flex flex-col h-full">
                 {{-- Screenshot (16:9 ratio - recommended: 1200×675px) --}}
-                <div class="relative bg-gray-100 dark:bg-gray-900 shrink-0 overflow-hidden">
+                <div class="relative bg-gray-100 dark:bg-white/5 shrink-0 overflow-hidden">
                     @if($theme['screenshot'])
                         <img
                             src="{{ $theme['screenshot'] }}"
@@ -15,7 +16,7 @@
                             class="w-full aspect-video object-cover"
                         >
                     @else
-                        <div class="aspect-video flex flex-col items-center justify-center text-gray-300 dark:text-gray-600">
+                        <div class="aspect-video flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
                             <svg
                                 viewBox="0 0 320 180"
                                 class="w-16 h-12"
@@ -33,32 +34,32 @@
                                 />
                                 <circle cx="226" cy="64" r="14" fill="none" stroke="currentColor" stroke-width="10" />
                             </svg>
-                            <span class="text-xs text-gray-400 dark:text-gray-500 mt-1">No preview</span>
+                            <span class="text-xs mt-1">No preview</span>
                         </div>
                     @endif
 
                     {{-- Active Badge --}}
                     @if($theme['isActive'])
                         <div class="absolute top-2 right-2">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-500 text-white shadow-sm">
+                            <x-filament::badge color="success" size="sm">
                                 <x-heroicon-s-check-circle class="w-3 h-3 mr-0.5" />
                                 Active
-                            </span>
+                            </x-filament::badge>
                         </div>
                     @endif
 
                     {{-- Status Badges --}}
                     @if(!$theme['meetsRequirements'])
                         <div class="absolute top-2 left-2">
-                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-danger-500 text-white shadow-sm" title="Requirements not met">
+                            <x-filament::badge color="danger" size="sm" title="Requirements not met">
                                 <x-heroicon-s-exclamation-triangle class="w-3 h-3" />
-                            </span>
+                            </x-filament::badge>
                         </div>
                     @elseif(!$theme['isBuilt'] && $theme['isPrebuilt'])
                         <div class="absolute top-2 left-2">
-                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-warning-500 text-white shadow-sm" title="Not built">
+                            <x-filament::badge color="warning" size="sm" title="Not built">
                                 <x-heroicon-s-wrench class="w-3 h-3" />
-                            </span>
+                            </x-filament::badge>
                         </div>
                     @endif
                 </div>
@@ -66,7 +67,7 @@
                 {{-- Theme Info --}}
                 <div class="px-2.5 py-2 space-y-1.5 flex-1 flex flex-col">
                     <div>
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white truncate leading-tight" title="{{ $theme['name'] }}">
+                        <h3 class="text-sm font-semibold text-gray-950 dark:text-white truncate leading-tight" title="{{ $theme['name'] }}">
                             {{ $theme['name'] }}
                         </h3>
                         <p class="text-xs text-gray-500 dark:text-gray-400 truncate leading-tight">
@@ -109,18 +110,19 @@
                         </x-filament::button>
                     </div>
                 </div>
-            </div>
+                </div>
+            </x-filament::section>
         @endforeach
     </div>
 
     {{-- Empty State --}}
     @if($this->themes->isEmpty())
-        <div class="text-center py-12">
-            <x-heroicon-o-paint-brush class="mx-auto h-12 w-12 text-gray-400" />
-            <h3 class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No themes found</h3>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Add themes to the <code class="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded">themes/</code> directory.
-            </p>
+        <div class="flex flex-col items-center justify-center p-12 text-center">
+            <div class="rounded-full bg-gray-100 dark:bg-white/5 p-3 mb-4">
+                <x-heroicon-o-paint-brush class="w-6 h-6 text-gray-400 dark:text-gray-500" />
+            </div>
+            <h3 class="text-base font-semibold text-gray-950 dark:text-white">No themes found</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Add themes to the themes/ directory.</p>
         </div>
     @endif
 
@@ -130,14 +132,14 @@
             <div class="flex items-center gap-3">
                 <span>{{ $themeDetails['name'] ?? 'Theme Details' }}</span>
                 @if($themeDetails)
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                    <x-filament::badge color="gray" size="sm">
                         v{{ $themeDetails['version'] }}
-                    </span>
+                    </x-filament::badge>
                     @if($themeDetails['isActive'])
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300">
+                        <x-filament::badge color="success" size="sm">
                             <x-heroicon-s-check-circle class="w-3 h-3 mr-1" />
                             Active
-                        </span>
+                        </x-filament::badge>
                     @endif
                 @endif
             </div>
@@ -147,7 +149,7 @@
             <div class="space-y-4 text-sm">
                 {{-- Screenshot --}}
                 @if($themeDetails['screenshot'])
-                    <div class="aspect-video bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden shadow-sm">
+                    <div class="aspect-video bg-gray-100 dark:bg-white/5 rounded-lg overflow-hidden shadow-sm">
                         <img
                             src="{{ $themeDetails['screenshot'] }}"
                             alt="{{ $themeDetails['name'] }}"
@@ -157,7 +159,7 @@
                 @endif
 
                 {{-- Description --}}
-                <p class="text-gray-600 dark:text-gray-300">
+                <p class="text-gray-600 dark:text-gray-400">
                     {{ $themeDetails['description'] ?: 'No description available.' }}
                 </p>
 
@@ -203,7 +205,7 @@
 
                 {{-- Color Palette --}}
                 @if(!empty($themeDetails['tailwind']['colors']['primary']))
-                    <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                    <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
                         <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Primary Colors</h4>
                         <div class="flex rounded-sm overflow-hidden h-8">
                             @foreach($themeDetails['tailwind']['colors']['primary'] as $shade => $color)
@@ -219,7 +221,7 @@
 
                 {{-- Features Grid --}}
                 @if(!empty($themeDetails['supports']))
-                    <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                    <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
                         <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Features</h4>
                         <div class="grid grid-cols-2 gap-x-4 gap-y-1">
                             @foreach($themeDetails['supports'] as $feature => $enabled)
@@ -242,7 +244,7 @@
                 @endif
 
                 {{-- Theme Information --}}
-                <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
                     <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Information</h4>
                     <dl class="grid grid-cols-2 gap-x-4 gap-y-1.5">
                         <div>
@@ -274,7 +276,7 @@
 
                 {{-- Compatibility --}}
                 @if(!empty($themeDetails['compatibility']))
-                    <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                    <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
                         <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Compatibility</h4>
                         <dl class="grid grid-cols-2 gap-x-4 gap-y-1.5">
                             @if(!empty($themeDetails['compatibility']['php']))
@@ -300,7 +302,7 @@
                 @endif
 
                 {{-- Footer --}}
-                <div class="pt-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div class="pt-3 border-t border-gray-200 dark:border-white/10 flex items-center justify-between">
                     <p class="text-xs text-gray-400 dark:text-gray-500 font-mono truncate max-w-[70%]" title="{{ $themeDetails['path'] }}">
                         {{ $themeDetails['path'] }}
                     </p>

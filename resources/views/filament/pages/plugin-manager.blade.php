@@ -8,7 +8,7 @@
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @foreach($this->availablePlugins as $plugin)
-                    <div class="bg-gradient-to-br from-primary-50 to-white dark:from-primary-900/20 dark:to-gray-800 rounded-lg shadow-sm border border-primary-200 dark:border-primary-800 p-4 relative overflow-hidden">
+                    <div class="bg-gradient-to-br from-primary-50 to-white dark:from-primary-900/20 dark:to-gray-900 rounded-lg shadow-sm border border-primary-200 dark:border-primary-800 p-4 relative overflow-hidden">
                         {{-- Featured badge --}}
                         @if($plugin['featured'] ?? false)
                             <div class="absolute top-0 right-0 bg-primary-500 text-white text-xs font-bold px-2 py-0.5 rounded-bl">
@@ -97,56 +97,56 @@
     {{-- Plugin List --}}
     <div class="space-y-4">
         @foreach($this->plugins as $plugin)
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+            <x-filament::section class="!p-4">
                 <div class="flex items-start justify-between gap-4">
                     {{-- Plugin Info --}}
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 flex-wrap">
-                            <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                            <h3 class="text-base font-semibold text-gray-950 dark:text-white">
                                 {{ $plugin['name'] }}
                             </h3>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                            <x-filament::badge color="gray" size="sm">
                                 v{{ $plugin['version'] }}
-                            </span>
+                            </x-filament::badge>
                             <span class="text-xs text-gray-500 dark:text-gray-400">
                                 {{ $plugin['fullSlug'] }}
                             </span>
                         </div>
 
-                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
                             {{ $plugin['description'] ?: 'No description available.' }}
                         </p>
 
                         {{-- Feature Badges --}}
                         <div class="mt-2 flex flex-wrap gap-1.5">
                             @if($plugin['hasFilamentPlugin'])
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+                                <x-filament::badge color="info" size="sm">
                                     <x-heroicon-s-squares-2x2 class="w-3 h-3 mr-1" />
                                     Filament
-                                </span>
+                                </x-filament::badge>
                             @endif
                             @if($plugin['hasPublicRoutes'])
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                                <x-filament::badge color="primary" size="sm">
                                     <x-heroicon-s-globe-alt class="w-3 h-3 mr-1" />
                                     Public Routes
-                                </span>
+                                </x-filament::badge>
                             @endif
                             @if($plugin['hasPrefixedRoutes'])
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300">
+                                <x-filament::badge color="info" size="sm">
                                     <x-heroicon-s-link class="w-3 h-3 mr-1" />
                                     API Routes
-                                </span>
+                                </x-filament::badge>
                             @endif
                             @if($plugin['hasMigrations'])
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
+                                <x-filament::badge color="warning" size="sm">
                                     <x-heroicon-s-circle-stack class="w-3 h-3 mr-1" />
                                     Migrations
-                                </span>
+                                </x-filament::badge>
                             @endif
                             @foreach($plugin['tags'] as $tag)
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                <x-filament::badge color="gray" size="sm">
                                     {{ $tag }}
-                                </span>
+                                </x-filament::badge>
                             @endforeach
                         </div>
 
@@ -195,7 +195,7 @@
                         </x-filament::button>
                     </div>
                 </div>
-            </div>
+            </x-filament::section>
         @endforeach
     </div>
 
@@ -268,7 +268,7 @@
                 @endif
 
                 {{-- Features --}}
-                <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
                     <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Features</h4>
                     <div class="grid grid-cols-2 gap-x-4 gap-y-1">
                         <div class="flex items-center gap-1.5">
@@ -312,7 +312,7 @@
 
                 {{-- Public Routes --}}
                 @if(!empty($pluginDetails['publicRoutes']))
-                    <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                    <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
                         <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Public Routes</h4>
                         <ul class="space-y-1 font-mono text-xs">
                             @foreach($pluginDetails['publicRoutes'] as $route)
@@ -324,7 +324,7 @@
 
                 {{-- Migrations --}}
                 @if(!empty($pluginDetails['migrations']))
-                    <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                    <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
                         <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Migrations</h4>
                         <ul class="space-y-1">
                             @foreach($pluginDetails['migrations'] as $migration)
@@ -346,7 +346,7 @@
 
                 {{-- Tags --}}
                 @if(!empty($pluginDetails['tags']))
-                    <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                    <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
                         <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Tags</h4>
                         <div class="flex flex-wrap gap-1.5">
                             @foreach($pluginDetails['tags'] as $tag)
@@ -359,7 +359,7 @@
                 @endif
 
                 {{-- Plugin Information --}}
-                <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
                     <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Information</h4>
                     <dl class="grid grid-cols-2 gap-x-4 gap-y-1.5">
                         <div>
@@ -393,7 +393,7 @@
 
                 {{-- Compatibility --}}
                 @if(!empty($pluginDetails['compatibility']))
-                    <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                    <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
                         <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Compatibility</h4>
                         <dl class="grid grid-cols-2 gap-x-4 gap-y-1.5">
                             @if(!empty($pluginDetails['compatibility']['php']))
@@ -420,7 +420,7 @@
 
                 {{-- Backups / Rollback --}}
                 @if(!empty($pluginDetails['backups']))
-                    <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                    <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
                         <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Available Backups</h4>
                         <ul class="space-y-2">
                             @foreach($pluginDetails['backups'] as $backup)
@@ -444,7 +444,7 @@
                 @endif
 
                 {{-- Footer --}}
-                <div class="pt-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div class="pt-3 border-t border-gray-200 dark:border-white/10 flex items-center justify-between">
                     <p class="text-xs text-gray-400 dark:text-gray-500 font-mono truncate max-w-[70%]" title="{{ $pluginDetails['path'] }}">
                         {{ $pluginDetails['path'] }}
                     </p>
