@@ -10,9 +10,10 @@ use Illuminate\Support\Str;
 class MakeTheme extends Command
 {
     protected $signature = 'make:theme {name? : The name of the theme}
-                            {--preset= : DaisyUI preset (light, dark, cupcake, etc.)}
+                            {--preset= : DaisyUI preset (light, dark, cupcake, etc.) or "custom" for custom theme}
                             {--prefers-dark= : Dark mode preset (optional)}
                             {--all-presets : Include all daisyUI presets for theme-controller}
+                            {--custom : Create a custom daisyUI theme with your own color palette}
                             {--author= : Theme author name}
                             {--description= : Theme description}
                             {--theme-version= : Theme version}
@@ -114,25 +115,42 @@ class MakeTheme extends Command
         // Theme version
         $version = $this->option('theme-version') ?: $this->ask('Starting version?', '1.0.0');
 
-        // DaisyUI mode selection
+        // Theme type selection
         $this->newLine();
-        $this->line('DaisyUI Theme Mode:');
-        $modeIndex = $this->choice(
-            'How should this theme handle daisyUI presets?',
+        $this->line('Theme Type:');
+        $modeChoice = $this->choice(
+            'What type of theme do you want to create?',
             [
-                'Single preset (one color scheme)',
-                'All presets (theme-controller switcher)',
+                '1' => 'DaisyUI - Single preset (one color scheme)',
+                '2' => 'DaisyUI - All presets (theme-controller switcher)',
+                '3' => 'DaisyUI - Custom theme (define your own colors)',
             ],
-            0
+            '1'
         );
-        $mode = $modeIndex === 'Single preset (one color scheme)' ? 'single' : 'all';
+
+        // Parse mode from choice
+        $mode = match ($modeChoice) {
+            'DaisyUI - Single preset (one color scheme)', '1' => 'single',
+            'DaisyUI - All presets (theme-controller switcher)', '2' => 'all',
+            'DaisyUI - Custom theme (define your own colors)', '3' => 'custom',
+            default => 'single',
+        };
 
         // Preset selection
         $preset = 'light';
         $prefersDark = null;
         $allPresets = false;
+        $customColors = null;
 
-        if ($mode === 'single') {
+        if ($mode === 'custom') {
+            $this->newLine();
+            $this->info('Custom daisyUI theme selected.');
+            $this->line('A starter color palette will be generated in your CSS file.');
+            $this->line('Customize colors using @plugin "daisyui/theme" { ... }');
+            $customColors = [
+                'name' => Str::slug($name),
+            ];
+        } elseif ($mode === 'single') {
             $this->newLine();
             $this->line('Popular presets: light, dark, cupcake, bumblebee, emerald, corporate, synthwave, retro, cyberpunk, dracula, nord');
             $preset = $this->askWithValidation(
@@ -162,9 +180,11 @@ class MakeTheme extends Command
             'description' => $description,
             'author' => $author,
             'version' => $version,
+            'mode' => $mode,
             'preset' => $preset,
             'prefersDark' => $prefersDark,
             'allPresets' => $allPresets,
+            'customColors' => $customColors,
         ];
     }
 
@@ -174,24 +194,36 @@ class MakeTheme extends Command
         $preset = $this->option('preset') ?: 'light';
         $prefersDark = $this->option('prefers-dark');
         $allPresets = $this->option('all-presets');
+        $isCustom = $this->option('custom');
+        $mode = 'single';
+        $customColors = null;
 
-        // Validate preset
-        if (! $this->validatePreset($preset)) {
-            $this->error("Invalid preset: {$preset}");
-            $this->line('Valid presets: '.implode(', ', Theme::ALL_DAISYUI_PRESETS));
-            exit(1);
-        }
+        // Check if using custom mode
+        if ($isCustom || $preset === 'custom') {
+            $mode = 'custom';
+            $customColors = ['name' => Str::slug($name)];
+            $preset = null;
+        } else {
+            // Validate preset
+            if (! $this->validatePreset($preset)) {
+                $this->error("Invalid preset: {$preset}");
+                $this->line('Valid presets: '.implode(', ', Theme::ALL_DAISYUI_PRESETS));
+                $this->line("Use --preset=custom for a custom Tailwind theme without daisyUI");
+                exit(1);
+            }
 
-        // Validate prefersDark if provided
-        if ($prefersDark && ! $this->validatePreset($prefersDark)) {
-            $this->error("Invalid dark preset: {$prefersDark}");
-            $this->line('Valid presets: '.implode(', ', Theme::ALL_DAISYUI_PRESETS));
-            exit(1);
-        }
+            // Validate prefersDark if provided
+            if ($prefersDark && ! $this->validatePreset($prefersDark)) {
+                $this->error("Invalid dark preset: {$prefersDark}");
+                $this->line('Valid presets: '.implode(', ', Theme::ALL_DAISYUI_PRESETS));
+                exit(1);
+            }
 
-        if ($allPresets) {
-            $preset = 'light';
-            $prefersDark = 'dark';
+            if ($allPresets) {
+                $mode = 'all';
+                $preset = 'light';
+                $prefersDark = 'dark';
+            }
         }
 
         return [
@@ -200,9 +232,11 @@ class MakeTheme extends Command
             'description' => $this->option('description') ?: 'A modern TallCMS theme',
             'author' => $this->option('author') ?: 'Theme Developer',
             'version' => $this->option('theme-version') ?: '1.0.0',
+            'mode' => $mode,
             'preset' => $preset,
             'prefersDark' => $prefersDark,
             'allPresets' => $allPresets,
+            'customColors' => $customColors,
         ];
     }
 
@@ -248,34 +282,53 @@ class MakeTheme extends Command
             'version' => $themeInfo['version'],
             'description' => $themeInfo['description'],
             'author' => $themeInfo['author'],
-            'daisyui' => [
-                'preset' => $themeInfo['preset'],
-            ],
-            'screenshots' => [
-                'primary' => 'screenshot.png',
-            ],
-            'supports' => [
-                'dark_mode' => $themeInfo['prefersDark'] !== null,
-                'theme_controller' => $themeInfo['allPresets'],
-            ],
-            'build' => [
-                'entries' => ['resources/css/app.css', 'resources/js/app.js'],
-            ],
         ];
 
-        // Add prefersDark only if explicitly set
-        if ($themeInfo['prefersDark']) {
-            $config['daisyui']['prefersDark'] = $themeInfo['prefersDark'];
+        // Custom daisyUI theme
+        if ($themeInfo['mode'] === 'custom') {
+            $themeName = $themeInfo['customColors']['name'] ?? $themeInfo['slug'];
+            $config['daisyui'] = [
+                'preset' => $themeName,
+                'custom' => true,
+            ];
+            $config['supports'] = [
+                'dark_mode' => false,
+                'theme_controller' => false,
+            ];
+        } else {
+            // DaisyUI theme
+            $config['daisyui'] = [
+                'preset' => $themeInfo['preset'],
+            ];
+
+            // Add prefersDark only if explicitly set
+            if ($themeInfo['prefersDark']) {
+                $config['daisyui']['prefersDark'] = $themeInfo['prefersDark'];
+            }
+
+            // Add presets: "all" for theme-controller mode
+            if ($themeInfo['allPresets']) {
+                $config['daisyui']['presets'] = 'all';
+            }
+
+            $config['supports'] = [
+                'dark_mode' => $themeInfo['prefersDark'] !== null,
+                'theme_controller' => $themeInfo['allPresets'],
+            ];
         }
 
-        // Add presets: "all" for theme-controller mode
-        if ($themeInfo['allPresets']) {
-            $config['daisyui']['presets'] = 'all';
-        }
+        $config['screenshots'] = [
+            'primary' => 'screenshot.png',
+        ];
+
+        $config['build'] = [
+            'entries' => ['resources/css/app.css', 'resources/js/app.js'],
+        ];
 
         File::put("{$themePath}/theme.json", json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         $this->line('Created: theme.json');
     }
+
 
     protected function createPackageJson(string $themePath, array $themeInfo): void
     {
@@ -329,9 +382,12 @@ JS;
 
     protected function createCssFiles(string $themePath, array $themeInfo): void
     {
-        $themesDirective = $this->buildThemesDirective($themeInfo);
+        if ($themeInfo['mode'] === 'custom') {
+            $appCss = $this->buildCustomThemeCss($themeInfo);
+        } else {
+            $themesDirective = $this->buildThemesDirective($themeInfo);
 
-        $appCss = <<<CSS
+            $appCss = <<<CSS
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 @plugin "daisyui" {
@@ -346,9 +402,78 @@ JS;
 
 /* Theme-specific styles */
 CSS;
+        }
 
         File::put("{$themePath}/resources/css/app.css", $appCss);
         $this->line('Created: resources/css/app.css');
+    }
+
+    protected function buildCustomThemeCss(array $themeInfo): string
+    {
+        $themeName = $themeInfo['customColors']['name'] ?? $themeInfo['slug'];
+
+        return <<<CSS
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@plugin "daisyui";
+
+/* Custom daisyUI theme - Customize these colors as needed */
+/* See: https://daisyui.com/docs/themes/#custom-themes */
+@plugin "daisyui/theme" {
+  name: "{$themeName}";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+
+  /* Base colors */
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(96% 0 0);
+  --color-base-300: oklch(92% 0 0);
+  --color-base-content: oklch(20% 0 0);
+
+  /* Brand colors */
+  --color-primary: oklch(55% 0.3 260);
+  --color-primary-content: oklch(100% 0 0);
+  --color-secondary: oklch(70% 0.2 330);
+  --color-secondary-content: oklch(100% 0 0);
+  --color-accent: oklch(75% 0.15 180);
+  --color-accent-content: oklch(20% 0 0);
+
+  /* Neutral */
+  --color-neutral: oklch(30% 0.02 260);
+  --color-neutral-content: oklch(98% 0 0);
+
+  /* Status colors */
+  --color-info: oklch(65% 0.2 240);
+  --color-info-content: oklch(100% 0 0);
+  --color-success: oklch(65% 0.2 150);
+  --color-success-content: oklch(100% 0 0);
+  --color-warning: oklch(75% 0.15 85);
+  --color-warning-content: oklch(20% 0 0);
+  --color-error: oklch(60% 0.25 25);
+  --color-error-content: oklch(100% 0 0);
+
+  /* Border radius */
+  --radius-selector: 0.5rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+
+  /* Sizing */
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+/* Scan paths for class discovery */
+@source '../views/**/*.blade.php';
+@source '../../../../resources/views/**/*.blade.php';
+/* Pro plugin - Tailwind v4 silently ignores missing paths */
+@source '../../../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php';
+
+/* Theme-specific styles */
+CSS;
     }
 
     protected function buildThemesDirective(array $themeInfo): string

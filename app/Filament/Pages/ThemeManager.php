@@ -289,6 +289,13 @@ class ThemeManager extends Page implements HasForms
             'parent' => $theme->parent,
             'supports' => $theme->supports,
             'tailwind' => $theme->tailwind,
+            'daisyui' => [
+                'preset' => $theme->getDaisyUIPreset(),
+                'prefersDark' => $theme->getDaisyUIPrefersDark(),
+                'presets' => $theme->getDaisyUIPresets(),
+                'custom' => $theme->hasCustomDaisyUITheme(),
+                'colors' => $theme->getDaisyUIColors(),
+            ],
             'path' => $theme->path,
             'compatibility' => $theme->getCompatibility(),
             'isBuilt' => $theme->isBuilt(),

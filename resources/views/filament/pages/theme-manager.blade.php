@@ -203,7 +203,7 @@
                     </div>
                 @endif
 
-                {{-- Color Palette --}}
+                {{-- Color Palette (Tailwind) --}}
                 @if(!empty($themeDetails['tailwind']['colors']['primary']))
                     <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
                         <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Primary Colors</h4>
@@ -216,6 +216,49 @@
                                 >&nbsp;</div>
                             @endforeach
                         </div>
+                    </div>
+                @endif
+
+                {{-- DaisyUI Preset Info --}}
+                @if(!empty($themeDetails['daisyui']['preset']))
+                    <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
+                        <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">DaisyUI Theme</h4>
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            <x-filament::badge color="primary" size="sm">
+                                {{ ucfirst($themeDetails['daisyui']['preset']) }}
+                            </x-filament::badge>
+                            @if(!empty($themeDetails['daisyui']['custom']))
+                                <x-filament::badge color="warning" size="sm">
+                                    Custom
+                                </x-filament::badge>
+                            @endif
+                            @if(!empty($themeDetails['daisyui']['prefersDark']))
+                                <x-filament::badge color="gray" size="sm">
+                                    Dark: {{ ucfirst($themeDetails['daisyui']['prefersDark']) }}
+                                </x-filament::badge>
+                            @endif
+                            @if(!empty($themeDetails['daisyui']['presets']) && $themeDetails['daisyui']['presets'] === 'all')
+                                <x-filament::badge color="info" size="sm">
+                                    All Presets
+                                </x-filament::badge>
+                            @elseif(!empty($themeDetails['daisyui']['presets']) && is_array($themeDetails['daisyui']['presets']))
+                                <x-filament::badge color="gray" size="sm">
+                                    {{ count($themeDetails['daisyui']['presets']) }} presets
+                                </x-filament::badge>
+                            @endif
+                        </div>
+                        {{-- Custom Theme Color Palette --}}
+                        @if(!empty($themeDetails['daisyui']['colors']))
+                            <div class="flex rounded-sm overflow-hidden h-6">
+                                @foreach($themeDetails['daisyui']['colors'] as $name => $color)
+                                    <div
+                                        class="grow shrink basis-0"
+                                        style="background: {{ $color }};"
+                                        title="{{ $name }}: {{ $color }}"
+                                    >&nbsp;</div>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
                 @endif
 

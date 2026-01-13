@@ -110,7 +110,7 @@ if (! function_exists('daisyui_preset')) {
      */
     function daisyui_preset(): string
     {
-        return active_theme()?->getDaisyuiPreset() ?? 'light';
+        return active_theme()?->getDaisyUIPreset() ?? 'light';
     }
 }
 
@@ -120,7 +120,7 @@ if (! function_exists('daisyui_dark_preset')) {
      */
     function daisyui_dark_preset(): ?string
     {
-        return active_theme()?->getDaisyuiPrefersDark();
+        return active_theme()?->getDaisyUIPrefersDark();
     }
 }
 
@@ -130,7 +130,7 @@ if (! function_exists('daisyui_presets')) {
      */
     function daisyui_presets(): array
     {
-        return active_theme()?->getDaisyuiPresets() ?? ['light'];
+        return active_theme()?->getDaisyUIPresets() ?? ['light'];
     }
 }
 
