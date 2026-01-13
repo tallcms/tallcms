@@ -40,3 +40,7 @@ tallcms-*.zip
 # Private/premium plugins (have their own repos)
 /plugins/tallcms/pro
 /plugins/tallcms/license-proxy
+
+# Internal documentation
+CLAUDE.md
+daisyui.md
