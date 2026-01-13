@@ -177,5 +177,6 @@ TallCMS is open-source software licensed under the [MIT License](https://opensou
 
 - **Website**: [tallcms.com](https://tallcms.com)
 - **GitHub**: [github.com/tallcms/tallcms](https://github.com/tallcms/tallcms)
+- **Roadmap**: [View our roadmap](ROADMAP.md)
 - **Documentation**: [tallcms.com/docs](https://tallcms.com/docs)
 - **Support**: hello@tallcms.com
