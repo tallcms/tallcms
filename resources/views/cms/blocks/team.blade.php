@@ -1,8 +1,8 @@
 @php
-    $columnsClass = match($columns ?? '3') {
+    $columnsClass = match((string) ($columns ?? '3')) {
         '2' => 'sm:grid-cols-2 max-w-4xl mx-auto',
         '3' => 'sm:grid-cols-2 lg:grid-cols-3',
-        '4' => 'sm:grid-cols-2 lg:grid-cols-4',
+        '4' => 'sm:grid-cols-2 md:grid-cols-4',
         default => 'sm:grid-cols-2 lg:grid-cols-3',
     };
 
@@ -42,7 +42,7 @@
         @if(!empty($members))
             <div class="grid gap-8 {{ $columnsClass }}">
                 @foreach($members as $member)
-                    <div class="{{ $card_style ?? 'card bg-base-200 shadow-lg' }} {{ $text_alignment ?? 'text-center' }}">
+                    <div class="{{ $card_style ?? 'card bg-base-200 shadow-lg' }} {{ $text_alignment ?? 'text-center' }} min-w-0">
                         <div class="card-body">
                             {{-- Photo --}}
                             <div class="mb-4 {{ ($text_alignment ?? 'text-center') === 'text-center' ? 'flex justify-center' : '' }}">
