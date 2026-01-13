@@ -1,0 +1,24 @@
+{
+    "name": "Blog",
+    "slug": "blog",
+    "version": "1.0.0",
+    "description": "Warm, readable theme optimized for long-form content",
+    "author": "TallCMS",
+    "daisyui": {
+        "preset": "autumn",
+        "prefersDark": "coffee"
+    },
+    "screenshots": {
+        "primary": "screenshot.png"
+    },
+    "supports": {
+        "dark_mode": true,
+        "theme_controller": false
+    },
+    "build": {
+        "entries": [
+            "resources/css/app.css",
+            "resources/js/app.js"
+        ]
+    }
+}

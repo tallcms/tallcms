@@ -1,0 +1,13 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@plugin "daisyui" {
+  themes: synthwave --default, cyberpunk --prefersdark;
+}
+
+/* Scan paths for class discovery */
+@source '../views/**/*.blade.php';
+@source '../../../../resources/views/**/*.blade.php';
+/* Pro plugin - Tailwind v4 silently ignores missing paths */
+@source '../../../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php';
+
+/* Theme-specific styles */

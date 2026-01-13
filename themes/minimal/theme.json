@@ -1,0 +1,24 @@
+{
+    "name": "Minimal",
+    "slug": "minimal",
+    "version": "1.0.0",
+    "description": "Simple, distraction-free design for content-focused sites",
+    "author": "TallCMS",
+    "daisyui": {
+        "preset": "lofi",
+        "prefersDark": "nord"
+    },
+    "screenshots": {
+        "primary": "screenshot.png"
+    },
+    "supports": {
+        "dark_mode": true,
+        "theme_controller": false
+    },
+    "build": {
+        "entries": [
+            "resources/css/app.css",
+            "resources/js/app.js"
+        ]
+    }
+}

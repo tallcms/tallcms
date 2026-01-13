@@ -1,0 +1,24 @@
+{
+    "name": "Creative",
+    "slug": "creative",
+    "version": "1.0.0",
+    "description": "Bold, vibrant colors for portfolios and creative studios",
+    "author": "TallCMS",
+    "daisyui": {
+        "preset": "synthwave",
+        "prefersDark": null
+    },
+    "screenshots": {
+        "primary": "screenshot.png"
+    },
+    "supports": {
+        "dark_mode": false,
+        "theme_controller": false
+    },
+    "build": {
+        "entries": [
+            "resources/css/app.css",
+            "resources/js/app.js"
+        ]
+    }
+}
