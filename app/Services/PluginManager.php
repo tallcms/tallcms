@@ -1203,6 +1203,13 @@ class PluginManager
         // Clear plugin discovery cache
         $this->clearCache();
 
+        // Clear general application cache
+        try {
+            Artisan::call('cache:clear');
+        } catch (\Throwable $e) {
+            Log::debug('Could not clear application cache: '.$e->getMessage());
+        }
+
         // Clear config cache
         try {
             Artisan::call('config:clear');
@@ -1229,6 +1236,13 @@ class PluginManager
             Artisan::call('route:clear');
         } catch (\Throwable $e) {
             Log::debug('Could not clear route cache: '.$e->getMessage());
+        }
+
+        // Clear Filament component cache (pages, resources, widgets)
+        try {
+            Artisan::call('filament:cache-components');
+        } catch (\Throwable $e) {
+            Log::debug('Could not clear Filament cache: '.$e->getMessage());
         }
 
         // Clear opcache if available
