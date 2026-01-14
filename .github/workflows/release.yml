@@ -89,7 +89,9 @@ jobs:
             --exclude='release' \
             --exclude='tests' \
             --exclude='.env' \
-            --exclude='.env.*' \
+            --exclude='.env.backup' \
+            --exclude='.env.local' \
+            --exclude='.env.production' \
             --exclude='phpunit.xml' \
             --exclude='.phpunit.cache' \
             --exclude='storage/logs/*.log' \
