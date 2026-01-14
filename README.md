@@ -1,6 +1,14 @@
 # TallCMS™
 
+[![Packagist Version](https://img.shields.io/packagist/v/tallcms/tallcms)](https://packagist.org/packages/tallcms/tallcms)
+[![Packagist Downloads](https://img.shields.io/packagist/dt/tallcms/tallcms)](https://packagist.org/packages/tallcms/tallcms)
+[![License](https://img.shields.io/packagist/l/tallcms/tallcms)](https://opensource.org/licenses/MIT)
+
 A modern Content Management System built on the **TALL stack** (Tailwind CSS, Alpine.js, Laravel, Livewire) with a Filament v4 admin panel and a daisyUI-powered block system.
+
+```bash
+composer create-project tallcms/tallcms my-site
+```
 
 ---
 
@@ -34,7 +42,18 @@ This project demonstrates what's possible when human creativity meets AI capabil
 
 ## Installation
 
-### Quick Start (Recommended)
+### Via Composer (Recommended)
+
+```bash
+composer create-project tallcms/tallcms my-site
+cd my-site
+npm install && npm run build
+php artisan serve
+```
+
+Visit `http://localhost:8000/install` to complete the web installer.
+
+### Manual Download
 
 1. **Download** the latest release from [tallcms.com](https://tallcms.com)
 2. **Extract** to your web server directory
@@ -47,11 +66,7 @@ The web installer will guide you through:
 - Admin account creation
 - Initial site settings
 
-No command line required.
-
-### For Developers
-
-If you're contributing or developing locally:
+### For Contributors
 
 ```bash
 git clone https://github.com/tallcms/tallcms.git
@@ -61,7 +76,7 @@ npm install && npm run build
 composer dev            # Start dev server with hot reload
 ```
 
-Visit `http://localhost:8000` to complete the web installer, then access your site.
+Visit `http://localhost:8000/install` to complete setup.
 
 ## Built-in Blocks
 
