@@ -19,7 +19,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: mbstring, xml, ctype, json, bcmath, curl, zip, gd, sqlite3
+          extensions: mbstring, xml, ctype, json, bcmath, curl, zip, gd, sqlite3, sodium
           coverage: none
 
       - name: Setup Node.js
@@ -42,6 +42,11 @@ jobs:
       - name: Install Composer dependencies (production)
         run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
+      - name: Setup Laravel environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
       - name: Install NPM dependencies
         run: npm ci
 
@@ -53,6 +58,25 @@ jobs:
         run: |
           npm install
           npm run build
+
+      - name: Get version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create release marker
+        run: |
+          cat > .tallcms-release << EOF
+          {
+              "product": "tallcms",
+              "version": "${{ steps.version.outputs.version }}",
+              "type": "full",
+              "min_php": "8.2",
+              "required_extensions": ["pdo", "mbstring", "openssl", "fileinfo"],
+              "build_platform": "Linux",
+              "build_php": "8.3",
+              "built_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
 
       - name: Prepare release directory
         run: |
@@ -74,7 +98,8 @@ jobs:
             --exclude='storage/framework/views/*' \
             --exclude='*.zip' \
             --exclude='.DS_Store' \
-            --exclude='Thumbs.db'
+            --exclude='Thumbs.db' \
+            --exclude='node_modules'
 
       - name: Create empty directories and placeholder files
         run: |
@@ -82,6 +107,9 @@ jobs:
 
           # Ensure storage directories exist with .gitkeep
           mkdir -p storage/app/public
+          mkdir -p storage/app/tallcms-backups/quarantine
+          mkdir -p storage/app/tallcms-backups/files
+          mkdir -p storage/app/tallcms-backups/db
           mkdir -p storage/framework/cache/data
           mkdir -p storage/framework/sessions
           mkdir -p storage/framework/views
@@ -90,6 +118,10 @@ jobs:
 
           touch storage/app/.gitkeep
           touch storage/app/public/.gitkeep
+          touch storage/app/tallcms-backups/.gitkeep
+          touch storage/app/tallcms-backups/quarantine/.gitkeep
+          touch storage/app/tallcms-backups/files/.gitkeep
+          touch storage/app/tallcms-backups/db/.gitkeep
           touch storage/framework/.gitkeep
           touch storage/framework/cache/.gitkeep
           touch storage/framework/cache/data/.gitkeep
@@ -98,18 +130,43 @@ jobs:
           touch storage/logs/.gitkeep
           touch bootstrap/cache/.gitkeep
 
-      - name: Get version from tag
-        id: version
-        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      - name: Setup Laravel environment
+        run: |
+          cd release
+          cp .env.example .env
+          php artisan key:generate --force
 
       - name: Create ZIP archive
         run: |
           cd release
-          zip -r ../tallcms-${{ steps.version.outputs.version }}.zip .
+          zip -r ../tallcms-${{ steps.version.outputs.version }}.zip . -x ".env" -x ".env.*"
 
-      - name: Upload release asset
+      - name: Generate checksums manifest
+        run: |
+          cd release
+          php artisan tallcms:generate-manifest --output=../checksums.json
+          cd ..
+          # Add ZIP hash to manifest
+          ZIP_HASH=$(sha256sum tallcms-${{ steps.version.outputs.version }}.zip | cut -d' ' -f1)
+          jq --arg hash "$ZIP_HASH" '.zip_sha256 = $hash' checksums.json > checksums.tmp && mv checksums.tmp checksums.json
+
+      - name: Sign checksums with Ed25519
+        run: |
+          if [ -z "$ED25519_PRIVATE_KEY" ]; then
+            echo "::error::ED25519_PRIVATE_KEY secret is not set. Release signing is required."
+            exit 1
+          fi
+          cd release
+          php artisan tallcms:sign-release ../checksums.json
+        env:
+          ED25519_PRIVATE_KEY: ${{ secrets.ED25519_PRIVATE_KEY }}
+
+      - name: Upload release assets
         uses: softprops/action-gh-release@v2
         with:
-          files: tallcms-${{ steps.version.outputs.version }}.zip
+          files: |
+            tallcms-${{ steps.version.outputs.version }}.zip
+            checksums.json
+            checksums.json.sig
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

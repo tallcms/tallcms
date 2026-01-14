@@ -27,6 +27,7 @@
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "league/flysystem-aws-s3-v3": "^3.30",
+        "paragonie/sodium_compat": "^2.0",
         "wsmallnews/filament-nestedset": "^2.0"
     },
     "require-dev": {
