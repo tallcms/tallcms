@@ -10,7 +10,7 @@ return [
     | This is the single source of truth for version comparisons.
     |
     */
-    'version' => '1.0.0',
+    'version' => '1.1.7',
 
     /*
     |--------------------------------------------------------------------------
@@ -52,5 +52,49 @@ return [
 
         // Default preview token expiry in hours
         'default_preview_expiry_hours' => 24,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | System Updates
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for the one-click update system. Updates are downloaded
+    | from GitHub releases and verified using Ed25519 signatures.
+    |
+    */
+    'updates' => [
+        // Enable or disable the update system entirely
+        'enabled' => env('TALLCMS_UPDATES_ENABLED', true),
+
+        // How often to check for updates (seconds). Default: 24 hours
+        'check_interval' => 86400,
+
+        // Cache TTL for GitHub API responses (seconds). Default: 1 hour
+        'cache_ttl' => 3600,
+
+        // GitHub repository for updates
+        'github_repo' => 'tallcms/tallcms',
+
+        // Optional GitHub token for higher API rate limits
+        'github_token' => env('TALLCMS_GITHUB_TOKEN'),
+
+        // Number of backup sets to retain
+        'backup_retention' => 3,
+
+        // Automatically backup files before updating
+        'auto_backup' => true,
+
+        // Require database backup before update (SQLite/MySQL/PostgreSQL)
+        'require_db_backup' => true,
+
+        // Maximum database size for automatic backup (bytes). Default: 100MB
+        'db_backup_size_limit' => 100 * 1024 * 1024,
+
+        // Ed25519 public key for release signature verification (hex-encoded, 64 chars)
+        // This key is used to verify that releases are authentic and haven't been tampered with.
+        // Generate a keypair with: php artisan tallcms:generate-keypair
+        // The public key below is a placeholder - replace with your actual key.
+        'public_key' => env('TALLCMS_UPDATE_PUBLIC_KEY', '6c41c964c60dd5341f7ba649dcda6e6de4b0b7afac2fbb9489527987907d35a9'),
     ],
 ];

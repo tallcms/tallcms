@@ -7,13 +7,14 @@ This roadmap outlines our vision for TallCMS development. We're committed to bui
 ## Quick Navigation
 
 - [v1.0 - Foundation](#v10---foundation) ✅
-- [v1.1 - UI Polish](#v11---ui-polish-current-release) 🟢
-- [v1.2 - Content & SEO](#v12---content--seo) 🔜
+- [v1.1 - UI Polish](#v11---ui-polish) ✅
+- [v1.2 - Content & SEO](#v12---content--seo-current-release) 🟢
 - [v1.3 - Multilingual](#v13---multilingual-support) 📋
 - [v1.4 - Developer Experience](#v14---developer-experience) 📋
 - [v1.5 - AI-Powered Content](#v15---ai-powered-content-creation) 📋
 - [v1.6 - Community & Users](#v16---community--users) 📋
 - [v1.7 - Marketplace](#v17---marketplace-integration) 📋
+- [v2.0 - Filament Plugin Architecture](#v20---filament-plugin-architecture) 📋
 - [Future Considerations](#future-considerations)
 - [How to Contribute](#how-to-contribute)
 
@@ -95,7 +96,7 @@ The initial release establishing TallCMS as a fully-featured content management 
 
 ---
 
-## v1.1 - UI Polish (Current Release)
+## v1.1 - UI Polish
 
 Focus: Enhanced theming with daisyUI 5 component library for beautiful, consistent UI.
 
@@ -120,9 +121,9 @@ Focus: Enhanced theming with daisyUI 5 component library for beautiful, consiste
 
 ---
 
-## v1.2 - Content & SEO
+## v1.2 - Content & SEO (Current Release)
 
-Focus: Complete the blogging experience and give content the SEO tools it deserves.
+Focus: Complete the blogging experience, SEO tools, and one-click system updates.
 
 ### Blog Frontend
 - [x] Public blog listing page (via Posts block)
@@ -151,6 +152,20 @@ Focus: Complete the blogging experience and give content the SEO tools it deserv
 - [ ] Lazy loading
 - [ ] Alt text management
 - [ ] Bulk upload improvements
+
+### System Updates
+- [x] Admin panel update checker with GitHub integration
+- [x] Ed25519 signature verification (pure PHP, no extensions needed)
+- [x] One-click updates with exec → queue → CLI fallback
+- [x] Automatic file backup before update
+- [x] Database backup (SQLite copy, mysqldump, pg_dump)
+- [x] Manifest-based conflict detection with quarantine (no auto-delete)
+- [x] Platform compatibility checks (PHP version, extensions)
+- [x] Stale lock recovery mechanism
+- [x] Progress tracking UI with real-time status
+- [x] Manual CLI instructions when automated methods unavailable
+- [x] CLI update command (php artisan tallcms:update)
+- [x] Release signing workflow (GitHub Actions)
 
 ---
 
@@ -268,6 +283,39 @@ Focus: Connect to the official TallCMS marketplace for plugins and themes.
 
 ---
 
+## v2.0 - Filament Plugin Architecture
+
+Focus: Restructure TallCMS as a Filament plugin for broader reach and easier adoption.
+
+### Core Package Split
+- [ ] Extract core CMS to `tallcms/cms` Composer package
+- [ ] Filament plugin registration and configuration
+- [ ] List on Filament plugin directory
+- [ ] `composer require tallcms/cms` support
+- [ ] Publish views, migrations, and config
+
+### Distribution Options
+- [ ] **Standalone**: Full TallCMS skeleton (`tallcms/tallcms`)
+- [ ] **Plugin**: Add to existing Filament apps (`tallcms/cms`)
+- [ ] Web installer for standalone installations
+- [ ] Setup wizard for plugin mode
+- [ ] Migration path from v1.x
+
+### Installation Experience
+- [ ] Auto-discover pages, resources, and widgets
+- [ ] Configurable URL prefixes (/cms, /blog, etc.)
+- [ ] Optional admin panel integration vs standalone
+- [ ] Database table prefix configuration
+- [ ] Asset publishing and customization
+
+### Backwards Compatibility
+- [ ] All v1.x themes continue working
+- [ ] All v1.x plugins continue working
+- [ ] Existing content and data preserved
+- [ ] Configuration upgrade assistant
+
+---
+
 ## Future Considerations
 
 Items we're exploring for future releases:
@@ -322,13 +370,14 @@ We welcome community input on our roadmap:
 | Version | Status | Theme | Highlights |
 |---------|--------|-------|------------|
 | v1.0 | ✅ Released | Foundation | Core CMS, Themes, Plugins, Permissions |
-| v1.1 | 🟢 Current | UI Polish | daisyUI 5, semantic CSS classes |
-| v1.2 | 🔜 Next | Content & SEO | Blog frontend, RSS, Search, Sitemap |
+| v1.1 | ✅ Released | UI Polish | daisyUI 5, semantic CSS classes |
+| v1.2 | 🟢 Current | Content & SEO | Blog frontend, System Updates, RSS, Sitemap |
 | v1.3 | 📋 Planned | Global | Multilingual support, RTL |
 | v1.4 | 📋 Planned | Developers | REST API, CLI tools, Webhooks |
 | v1.5 | 📋 Planned | AI | Content generation, Auto-optimization |
 | v1.6 | 📋 Planned | Community | Comments, User profiles, Analytics |
 | v1.7 | 📋 Planned | Ecosystem | Marketplace integration |
+| v2.0 | 📋 Planned | Platform | Filament plugin architecture, package split |
 
 ---
 
