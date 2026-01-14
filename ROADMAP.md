@@ -88,7 +88,7 @@ The initial release establishing TallCMS as a fully-featured content management 
 - [x] Multi-factor authentication (TOTP)
 
 ### Infrastructure
-- [x] Web installer (WordPress-style setup)
+- [x] Web installer (browser-based setup wizard)
 - [x] Cloud storage support (S3, DigitalOcean, Cloudflare R2, etc.)
 - [x] Multiple mail providers (SMTP, SES, Sendmail)
 - [x] Maintenance mode

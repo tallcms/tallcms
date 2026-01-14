@@ -22,7 +22,8 @@ This project demonstrates what's possible when human creativity meets AI capabil
 
 ## Features
 
-- **Web Installer** - WordPress-style setup wizard, no command line required
+- **Web Installer** - Setup wizard with no command line required
+- **One-Click Updates** - Secure system updates with Ed25519 signature verification
 - **Rich Content Editor** - daisyUI-first blocks with merge tags and device preview
 - **Hierarchical Pages & Posts** - SEO optimization and revision history
 - **Drag & Drop Menu Builder** - Nested navigation with multiple locations
@@ -167,6 +168,43 @@ See [Theme Development Guide](docs/THEME_DEVELOPMENT.md) for details.
 **"Permission denied"**
 - Check `storage/` and `bootstrap/cache/` are writable
 - Run `chmod -R 775 storage bootstrap/cache`
+
+## System Updates
+
+TallCMS includes a one-click update system accessible via **Settings → System Updates** in the admin panel.
+
+### Features
+
+- **Cryptographic Verification** - All releases are signed with Ed25519 signatures
+- **Automatic Backups** - Files and database are backed up before each update
+- **Progress Tracking** - Real-time status updates during the update process
+- **Fallback Options** - Supports exec, queue workers, or manual CLI commands
+
+### CLI Update
+
+You can also update via command line:
+
+```bash
+# Check what would happen (dry run)
+php artisan tallcms:update --dry-run
+
+# Update to latest version
+php artisan tallcms:update
+
+# Update to specific version
+php artisan tallcms:update --target=1.2.0
+```
+
+### Update Troubleshooting
+
+**"Update in progress"**
+- An update lock exists. Wait for it to complete or clear it via the admin panel.
+
+**"Missing required release files"**
+- The release may not have signed artifacts. Check GitHub releases.
+
+**"Signature verification failed"**
+- The release may have been tampered with. Do not proceed.
 
 ## Credits
 
