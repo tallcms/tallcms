@@ -372,6 +372,20 @@ class LicenseProxyClient
             ];
         }
 
+        // Handle FINGERPRINT_ALREADY_EXISTS - license is already active for this domain
+        // This can happen after plugin reinstall when local DB was cleared but server still has activation
+        // Treat this as a successful activation since the license IS active for this domain
+        $errorCode = $json['error_code'] ?? $json['code'] ?? '';
+        $message = $json['message'] ?? '';
+        if (str_contains($errorCode, 'FINGERPRINT_ALREADY_EXISTS') || str_contains($message, 'FINGERPRINT_ALREADY_EXISTS')) {
+            return [
+                'valid' => true,
+                'status' => 'active',
+                'message' => 'License is already active for this domain',
+                'data' => $json['data'] ?? [],
+            ];
+        }
+
         // Handle 404 - plugin not supported
         if ($response->status() === 404) {
             return [
