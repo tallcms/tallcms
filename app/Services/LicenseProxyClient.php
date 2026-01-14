@@ -7,16 +7,6 @@ use Illuminate\Support\Facades\Log;
 
 class LicenseProxyClient
 {
-    /**
-     * Test license key prefix for development/testing
-     * Full format: TALLCMS-{PRODUCT}-TEST-LICENSE
-     * Example: TALLCMS-PRO-TEST-LICENSE
-     * Only works when APP_ENV is local or testing
-     */
-    public const TEST_LICENSE_PREFIX = 'TALLCMS-';
-
-    public const TEST_LICENSE_SUFFIX = '-TEST-LICENSE';
-
     protected string $proxyUrl;
 
     public function __construct(string $proxyUrl)
@@ -31,10 +21,6 @@ class LicenseProxyClient
      */
     public function activate(string $pluginSlug, string $licenseKey, string $domain): array
     {
-        if ($this->isTestLicense($pluginSlug, $licenseKey)) {
-            return $this->getTestLicenseResponse($pluginSlug);
-        }
-
         try {
             $url = "{$this->proxyUrl}/license-proxy/activate";
             $payload = [
@@ -78,10 +64,6 @@ class LicenseProxyClient
      */
     public function validate(string $pluginSlug, string $licenseKey, string $domain): array
     {
-        if ($this->isTestLicense($pluginSlug, $licenseKey)) {
-            return $this->getTestLicenseResponse($pluginSlug);
-        }
-
         try {
             $url = "{$this->proxyUrl}/license-proxy/validate";
             $payload = [
@@ -127,21 +109,6 @@ class LicenseProxyClient
      */
     public function checkForUpdates(string $pluginSlug, string $licenseKey, string $domain, string $currentVersion): array
     {
-        // Test licenses simulate expired - updates are blocked
-        if ($this->isTestLicense($pluginSlug, $licenseKey)) {
-            return [
-                'success' => false,
-                'license_valid' => false,
-                'update_available' => false,
-                'current_version' => $currentVersion,
-                'latest_version' => null,
-                'download_url' => null,
-                'changelog_url' => null,
-                'purchase_url' => config("plugin.license.purchase_urls.{$pluginSlug}"),
-                'message' => 'License expired. Please renew to access updates. (Test license)',
-            ];
-        }
-
         try {
             $url = "{$this->proxyUrl}/license-proxy/updates";
             $payload = [
@@ -241,13 +208,6 @@ class LicenseProxyClient
      */
     public function deactivate(string $pluginSlug, string $licenseKey, string $domain): array
     {
-        if ($this->isTestLicense($pluginSlug, $licenseKey)) {
-            return [
-                'success' => true,
-                'message' => 'Test license deactivated',
-            ];
-        }
-
         try {
             $url = "{$this->proxyUrl}/license-proxy/deactivate";
             $payload = [
@@ -291,56 +251,6 @@ class LicenseProxyClient
                 'message' => 'Unable to connect to license server',
             ];
         }
-    }
-
-    /**
-     * Check if the given key is a valid test license for the plugin
-     */
-    protected function isTestLicense(string $pluginSlug, string $licenseKey): bool
-    {
-        $expectedTestKey = $this->getTestLicenseKey($pluginSlug);
-
-        return strtoupper($licenseKey) === $expectedTestKey
-            && in_array(app()->environment(), ['local', 'testing'], true);
-    }
-
-    /**
-     * Generate the expected test license key for a plugin
-     * Format: TALLCMS-{SLUG-UPPERCASE}-TEST-LICENSE
-     * Example: tallcms/pro -> TALLCMS-PRO-TEST-LICENSE
-     */
-    protected function getTestLicenseKey(string $pluginSlug): string
-    {
-        // Extract product name from slug (e.g., 'tallcms/pro' -> 'PRO')
-        $parts = explode('/', $pluginSlug);
-        $product = strtoupper(end($parts));
-
-        return self::TEST_LICENSE_PREFIX.$product.self::TEST_LICENSE_SUFFIX;
-    }
-
-    /**
-     * Get a mock response for test license
-     *
-     * Test licenses simulate an EXPIRED license for testing:
-     * - License was activated a year ago
-     * - Expired 30 days ago (past the 14-day grace period)
-     * - Updates are blocked, but plugin still works (no watermark)
-     */
-    protected function getTestLicenseResponse(string $pluginSlug): array
-    {
-        return [
-            'valid' => false,
-            'status' => 'expired',
-            'message' => 'Test license expired (for testing expired scenarios)',
-            'data' => [
-                'license_key' => $this->getTestLicenseKey($pluginSlug),
-                'plugin_slug' => $pluginSlug,
-                'status' => 'expired',
-                'activated_at' => now()->subYear()->toIso8601String(),
-                'expires_at' => now()->subDays(30)->toIso8601String(),
-                'is_test' => true,
-            ],
-        ];
     }
 
     /**
