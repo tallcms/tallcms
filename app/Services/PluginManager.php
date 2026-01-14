@@ -1240,7 +1240,7 @@ class PluginManager
 
         // Clear Filament component cache (pages, resources, widgets)
         try {
-            Artisan::call('filament:cache-components');
+            Artisan::call('filament:clear-cached-components');
         } catch (\Throwable $e) {
             Log::debug('Could not clear Filament cache: '.$e->getMessage());
         }
