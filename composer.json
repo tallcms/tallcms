@@ -88,16 +88,7 @@
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --graceful --ansi",
             "@php artisan storage:link --ansi",
-            "@echo ''",
-            "@echo '  TallCMS installed successfully!'",
-            "@echo ''",
-            "@echo '  Next steps:'",
-            "@echo '    1. npm install && npm run build'",
-            "@echo '    2. php artisan serve'",
-            "@echo '    3. Visit http://localhost:8000/install'",
-            "@echo ''",
-            "@echo '  Documentation: https://tallcms.com/docs'",
-            "@echo ''"
+            "@php -r \"echo PHP_EOL . '  TallCMS installed successfully!' . PHP_EOL . PHP_EOL . '  Next steps:' . PHP_EOL . '    1. npm install && npm run build' . PHP_EOL . '    2. php artisan serve' . PHP_EOL . '    3. Visit http://localhost:8000/install' . PHP_EOL . PHP_EOL . '  Documentation: https://tallcms.com/docs' . PHP_EOL . PHP_EOL;\""
         ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
