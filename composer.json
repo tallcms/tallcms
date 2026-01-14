@@ -1,10 +1,23 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "tallcms/tallcms",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "A modern CMS built on Laravel, Livewire, Alpine.js, and Filament. The TALL stack CMS.",
+    "keywords": ["cms", "laravel", "livewire", "filament", "tallstack", "alpinejs", "tailwind"],
     "license": "MIT",
+    "homepage": "https://tallcms.com",
+    "support": {
+        "issues": "https://github.com/tallcms/tallcms/issues",
+        "source": "https://github.com/tallcms/tallcms",
+        "docs": "https://tallcms.com/docs"
+    },
+    "authors": [
+        {
+            "name": "TallCMS",
+            "email": "hello@tallcms.com",
+            "homepage": "https://tallcms.com"
+        }
+    ],
     "require": {
         "php": "^8.2",
         "aws/aws-sdk-php": "^3.369",
@@ -73,7 +86,18 @@
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi",
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
-            "@php artisan migrate --graceful --ansi"
+            "@php artisan migrate --graceful --ansi",
+            "@php artisan storage:link --ansi",
+            "@echo ''",
+            "@echo '  TallCMS installed successfully!'",
+            "@echo ''",
+            "@echo '  Next steps:'",
+            "@echo '    1. npm install && npm run build'",
+            "@echo '    2. php artisan serve'",
+            "@echo '    3. Visit http://localhost:8000/install'",
+            "@echo ''",
+            "@echo '  Documentation: https://tallcms.com/docs'",
+            "@echo ''"
         ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
