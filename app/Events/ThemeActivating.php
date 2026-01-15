@@ -2,17 +2,9 @@
 
 namespace App\Events;
 
-use App\Models\Theme;
+use TallCms\Cms\Events\ThemeActivating as BaseThemeActivating;
 
-class ThemeActivating
+class ThemeActivating extends BaseThemeActivating
 {
-    public Theme $theme;
-
-    public ?Theme $previousTheme;
-
-    public function __construct(Theme $theme, ?Theme $previousTheme = null)
-    {
-        $this->theme = $theme;
-        $this->previousTheme = $previousTheme;
-    }
+    // All functionality inherited from TallCms\Cms\Events\ThemeActivating
 }

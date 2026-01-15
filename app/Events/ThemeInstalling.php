@@ -2,14 +2,9 @@
 
 namespace App\Events;
 
-use App\Models\Theme;
+use TallCms\Cms\Events\ThemeInstalling as BaseThemeInstalling;
 
-class ThemeInstalling
+class ThemeInstalling extends BaseThemeInstalling
 {
-    public Theme $theme;
-
-    public function __construct(Theme $theme)
-    {
-        $this->theme = $theme;
-    }
+    // All functionality inherited from TallCms\Cms\Events\ThemeInstalling
 }

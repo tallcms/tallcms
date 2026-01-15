@@ -20,6 +20,9 @@ class TallCmsPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
+        // Store panel ID for notifications and route generation
+        config(['tallcms.filament.panel_id' => $panel->getId()]);
+
         // Store config for resources/pages to access
         config(['tallcms.filament.navigation_group' => $this->navigationGroup]);
         config(['tallcms.filament.navigation_sort' => $this->navigationSort]);
@@ -148,15 +151,20 @@ class TallCmsPlugin implements Plugin
      */
     protected function shouldLoadPlugins(): bool
     {
-        $pluginsPath = config('tallcms.plugin_mode.plugins_path');
-
         // Standalone: always load from plugins/
         if (app(TallCmsServiceProvider::class)->isStandaloneMode()) {
             return is_dir(base_path('plugins'));
         }
 
-        // Plugin mode: only if plugins_path is configured
-        return $pluginsPath !== null && is_dir($pluginsPath);
+        // Plugin mode: check plugins_enabled flag first
+        if (! config('tallcms.plugin_mode.plugins_enabled', false)) {
+            return false;
+        }
+
+        // Use configured path or fall back to base_path('plugins')
+        $pluginsPath = config('tallcms.plugin_mode.plugins_path') ?? base_path('plugins');
+
+        return is_dir($pluginsPath);
     }
 
     /**

@@ -2,19 +2,9 @@
 
 namespace App\Events;
 
-use App\Models\Theme;
-use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
+use TallCms\Cms\Events\ThemeRollback as BaseThemeRollback;
 
-class ThemeRollback
+class ThemeRollback extends BaseThemeRollback
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
-
-    /**
-     * Create a new event instance.
-     */
-    public function __construct(
-        public Theme $theme
-    ) {}
+    // All functionality inherited from TallCms\Cms\Events\ThemeRollback
 }

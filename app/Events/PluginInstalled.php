@@ -2,20 +2,9 @@
 
 namespace App\Events;
 
-use App\Models\Plugin;
-use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
+use TallCms\Cms\Events\PluginInstalled as BasePluginInstalled;
 
-class PluginInstalled
+class PluginInstalled extends BasePluginInstalled
 {
-    use Dispatchable, SerializesModels;
-
-    /**
-     * Create a new event instance.
-     */
-    public function __construct(
-        public Plugin $plugin,
-        public array $migrationsRan = [],
-        public string $source = 'upload'
-    ) {}
+    // All functionality inherited from TallCms\Cms\Events\PluginInstalled
 }

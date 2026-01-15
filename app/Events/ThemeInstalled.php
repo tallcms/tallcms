@@ -2,17 +2,9 @@
 
 namespace App\Events;
 
-use App\Models\Theme;
+use TallCms\Cms\Events\ThemeInstalled as BaseThemeInstalled;
 
-class ThemeInstalled
+class ThemeInstalled extends BaseThemeInstalled
 {
-    public Theme $theme;
-
-    public bool $success;
-
-    public function __construct(Theme $theme, bool $success = true)
-    {
-        $this->theme = $theme;
-        $this->success = $success;
-    }
+    // All functionality inherited from TallCms\Cms\Events\ThemeInstalled
 }

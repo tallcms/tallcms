@@ -2,19 +2,9 @@
 
 namespace App\Events;
 
-use App\Models\Plugin;
-use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
+use TallCms\Cms\Events\PluginUninstalled as BasePluginUninstalled;
 
-class PluginUninstalled
+class PluginUninstalled extends BasePluginUninstalled
 {
-    use Dispatchable, SerializesModels;
-
-    /**
-     * Create a new event instance.
-     */
-    public function __construct(
-        public Plugin $plugin,
-        public array $migrationsRolledBack = []
-    ) {}
+    // All functionality inherited from TallCms\Cms\Events\PluginUninstalled
 }
