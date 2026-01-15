@@ -1,0 +1,57 @@
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "tallcms/cms",
+    "type": "library",
+    "description": "TallCMS - A modern CMS for Filament admin panels. Works standalone or as a plugin in existing Filament apps.",
+    "keywords": ["cms", "filament", "laravel", "livewire", "tallstack", "content-management"],
+    "license": "MIT",
+    "homepage": "https://tallcms.com",
+    "support": {
+        "issues": "https://github.com/tallcms/cms/issues",
+        "source": "https://github.com/tallcms/cms",
+        "docs": "https://tallcms.com/docs"
+    },
+    "authors": [
+        {
+            "name": "TallCMS",
+            "email": "hello@tallcms.com",
+            "homepage": "https://tallcms.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "filament/filament": "^4.0",
+        "spatie/laravel-package-tools": "^1.16",
+        "bezhansalleh/filament-shield": "^4.0",
+        "spatie/laravel-permission": "^6.0",
+        "ezyang/htmlpurifier": "^4.19",
+        "paragonie/sodium_compat": "^2.0",
+        "wsmallnews/filament-nestedset": "^2.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^10.0",
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "TallCms\\Cms\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TallCms\\Cms\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "TallCms\\Cms\\TallCmsServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

@@ -18,7 +18,17 @@
             "homepage": "https://tallcms.com"
         }
     ],
+    "repositories": [
+        {
+            "type": "path",
+            "url": "./packages/tallcms/cms",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
     "require": {
+        "tallcms/cms": "@dev",
         "php": "^8.2",
         "aws/aws-sdk-php": "^3.369",
         "bezhansalleh/filament-shield": "^4.0",
