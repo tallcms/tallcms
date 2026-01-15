@@ -4,9 +4,9 @@ if (! function_exists('theme')) {
     /**
      * Get the current active theme instance
      */
-    function theme(): \App\Contracts\ThemeInterface
+    function theme(): \TallCms\Cms\Contracts\ThemeInterface
     {
-        return \App\Services\ThemeResolver::getCurrentTheme();
+        return \TallCms\Cms\Services\ThemeResolver::getCurrentTheme();
     }
 }
 
@@ -56,9 +56,9 @@ if (! function_exists('theme_manager')) {
     /**
      * Get the theme manager instance
      */
-    function theme_manager(): \App\Services\ThemeManager
+    function theme_manager(): \TallCms\Cms\Services\ThemeManager
     {
-        return app(\App\Services\ThemeManager::class);
+        return app(\TallCms\Cms\Services\ThemeManager::class);
     }
 }
 
@@ -66,7 +66,7 @@ if (! function_exists('active_theme')) {
     /**
      * Get the active theme instance
      */
-    function active_theme(): \App\Models\Theme
+    function active_theme(): \TallCms\Cms\Models\Theme
     {
         return theme_manager()->getActiveTheme();
     }
@@ -201,11 +201,11 @@ if (! function_exists('cms_post_url')) {
     /**
      * Generate URL for a post within a parent page context
      *
-     * @param  \App\Models\CmsPost  $post  The post to generate URL for
+     * @param  \TallCms\Cms\Models\CmsPost  $post  The post to generate URL for
      * @param  string  $parentSlug  The parent page slug (e.g., 'blog')
      * @return string The full URL to the post
      */
-    function cms_post_url(\App\Models\CmsPost $post, string $parentSlug): string
+    function cms_post_url(\TallCms\Cms\Models\CmsPost $post, string $parentSlug): string
     {
         $slug = trim($parentSlug, '/').'/'.$post->slug;
 
