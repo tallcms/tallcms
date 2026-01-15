@@ -2,48 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Support\Str;
+use TallCms\Cms\Models\MediaCollection as BaseMediaCollection;
 
-class MediaCollection extends Model
+/**
+ * MediaCollection - extends the package's MediaCollection for backwards compatibility.
+ *
+ * This class exists so that existing code using App\Models\MediaCollection
+ * continues to work. All functionality is provided by the tallcms/cms package.
+ */
+class MediaCollection extends BaseMediaCollection
 {
-    protected $table = 'tallcms_media_collections';
-
-    protected $fillable = [
-        'name',
-        'slug',
-        'description',
-        'color',
-    ];
-
-    protected static function booted()
-    {
-        static::creating(function (MediaCollection $collection) {
-            if (empty($collection->slug)) {
-                $collection->slug = Str::slug($collection->name);
-            }
-        });
-
-        static::updating(function (MediaCollection $collection) {
-            if ($collection->isDirty('name') && empty($collection->slug)) {
-                $collection->slug = Str::slug($collection->name);
-            }
-        });
-    }
-
-    public function media(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            TallcmsMedia::class,
-            'tallcms_media_collection_pivot',
-            'collection_id',
-            'media_id'
-        )->withTimestamps();
-    }
-
-    public function getMediaCountAttribute(): int
-    {
-        return $this->media()->count();
-    }
+    // All functionality inherited from TallCms\Cms\Models\MediaCollection
 }

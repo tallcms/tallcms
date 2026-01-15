@@ -2,45 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use TallCms\Cms\Models\TallcmsMenu as BaseTallcmsMenu;
 
-class TallcmsMenu extends Model
+/**
+ * TallcmsMenu - extends the package's TallcmsMenu for backwards compatibility.
+ *
+ * This class exists so that existing code using App\Models\TallcmsMenu
+ * continues to work. All functionality is provided by the tallcms/cms package.
+ */
+class TallcmsMenu extends BaseTallcmsMenu
 {
-    protected $table = 'tallcms_menus';
-
-    protected $fillable = [
-        'name',
-        'location',
-        'description',
-        'is_active',
-    ];
-
-    protected $casts = [
-        'is_active' => 'boolean',
-    ];
-
-    public function items(): HasMany
-    {
-        return $this->hasMany(TallcmsMenuItem::class, 'menu_id')
-            ->whereIsRoot()
-            ->defaultOrder();
-    }
-
-    public function allItems(): HasMany
-    {
-        return $this->hasMany(TallcmsMenuItem::class, 'menu_id');
-    }
-
-    public function activeItems(): HasMany
-    {
-        return $this->items()->where('is_active', true);
-    }
-
-    public static function byLocation(string $location): ?self
-    {
-        return static::where('location', $location)
-            ->where('is_active', true)
-            ->first();
-    }
+    // All functionality inherited from TallCms\Cms\Models\TallcmsMenu
 }
