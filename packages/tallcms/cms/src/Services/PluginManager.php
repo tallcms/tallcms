@@ -28,7 +28,7 @@ class PluginManager
      */
     public function getPluginsPath(): string
     {
-        return config('plugin.path', base_path('plugins'));
+        return config('tallcms.plugin_mode.plugins_path') ?? base_path('plugins');
     }
 
     /**

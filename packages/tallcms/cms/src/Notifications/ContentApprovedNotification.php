@@ -124,12 +124,14 @@ class ContentApprovedNotification extends Notification
      */
     protected function getViewUrl(): string
     {
+        $panelId = config('tallcms.filament.panel_id', 'admin');
+
         if ($this->content instanceof CmsPost) {
-            return route('filament.admin.resources.cms-posts.edit', $this->content);
+            return route("filament.{$panelId}.resources.cms-posts.edit", $this->content);
         }
 
         if ($this->content instanceof CmsPage) {
-            return route('filament.admin.resources.cms-pages.edit', $this->content);
+            return route("filament.{$panelId}.resources.cms-pages.edit", $this->content);
         }
 
         return url('/admin');
@@ -140,12 +142,15 @@ class ContentApprovedNotification extends Notification
      */
     protected function getFrontendUrl(): string
     {
+        $prefix = config('tallcms.plugin_mode.routes_prefix', '');
+        $prefix = $prefix ? "/{$prefix}" : '';
+
         if ($this->content instanceof CmsPost) {
-            return url("/blog/{$this->content->slug}");
+            return url("{$prefix}/blog/{$this->content->slug}");
         }
 
         if ($this->content instanceof CmsPage) {
-            return $this->content->is_homepage ? url('/') : url("/{$this->content->slug}");
+            return $this->content->is_homepage ? url('/') : url("{$prefix}/{$this->content->slug}");
         }
 
         return url('/');

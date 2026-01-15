@@ -86,9 +86,12 @@ class MergeTagService
      */
     protected static function getPageTags(CmsPage $page): array
     {
+        $prefix = config('tallcms.plugin_mode.routes_prefix', '');
+        $prefix = $prefix ? "/{$prefix}" : '';
+
         return [
             'page_title' => $page->title ?? '',
-            'page_url' => url('/'.ltrim($page->slug, '/')),
+            'page_url' => url($prefix.'/'.ltrim($page->slug, '/')),
             'page_author' => 'Admin', // Pages don't have authors, could be site admin
         ];
     }
@@ -98,9 +101,12 @@ class MergeTagService
      */
     protected static function getPostTags(CmsPost $post): array
     {
+        $prefix = config('tallcms.plugin_mode.routes_prefix', '');
+        $prefix = $prefix ? "/{$prefix}" : '';
+
         return [
             'post_title' => $post->title ?? '',
-            'post_url' => url('/post/'.$post->slug), // TODO: Implement post routing or update when blog routing is added
+            'post_url' => url("{$prefix}/blog/{$post->slug}"),
             'post_excerpt' => $post->excerpt ?? '',
             'post_author' => $post->author->name ?? 'Unknown Author',
             'post_author_email' => $post->author->email ?? '',

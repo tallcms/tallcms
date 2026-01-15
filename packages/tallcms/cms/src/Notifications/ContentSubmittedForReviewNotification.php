@@ -102,12 +102,14 @@ class ContentSubmittedForReviewNotification extends Notification
      */
     protected function getEditUrl(): string
     {
+        $panelId = config('tallcms.filament.panel_id', 'admin');
+
         if ($this->content instanceof CmsPost) {
-            return route('filament.admin.resources.cms-posts.edit', $this->content);
+            return route("filament.{$panelId}.resources.cms-posts.edit", $this->content);
         }
 
         if ($this->content instanceof CmsPage) {
-            return route('filament.admin.resources.cms-pages.edit', $this->content);
+            return route("filament.{$panelId}.resources.cms-pages.edit", $this->content);
         }
 
         return url('/admin');

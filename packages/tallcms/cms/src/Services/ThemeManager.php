@@ -96,7 +96,7 @@ class ThemeManager
         Log::warning("Theme '{$requestedSlug}' not found or invalid. Falling back to '{$fallbackSlug}'.", [
             'requested_theme' => $requestedSlug,
             'fallback_theme' => $fallbackSlug,
-            'themes_path' => base_path('themes'),
+            'themes_path' => $this->getThemesPath(),
         ]);
     }
 
@@ -329,7 +329,7 @@ class ThemeManager
      */
     protected function discoverThemes(): Collection
     {
-        $themesPath = base_path('themes');
+        $themesPath = $this->getThemesPath();
 
         if (! File::exists($themesPath)) {
             return collect();
@@ -1042,7 +1042,7 @@ class ThemeManager
             'tailwind' => [],
             'supports' => [],
             'build' => [],
-        ], base_path('themes/default'));
+        ], $this->getThemesPath().'/default');
     }
 
     /**
@@ -1065,7 +1065,7 @@ class ThemeManager
      */
     public function getThemesPath(): string
     {
-        return base_path('themes');
+        return config('tallcms.plugin_mode.themes_path') ?? base_path('themes');
     }
 
     /**

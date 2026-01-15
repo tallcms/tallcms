@@ -90,6 +90,9 @@ return [
     |
     */
     'filament' => [
+        // Panel ID for route generation in notifications
+        // Used for constructing admin panel URLs like filament.{panel_id}.resources.*
+        'panel_id' => env('TALLCMS_PANEL_ID', 'admin'),
         'navigation_group' => 'CMS',
         'navigation_sort' => null,
     ],
