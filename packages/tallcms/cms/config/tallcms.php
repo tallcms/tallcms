@@ -41,6 +41,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Route Configuration (Standalone Mode)
+    |--------------------------------------------------------------------------
+    |
+    | These settings apply to standalone mode route naming and exclusions.
+    |
+    */
+    'route_name_prefix' => env('TALLCMS_ROUTE_NAME_PREFIX', ''),
+
+    'route_exclusions' => env(
+        'TALLCMS_ROUTE_EXCLUSIONS',
+        '^(?!preview|admin|livewire|storage|api|install).*'
+    ),
+
+    /*
+    |--------------------------------------------------------------------------
     | Plugin Mode Settings
     |--------------------------------------------------------------------------
     |
@@ -56,6 +71,17 @@ return [
         // URL prefix for CMS routes (e.g., 'cms' results in /cms/about, /cms/blog)
         // REQUIRED when routes_enabled is true. Must not be empty.
         'routes_prefix' => env('TALLCMS_ROUTES_PREFIX'),
+
+        // Route name prefix for plugin mode (e.g., 'tallcms.' results in tallcms.cms.page)
+        'route_name_prefix' => env('TALLCMS_PLUGIN_ROUTE_NAME_PREFIX', 'tallcms.'),
+
+        // Granular route toggles for plugin mode
+        'catch_all_enabled' => env('TALLCMS_CATCH_ALL_ENABLED', false),
+        'api_routes_enabled' => env('TALLCMS_API_ROUTES_ENABLED', true),
+        'preview_routes_enabled' => env('TALLCMS_PREVIEW_ROUTES_ENABLED', true),
+
+        // Route exclusions pattern for catch-all route in plugin mode
+        'route_exclusions' => env('TALLCMS_PLUGIN_ROUTE_EXCLUSIONS', '.*'),
 
         // Enable the TallCMS plugin system in plugin mode.
         // When false (default), PluginServiceProvider skips all plugin loading.
@@ -93,6 +119,10 @@ return [
         // Panel ID for route generation in notifications
         // Used for constructing admin panel URLs like filament.{panel_id}.resources.*
         'panel_id' => env('TALLCMS_PANEL_ID', 'admin'),
+
+        // Panel path for URL construction and middleware exclusions
+        'panel_path' => env('TALLCMS_PANEL_PATH', 'admin'),
+
         'navigation_group' => 'CMS',
         'navigation_sort' => null,
     ],

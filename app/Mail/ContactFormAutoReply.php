@@ -2,38 +2,15 @@
 
 namespace App\Mail;
 
-use App\Models\TallcmsContactSubmission;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Content;
-use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Queue\SerializesModels;
+use TallCms\Cms\Mail\ContactFormAutoReply as BaseContactFormAutoReply;
 
-class ContactFormAutoReply extends Mailable implements ShouldQueue
+/**
+ * ContactFormAutoReply - extends the package's class for backwards compatibility.
+ *
+ * This class exists so that existing code using App\Mail\ContactFormAutoReply
+ * continues to work. All functionality is provided by the tallcms/cms package.
+ */
+class ContactFormAutoReply extends BaseContactFormAutoReply
 {
-    use Queueable, SerializesModels;
-
-    public function __construct(
-        public TallcmsContactSubmission $submission
-    ) {}
-
-    public function envelope(): Envelope
-    {
-        return new Envelope(
-            subject: 'Thank you for contacting '.config('app.name'),
-        );
-    }
-
-    public function content(): Content
-    {
-        return new Content(
-            view: 'emails.contact-form-auto-reply',
-        );
-    }
-
-    public function attachments(): array
-    {
-        return [];
-    }
+    // All functionality inherited from TallCms\Cms\Mail\ContactFormAutoReply
 }

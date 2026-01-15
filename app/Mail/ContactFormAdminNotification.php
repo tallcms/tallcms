@@ -2,43 +2,15 @@
 
 namespace App\Mail;
 
-use App\Models\TallcmsContactSubmission;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Content;
-use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Queue\SerializesModels;
+use TallCms\Cms\Mail\ContactFormAdminNotification as BaseContactFormAdminNotification;
 
-class ContactFormAdminNotification extends Mailable implements ShouldQueue
+/**
+ * ContactFormAdminNotification - extends the package's class for backwards compatibility.
+ *
+ * This class exists so that existing code using App\Mail\ContactFormAdminNotification
+ * continues to work. All functionality is provided by the tallcms/cms package.
+ */
+class ContactFormAdminNotification extends BaseContactFormAdminNotification
 {
-    use Queueable, SerializesModels;
-
-    public function __construct(
-        public TallcmsContactSubmission $submission
-    ) {}
-
-    public function envelope(): Envelope
-    {
-        // Sanitize subject to prevent header injection
-        $senderName = $this->submission->name
-            ? str_replace(["\r", "\n"], '', $this->submission->name)
-            : 'Someone';
-
-        return new Envelope(
-            subject: "New Contact Form Submission from {$senderName}",
-        );
-    }
-
-    public function content(): Content
-    {
-        return new Content(
-            view: 'emails.contact-form-admin',
-        );
-    }
-
-    public function attachments(): array
-    {
-        return [];
-    }
+    // All functionality inherited from TallCms\Cms\Mail\ContactFormAdminNotification
 }

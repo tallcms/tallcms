@@ -2,20 +2,60 @@
 
 declare(strict_types=1);
 
-use Illuminate\Support\Facades\Route;
-
 /*
 |--------------------------------------------------------------------------
-| TallCMS Web Routes
+| TallCMS Package Routes (Plugin Mode Only)
 |--------------------------------------------------------------------------
 |
-| These routes handle the frontend rendering of CMS pages and posts.
-| In standalone mode, these are loaded at the root level.
-| In plugin mode, these are loaded with a configurable prefix.
+| These routes are loaded ONLY in plugin mode when routes_enabled is true.
+| In standalone mode, routes are defined in the app's routes/web.php
+| using App wrapper classes for full customization.
+|
+| Plugin mode routes use the tallcms.* prefix by default to avoid conflicts.
 |
 */
 
-// TODO: Extract routes from main application after Phase 6
-// Route::get('/blog', [PostController::class, 'index'])->name('cms.blog.index');
-// Route::get('/blog/{slug}', [PostController::class, 'show'])->name('cms.blog.show');
-// Route::get('/{slug}', [PageController::class, 'show'])->name('cms.page')->where('slug', '.*');
+use Illuminate\Support\Facades\Route;
+use TallCms\Cms\Http\Controllers\ContactFormController;
+use TallCms\Cms\Http\Controllers\PreviewController;
+use TallCms\Cms\Livewire\CmsPageRenderer;
+
+// Route name prefix (defaults to 'tallcms.' in plugin mode)
+$namePrefix = config('tallcms.plugin_mode.route_name_prefix', 'tallcms.');
+
+Route::name($namePrefix)->group(function () {
+    // Contact API
+    if (config('tallcms.plugin_mode.api_routes_enabled', true)) {
+        Route::post('/api/tallcms/contact', [ContactFormController::class, 'submit'])
+            ->name('contact.submit');
+    }
+
+    // Preview routes
+    if (config('tallcms.plugin_mode.preview_routes_enabled', true)) {
+        Route::get('/preview/share/{token}', [PreviewController::class, 'tokenPreview'])
+            ->middleware('throttle:60,1')
+            ->name('preview.token');
+
+        Route::middleware('auth')->group(function () {
+            Route::get('/preview/page/{page}', [PreviewController::class, 'page'])
+                ->name('preview.page');
+            Route::get('/preview/post/{post}', [PreviewController::class, 'post'])
+                ->name('preview.post');
+        });
+    }
+
+    // Catch-all CMS routes (disabled by default in plugin mode)
+    if (config('tallcms.plugin_mode.catch_all_enabled', false)) {
+        Route::middleware('tallcms.maintenance')->group(function () {
+            Route::get('/', CmsPageRenderer::class)
+                ->defaults('slug', '/')
+                ->name('cms.home');
+
+            $pattern = config('tallcms.plugin_mode.route_exclusions', '.*');
+
+            Route::get('/{slug}', CmsPageRenderer::class)
+                ->where('slug', $pattern)
+                ->name('cms.page');
+        });
+    }
+});

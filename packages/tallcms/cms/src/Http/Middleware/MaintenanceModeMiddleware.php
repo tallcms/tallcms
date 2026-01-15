@@ -1,24 +1,20 @@
 <?php
 
-namespace App\Http\Middleware;
+declare(strict_types=1);
 
-use App\Models\SiteSetting;
+namespace TallCms\Cms\Http\Middleware;
+
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\Response;
-use TallCms\Cms\Http\Middleware\MaintenanceModeMiddleware as BaseMaintenanceModeMiddleware;
+use TallCms\Cms\Models\SiteSetting;
 
-/**
- * MaintenanceModeMiddleware - extends the package's middleware for backwards compatibility.
- *
- * Overrides the view to use app-level view for full customization in standalone mode.
- */
-class MaintenanceModeMiddleware extends BaseMaintenanceModeMiddleware
+class MaintenanceModeMiddleware
 {
     /**
      * Handle an incoming request.
-     *
-     * Override to use app-level maintenance view for standalone customization.
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -43,14 +39,14 @@ class MaintenanceModeMiddleware extends BaseMaintenanceModeMiddleware
                 $maintenanceMessage = SiteSetting::get('maintenance_message', 'We\'re currently performing scheduled maintenance. Please check back soon!');
                 $siteName = SiteSetting::get('site_name');
 
-                // Use app-level view for standalone customization
-                return response()->view('maintenance', [
+                return response()->view('tallcms::maintenance', [
                     'maintenanceMessage' => $maintenanceMessage,
                     'siteName' => $siteName,
                 ], 503);
             }
         } catch (\Exception $e) {
             // If database query fails, skip maintenance check
+            // This handles cases where tables don't exist yet
         }
 
         return $next($request);
@@ -61,21 +57,30 @@ class MaintenanceModeMiddleware extends BaseMaintenanceModeMiddleware
      */
     private function installationIncomplete(): bool
     {
-        if (! \Illuminate\Support\Facades\File::exists(storage_path('installer.lock'))) {
+        // Installation is incomplete if:
+        // 1. No installer lock file exists
+        // 2. Database tables don't exist
+        // 3. .env doesn't exist
+
+        if (! File::exists(storage_path('installer.lock'))) {
             return true;
         }
 
-        if (! \Illuminate\Support\Facades\File::exists(base_path('.env'))) {
+        if (! File::exists(base_path('.env'))) {
             return true;
         }
 
         try {
+            // Check if database is configured
             if (empty(config('database.connections.'.config('database.default').'.database'))) {
                 return true;
             }
 
-            return ! \Illuminate\Support\Facades\Schema::hasTable((new SiteSetting)->getTable());
+            // Check if the settings table exists using the model's table name
+            return ! Schema::hasTable((new SiteSetting)->getTable());
         } catch (\Exception $e) {
+            // If we can't check the schema, assume installation is incomplete
+            // This handles cases where database isn't configured or accessible
             return true;
         }
     }

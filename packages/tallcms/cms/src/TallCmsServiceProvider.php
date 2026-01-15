@@ -106,6 +106,21 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
         // Enums
         'App\\Enums\\ContentStatus' => Enums\ContentStatus::class,
+
+        // Controllers
+        'App\\Http\\Controllers\\ContactFormController' => Http\Controllers\ContactFormController::class,
+        'App\\Http\\Controllers\\PreviewController' => Http\Controllers\PreviewController::class,
+
+        // Middleware
+        'App\\Http\\Middleware\\MaintenanceModeMiddleware' => Http\Middleware\MaintenanceModeMiddleware::class,
+        'App\\Http\\Middleware\\ThemePreviewMiddleware' => Http\Middleware\ThemePreviewMiddleware::class,
+
+        // Livewire Components
+        'App\\Livewire\\CmsPageRenderer' => Livewire\CmsPageRenderer::class,
+
+        // Mail
+        'App\\Mail\\ContactFormAdminNotification' => Mail\ContactFormAdminNotification::class,
+        'App\\Mail\\ContactFormAutoReply' => Mail\ContactFormAutoReply::class,
     ];
 
     public function configurePackage(Package $package): void
@@ -158,6 +173,9 @@ class TallCmsServiceProvider extends PackageServiceProvider
     {
         parent::packageBooted();
 
+        // Register middleware aliases before loading routes
+        $this->registerMiddlewareAliases();
+
         // Register assets only if published
         $cssPath = public_path('vendor/tallcms/tallcms.css');
         $jsPath = public_path('vendor/tallcms/tallcms.js');
@@ -175,6 +193,17 @@ class TallCmsServiceProvider extends PackageServiceProvider
         } else {
             $this->bootPluginFeatures();
         }
+    }
+
+    /**
+     * Register middleware aliases used by package routes.
+     */
+    protected function registerMiddlewareAliases(): void
+    {
+        $router = $this->app['router'];
+
+        $router->aliasMiddleware('tallcms.maintenance', Http\Middleware\MaintenanceModeMiddleware::class);
+        $router->aliasMiddleware('tallcms.theme-preview', Http\Middleware\ThemePreviewMiddleware::class);
     }
 
     /**
@@ -199,8 +228,11 @@ class TallCmsServiceProvider extends PackageServiceProvider
      */
     protected function bootStandaloneFeatures(): void
     {
-        // Standalone: all features enabled, routes at root
-        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+        // Standalone mode: routes are defined in the app's routes/web.php
+        // using App wrapper classes for full customization.
+        // Package routes are NOT loaded to avoid duplication.
+        // The app routes use App\Livewire\CmsPageRenderer which extends
+        // the package class and can override render() for custom views.
     }
 
     /**
