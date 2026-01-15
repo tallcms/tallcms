@@ -15,6 +15,7 @@ use TallCms\Cms\Events\PluginInstalling;
 use TallCms\Cms\Events\PluginUninstalled;
 use TallCms\Cms\Events\PluginUninstalling;
 use TallCms\Cms\Models\Plugin;
+use TallCms\Cms\Support\EventDispatcher;
 use ZipArchive;
 
 class PluginManager
@@ -569,7 +570,7 @@ class PluginManager
             }
 
             // Fire installing event
-            event(new PluginInstalling($plugin, 'upload'));
+            EventDispatcher::dispatch(new PluginInstalling($plugin, 'upload'));
 
             // Register autoloader
             $this->registerAutoload($plugin);
@@ -612,7 +613,7 @@ class PluginManager
             $this->clearAllCaches();
 
             // Fire installed event
-            event(new PluginInstalled($plugin, $migrationsRan, 'upload'));
+            EventDispatcher::dispatch(new PluginInstalled($plugin, $migrationsRan, 'upload'));
 
             Log::info("Plugin installed: {$plugin->getFullSlug()}", [
                 'version' => $plugin->version,
@@ -658,7 +659,7 @@ class PluginManager
 
         try {
             // Fire uninstalling event
-            event(new PluginUninstalling($plugin));
+            EventDispatcher::dispatch(new PluginUninstalling($plugin));
 
             // Rollback migrations
             $migrationsRolledBack = [];
@@ -680,7 +681,7 @@ class PluginManager
             $this->clearAllCaches();
 
             // Fire uninstalled event
-            event(new PluginUninstalled($plugin, $migrationsRolledBack));
+            EventDispatcher::dispatch(new PluginUninstalled($plugin, $migrationsRolledBack));
 
             Log::info("Plugin uninstalled: {$plugin->getFullSlug()}", [
                 'migrations_rolled_back' => $migrationsRolledBack,

@@ -7,7 +7,6 @@ namespace TallCms\Cms\Services;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
@@ -19,6 +18,7 @@ use TallCms\Cms\Events\ThemeInstalled;
 use TallCms\Cms\Events\ThemeInstalling;
 use TallCms\Cms\Events\ThemeRollback;
 use TallCms\Cms\Models\Theme;
+use TallCms\Cms\Support\EventDispatcher;
 use ZipArchive;
 
 class ThemeManager
@@ -122,7 +122,7 @@ class ThemeManager
         $this->publishThemeAssets($theme);
 
         // Dispatch theme activating event
-        Event::dispatch(new ThemeActivating($theme, $previousTheme));
+        EventDispatcher::dispatch(new ThemeActivating($theme, $previousTheme));
 
         // Update configuration file
         $configPath = config_path('theme.php');
@@ -173,7 +173,7 @@ class ThemeManager
         }
 
         // Dispatch theme activated event
-        Event::dispatch(new ThemeActivated($theme, $previousTheme));
+        EventDispatcher::dispatch(new ThemeActivated($theme, $previousTheme));
 
         return true;
     }
@@ -250,7 +250,7 @@ class ThemeManager
             Cache::forget('theme.rollback_timestamp');
 
             // Dispatch rollback event
-            Event::dispatch(new ThemeRollback($previousTheme));
+            EventDispatcher::dispatch(new ThemeRollback($previousTheme));
         }
 
         return $success;
@@ -383,7 +383,7 @@ class ThemeManager
         }
 
         // Dispatch theme installing event
-        Event::dispatch(new ThemeInstalling($theme));
+        EventDispatcher::dispatch(new ThemeInstalling($theme));
 
         $success = true;
 
@@ -411,7 +411,7 @@ class ThemeManager
         $this->clearCache();
 
         // Dispatch theme installed event
-        Event::dispatch(new ThemeInstalled($theme, $success));
+        EventDispatcher::dispatch(new ThemeInstalled($theme, $success));
 
         return $success;
     }

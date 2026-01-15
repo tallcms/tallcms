@@ -12,6 +12,7 @@ use TallCms\Cms\Models\User;
 use TallCms\Cms\Notifications\ContentApprovedNotification;
 use TallCms\Cms\Notifications\ContentRejectedNotification;
 use TallCms\Cms\Notifications\ContentSubmittedForReviewNotification;
+use TallCms\Cms\Support\NotificationDispatcher;
 
 class PublishingWorkflowService
 {
@@ -39,7 +40,7 @@ class PublishingWorkflowService
             $content->approve();
 
             if ($this->notificationsEnabled() && $author) {
-                $author->notify(new ContentApprovedNotification($content));
+                NotificationDispatcher::send($author, new ContentApprovedNotification($content));
             }
         });
     }
@@ -54,7 +55,7 @@ class PublishingWorkflowService
             $content->reject($reason);
 
             if ($this->notificationsEnabled() && $author) {
-                $author->notify(new ContentRejectedNotification($content, $reason));
+                NotificationDispatcher::send($author, new ContentRejectedNotification($content, $reason));
             }
         });
     }
@@ -82,7 +83,7 @@ class PublishingWorkflowService
                 continue;
             }
 
-            $approver->notify(new ContentSubmittedForReviewNotification($content));
+            NotificationDispatcher::send($approver, new ContentSubmittedForReviewNotification($content));
         }
     }
 

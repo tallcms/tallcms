@@ -20,8 +20,10 @@ class TallCmsPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
-        // Store panel ID for notifications and route generation
-        config(['tallcms.filament.panel_id' => $panel->getId()]);
+        // Store panel ID for notifications and route generation (only if not explicitly configured)
+        if (! config('tallcms.filament.panel_id')) {
+            config(['tallcms.filament.panel_id' => $panel->getId()]);
+        }
 
         // Store config for resources/pages to access
         config(['tallcms.filament.navigation_group' => $this->navigationGroup]);
