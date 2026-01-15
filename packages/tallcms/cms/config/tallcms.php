@@ -57,13 +57,23 @@ return [
         // REQUIRED when routes_enabled is true. Must not be empty.
         'routes_prefix' => env('TALLCMS_ROUTES_PREFIX'),
 
-        // Path to TallCMS themes directory. Set to null to disable theme system.
-        // Example: base_path('tallcms-themes') for a custom location
-        'themes_path' => env('TALLCMS_THEMES_PATH'),
+        // Enable the TallCMS plugin system in plugin mode.
+        // When false (default), PluginServiceProvider skips all plugin loading.
+        // Set to true to enable third-party TallCMS plugins in your Filament app.
+        'plugins_enabled' => env('TALLCMS_PLUGINS_ENABLED', false),
 
-        // Path to TallCMS plugins directory. Set to null to disable plugin system.
-        // Example: base_path('tallcms-plugins') for a custom location
+        // Path to TallCMS plugins directory. Only used when plugins_enabled is true.
+        // Defaults to base_path('plugins') if not set.
         'plugins_path' => env('TALLCMS_PLUGINS_PATH'),
+
+        // Enable the TallCMS theme system in plugin mode.
+        // When false (default), ThemeServiceProvider skips all theme loading.
+        // Set to true to enable TallCMS themes in your Filament app.
+        'themes_enabled' => env('TALLCMS_THEMES_ENABLED', false),
+
+        // Path to TallCMS themes directory. Only used when themes_enabled is true.
+        // Defaults to base_path('themes') if not set.
+        'themes_path' => env('TALLCMS_THEMES_PATH'),
 
         // User model class. Must implement TallCmsUserContract.
         // Default works with standard Laravel User model with HasRoles trait.
