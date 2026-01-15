@@ -140,11 +140,15 @@ class TallCmsServiceProvider extends PackageServiceProvider
     /**
      * Register class aliases for backwards compatibility.
      * This allows existing code using App\* namespaces to continue working.
+     * Skips aliasing if the original class/interface/trait already exists
+     * (e.g., in a monorepo or when app/ classes haven't been removed).
      */
     protected function registerClassAliases(): void
     {
         foreach ($this->classAliases as $alias => $class) {
-            if (! class_exists($alias, false)) {
+            // Check if alias target already exists as class, interface, or trait
+            // Allow autoloading (no false param) to properly detect existing types
+            if (! class_exists($alias) && ! interface_exists($alias) && ! trait_exists($alias)) {
                 class_alias($class, $alias);
             }
         }

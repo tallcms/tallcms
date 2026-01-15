@@ -2,9 +2,9 @@
 
 namespace App\Providers\Filament;
 
-use App\Services\PluginLicenseService;
-use App\Services\PluginManager;
-use App\Services\ThemeResolver;
+use TallCms\Cms\Services\PluginLicenseService;
+use TallCms\Cms\Services\PluginManager;
+use TallCms\Cms\Services\ThemeResolver;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
