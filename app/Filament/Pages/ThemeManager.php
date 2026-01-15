@@ -2,9 +2,9 @@
 
 namespace App\Filament\Pages;
 
-use App\Models\Theme;
 use App\Services\ThemeManager as ThemeManagerService;
 use App\Services\ThemeValidator;
+use TallCms\Cms\Models\Theme;
 use BackedEnum;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\Action;
