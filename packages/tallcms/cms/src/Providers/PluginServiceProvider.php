@@ -23,10 +23,45 @@ class PluginServiceProvider extends ServiceProvider
     protected const MAX_PUBLIC_ROUTES = 5;
 
     /**
+     * Determine if plugin system is enabled.
+     * In standalone mode: always enabled
+     * In plugin mode: requires explicit opt-in via config
+     */
+    protected function isPluginSystemEnabled(): bool
+    {
+        // Check if running in standalone mode
+        if ($this->isStandaloneMode()) {
+            return true;
+        }
+
+        // In plugin mode, require explicit opt-in
+        return config('tallcms.plugin_mode.plugins_enabled', false);
+    }
+
+    /**
+     * Determine if running in standalone mode
+     */
+    protected function isStandaloneMode(): bool
+    {
+        // 1. Explicit config takes precedence
+        if (config('tallcms.mode') !== null) {
+            return config('tallcms.mode') === 'standalone';
+        }
+
+        // 2. Auto-detect: standalone has .tallcms-standalone marker
+        return file_exists(base_path('.tallcms-standalone'));
+    }
+
+    /**
      * Register any application services.
      */
     public function register(): void
     {
+        // Skip registration entirely if plugin system is not enabled
+        if (! $this->isPluginSystemEnabled()) {
+            return;
+        }
+
         // Register PluginMigrationRepository as singleton
         $this->app->singleton(PluginMigrationRepository::class);
 
@@ -80,6 +115,11 @@ class PluginServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Skip boot entirely if plugin system is not enabled
+        if (! $this->isPluginSystemEnabled()) {
+            return;
+        }
+
         // Ensure plugins directory exists
         $this->ensurePluginsDirectory();
 

@@ -14,10 +14,45 @@ use TallCms\Cms\Services\ThemeManager;
 class ThemeServiceProvider extends ServiceProvider
 {
     /**
+     * Determine if theme system is enabled.
+     * In standalone mode: always enabled
+     * In plugin mode: requires explicit opt-in via config
+     */
+    protected function isThemeSystemEnabled(): bool
+    {
+        // Check if running in standalone mode
+        if ($this->isStandaloneMode()) {
+            return true;
+        }
+
+        // In plugin mode, require explicit opt-in
+        return config('tallcms.plugin_mode.themes_enabled', false);
+    }
+
+    /**
+     * Determine if running in standalone mode
+     */
+    protected function isStandaloneMode(): bool
+    {
+        // 1. Explicit config takes precedence
+        if (config('tallcms.mode') !== null) {
+            return config('tallcms.mode') === 'standalone';
+        }
+
+        // 2. Auto-detect: standalone has .tallcms-standalone marker
+        return file_exists(base_path('.tallcms-standalone'));
+    }
+
+    /**
      * Register any application services.
      */
     public function register(): void
     {
+        // Skip registration entirely if theme system is not enabled
+        if (! $this->isThemeSystemEnabled()) {
+            return;
+        }
+
         // Register ThemeManager as singleton
         $this->app->singleton(ThemeManager::class, function ($app) {
             return new ThemeManager;
@@ -32,6 +67,11 @@ class ThemeServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Skip boot entirely if theme system is not enabled
+        if (! $this->isThemeSystemEnabled()) {
+            return;
+        }
+
         // Create theme config if it doesn't exist
         $this->ensureThemeConfig();
 

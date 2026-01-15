@@ -87,6 +87,25 @@ class TallCmsServiceProvider extends PackageServiceProvider
         // Providers
         'App\\Providers\\PluginServiceProvider' => Providers\PluginServiceProvider::class,
         'App\\Providers\\ThemeServiceProvider' => Providers\ThemeServiceProvider::class,
+
+        // Events
+        'App\\Events\\PluginInstalled' => Events\PluginInstalled::class,
+        'App\\Events\\PluginInstalling' => Events\PluginInstalling::class,
+        'App\\Events\\PluginUninstalled' => Events\PluginUninstalled::class,
+        'App\\Events\\PluginUninstalling' => Events\PluginUninstalling::class,
+        'App\\Events\\ThemeActivated' => Events\ThemeActivated::class,
+        'App\\Events\\ThemeActivating' => Events\ThemeActivating::class,
+        'App\\Events\\ThemeInstalled' => Events\ThemeInstalled::class,
+        'App\\Events\\ThemeInstalling' => Events\ThemeInstalling::class,
+        'App\\Events\\ThemeRollback' => Events\ThemeRollback::class,
+
+        // Notifications
+        'App\\Notifications\\ContentApprovedNotification' => Notifications\ContentApprovedNotification::class,
+        'App\\Notifications\\ContentRejectedNotification' => Notifications\ContentRejectedNotification::class,
+        'App\\Notifications\\ContentSubmittedForReviewNotification' => Notifications\ContentSubmittedForReviewNotification::class,
+
+        // Enums
+        'App\\Enums\\ContentStatus' => Enums\ContentStatus::class,
     ];
 
     public function configurePackage(Package $package): void
