@@ -51,8 +51,8 @@ class EventDispatcher
     /**
      * Recreate an event instance as its App wrapper class.
      *
-     * Since App wrappers extend package classes with identical constructors,
-     * we can use reflection to copy constructor arguments.
+     * Uses reflection to access properties regardless of visibility,
+     * supporting public, protected, and private promoted properties.
      */
     protected static function recreateAsAppClass(object $event, string $appClass): object
     {
@@ -66,8 +66,11 @@ class EventDispatcher
         $args = [];
         foreach ($constructor->getParameters() as $param) {
             $name = $param->getName();
-            if (property_exists($event, $name)) {
-                $args[] = $event->$name;
+            // Use reflection to access properties regardless of visibility
+            if ($reflection->hasProperty($name)) {
+                $property = $reflection->getProperty($name);
+                $property->setAccessible(true);
+                $args[] = $property->getValue($event);
             } elseif ($param->isDefaultValueAvailable()) {
                 $args[] = $param->getDefaultValue();
             }
