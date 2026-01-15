@@ -2,8 +2,8 @@
 
 namespace App\Filament\Pages;
 
-use App\Models\Plugin;
 use App\Services\PluginLicenseService;
+use TallCms\Cms\Models\Plugin;
 use App\Services\PluginManager as PluginManagerService;
 use App\Services\PluginMigrator;
 use App\Services\PluginValidator;
