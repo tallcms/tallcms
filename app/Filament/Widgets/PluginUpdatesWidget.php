@@ -1,63 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Widgets;
 
-use App\Services\PluginLicenseService;
-use App\Services\PluginManager;
-use Filament\Notifications\Notification;
-use Filament\Widgets\Widget;
+use TallCms\Cms\Filament\Widgets\PluginUpdatesWidget as BasePluginUpdatesWidget;
 
-class PluginUpdatesWidget extends Widget
+class PluginUpdatesWidget extends BasePluginUpdatesWidget
 {
-    protected string $view = 'filament.widgets.plugin-updates';
-
-    protected static ?int $sort = -1; // Show at top
-
-    protected int|string|array $columnSpan = 'full';
-
-    public array $updates = [];
-
-    public bool $isChecking = false;
-
-    public function mount(): void
-    {
-        $this->updates = app(PluginLicenseService::class)->getAvailableUpdates();
-    }
-
-    public function refresh(): void
-    {
-        $this->isChecking = true;
-
-        // Clear all caches and re-check
-        $licenseService = app(PluginLicenseService::class);
-        app(PluginManager::class)->refreshCache();
-        $licenseService->clearUpdateCache();
-
-        // Force fresh check
-        $licenseService->checkForUpdatesAutomatically();
-
-        // Reload updates
-        $this->updates = $licenseService->getAvailableUpdates();
-
-        $this->isChecking = false;
-
-        if (empty($this->updates)) {
-            Notification::make()
-                ->title('All plugins are up to date')
-                ->success()
-                ->send();
-        } else {
-            Notification::make()
-                ->title('Update check complete')
-                ->body(count($this->updates) . ' update(s) available')
-                ->info()
-                ->send();
-        }
-    }
-
-    public static function canView(): bool
-    {
-        // Only show if there are updates available
-        return app(PluginLicenseService::class)->hasAvailableUpdates();
-    }
+    // Extend to customize plugin updates widget
 }

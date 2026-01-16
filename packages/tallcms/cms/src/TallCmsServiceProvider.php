@@ -232,6 +232,10 @@ class TallCmsServiceProvider extends PackageServiceProvider
         'App\\Filament\\Pages\\ThemeManager' => Filament\Pages\ThemeManager::class,
         'App\\Filament\\Pages\\UpdateManual' => Filament\Pages\UpdateManual::class,
         'App\\Filament\\Pages\\UpdateProgress' => Filament\Pages\UpdateProgress::class,
+
+        // Filament Widgets
+        'App\\Filament\\Widgets\\MenuOverviewWidget' => Filament\Widgets\MenuOverviewWidget::class,
+        'App\\Filament\\Widgets\\PluginUpdatesWidget' => Filament\Widgets\PluginUpdatesWidget::class,
     ];
 
     public function configurePackage(Package $package): void
