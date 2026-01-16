@@ -6,104 +6,104 @@ namespace TallCms\Cms\Policies;
 
 use TallCms\Cms\Models\CmsPost;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
+use Illuminate\Contracts\Auth\Authenticatable;
 
 class CmsPostPolicy
 {
     use HandlesAuthorization;
 
-    public function viewAny(AuthUser $authUser): bool
+    public function viewAny(Authenticatable $user): bool
     {
-        return $authUser->can('ViewAny:CmsPost');
+        return $user->can('ViewAny:CmsPost');
     }
 
-    public function view(AuthUser $authUser, CmsPost $cmsPost): bool
+    public function view(Authenticatable $user, CmsPost $cmsPost): bool
     {
-        return $authUser->can('View:CmsPost');
+        return $user->can('View:CmsPost');
     }
 
-    public function create(AuthUser $authUser): bool
+    public function create(Authenticatable $user): bool
     {
-        return $authUser->can('Create:CmsPost');
+        return $user->can('Create:CmsPost');
     }
 
-    public function update(AuthUser $authUser, CmsPost $cmsPost): bool
+    public function update(Authenticatable $user, CmsPost $cmsPost): bool
     {
-        return $authUser->can('Update:CmsPost');
+        return $user->can('Update:CmsPost');
     }
 
-    public function delete(AuthUser $authUser, CmsPost $cmsPost): bool
+    public function delete(Authenticatable $user, CmsPost $cmsPost): bool
     {
-        return $authUser->can('Delete:CmsPost');
+        return $user->can('Delete:CmsPost');
     }
 
-    public function restore(AuthUser $authUser, CmsPost $cmsPost): bool
+    public function restore(Authenticatable $user, CmsPost $cmsPost): bool
     {
-        return $authUser->can('Restore:CmsPost');
+        return $user->can('Restore:CmsPost');
     }
 
-    public function forceDelete(AuthUser $authUser, CmsPost $cmsPost): bool
+    public function forceDelete(Authenticatable $user, CmsPost $cmsPost): bool
     {
-        return $authUser->can('ForceDelete:CmsPost');
+        return $user->can('ForceDelete:CmsPost');
     }
 
-    public function forceDeleteAny(AuthUser $authUser): bool
+    public function forceDeleteAny(Authenticatable $user): bool
     {
-        return $authUser->can('ForceDeleteAny:CmsPost');
+        return $user->can('ForceDeleteAny:CmsPost');
     }
 
-    public function restoreAny(AuthUser $authUser): bool
+    public function restoreAny(Authenticatable $user): bool
     {
-        return $authUser->can('RestoreAny:CmsPost');
+        return $user->can('RestoreAny:CmsPost');
     }
 
-    public function replicate(AuthUser $authUser, CmsPost $cmsPost): bool
+    public function replicate(Authenticatable $user, CmsPost $cmsPost): bool
     {
-        return $authUser->can('Replicate:CmsPost');
+        return $user->can('Replicate:CmsPost');
     }
 
-    public function reorder(AuthUser $authUser): bool
+    public function reorder(Authenticatable $user): bool
     {
-        return $authUser->can('Reorder:CmsPost');
+        return $user->can('Reorder:CmsPost');
     }
 
     /**
      * Determine if the user can approve the post (publish pending content)
      */
-    public function approve(AuthUser $authUser, CmsPost $cmsPost): bool
+    public function approve(Authenticatable $user, CmsPost $cmsPost): bool
     {
-        return $authUser->can('Approve:CmsPost') && $cmsPost->canBeApproved();
+        return $user->can('Approve:CmsPost') && $cmsPost->canBeApproved();
     }
 
     /**
      * Determine if the user can submit the post for review
      */
-    public function submitForReview(AuthUser $authUser, CmsPost $cmsPost): bool
+    public function submitForReview(Authenticatable $user, CmsPost $cmsPost): bool
     {
-        return $authUser->can('SubmitForReview:CmsPost') && $cmsPost->canSubmitForReview();
+        return $user->can('SubmitForReview:CmsPost') && $cmsPost->canSubmitForReview();
     }
 
     /**
      * Determine if the user can view revisions
      */
-    public function viewRevisions(AuthUser $authUser, CmsPost $cmsPost): bool
+    public function viewRevisions(Authenticatable $user, CmsPost $cmsPost): bool
     {
-        return $authUser->can('ViewRevisions:CmsPost');
+        return $user->can('ViewRevisions:CmsPost');
     }
 
     /**
      * Determine if the user can restore a revision
      */
-    public function restoreRevision(AuthUser $authUser, CmsPost $cmsPost): bool
+    public function restoreRevision(Authenticatable $user, CmsPost $cmsPost): bool
     {
-        return $authUser->can('RestoreRevision:CmsPost');
+        return $user->can('RestoreRevision:CmsPost');
     }
 
     /**
      * Determine if the user can generate preview links
      */
-    public function generatePreviewLink(AuthUser $authUser, CmsPost $cmsPost): bool
+    public function generatePreviewLink(Authenticatable $user, CmsPost $cmsPost): bool
     {
-        return $authUser->can('GeneratePreviewLink:CmsPost');
+        return $user->can('GeneratePreviewLink:CmsPost');
     }
 }

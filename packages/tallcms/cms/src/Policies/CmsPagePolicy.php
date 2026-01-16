@@ -6,104 +6,104 @@ namespace TallCms\Cms\Policies;
 
 use TallCms\Cms\Models\CmsPage;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
+use Illuminate\Contracts\Auth\Authenticatable;
 
 class CmsPagePolicy
 {
     use HandlesAuthorization;
 
-    public function viewAny(AuthUser $authUser): bool
+    public function viewAny(Authenticatable $user): bool
     {
-        return $authUser->can('ViewAny:CmsPage');
+        return $user->can('ViewAny:CmsPage');
     }
 
-    public function view(AuthUser $authUser, CmsPage $cmsPage): bool
+    public function view(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $authUser->can('View:CmsPage');
+        return $user->can('View:CmsPage');
     }
 
-    public function create(AuthUser $authUser): bool
+    public function create(Authenticatable $user): bool
     {
-        return $authUser->can('Create:CmsPage');
+        return $user->can('Create:CmsPage');
     }
 
-    public function update(AuthUser $authUser, CmsPage $cmsPage): bool
+    public function update(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $authUser->can('Update:CmsPage');
+        return $user->can('Update:CmsPage');
     }
 
-    public function delete(AuthUser $authUser, CmsPage $cmsPage): bool
+    public function delete(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $authUser->can('Delete:CmsPage');
+        return $user->can('Delete:CmsPage');
     }
 
-    public function restore(AuthUser $authUser, CmsPage $cmsPage): bool
+    public function restore(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $authUser->can('Restore:CmsPage');
+        return $user->can('Restore:CmsPage');
     }
 
-    public function forceDelete(AuthUser $authUser, CmsPage $cmsPage): bool
+    public function forceDelete(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $authUser->can('ForceDelete:CmsPage');
+        return $user->can('ForceDelete:CmsPage');
     }
 
-    public function forceDeleteAny(AuthUser $authUser): bool
+    public function forceDeleteAny(Authenticatable $user): bool
     {
-        return $authUser->can('ForceDeleteAny:CmsPage');
+        return $user->can('ForceDeleteAny:CmsPage');
     }
 
-    public function restoreAny(AuthUser $authUser): bool
+    public function restoreAny(Authenticatable $user): bool
     {
-        return $authUser->can('RestoreAny:CmsPage');
+        return $user->can('RestoreAny:CmsPage');
     }
 
-    public function replicate(AuthUser $authUser, CmsPage $cmsPage): bool
+    public function replicate(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $authUser->can('Replicate:CmsPage');
+        return $user->can('Replicate:CmsPage');
     }
 
-    public function reorder(AuthUser $authUser): bool
+    public function reorder(Authenticatable $user): bool
     {
-        return $authUser->can('Reorder:CmsPage');
+        return $user->can('Reorder:CmsPage');
     }
 
     /**
      * Determine if the user can approve the page (publish pending content)
      */
-    public function approve(AuthUser $authUser, CmsPage $cmsPage): bool
+    public function approve(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $authUser->can('Approve:CmsPage') && $cmsPage->canBeApproved();
+        return $user->can('Approve:CmsPage') && $cmsPage->canBeApproved();
     }
 
     /**
      * Determine if the user can submit the page for review
      */
-    public function submitForReview(AuthUser $authUser, CmsPage $cmsPage): bool
+    public function submitForReview(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $authUser->can('SubmitForReview:CmsPage') && $cmsPage->canSubmitForReview();
+        return $user->can('SubmitForReview:CmsPage') && $cmsPage->canSubmitForReview();
     }
 
     /**
      * Determine if the user can view revisions
      */
-    public function viewRevisions(AuthUser $authUser, CmsPage $cmsPage): bool
+    public function viewRevisions(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $authUser->can('ViewRevisions:CmsPage');
+        return $user->can('ViewRevisions:CmsPage');
     }
 
     /**
      * Determine if the user can restore a revision
      */
-    public function restoreRevision(AuthUser $authUser, CmsPage $cmsPage): bool
+    public function restoreRevision(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $authUser->can('RestoreRevision:CmsPage');
+        return $user->can('RestoreRevision:CmsPage');
     }
 
     /**
      * Determine if the user can generate preview links
      */
-    public function generatePreviewLink(AuthUser $authUser, CmsPage $cmsPage): bool
+    public function generatePreviewLink(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $authUser->can('GeneratePreviewLink:CmsPage');
+        return $user->can('GeneratePreviewLink:CmsPage');
     }
 }

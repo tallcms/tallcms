@@ -6,64 +6,64 @@ namespace TallCms\Cms\Policies;
 
 use TallCms\Cms\Models\TallcmsContactSubmission;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
+use Illuminate\Contracts\Auth\Authenticatable;
 
 class TallcmsContactSubmissionPolicy
 {
     use HandlesAuthorization;
 
-    public function viewAny(AuthUser $authUser): bool
+    public function viewAny(Authenticatable $user): bool
     {
-        return $authUser->can('ViewAny:TallcmsContactSubmission');
+        return $user->can('ViewAny:TallcmsContactSubmission');
     }
 
-    public function view(AuthUser $authUser, TallcmsContactSubmission $tallcmsContactSubmission): bool
+    public function view(Authenticatable $user, TallcmsContactSubmission $tallcmsContactSubmission): bool
     {
-        return $authUser->can('View:TallcmsContactSubmission');
+        return $user->can('View:TallcmsContactSubmission');
     }
 
-    public function create(AuthUser $authUser): bool
+    public function create(Authenticatable $user): bool
     {
-        return $authUser->can('Create:TallcmsContactSubmission');
+        return $user->can('Create:TallcmsContactSubmission');
     }
 
-    public function update(AuthUser $authUser, TallcmsContactSubmission $tallcmsContactSubmission): bool
+    public function update(Authenticatable $user, TallcmsContactSubmission $tallcmsContactSubmission): bool
     {
-        return $authUser->can('Update:TallcmsContactSubmission');
+        return $user->can('Update:TallcmsContactSubmission');
     }
 
-    public function delete(AuthUser $authUser, TallcmsContactSubmission $tallcmsContactSubmission): bool
+    public function delete(Authenticatable $user, TallcmsContactSubmission $tallcmsContactSubmission): bool
     {
-        return $authUser->can('Delete:TallcmsContactSubmission');
+        return $user->can('Delete:TallcmsContactSubmission');
     }
 
-    public function restore(AuthUser $authUser, TallcmsContactSubmission $tallcmsContactSubmission): bool
+    public function restore(Authenticatable $user, TallcmsContactSubmission $tallcmsContactSubmission): bool
     {
-        return $authUser->can('Restore:TallcmsContactSubmission');
+        return $user->can('Restore:TallcmsContactSubmission');
     }
 
-    public function forceDelete(AuthUser $authUser, TallcmsContactSubmission $tallcmsContactSubmission): bool
+    public function forceDelete(Authenticatable $user, TallcmsContactSubmission $tallcmsContactSubmission): bool
     {
-        return $authUser->can('ForceDelete:TallcmsContactSubmission');
+        return $user->can('ForceDelete:TallcmsContactSubmission');
     }
 
-    public function forceDeleteAny(AuthUser $authUser): bool
+    public function forceDeleteAny(Authenticatable $user): bool
     {
-        return $authUser->can('ForceDeleteAny:TallcmsContactSubmission');
+        return $user->can('ForceDeleteAny:TallcmsContactSubmission');
     }
 
-    public function restoreAny(AuthUser $authUser): bool
+    public function restoreAny(Authenticatable $user): bool
     {
-        return $authUser->can('RestoreAny:TallcmsContactSubmission');
+        return $user->can('RestoreAny:TallcmsContactSubmission');
     }
 
-    public function replicate(AuthUser $authUser, TallcmsContactSubmission $tallcmsContactSubmission): bool
+    public function replicate(Authenticatable $user, TallcmsContactSubmission $tallcmsContactSubmission): bool
     {
-        return $authUser->can('Replicate:TallcmsContactSubmission');
+        return $user->can('Replicate:TallcmsContactSubmission');
     }
 
-    public function reorder(AuthUser $authUser): bool
+    public function reorder(Authenticatable $user): bool
     {
-        return $authUser->can('Reorder:TallcmsContactSubmission');
+        return $user->can('Reorder:TallcmsContactSubmission');
     }
 }

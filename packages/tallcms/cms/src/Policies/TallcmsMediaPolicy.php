@@ -6,64 +6,64 @@ namespace TallCms\Cms\Policies;
 
 use TallCms\Cms\Models\TallcmsMedia;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
+use Illuminate\Contracts\Auth\Authenticatable;
 
 class TallcmsMediaPolicy
 {
     use HandlesAuthorization;
 
-    public function viewAny(AuthUser $authUser): bool
+    public function viewAny(Authenticatable $user): bool
     {
-        return $authUser->can('ViewAny:TallcmsMedia');
+        return $user->can('ViewAny:TallcmsMedia');
     }
 
-    public function view(AuthUser $authUser, TallcmsMedia $tallcmsMedia): bool
+    public function view(Authenticatable $user, TallcmsMedia $tallcmsMedia): bool
     {
-        return $authUser->can('View:TallcmsMedia');
+        return $user->can('View:TallcmsMedia');
     }
 
-    public function create(AuthUser $authUser): bool
+    public function create(Authenticatable $user): bool
     {
-        return $authUser->can('Create:TallcmsMedia');
+        return $user->can('Create:TallcmsMedia');
     }
 
-    public function update(AuthUser $authUser, TallcmsMedia $tallcmsMedia): bool
+    public function update(Authenticatable $user, TallcmsMedia $tallcmsMedia): bool
     {
-        return $authUser->can('Update:TallcmsMedia');
+        return $user->can('Update:TallcmsMedia');
     }
 
-    public function delete(AuthUser $authUser, TallcmsMedia $tallcmsMedia): bool
+    public function delete(Authenticatable $user, TallcmsMedia $tallcmsMedia): bool
     {
-        return $authUser->can('Delete:TallcmsMedia');
+        return $user->can('Delete:TallcmsMedia');
     }
 
-    public function restore(AuthUser $authUser, TallcmsMedia $tallcmsMedia): bool
+    public function restore(Authenticatable $user, TallcmsMedia $tallcmsMedia): bool
     {
-        return $authUser->can('Restore:TallcmsMedia');
+        return $user->can('Restore:TallcmsMedia');
     }
 
-    public function forceDelete(AuthUser $authUser, TallcmsMedia $tallcmsMedia): bool
+    public function forceDelete(Authenticatable $user, TallcmsMedia $tallcmsMedia): bool
     {
-        return $authUser->can('ForceDelete:TallcmsMedia');
+        return $user->can('ForceDelete:TallcmsMedia');
     }
 
-    public function forceDeleteAny(AuthUser $authUser): bool
+    public function forceDeleteAny(Authenticatable $user): bool
     {
-        return $authUser->can('ForceDeleteAny:TallcmsMedia');
+        return $user->can('ForceDeleteAny:TallcmsMedia');
     }
 
-    public function restoreAny(AuthUser $authUser): bool
+    public function restoreAny(Authenticatable $user): bool
     {
-        return $authUser->can('RestoreAny:TallcmsMedia');
+        return $user->can('RestoreAny:TallcmsMedia');
     }
 
-    public function replicate(AuthUser $authUser, TallcmsMedia $tallcmsMedia): bool
+    public function replicate(Authenticatable $user, TallcmsMedia $tallcmsMedia): bool
     {
-        return $authUser->can('Replicate:TallcmsMedia');
+        return $user->can('Replicate:TallcmsMedia');
     }
 
-    public function reorder(AuthUser $authUser): bool
+    public function reorder(Authenticatable $user): bool
     {
-        return $authUser->can('Reorder:TallcmsMedia');
+        return $user->can('Reorder:TallcmsMedia');
     }
 }

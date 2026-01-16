@@ -6,64 +6,64 @@ namespace TallCms\Cms\Policies;
 
 use TallCms\Cms\Models\TallcmsMenu;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
+use Illuminate\Contracts\Auth\Authenticatable;
 
 class TallcmsMenuPolicy
 {
     use HandlesAuthorization;
 
-    public function viewAny(AuthUser $authUser): bool
+    public function viewAny(Authenticatable $user): bool
     {
-        return $authUser->can('ViewAny:TallcmsMenu');
+        return $user->can('ViewAny:TallcmsMenu');
     }
 
-    public function view(AuthUser $authUser, TallcmsMenu $tallcmsMenu): bool
+    public function view(Authenticatable $user, TallcmsMenu $tallcmsMenu): bool
     {
-        return $authUser->can('View:TallcmsMenu');
+        return $user->can('View:TallcmsMenu');
     }
 
-    public function create(AuthUser $authUser): bool
+    public function create(Authenticatable $user): bool
     {
-        return $authUser->can('Create:TallcmsMenu');
+        return $user->can('Create:TallcmsMenu');
     }
 
-    public function update(AuthUser $authUser, TallcmsMenu $tallcmsMenu): bool
+    public function update(Authenticatable $user, TallcmsMenu $tallcmsMenu): bool
     {
-        return $authUser->can('Update:TallcmsMenu');
+        return $user->can('Update:TallcmsMenu');
     }
 
-    public function delete(AuthUser $authUser, TallcmsMenu $tallcmsMenu): bool
+    public function delete(Authenticatable $user, TallcmsMenu $tallcmsMenu): bool
     {
-        return $authUser->can('Delete:TallcmsMenu');
+        return $user->can('Delete:TallcmsMenu');
     }
 
-    public function restore(AuthUser $authUser, TallcmsMenu $tallcmsMenu): bool
+    public function restore(Authenticatable $user, TallcmsMenu $tallcmsMenu): bool
     {
-        return $authUser->can('Restore:TallcmsMenu');
+        return $user->can('Restore:TallcmsMenu');
     }
 
-    public function forceDelete(AuthUser $authUser, TallcmsMenu $tallcmsMenu): bool
+    public function forceDelete(Authenticatable $user, TallcmsMenu $tallcmsMenu): bool
     {
-        return $authUser->can('ForceDelete:TallcmsMenu');
+        return $user->can('ForceDelete:TallcmsMenu');
     }
 
-    public function forceDeleteAny(AuthUser $authUser): bool
+    public function forceDeleteAny(Authenticatable $user): bool
     {
-        return $authUser->can('ForceDeleteAny:TallcmsMenu');
+        return $user->can('ForceDeleteAny:TallcmsMenu');
     }
 
-    public function restoreAny(AuthUser $authUser): bool
+    public function restoreAny(Authenticatable $user): bool
     {
-        return $authUser->can('RestoreAny:TallcmsMenu');
+        return $user->can('RestoreAny:TallcmsMenu');
     }
 
-    public function replicate(AuthUser $authUser, TallcmsMenu $tallcmsMenu): bool
+    public function replicate(Authenticatable $user, TallcmsMenu $tallcmsMenu): bool
     {
-        return $authUser->can('Replicate:TallcmsMenu');
+        return $user->can('Replicate:TallcmsMenu');
     }
 
-    public function reorder(AuthUser $authUser): bool
+    public function reorder(Authenticatable $user): bool
     {
-        return $authUser->can('Reorder:TallcmsMenu');
+        return $user->can('Reorder:TallcmsMenu');
     }
 }

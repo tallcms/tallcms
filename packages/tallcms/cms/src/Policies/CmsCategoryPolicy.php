@@ -6,64 +6,64 @@ namespace TallCms\Cms\Policies;
 
 use TallCms\Cms\Models\CmsCategory;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
+use Illuminate\Contracts\Auth\Authenticatable;
 
 class CmsCategoryPolicy
 {
     use HandlesAuthorization;
 
-    public function viewAny(AuthUser $authUser): bool
+    public function viewAny(Authenticatable $user): bool
     {
-        return $authUser->can('ViewAny:CmsCategory');
+        return $user->can('ViewAny:CmsCategory');
     }
 
-    public function view(AuthUser $authUser, CmsCategory $cmsCategory): bool
+    public function view(Authenticatable $user, CmsCategory $cmsCategory): bool
     {
-        return $authUser->can('View:CmsCategory');
+        return $user->can('View:CmsCategory');
     }
 
-    public function create(AuthUser $authUser): bool
+    public function create(Authenticatable $user): bool
     {
-        return $authUser->can('Create:CmsCategory');
+        return $user->can('Create:CmsCategory');
     }
 
-    public function update(AuthUser $authUser, CmsCategory $cmsCategory): bool
+    public function update(Authenticatable $user, CmsCategory $cmsCategory): bool
     {
-        return $authUser->can('Update:CmsCategory');
+        return $user->can('Update:CmsCategory');
     }
 
-    public function delete(AuthUser $authUser, CmsCategory $cmsCategory): bool
+    public function delete(Authenticatable $user, CmsCategory $cmsCategory): bool
     {
-        return $authUser->can('Delete:CmsCategory');
+        return $user->can('Delete:CmsCategory');
     }
 
-    public function restore(AuthUser $authUser, CmsCategory $cmsCategory): bool
+    public function restore(Authenticatable $user, CmsCategory $cmsCategory): bool
     {
-        return $authUser->can('Restore:CmsCategory');
+        return $user->can('Restore:CmsCategory');
     }
 
-    public function forceDelete(AuthUser $authUser, CmsCategory $cmsCategory): bool
+    public function forceDelete(Authenticatable $user, CmsCategory $cmsCategory): bool
     {
-        return $authUser->can('ForceDelete:CmsCategory');
+        return $user->can('ForceDelete:CmsCategory');
     }
 
-    public function forceDeleteAny(AuthUser $authUser): bool
+    public function forceDeleteAny(Authenticatable $user): bool
     {
-        return $authUser->can('ForceDeleteAny:CmsCategory');
+        return $user->can('ForceDeleteAny:CmsCategory');
     }
 
-    public function restoreAny(AuthUser $authUser): bool
+    public function restoreAny(Authenticatable $user): bool
     {
-        return $authUser->can('RestoreAny:CmsCategory');
+        return $user->can('RestoreAny:CmsCategory');
     }
 
-    public function replicate(AuthUser $authUser, CmsCategory $cmsCategory): bool
+    public function replicate(Authenticatable $user, CmsCategory $cmsCategory): bool
     {
-        return $authUser->can('Replicate:CmsCategory');
+        return $user->can('Replicate:CmsCategory');
     }
 
-    public function reorder(AuthUser $authUser): bool
+    public function reorder(Authenticatable $user): bool
     {
-        return $authUser->can('Reorder:CmsCategory');
+        return $user->can('Reorder:CmsCategory');
     }
 }
