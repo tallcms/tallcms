@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Resources\TallcmsMenus\Tables;
 
+use TallCms\Cms\Filament\Pages\MenuItemsManager;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -48,7 +49,7 @@ class TallcmsMenusTable
                     ->label('Manage Items')
                     ->icon('heroicon-o-bars-3')
                     ->color('primary')
-                    ->url(fn ($record): string => "/admin/menu-items-manager?activeTab={$record->id}")
+                    ->url(fn ($record): string => MenuItemsManager::getUrl(['activeTab' => $record->id]))
                     ->openUrlInNewTab(false),
 
                 Action::make('preview')
@@ -56,7 +57,7 @@ class TallcmsMenusTable
                     ->icon('heroicon-o-eye')
                     ->color('gray')
                     ->modalHeading(fn ($record) => 'Preview: '.$record->name)
-                    ->modalContent(fn ($record) => view('admin.menu-preview', compact('record')))
+                    ->modalContent(fn ($record) => view('tallcms::filament.menus.preview', compact('record')))
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close'),
 

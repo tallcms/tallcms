@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Resources\TallcmsMenus\Pages;
 
+use TallCms\Cms\Filament\Pages\MenuItemsManager;
 use TallCms\Cms\Filament\Resources\TallcmsMenus\TallcmsMenuResource;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -18,7 +19,7 @@ class EditTallcmsMenu extends EditRecord
                 ->label('Manage Menu Items')
                 ->icon('heroicon-o-bars-3')
                 ->color('primary')
-                ->url(fn (): string => "/admin/menu-items-manager?activeTab={$this->getRecord()->id}")
+                ->url(fn (): string => MenuItemsManager::getUrl(['activeTab' => $this->getRecord()->id]))
                 ->openUrlInNewTab(false),
 
             DeleteAction::make(),
