@@ -3,8 +3,8 @@
 namespace TallCms\Cms\Filament\Resources\CmsPages\Schemas;
 
 use TallCms\Cms\Enums\ContentStatus;
+use TallCms\Cms\Livewire\RevisionHistory;
 use TallCms\Cms\Models\CmsPage;
-use App\Models\User;
 use TallCms\Cms\Services\CustomBlockDiscoveryService;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
@@ -112,7 +112,11 @@ class CmsPageForm
 
                                         Select::make('author_id')
                                             ->label('Author')
-                                            ->options(User::query()->pluck('name', 'id'))
+                                            ->options(function () {
+                                                $userModel = config('tallcms.plugin_mode.user_model', 'App\\Models\\User');
+
+                                                return $userModel::query()->pluck('name', 'id');
+                                            })
                                             ->default(auth()->id())
                                             ->nullable()
                                             ->searchable(),
@@ -181,7 +185,7 @@ class CmsPageForm
                             ->icon('heroicon-o-clock')
                             ->visible(fn (?CmsPage $record) => $record !== null && auth()->user()?->can('ViewRevisions:CmsPage'))
                             ->schema([
-                                Livewire::make(\App\Livewire\RevisionHistory::class)
+                                Livewire::make(RevisionHistory::class)
                                     ->lazy()
                                     ->data(fn (?CmsPage $record) => ['record' => $record]),
                             ]),

@@ -6,50 +6,26 @@ namespace TallCms\Cms;
 
 use Filament\Contracts\Plugin;
 use Filament\Panel;
+use TallCms\Cms\Filament\Resources\CmsCategories\CmsCategoryResource;
+use TallCms\Cms\Filament\Resources\CmsPages\CmsPageResource;
+use TallCms\Cms\Filament\Resources\CmsPosts\CmsPostResource;
+use TallCms\Cms\Filament\Resources\TallcmsContactSubmissions\TallcmsContactSubmissionResource;
+use TallCms\Cms\Filament\Resources\TallcmsMedia\TallcmsMediaResource;
+use TallCms\Cms\Filament\Resources\TallcmsMenus\TallcmsMenuResource;
 
 class TallCmsPlugin implements Plugin
 {
-    protected ?string $navigationGroup = 'CMS';
+    protected bool $hasCategories = true;
 
-    protected ?int $navigationSort = null;
+    protected bool $hasPages = true;
 
-    public function getId(): string
-    {
-        return 'tallcms';
-    }
+    protected bool $hasPosts = true;
 
-    public function register(Panel $panel): void
-    {
-        // Store panel ID for notifications and route generation (only if not explicitly configured)
-        if (! config('tallcms.filament.panel_id')) {
-            config(['tallcms.filament.panel_id' => $panel->getId()]);
-        }
+    protected bool $hasContactSubmissions = true;
 
-        // Store config for resources/pages to access
-        config(['tallcms.filament.navigation_group' => $this->navigationGroup]);
-        config(['tallcms.filament.navigation_sort' => $this->navigationSort]);
+    protected bool $hasMedia = true;
 
-        // Always register core CMS resources
-        $panel
-            ->resources($this->getResources())
-            ->pages($this->getPages())
-            ->widgets($this->getWidgets());
-
-        // Standalone-only pages (theme manager, plugin manager, updater)
-        if (app(TallCmsServiceProvider::class)->isStandaloneMode()) {
-            $panel->pages($this->getStandalonePages());
-        }
-
-        // Load TallCMS plugins and register their Filament components
-        if ($this->shouldLoadPlugins()) {
-            $this->registerTallCmsPlugins($panel);
-        }
-    }
-
-    public function boot(Panel $panel): void
-    {
-        // Post-registration setup
-    }
+    protected bool $hasMenus = true;
 
     public static function make(): static
     {
@@ -64,120 +40,114 @@ class TallCmsPlugin implements Plugin
         return $plugin;
     }
 
-    /**
-     * Set the navigation group for all TallCMS resources and pages.
-     */
-    public function navigationGroup(?string $group): static
+    public function getId(): string
     {
-        $this->navigationGroup = $group;
+        return 'tallcms';
+    }
+
+    public function register(Panel $panel): void
+    {
+        $panel->resources($this->getResources());
+    }
+
+    public function boot(Panel $panel): void
+    {
+        //
+    }
+
+    /**
+     * Get all enabled CMS resources.
+     *
+     * @return array<class-string>
+     */
+    public function getResources(): array
+    {
+        $resources = [];
+
+        if ($this->hasCategories) {
+            $resources[] = CmsCategoryResource::class;
+        }
+
+        if ($this->hasPages) {
+            $resources[] = CmsPageResource::class;
+        }
+
+        if ($this->hasPosts) {
+            $resources[] = CmsPostResource::class;
+        }
+
+        if ($this->hasContactSubmissions) {
+            $resources[] = TallcmsContactSubmissionResource::class;
+        }
+
+        if ($this->hasMedia) {
+            $resources[] = TallcmsMediaResource::class;
+        }
+
+        if ($this->hasMenus) {
+            $resources[] = TallcmsMenuResource::class;
+        }
+
+        return $resources;
+    }
+
+    /**
+     * Disable categories resource.
+     */
+    public function withoutCategories(): static
+    {
+        $this->hasCategories = false;
 
         return $this;
     }
 
     /**
-     * Set the navigation sort order for TallCMS resources and pages.
+     * Disable pages resource.
      */
-    public function navigationSort(?int $sort): static
+    public function withoutPages(): static
     {
-        $this->navigationSort = $sort;
+        $this->hasPages = false;
 
         return $this;
     }
 
     /**
-     * Get the core CMS resources to register.
-     *
-     * @return array<class-string>
+     * Disable posts resource.
      */
-    protected function getResources(): array
+    public function withoutPosts(): static
     {
-        // TODO: Return actual resources after extraction
-        return [
-            // Filament\Resources\CmsPageResource::class,
-            // Filament\Resources\CmsPostResource::class,
-            // Filament\Resources\CmsCategoryResource::class,
-            // Filament\Resources\TallcmsMediaResource::class,
-            // Filament\Resources\TallcmsMenuResource::class,
-            // Filament\Resources\TallcmsContactSubmissionResource::class,
-        ];
+        $this->hasPosts = false;
+
+        return $this;
     }
 
     /**
-     * Get the pages to register in all modes.
-     *
-     * @return array<class-string>
+     * Disable contact submissions resource.
      */
-    protected function getPages(): array
+    public function withoutContactSubmissions(): static
     {
-        // TODO: Return actual pages after extraction
-        return [
-            // Filament\Pages\SiteSettings::class,
-            // Filament\Pages\MenuItemsManager::class,
-        ];
+        $this->hasContactSubmissions = false;
+
+        return $this;
     }
 
     /**
-     * Get pages only available in standalone mode.
-     *
-     * @return array<class-string>
+     * Disable media resource.
      */
-    protected function getStandalonePages(): array
+    public function withoutMedia(): static
     {
-        // TODO: Return actual standalone pages after extraction
-        return [
-            // Filament\Pages\ThemeManager::class,
-            // Filament\Pages\PluginManager::class,
-            // Filament\Pages\PluginLicenses::class,
-            // Filament\Pages\SystemUpdates::class,
-            // Filament\Pages\UpdateProgress::class,
-            // Filament\Pages\UpdateManual::class,
-        ];
+        $this->hasMedia = false;
+
+        return $this;
     }
 
     /**
-     * Get the widgets to register.
-     *
-     * @return array<class-string>
+     * Disable menus resource.
      */
-    protected function getWidgets(): array
+    public function withoutMenus(): static
     {
-        // TODO: Return actual widgets after extraction
-        return [
-            // Filament\Widgets\MenuOverviewWidget::class,
-            // Filament\Widgets\PluginUpdatesWidget::class,
-        ];
-    }
+        $this->hasMenus = false;
 
-    /**
-     * Determine if TallCMS plugins should be loaded.
-     */
-    protected function shouldLoadPlugins(): bool
-    {
-        // Standalone: always load from plugins/
-        if (app(TallCmsServiceProvider::class)->isStandaloneMode()) {
-            return is_dir(base_path('plugins'));
-        }
-
-        // Plugin mode: check plugins_enabled flag first
-        if (! config('tallcms.plugin_mode.plugins_enabled', false)) {
-            return false;
-        }
-
-        // Use configured path or fall back to base_path('plugins')
-        $pluginsPath = config('tallcms.plugin_mode.plugins_path') ?? base_path('plugins');
-
-        return is_dir($pluginsPath);
-    }
-
-    /**
-     * Register TallCMS plugins with the Filament panel.
-     */
-    protected function registerTallCmsPlugins(Panel $panel): void
-    {
-        // TODO: Implement after PluginManager is extracted
-        // $tallcmsPlugins = app(Services\PluginManager::class)->getFilamentPlugins();
-        // foreach ($tallcmsPlugins as $plugin) {
-        //     $plugin->register($panel);
-        // }
+        return $this;
     }
 }

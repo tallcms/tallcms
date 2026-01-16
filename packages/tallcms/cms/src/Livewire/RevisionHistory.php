@@ -2,6 +2,8 @@
 
 namespace TallCms\Cms\Livewire;
 
+use TallCms\Cms\Filament\Resources\CmsPages\CmsPageResource;
+use TallCms\Cms\Filament\Resources\CmsPosts\CmsPostResource;
 use TallCms\Cms\Models\CmsRevision;
 use TallCms\Cms\Services\ContentDiffService;
 use Filament\Actions\Action;
@@ -318,11 +320,12 @@ class RevisionHistory extends Component implements HasActions, HasForms
 
             // Redirect to the edit page to refresh the form with restored content
             // Use navigate: false to force full page reload and bypass Livewire SPA cache
-            $routeName = $this->record instanceof \TallCms\Cms\Models\CmsPost
-                ? 'filament.admin.resources.cms-posts.edit'
-                : 'filament.admin.resources.cms-pages.edit';
+            // Use resource's getUrl() for multi-panel compatibility
+            $editUrl = $this->record instanceof \TallCms\Cms\Models\CmsPost
+                ? CmsPostResource::getUrl('edit', ['record' => $this->record])
+                : CmsPageResource::getUrl('edit', ['record' => $this->record]);
 
-            $this->redirect(route($routeName, ['record' => $this->record]), navigate: false);
+            $this->redirect($editUrl, navigate: false);
         } catch (\Exception $e) {
             Notification::make()
                 ->danger()

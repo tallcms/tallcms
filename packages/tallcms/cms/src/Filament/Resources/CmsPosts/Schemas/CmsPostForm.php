@@ -3,9 +3,9 @@
 namespace TallCms\Cms\Filament\Resources\CmsPosts\Schemas;
 
 use TallCms\Cms\Enums\ContentStatus;
+use TallCms\Cms\Livewire\RevisionHistory;
 use TallCms\Cms\Models\CmsCategory;
 use TallCms\Cms\Models\CmsPost;
-use App\Models\User;
 use TallCms\Cms\Services\CustomBlockDiscoveryService;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
@@ -128,7 +128,11 @@ class CmsPostForm
 
                                         Select::make('author_id')
                                             ->label('Author')
-                                            ->options(User::query()->pluck('name', 'id'))
+                                            ->options(function () {
+                                                $userModel = config('tallcms.plugin_mode.user_model', 'App\\Models\\User');
+
+                                                return $userModel::query()->pluck('name', 'id');
+                                            })
                                             ->default(auth()->id())
                                             ->required(),
 
@@ -200,7 +204,7 @@ class CmsPostForm
                             ->icon('heroicon-o-clock')
                             ->visible(fn (?CmsPost $record) => $record !== null && auth()->user()?->can('ViewRevisions:CmsPost'))
                             ->schema([
-                                Livewire::make(\App\Livewire\RevisionHistory::class)
+                                Livewire::make(RevisionHistory::class)
                                     ->lazy()
                                     ->data(fn (?CmsPost $record) => ['record' => $record]),
                             ]),
