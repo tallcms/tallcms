@@ -155,7 +155,7 @@ class SystemUpdates extends Page
                 'execution_method' => 'manual',
             ]);
 
-            $this->redirect(route('filament.admin.pages.update-manual'));
+            $this->redirect(UpdateManual::getUrl());
 
             return;
         }
@@ -168,7 +168,7 @@ class SystemUpdates extends Page
             ->success()
             ->send();
 
-        $this->redirect(route('filament.admin.pages.update-progress'));
+        $this->redirect(UpdateProgress::getUrl());
     }
 
     private function tryExecBackground(TallCmsUpdater $updater, string $targetVersion): ?string

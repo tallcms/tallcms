@@ -41,9 +41,16 @@ public function panel(Panel $panel): Panel
 php artisan vendor:publish --tag=tallcms-assets
 ```
 
-### Selective Resource Registration
+### What Gets Registered
 
-You can disable specific CMS resources if you don't need them:
+The plugin automatically registers:
+- **Resources**: Pages, Posts, Categories, Media, Menus, Contact Submissions
+- **Pages**: Site Settings, Menu Items Manager
+- **Widgets**: Menu Overview Widget
+
+### Selective Registration
+
+You can disable specific components if you don't need them:
 
 ```php
 ->plugin(
@@ -51,16 +58,18 @@ You can disable specific CMS resources if you don't need them:
         ->withoutCategories()
         ->withoutPosts()
         ->withoutContactSubmissions()
+        ->withoutSiteSettings()
 )
 ```
 
 Available methods:
 - `withoutCategories()` - Disable categories resource
-- `withoutPages()` - Disable pages resource  
+- `withoutPages()` - Disable pages resource
 - `withoutPosts()` - Disable posts resource
 - `withoutContactSubmissions()` - Disable contact submissions resource
 - `withoutMedia()` - Disable media library resource
-- `withoutMenus()` - Disable menus resource
+- `withoutMenus()` - Disable menus resource and related pages/widgets
+- `withoutSiteSettings()` - Disable site settings page
 
 ### Configuration
 

@@ -73,7 +73,7 @@ class UpdateManual extends Page
 
         // Redirect if not in manual mode
         if (($state['status'] ?? '') !== 'pending_manual') {
-            $this->redirect(route('filament.admin.pages.system-updates'));
+            $this->redirect(SystemUpdates::getUrl());
         }
     }
 
@@ -83,7 +83,7 @@ class UpdateManual extends Page
         $updater->clearLock();
         $updater->clearState();
 
-        $this->redirect(route('filament.admin.pages.system-updates'));
+        $this->redirect(SystemUpdates::getUrl());
     }
 
     public function checkProgress(): void
@@ -91,7 +91,7 @@ class UpdateManual extends Page
         $state = $this->updateState;
 
         if (in_array($state['status'] ?? '', ['in_progress', 'completed', 'failed'])) {
-            $this->redirect(route('filament.admin.pages.update-progress'));
+            $this->redirect(UpdateProgress::getUrl());
         }
     }
 }

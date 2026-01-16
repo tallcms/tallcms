@@ -6,12 +6,15 @@ namespace TallCms\Cms;
 
 use Filament\Contracts\Plugin;
 use Filament\Panel;
+use TallCms\Cms\Filament\Pages\MenuItemsManager;
+use TallCms\Cms\Filament\Pages\SiteSettings;
 use TallCms\Cms\Filament\Resources\CmsCategories\CmsCategoryResource;
 use TallCms\Cms\Filament\Resources\CmsPages\CmsPageResource;
 use TallCms\Cms\Filament\Resources\CmsPosts\CmsPostResource;
 use TallCms\Cms\Filament\Resources\TallcmsContactSubmissions\TallcmsContactSubmissionResource;
 use TallCms\Cms\Filament\Resources\TallcmsMedia\TallcmsMediaResource;
 use TallCms\Cms\Filament\Resources\TallcmsMenus\TallcmsMenuResource;
+use TallCms\Cms\Filament\Widgets\MenuOverviewWidget;
 
 class TallCmsPlugin implements Plugin
 {
@@ -26,6 +29,8 @@ class TallCmsPlugin implements Plugin
     protected bool $hasMedia = true;
 
     protected bool $hasMenus = true;
+
+    protected bool $hasSiteSettings = true;
 
     public static function make(): static
     {
@@ -47,12 +52,53 @@ class TallCmsPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
-        $panel->resources($this->getResources());
+        $panel
+            ->resources($this->getResources())
+            ->pages($this->getPages())
+            ->widgets($this->getWidgets());
     }
 
     public function boot(Panel $panel): void
     {
         //
+    }
+
+    /**
+     * Get all enabled CMS pages.
+     *
+     * @return array<class-string>
+     */
+    public function getPages(): array
+    {
+        $pages = [];
+
+        if ($this->hasSiteSettings) {
+            $pages[] = SiteSettings::class;
+        }
+
+        // MenuItemsManager is always included when menus are enabled
+        // (it's hidden from nav, used by TallcmsMenuResource)
+        if ($this->hasMenus) {
+            $pages[] = MenuItemsManager::class;
+        }
+
+        return $pages;
+    }
+
+    /**
+     * Get all enabled CMS widgets.
+     *
+     * @return array<class-string>
+     */
+    public function getWidgets(): array
+    {
+        $widgets = [];
+
+        if ($this->hasMenus) {
+            $widgets[] = MenuOverviewWidget::class;
+        }
+
+        return $widgets;
     }
 
     /**
@@ -147,6 +193,16 @@ class TallCmsPlugin implements Plugin
     public function withoutMenus(): static
     {
         $this->hasMenus = false;
+
+        return $this;
+    }
+
+    /**
+     * Disable site settings page.
+     */
+    public function withoutSiteSettings(): static
+    {
+        $this->hasSiteSettings = false;
 
         return $this;
     }

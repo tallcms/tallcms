@@ -55,7 +55,7 @@ class UpdateProgress extends Page
 
         // Redirect if no update in progress
         if ($state['status'] === 'no_update') {
-            $this->redirect(route('filament.admin.pages.system-updates'));
+            $this->redirect(SystemUpdates::getUrl());
         }
     }
 
@@ -65,11 +65,11 @@ class UpdateProgress extends Page
         $updater->clearLock();
         $updater->clearState();
 
-        $this->redirect(route('filament.admin.pages.system-updates'));
+        $this->redirect(SystemUpdates::getUrl());
     }
 
     public function backToUpdates(): void
     {
-        $this->redirect(route('filament.admin.pages.system-updates'));
+        $this->redirect(SystemUpdates::getUrl());
     }
 }
