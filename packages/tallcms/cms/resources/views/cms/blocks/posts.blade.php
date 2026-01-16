@@ -120,7 +120,7 @@
             return '#';
         }
         $slug = empty($parentSlug) ? $post->slug : $parentSlug . '/' . $post->slug;
-        return route('cms.page', ['slug' => $slug]);
+        return route('tallcms.cms.page', ['slug' => $slug]);
     };
 
     // Helper to generate category filter URL
@@ -129,9 +129,9 @@
             return '#';
         }
         if (empty($parentSlug)) {
-            return route('cms.home') . '?category=' . $category->slug;
+            return route('tallcms.cms.home') . '?category=' . $category->slug;
         }
-        return route('cms.page', ['slug' => $parentSlug]) . '?category=' . $category->slug;
+        return route('tallcms.cms.page', ['slug' => $parentSlug]) . '?category=' . $category->slug;
     };
 
     // Helper to generate clear filter URL
@@ -140,9 +140,9 @@
             return '#';
         }
         if (empty($parentSlug)) {
-            return route('cms.home');
+            return route('tallcms.cms.home');
         }
-        return route('cms.page', ['slug' => $parentSlug]);
+        return route('tallcms.cms.page', ['slug' => $parentSlug]);
     };
 @endphp
 

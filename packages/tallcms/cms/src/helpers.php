@@ -438,6 +438,6 @@ if (! function_exists('cms_post_url')) {
     {
         $slug = trim($parentSlug, '/') . '/' . $post->slug;
 
-        return route('cms.page', ['slug' => $slug]);
+        return route('tallcms.cms.page', ['slug' => $slug]);
     }
 }
