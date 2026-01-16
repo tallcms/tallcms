@@ -236,6 +236,9 @@ class TallCmsServiceProvider extends PackageServiceProvider
         // Filament Widgets
         'App\\Filament\\Widgets\\MenuOverviewWidget' => Filament\Widgets\MenuOverviewWidget::class,
         'App\\Filament\\Widgets\\PluginUpdatesWidget' => Filament\Widgets\PluginUpdatesWidget::class,
+
+        // Jobs
+        'App\\Jobs\\TallCmsUpdateJob' => Jobs\TallCmsUpdateJob::class,
     ];
 
     public function configurePackage(Package $package): void
