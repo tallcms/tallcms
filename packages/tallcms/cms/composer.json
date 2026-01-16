@@ -2,8 +2,19 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "tallcms/cms",
     "type": "library",
+    "version": "2.0.0",
     "description": "TallCMS - A modern CMS for Filament admin panels. Works standalone or as a plugin in existing Filament apps.",
-    "keywords": ["cms", "filament", "laravel", "livewire", "tallstack", "content-management"],
+    "keywords": [
+        "cms",
+        "filament",
+        "filament-plugin",
+        "laravel",
+        "livewire",
+        "tallstack",
+        "content-management",
+        "blog",
+        "pages"
+    ],
     "license": "MIT",
     "homepage": "https://tallcms.com",
     "support": {
@@ -11,6 +22,12 @@
         "source": "https://github.com/tallcms/cms",
         "docs": "https://tallcms.com/docs"
     },
+    "funding": [
+        {
+            "type": "github",
+            "url": "https://github.com/sponsors/tallcms"
+        }
+    ],
     "authors": [
         {
             "name": "TallCMS",
