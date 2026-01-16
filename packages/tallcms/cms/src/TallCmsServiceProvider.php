@@ -222,6 +222,16 @@ class TallCmsServiceProvider extends PackageServiceProvider
         'App\\Policies\\TallcmsContactSubmissionPolicy' => Policies\TallcmsContactSubmissionPolicy::class,
         'App\\Policies\\TallcmsMediaPolicy' => Policies\TallcmsMediaPolicy::class,
         'App\\Policies\\TallcmsMenuPolicy' => Policies\TallcmsMenuPolicy::class,
+
+        // Filament Pages
+        'App\\Filament\\Pages\\MenuItemsManager' => Filament\Pages\MenuItemsManager::class,
+        'App\\Filament\\Pages\\PluginLicenses' => Filament\Pages\PluginLicenses::class,
+        'App\\Filament\\Pages\\PluginManager' => Filament\Pages\PluginManager::class,
+        'App\\Filament\\Pages\\SiteSettings' => Filament\Pages\SiteSettings::class,
+        'App\\Filament\\Pages\\SystemUpdates' => Filament\Pages\SystemUpdates::class,
+        'App\\Filament\\Pages\\ThemeManager' => Filament\Pages\ThemeManager::class,
+        'App\\Filament\\Pages\\UpdateManual' => Filament\Pages\UpdateManual::class,
+        'App\\Filament\\Pages\\UpdateProgress' => Filament\Pages\UpdateProgress::class,
     ];
 
     public function configurePackage(Package $package): void
