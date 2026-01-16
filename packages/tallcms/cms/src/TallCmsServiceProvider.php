@@ -214,6 +214,14 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
         // Livewire Components
         'App\\Livewire\\RevisionHistory' => Livewire\RevisionHistory::class,
+
+        // Policies
+        'App\\Policies\\CmsCategoryPolicy' => Policies\CmsCategoryPolicy::class,
+        'App\\Policies\\CmsPagePolicy' => Policies\CmsPagePolicy::class,
+        'App\\Policies\\CmsPostPolicy' => Policies\CmsPostPolicy::class,
+        'App\\Policies\\TallcmsContactSubmissionPolicy' => Policies\TallcmsContactSubmissionPolicy::class,
+        'App\\Policies\\TallcmsMediaPolicy' => Policies\TallcmsMediaPolicy::class,
+        'App\\Policies\\TallcmsMenuPolicy' => Policies\TallcmsMenuPolicy::class,
     ];
 
     public function configurePackage(Package $package): void
