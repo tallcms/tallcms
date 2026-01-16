@@ -2,17 +2,9 @@
 
 namespace App\Filament\Resources\TallcmsContactSubmissions\Pages;
 
-use App\Filament\Resources\TallcmsContactSubmissions\TallcmsContactSubmissionResource;
-use Filament\Resources\Pages\ListRecords;
+use TallCms\Cms\Filament\Resources\TallcmsContactSubmissions\Pages\ListTallcmsContactSubmissions as BaseListTallcmsContactSubmissions;
 
-class ListTallcmsContactSubmissions extends ListRecords
+class ListTallcmsContactSubmissions extends BaseListTallcmsContactSubmissions
 {
-    protected static string $resource = TallcmsContactSubmissionResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            // No create action - submissions come from the frontend
-        ];
-    }
+    //
 }

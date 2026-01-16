@@ -2,19 +2,9 @@
 
 namespace App\Filament\Resources\CmsPages\Pages;
 
-use App\Filament\Resources\CmsPages\CmsPageResource;
-use Filament\Actions\CreateAction;
-use Filament\Resources\Pages\ListRecords;
+use TallCms\Cms\Filament\Resources\CmsPages\Pages\ListCmsPages as BaseListCmsPages;
 
-class ListCmsPages extends ListRecords
+class ListCmsPages extends BaseListCmsPages
 {
-    protected static string $resource = CmsPageResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            CreateAction::make()
-                ->label('New Page'),
-        ];
-    }
+    //
 }

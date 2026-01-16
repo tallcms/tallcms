@@ -2,10 +2,9 @@
 
 namespace App\Filament\Resources\TallcmsMenus\Pages;
 
-use App\Filament\Resources\TallcmsMenus\TallcmsMenuResource;
-use Filament\Resources\Pages\CreateRecord;
+use TallCms\Cms\Filament\Resources\TallcmsMenus\Pages\CreateTallcmsMenu as BaseCreateTallcmsMenu;
 
-class CreateTallcmsMenu extends CreateRecord
+class CreateTallcmsMenu extends BaseCreateTallcmsMenu
 {
-    protected static string $resource = TallcmsMenuResource::class;
+    //
 }

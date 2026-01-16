@@ -2,22 +2,9 @@
 
 namespace App\Filament\Resources\CmsCategories\Pages;
 
-use App\Filament\Resources\CmsCategories\CmsCategoryResource;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\ForceDeleteAction;
-use Filament\Actions\RestoreAction;
-use Filament\Resources\Pages\EditRecord;
+use TallCms\Cms\Filament\Resources\CmsCategories\Pages\EditCmsCategory as BaseEditCmsCategory;
 
-class EditCmsCategory extends EditRecord
+class EditCmsCategory extends BaseEditCmsCategory
 {
-    protected static string $resource = CmsCategoryResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            DeleteAction::make(),
-            ForceDeleteAction::make(),
-            RestoreAction::make(),
-        ];
-    }
+    //
 }

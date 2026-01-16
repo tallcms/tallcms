@@ -2,10 +2,9 @@
 
 namespace App\Filament\Resources\CmsPages\Pages;
 
-use App\Filament\Resources\CmsPages\CmsPageResource;
-use Filament\Resources\Pages\CreateRecord;
+use TallCms\Cms\Filament\Resources\CmsPages\Pages\CreateCmsPage as BaseCreateCmsPage;
 
-class CreateCmsPage extends CreateRecord
+class CreateCmsPage extends BaseCreateCmsPage
 {
-    protected static string $resource = CmsPageResource::class;
+    //
 }

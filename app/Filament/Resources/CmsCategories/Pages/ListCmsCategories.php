@@ -2,19 +2,9 @@
 
 namespace App\Filament\Resources\CmsCategories\Pages;
 
-use App\Filament\Resources\CmsCategories\CmsCategoryResource;
-use Filament\Actions\CreateAction;
-use Filament\Resources\Pages\ListRecords;
+use TallCms\Cms\Filament\Resources\CmsCategories\Pages\ListCmsCategories as BaseListCmsCategories;
 
-class ListCmsCategories extends ListRecords
+class ListCmsCategories extends BaseListCmsCategories
 {
-    protected static string $resource = CmsCategoryResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            CreateAction::make()
-                ->label('New Category'),
-        ];
-    }
+    //
 }

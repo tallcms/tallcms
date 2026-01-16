@@ -2,19 +2,9 @@
 
 namespace App\Filament\Resources\CmsPosts\Pages;
 
-use App\Filament\Resources\CmsPosts\CmsPostResource;
-use Filament\Actions\CreateAction;
-use Filament\Resources\Pages\ListRecords;
+use TallCms\Cms\Filament\Resources\CmsPosts\Pages\ListCmsPosts as BaseListCmsPosts;
 
-class ListCmsPosts extends ListRecords
+class ListCmsPosts extends BaseListCmsPosts
 {
-    protected static string $resource = CmsPostResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            CreateAction::make()
-                ->label('New Post'),
-        ];
-    }
+    //
 }

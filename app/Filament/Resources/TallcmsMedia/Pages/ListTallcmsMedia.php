@@ -2,18 +2,9 @@
 
 namespace App\Filament\Resources\TallcmsMedia\Pages;
 
-use App\Filament\Resources\TallcmsMedia\TallcmsMediaResource;
-use Filament\Actions\CreateAction;
-use Filament\Resources\Pages\ListRecords;
+use TallCms\Cms\Filament\Resources\TallcmsMedia\Pages\ListTallcmsMedia as BaseListTallcmsMedia;
 
-class ListTallcmsMedia extends ListRecords
+class ListTallcmsMedia extends BaseListTallcmsMedia
 {
-    protected static string $resource = TallcmsMediaResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            CreateAction::make(),
-        ];
-    }
+    //
 }

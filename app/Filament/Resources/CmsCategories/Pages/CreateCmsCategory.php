@@ -2,10 +2,9 @@
 
 namespace App\Filament\Resources\CmsCategories\Pages;
 
-use App\Filament\Resources\CmsCategories\CmsCategoryResource;
-use Filament\Resources\Pages\CreateRecord;
+use TallCms\Cms\Filament\Resources\CmsCategories\Pages\CreateCmsCategory as BaseCreateCmsCategory;
 
-class CreateCmsCategory extends CreateRecord
+class CreateCmsCategory extends BaseCreateCmsCategory
 {
-    protected static string $resource = CmsCategoryResource::class;
+    //
 }

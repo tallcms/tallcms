@@ -2,10 +2,9 @@
 
 namespace App\Filament\Resources\CmsPosts\Pages;
 
-use App\Filament\Resources\CmsPosts\CmsPostResource;
-use Filament\Resources\Pages\CreateRecord;
+use TallCms\Cms\Filament\Resources\CmsPosts\Pages\CreateCmsPost as BaseCreateCmsPost;
 
-class CreateCmsPost extends CreateRecord
+class CreateCmsPost extends BaseCreateCmsPost
 {
-    protected static string $resource = CmsPostResource::class;
+    //
 }

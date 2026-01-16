@@ -165,6 +165,55 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
         // Filament Block Concerns
         'App\\Filament\\Blocks\\Concerns\\HasDaisyUIOptions' => Filament\Blocks\Concerns\HasDaisyUIOptions::class,
+
+        // Filament Resources - CmsCategories
+        'App\\Filament\\Resources\\CmsCategories\\CmsCategoryResource' => Filament\Resources\CmsCategories\CmsCategoryResource::class,
+        'App\\Filament\\Resources\\CmsCategories\\Pages\\CreateCmsCategory' => Filament\Resources\CmsCategories\Pages\CreateCmsCategory::class,
+        'App\\Filament\\Resources\\CmsCategories\\Pages\\EditCmsCategory' => Filament\Resources\CmsCategories\Pages\EditCmsCategory::class,
+        'App\\Filament\\Resources\\CmsCategories\\Pages\\ListCmsCategories' => Filament\Resources\CmsCategories\Pages\ListCmsCategories::class,
+        'App\\Filament\\Resources\\CmsCategories\\Schemas\\CmsCategoryForm' => Filament\Resources\CmsCategories\Schemas\CmsCategoryForm::class,
+        'App\\Filament\\Resources\\CmsCategories\\Tables\\CmsCategoriesTable' => Filament\Resources\CmsCategories\Tables\CmsCategoriesTable::class,
+
+        // Filament Resources - CmsPages
+        'App\\Filament\\Resources\\CmsPages\\CmsPageResource' => Filament\Resources\CmsPages\CmsPageResource::class,
+        'App\\Filament\\Resources\\CmsPages\\Pages\\CreateCmsPage' => Filament\Resources\CmsPages\Pages\CreateCmsPage::class,
+        'App\\Filament\\Resources\\CmsPages\\Pages\\EditCmsPage' => Filament\Resources\CmsPages\Pages\EditCmsPage::class,
+        'App\\Filament\\Resources\\CmsPages\\Pages\\ListCmsPages' => Filament\Resources\CmsPages\Pages\ListCmsPages::class,
+        'App\\Filament\\Resources\\CmsPages\\Schemas\\CmsPageForm' => Filament\Resources\CmsPages\Schemas\CmsPageForm::class,
+        'App\\Filament\\Resources\\CmsPages\\Tables\\CmsPagesTable' => Filament\Resources\CmsPages\Tables\CmsPagesTable::class,
+
+        // Filament Resources - CmsPosts
+        'App\\Filament\\Resources\\CmsPosts\\CmsPostResource' => Filament\Resources\CmsPosts\CmsPostResource::class,
+        'App\\Filament\\Resources\\CmsPosts\\Pages\\CreateCmsPost' => Filament\Resources\CmsPosts\Pages\CreateCmsPost::class,
+        'App\\Filament\\Resources\\CmsPosts\\Pages\\EditCmsPost' => Filament\Resources\CmsPosts\Pages\EditCmsPost::class,
+        'App\\Filament\\Resources\\CmsPosts\\Pages\\ListCmsPosts' => Filament\Resources\CmsPosts\Pages\ListCmsPosts::class,
+        'App\\Filament\\Resources\\CmsPosts\\Schemas\\CmsPostForm' => Filament\Resources\CmsPosts\Schemas\CmsPostForm::class,
+        'App\\Filament\\Resources\\CmsPosts\\Tables\\CmsPostsTable' => Filament\Resources\CmsPosts\Tables\CmsPostsTable::class,
+
+        // Filament Resources - TallcmsContactSubmissions
+        'App\\Filament\\Resources\\TallcmsContactSubmissions\\TallcmsContactSubmissionResource' => Filament\Resources\TallcmsContactSubmissions\TallcmsContactSubmissionResource::class,
+        'App\\Filament\\Resources\\TallcmsContactSubmissions\\Pages\\ListTallcmsContactSubmissions' => Filament\Resources\TallcmsContactSubmissions\Pages\ListTallcmsContactSubmissions::class,
+        'App\\Filament\\Resources\\TallcmsContactSubmissions\\Pages\\ViewTallcmsContactSubmission' => Filament\Resources\TallcmsContactSubmissions\Pages\ViewTallcmsContactSubmission::class,
+        'App\\Filament\\Resources\\TallcmsContactSubmissions\\Tables\\TallcmsContactSubmissionsTable' => Filament\Resources\TallcmsContactSubmissions\Tables\TallcmsContactSubmissionsTable::class,
+
+        // Filament Resources - TallcmsMedia
+        'App\\Filament\\Resources\\TallcmsMedia\\TallcmsMediaResource' => Filament\Resources\TallcmsMedia\TallcmsMediaResource::class,
+        'App\\Filament\\Resources\\TallcmsMedia\\Pages\\CreateTallcmsMedia' => Filament\Resources\TallcmsMedia\Pages\CreateTallcmsMedia::class,
+        'App\\Filament\\Resources\\TallcmsMedia\\Pages\\EditTallcmsMedia' => Filament\Resources\TallcmsMedia\Pages\EditTallcmsMedia::class,
+        'App\\Filament\\Resources\\TallcmsMedia\\Pages\\ListTallcmsMedia' => Filament\Resources\TallcmsMedia\Pages\ListTallcmsMedia::class,
+        'App\\Filament\\Resources\\TallcmsMedia\\Schemas\\TallcmsMediaForm' => Filament\Resources\TallcmsMedia\Schemas\TallcmsMediaForm::class,
+        'App\\Filament\\Resources\\TallcmsMedia\\Tables\\TallcmsMediaTable' => Filament\Resources\TallcmsMedia\Tables\TallcmsMediaTable::class,
+
+        // Filament Resources - TallcmsMenus
+        'App\\Filament\\Resources\\TallcmsMenus\\TallcmsMenuResource' => Filament\Resources\TallcmsMenus\TallcmsMenuResource::class,
+        'App\\Filament\\Resources\\TallcmsMenus\\Pages\\CreateTallcmsMenu' => Filament\Resources\TallcmsMenus\Pages\CreateTallcmsMenu::class,
+        'App\\Filament\\Resources\\TallcmsMenus\\Pages\\EditTallcmsMenu' => Filament\Resources\TallcmsMenus\Pages\EditTallcmsMenu::class,
+        'App\\Filament\\Resources\\TallcmsMenus\\Pages\\ListTallcmsMenus' => Filament\Resources\TallcmsMenus\Pages\ListTallcmsMenus::class,
+        'App\\Filament\\Resources\\TallcmsMenus\\Schemas\\TallcmsMenuForm' => Filament\Resources\TallcmsMenus\Schemas\TallcmsMenuForm::class,
+        'App\\Filament\\Resources\\TallcmsMenus\\Tables\\TallcmsMenusTable' => Filament\Resources\TallcmsMenus\Tables\TallcmsMenusTable::class,
+
+        // Livewire Components
+        'App\\Livewire\\RevisionHistory' => Livewire\RevisionHistory::class,
     ];
 
     public function configurePackage(Package $package): void
