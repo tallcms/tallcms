@@ -6,9 +6,33 @@
 
 A modern Content Management System built on the **TALL stack** (Tailwind CSS, Alpine.js, Laravel, Livewire) with a Filament v4 admin panel and a daisyUI-powered block system.
 
+## Two Ways to Use TallCMS
+
+### 1. Standalone Application (Full CMS)
+
+Get a complete CMS with themes, plugins, web installer, and auto-updates:
+
 ```bash
 composer create-project tallcms/tallcms my-site
 ```
+
+### 2. Filament Plugin (Add to Existing App)
+
+Add CMS features to your existing Filament application:
+
+```bash
+composer require tallcms/cms
+```
+
+Then register the plugin in your panel provider:
+
+```php
+use TallCms\Cms\TallCmsPlugin;
+
+->plugin(TallCmsPlugin::make())
+```
+
+See the [package documentation](packages/tallcms/cms/README.md) for full plugin installation instructions.
 
 ---
 
@@ -22,26 +46,32 @@ This project demonstrates what's possible when human creativity meets AI capabil
 
 ## Features
 
-- **Web Installer** - Setup wizard with no command line required
-- **One-Click Updates** - Secure system updates with Ed25519 signature verification
-- **Rich Content Editor** - daisyUI-first blocks with merge tags and device preview
-- **Hierarchical Pages & Posts** - SEO optimization and revision history
-- **Drag & Drop Menu Builder** - Nested navigation with multiple locations
+- **Web Installer** - Setup wizard with no command line required (standalone only)
+- **One-Click Updates** - Secure system updates with Ed25519 signature verification (standalone only)
+- **Rich Content Editor** - Block-based editor with 16 built-in content blocks
+- **Pages & Posts** - Static pages and blog posts with categories
+- **Publishing Workflow** - Draft, Pending Review, Scheduled, and Published states
+- **Revision History** - Track changes with diff comparison and rollback
+- **Preview System** - Preview unpublished content with shareable tokens
+- **Media Library** - Organize uploads with collections and metadata
+- **Menu Builder** - Drag-and-drop navigation menus for multiple locations
+- **Site Settings** - Centralized configuration for site name, contact info, social links
 - **Role-Based Permissions** - Super Admin, Administrator, Editor, Author
-- **Plugin System** - Extend functionality with installable plugins
-- **Theme System** - daisyUI presets or custom themes with template overrides
-- **Theme Controller** - Optional runtime theme switching
+- **Plugin System** - Extend functionality with installable plugins (standalone only)
+- **Theme System** - daisyUI presets or custom themes with template overrides (standalone only)
 - **Cloud Storage** - S3-compatible storage (AWS, DigitalOcean, Cloudflare R2)
 - **Maintenance Mode** - Built-in site maintenance with custom messaging
 
 ## System Requirements
 
 - **PHP**: 8.2 or higher
+- **Laravel**: 11.0 or 12.0
+- **Filament**: 4.0
 - **Database**: MySQL 8.0+, MariaDB 10.3+, or SQLite
 - **Web Server**: Apache 2.4+ or Nginx 1.18+
 - **PHP Extensions**: OpenSSL, PDO, Mbstring, Tokenizer, XML, Ctype, JSON, BCMath, Fileinfo, GD
 
-## Installation
+## Standalone Installation
 
 ### Via Composer (Recommended)
 
@@ -79,21 +109,60 @@ composer dev            # Start dev server with hot reload
 
 Visit `http://localhost:8000/install` to complete setup.
 
+## Plugin Installation
+
+For existing Filament applications, install the CMS as a plugin:
+
+```bash
+composer require tallcms/cms
+php artisan vendor:publish --tag=tallcms-migrations
+php artisan migrate
+```
+
+Register in your panel provider:
+
+```php
+use TallCms\Cms\TallCmsPlugin;
+
+public function panel(Panel $panel): Panel
+{
+    return $panel
+        ->plugin(TallCmsPlugin::make());
+}
+```
+
+### Selective Features
+
+Disable components you don't need:
+
+```php
+->plugin(
+    TallCmsPlugin::make()
+        ->withoutPosts()
+        ->withoutCategories()
+        ->withoutContactSubmissions()
+)
+```
+
 ## Built-in Blocks
 
 | Block | Description |
 |-------|-------------|
 | **Hero** | Landing page headers with CTAs and background images |
 | **Call-to-Action** | Conversion-optimized promotional sections |
-| **Image Gallery** | Lightbox galleries with grid/masonry layouts |
-| **Contact Form** | Dynamic forms with email notifications |
 | **Content** | Article content with headings and rich text |
-| **FAQ** | Accordion-style frequently asked questions |
 | **Features** | Feature grids with icons and descriptions |
 | **Pricing** | Pricing tables with feature comparison |
-| **Team** | Team member profiles with social links |
+| **FAQ** | Accordion-style frequently asked questions |
 | **Testimonials** | Customer testimonials with ratings |
+| **Team** | Team member profiles with social links |
+| **Stats** | Statistics and metrics display |
+| **Image Gallery** | Lightbox galleries with grid layouts |
+| **Logos** | Logo showcases for partners/clients |
 | **Timeline** | Chronological event displays |
+| **Contact Form** | Dynamic forms with email notifications |
+| **Posts** | Display recent blog posts |
+| **Parallax** | Parallax scrolling sections |
 | **Divider** | Visual section separators |
 
 ## TallCMS Pro
@@ -169,9 +238,15 @@ See [Theme Development Guide](docs/THEME_DEVELOPMENT.md) for details.
 - Check `storage/` and `bootstrap/cache/` are writable
 - Run `chmod -R 775 storage bootstrap/cache`
 
+### Plugin Mode
+
+**"CMS resources not appearing"**
+- Ensure `TallCmsPlugin::make()` is registered in your panel provider
+- Run `php artisan vendor:publish --tag=tallcms-migrations` and migrate
+
 ## System Updates
 
-TallCMS includes a one-click update system accessible via **Settings → System Updates** in the admin panel.
+TallCMS includes a one-click update system accessible via **Settings → System Updates** in the admin panel (standalone mode only).
 
 ### Features
 
@@ -206,6 +281,27 @@ php artisan tallcms:update --target=1.2.0
 **"Signature verification failed"**
 - The release may have been tampered with. Do not proceed.
 
+## Architecture
+
+TallCMS v2.0 uses a modular architecture:
+
+```
+tallcms/tallcms (Skeleton)     tallcms/cms (Package)
+├── app/                       ├── src/
+│   ├── Models/ (wrappers)     │   ├── Models/
+│   ├── Services/ (wrappers)   │   ├── Services/
+│   └── Filament/ (wrappers)   │   ├── Filament/
+├── themes/                    │   │   ├── Blocks/
+├── plugins/                   │   │   ├── Resources/
+├── .tallcms-standalone        │   │   ├── Pages/
+└── ...                        │   │   └── Widgets/
+                               │   └── ...
+                               └── database/migrations/
+```
+
+- **Standalone mode**: Full skeleton with themes, plugins, and auto-updates
+- **Plugin mode**: Just the CMS package in your existing Filament app
+
 ## Credits
 
 ### AI Collaboration
@@ -230,6 +326,7 @@ TallCMS is open-source software licensed under the [MIT License](https://opensou
 
 - **Website**: [tallcms.com](https://tallcms.com)
 - **GitHub**: [github.com/tallcms/tallcms](https://github.com/tallcms/tallcms)
+- **Package**: [github.com/tallcms/cms](https://github.com/tallcms/cms)
 - **Roadmap**: [View our roadmap](ROADMAP.md)
 - **Documentation**: [tallcms.com/docs](https://tallcms.com/docs)
 - **Support**: hello@tallcms.com
