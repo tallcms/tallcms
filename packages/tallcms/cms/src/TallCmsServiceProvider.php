@@ -341,6 +341,11 @@ class TallCmsServiceProvider extends PackageServiceProvider
      */
     protected function bootPluginFeatures(): void
     {
+        // Check if TallCmsPlugin is registered (deferred to after app boots)
+        $this->app->booted(function () {
+            $this->checkPluginRegistration();
+        });
+
         // Plugin mode: routes are OPT-IN and require explicit prefix
         if (config('tallcms.plugin_mode.routes_enabled', false)) {
             $prefix = config('tallcms.plugin_mode.routes_prefix');
@@ -364,6 +369,45 @@ class TallCmsServiceProvider extends PackageServiceProvider
             Route::prefix($prefix)
                 ->middleware(['web'])
                 ->group(__DIR__ . '/../routes/web.php');
+        }
+    }
+
+    /**
+     * Check if TallCmsPlugin is registered with any Filament panel.
+     * Logs a warning if not registered to help plugin mode users.
+     */
+    protected function checkPluginRegistration(): void
+    {
+        // Skip check if running in console (artisan commands)
+        if ($this->app->runningInConsole()) {
+            return;
+        }
+
+        // Skip if Filament isn't available
+        if (! class_exists(\Filament\Facades\Filament::class)) {
+            return;
+        }
+
+        try {
+            $panels = \Filament\Facades\Filament::getPanels();
+            $pluginRegistered = false;
+
+            foreach ($panels as $panel) {
+                if ($panel->hasPlugin('tallcms')) {
+                    $pluginRegistered = true;
+                    break;
+                }
+            }
+
+            if (! $pluginRegistered) {
+                \Illuminate\Support\Facades\Log::warning(
+                    'TallCMS: Plugin not registered with any Filament panel. ' .
+                    'Add TallCmsPlugin::make() to your panel provider. ' .
+                    'Example: $panel->plugin(TallCmsPlugin::make())'
+                );
+            }
+        } catch (\Throwable $e) {
+            // Silently ignore - Filament may not be fully booted yet
         }
     }
 
