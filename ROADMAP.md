@@ -8,13 +8,13 @@ This roadmap outlines our vision for TallCMS development. We're committed to bui
 
 - [v1.0 - Foundation](#v10---foundation) ✅
 - [v1.1 - UI Polish](#v11---ui-polish) ✅
-- [v1.2 - Content & SEO](#v12---content--seo-current-release) 🟢
+- [v1.2 - Content & SEO](#v12---content--seo) ✅
 - [v1.3 - Multilingual](#v13---multilingual-support) 📋
 - [v1.4 - Developer Experience](#v14---developer-experience) 📋
 - [v1.5 - AI-Powered Content](#v15---ai-powered-content-creation) 📋
 - [v1.6 - Community & Users](#v16---community--users) 📋
 - [v1.7 - Marketplace](#v17---marketplace-integration) 📋
-- [v2.0 - Filament Plugin Architecture](#v20---filament-plugin-architecture) 📋
+- [v2.0 - Filament Plugin Architecture](#v20---filament-plugin-architecture) 🟢
 - [Future Considerations](#future-considerations)
 - [How to Contribute](#how-to-contribute)
 
@@ -121,7 +121,7 @@ Focus: Enhanced theming with daisyUI 5 component library for beautiful, consiste
 
 ---
 
-## v1.2 - Content & SEO (Current Release)
+## v1.2 - Content & SEO
 
 Focus: Complete the blogging experience, SEO tools, and one-click system updates.
 
@@ -288,31 +288,31 @@ Focus: Connect to the official TallCMS marketplace for plugins and themes.
 Focus: Restructure TallCMS as a Filament plugin for broader reach and easier adoption.
 
 ### Core Package Split
-- [ ] Extract core CMS to `tallcms/cms` Composer package
-- [ ] Filament plugin registration and configuration
+- [x] Extract core CMS to `tallcms/cms` Composer package
+- [x] Filament plugin registration and configuration (`TallCmsPlugin`)
 - [ ] List on Filament plugin directory
-- [ ] `composer require tallcms/cms` support
-- [ ] Publish views, migrations, and config
+- [x] `composer require tallcms/cms` support
+- [x] Publish views, migrations, and config
 
 ### Distribution Options
-- [ ] **Standalone**: Full TallCMS skeleton (`tallcms/tallcms`)
-- [ ] **Plugin**: Add to existing Filament apps (`tallcms/cms`)
-- [ ] Web installer for standalone installations
+- [x] **Standalone**: Full TallCMS skeleton (`tallcms/tallcms`)
+- [x] **Plugin**: Add to existing Filament apps (`tallcms/cms`)
+- [x] Web installer for standalone installations
 - [ ] Setup wizard for plugin mode
-- [ ] Migration path from v1.x
+- [x] Migration path from v1.x (class aliases for backwards compatibility)
 
 ### Installation Experience
-- [ ] Auto-discover pages, resources, and widgets
-- [ ] Configurable URL prefixes (/cms, /blog, etc.)
-- [ ] Optional admin panel integration vs standalone
-- [ ] Database table prefix configuration
-- [ ] Asset publishing and customization
+- [x] Auto-register pages, resources, and widgets via `TallCmsPlugin`
+- [x] Configurable URL prefixes (`plugin_mode.routes_prefix`)
+- [x] Selective component registration (`withoutPages()`, `withoutPosts()`, etc.)
+- [x] Multi-panel support with dynamic URL generation
+- [x] Asset publishing and customization
 
 ### Backwards Compatibility
-- [ ] All v1.x themes continue working
-- [ ] All v1.x plugins continue working
-- [ ] Existing content and data preserved
-- [ ] Configuration upgrade assistant
+- [x] All v1.x themes continue working (standalone mode)
+- [x] All v1.x plugins continue working (standalone mode)
+- [x] Existing content and data preserved
+- [x] Class aliases for `App\*` namespace compatibility
 
 ---
 
@@ -371,13 +371,13 @@ We welcome community input on our roadmap:
 |---------|--------|-------|------------|
 | v1.0 | ✅ Released | Foundation | Core CMS, Themes, Plugins, Permissions |
 | v1.1 | ✅ Released | UI Polish | daisyUI 5, semantic CSS classes |
-| v1.2 | 🟢 Current | Content & SEO | Blog frontend, System Updates, RSS, Sitemap |
+| v1.2 | ✅ Released | Content & SEO | Blog frontend, System Updates |
 | v1.3 | 📋 Planned | Global | Multilingual support, RTL |
 | v1.4 | 📋 Planned | Developers | REST API, CLI tools, Webhooks |
 | v1.5 | 📋 Planned | AI | Content generation, Auto-optimization |
 | v1.6 | 📋 Planned | Community | Comments, User profiles, Analytics |
 | v1.7 | 📋 Planned | Ecosystem | Marketplace integration |
-| v2.0 | 📋 Planned | Platform | Filament plugin architecture, package split |
+| v2.0 | 🟢 In Progress | Platform | Filament plugin architecture, package split |
 
 ---
 
