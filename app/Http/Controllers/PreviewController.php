@@ -15,6 +15,11 @@ use TallCms\Cms\Models\CmsPreviewToken;
  *
  * In standalone mode, this class overrides the view references to use
  * app-level views (preview.page, preview.post) for full customization.
+ *
+ * Note: Method signatures use package model type hints for PHP signature compatibility.
+ * App\Models\* wrappers (if they exist) extend the package models, so instanceof
+ * checks still work correctly. Route model binding in routes/web.php can use
+ * App\Models\* classes for full customization.
  */
 class PreviewController extends BasePreviewController
 {

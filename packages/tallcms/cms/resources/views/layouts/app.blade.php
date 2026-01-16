@@ -50,11 +50,16 @@
 <body class="bg-white">
     <div class="min-h-screen">
         <!-- Navigation -->
+        @php
+            // Build CMS root URL respecting plugin mode prefix
+            $cmsPrefix = config('tallcms.plugin_mode.routes_prefix');
+            $cmsRootUrl = $cmsPrefix ? url($cmsPrefix) : url('/');
+        @endphp
         <nav class="bg-white shadow-sm">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
                     <div class="flex items-center">
-                        <a href="{{ url('/') }}" class="text-xl font-bold text-gray-900">
+                        <a href="{{ $cmsRootUrl }}" class="text-xl font-bold text-gray-900">
                             {{ config('app.name') }}
                         </a>
                     </div>
