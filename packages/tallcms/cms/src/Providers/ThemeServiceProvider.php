@@ -10,6 +10,7 @@ use Illuminate\Support\ServiceProvider;
 use TallCms\Cms\Contracts\ThemeInterface;
 use TallCms\Cms\Services\FileBasedTheme;
 use TallCms\Cms\Services\ThemeManager;
+use TallCms\Cms\Support\ThemeColors;
 
 class ThemeServiceProvider extends ServiceProvider
 {
@@ -48,12 +49,7 @@ class ThemeServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Skip registration entirely if theme system is not enabled
-        if (! $this->isThemeSystemEnabled()) {
-            return;
-        }
-
-        // Register ThemeManager as singleton
+        // Always register ThemeManager (needed for Theme Manager UI)
         $this->app->singleton(ThemeManager::class, function ($app) {
             return new ThemeManager;
         });
@@ -171,13 +167,17 @@ class ThemeServiceProvider extends ServiceProvider
 
     /**
      * Bind file-based theme to ThemeInterface on boot
+     *
+     * If a valid file-based theme exists, bind it to ThemeInterface.
+     * Otherwise, bind the default ThemeColors as a fallback to prevent
+     * "target not instantiable" errors in plugin mode.
      */
     protected function bindActiveFileBasedTheme(): void
     {
         $themeManager = $this->app->make(ThemeManager::class);
         $activeTheme = $themeManager->getActiveTheme();
 
-        // Only bind if we have a valid file-based theme
+        // Bind file-based theme if valid, otherwise use default ThemeColors
         if ($activeTheme && file_exists($activeTheme->path.'/theme.json')) {
             $fileBasedTheme = new FileBasedTheme($activeTheme);
 
@@ -185,6 +185,9 @@ class ThemeServiceProvider extends ServiceProvider
             $this->app->bind(ThemeInterface::class, function () use ($fileBasedTheme) {
                 return $fileBasedTheme;
             });
+        } else {
+            // Fallback to default ThemeColors when no valid theme exists
+            $this->app->bind(ThemeInterface::class, ThemeColors::class);
         }
     }
 }

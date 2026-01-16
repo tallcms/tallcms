@@ -21,8 +21,8 @@ class TallcmsMediaForm
                     ->label('Upload Files')
                     ->multiple()
                     ->directory('media')
-                    ->disk(cms_media_disk())
-                    ->visibility(cms_media_visibility())
+                    ->disk(\cms_media_disk())
+                    ->visibility(\cms_media_visibility())
                     ->acceptedFileTypes(['image/*', 'video/*', 'audio/*', 'application/pdf'])
                     ->maxSize(10240) // 10MB
                     ->previewable()
@@ -86,8 +86,8 @@ class TallcmsMediaForm
                 FileUpload::make('new_file')
                     ->label('Replace File')
                     ->directory('media')
-                    ->disk(cms_media_disk())
-                    ->visibility(cms_media_visibility())
+                    ->disk(\cms_media_disk())
+                    ->visibility(\cms_media_visibility())
                     ->acceptedFileTypes(['image/*', 'video/*', 'audio/*', 'application/pdf'])
                     ->maxSize(10240) // 10MB
                     ->previewable()

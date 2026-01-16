@@ -151,7 +151,7 @@ class {{CLASS_NAME}} extends RichContentCustomBlock
 
     public static function toPreviewHtml(array $config): string
     {
-        return view('cms.blocks.{{KEBAB_NAME}}', [
+        return view('tallcms::cms.blocks.{{KEBAB_NAME}}', [
             'title' => $config['title'] ?? 'Sample Title',
             'description' => $config['description'] ?? 'Sample description text',
         ])->render();
@@ -159,7 +159,7 @@ class {{CLASS_NAME}} extends RichContentCustomBlock
 
     public static function toHtml(array $config, array $data): string
     {
-        return view('cms.blocks.{{KEBAB_NAME}}', [
+        return view('tallcms::cms.blocks.{{KEBAB_NAME}}', [
             'title' => $config['title'] ?? '',
             'description' => $config['description'] ?? '',
         ])->render();
@@ -179,7 +179,7 @@ EOT;
 
 @php
     // Get current theme presets for consistent styling
-    $textPresets = theme_text_presets();
+    $textPresets = \theme_text_presets();
     $textPreset = $textPresets['primary'] ?? [
         'heading' => '#111827',
         'description' => '#374151'

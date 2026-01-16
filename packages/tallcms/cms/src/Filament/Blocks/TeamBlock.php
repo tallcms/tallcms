@@ -79,9 +79,9 @@ class TeamBlock extends RichContentCustomBlock
                                         FileUpload::make('photo')
                                             ->label('Photo')
                                             ->image()
-                                            ->disk(cms_media_disk())
+                                            ->disk(\cms_media_disk())
                                             ->directory('team')
-                                            ->visibility(cms_media_visibility())
+                                            ->visibility(\cms_media_visibility())
                                             ->imageEditor()
                                             ->imageResizeMode('cover')
                                             ->imageCropAspectRatio('1:1')
@@ -228,7 +228,7 @@ class TeamBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
-        return view('cms.blocks.team', [
+        return view('tallcms::cms.blocks.team', [
             'id' => static::getId(),
             'heading' => $config['heading'] ?? '',
             'subheading' => $config['subheading'] ?? '',

@@ -206,8 +206,8 @@ class HeroBlock extends RichContentCustomBlock
                                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                                     ->maxSize(5120)
                                     ->directory('cms/hero-blocks')
-                                    ->disk(cms_media_disk())
-                                    ->visibility(cms_media_visibility())
+                                    ->disk(\cms_media_disk())
+                                    ->visibility(\cms_media_visibility())
                                     ->nullable()
                                     ->helperText('Recommended: 2560×1440px (16:9). Keep focal point centered. Max 5MB.'),
 
@@ -295,7 +295,7 @@ class HeroBlock extends RichContentCustomBlock
         $secondaryVariant = $config['secondary_button_variant'] ?? 'btn-ghost text-white hover:bg-white/20';
         $secondaryClasses = "btn {$secondaryVariant} {$buttonSize}";
 
-        return view('cms.blocks.hero', [
+        return view('tallcms::cms.blocks.hero', [
             'id' => static::getId(),
             'isPreview' => $isPreview,
             'heading' => $config['heading'] ?? '',

@@ -28,7 +28,7 @@ class EditTallcmsMedia extends EditRecord
         if (! empty($data['new_file'])) {
             $newFilePath = $data['new_file'];
             $oldPath = $record->path;
-            $disk = cms_media_disk();
+            $disk = \cms_media_disk();
 
             // Delete the old file if it exists
             if ($oldPath && Storage::disk($record->disk)->exists($oldPath)) {

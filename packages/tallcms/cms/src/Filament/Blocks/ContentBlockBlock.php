@@ -100,7 +100,7 @@ class ContentBlockBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
-        return view('cms.blocks.content-block', [
+        return view('tallcms::cms.blocks.content-block', [
             'id' => static::getId(),
             'title' => $config['title'] ?? '',
             'subtitle' => $config['subtitle'] ?? '',

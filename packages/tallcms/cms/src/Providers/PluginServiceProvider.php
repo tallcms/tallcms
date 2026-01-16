@@ -57,11 +57,22 @@ class PluginServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Skip registration entirely if plugin system is not enabled
-        if (! $this->isPluginSystemEnabled()) {
-            return;
-        }
+        // Always register core services (needed for Plugin Manager UI)
+        $this->registerCoreServices();
 
+        // Only register plugin autoloading if plugin system is enabled
+        if ($this->isPluginSystemEnabled()) {
+            // Register PSR-4 autoloading early so Filament can find plugin classes
+            // This must happen during register() before AdminPanelProvider's panel() runs
+            $this->registerPluginAutoloading();
+        }
+    }
+
+    /**
+     * Register core plugin services (always needed for Plugin Manager UI)
+     */
+    protected function registerCoreServices(): void
+    {
         // Register PluginMigrationRepository as singleton
         $this->app->singleton(PluginMigrationRepository::class);
 
@@ -76,7 +87,7 @@ class PluginServiceProvider extends ServiceProvider
         // Register license proxy client
         $this->app->singleton(LicenseProxyClient::class, function ($app) {
             return new LicenseProxyClient(
-                config('plugin.license.proxy_url', 'https://tallcms.com')
+                config('tallcms.plugins.license.proxy_url', 'https://tallcms.com')
             );
         });
 
@@ -90,10 +101,6 @@ class PluginServiceProvider extends ServiceProvider
 
         // Alias for convenience
         $this->app->alias(PluginLicenseService::class, 'plugin.license');
-
-        // Register PSR-4 autoloading early so Filament can find plugin classes
-        // This must happen during register() before AdminPanelProvider's panel() runs
-        $this->registerPluginAutoloading();
     }
 
     /**

@@ -155,7 +155,7 @@ class FaqBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
-        return view('cms.blocks.faq', [
+        return view('tallcms::cms.blocks.faq', [
             'id' => static::getId(),
             'heading' => $config['heading'] ?? '',
             'subheading' => $config['subheading'] ?? '',

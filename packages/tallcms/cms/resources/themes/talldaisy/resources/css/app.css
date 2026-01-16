@@ -1,0 +1,24 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Paths relative from themes/talldaisy/resources/css/app.css */
+@source "../views/**/*.blade.php";
+@source "../../../../resources/views/**/*.blade.php";
+@source "../../../../resources/views/cms/blocks/**/*.blade.php";
+@source "../../../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php";
+
+@plugin "daisyui" {
+  themes: light --default, dark --prefersdark, cupcake, bumblebee, emerald,
+          corporate, synthwave, retro, cyberpunk, valentine, halloween,
+          garden, forest, aqua, lofi, pastel, fantasy, wireframe, black,
+          luxury, dracula, cmyk, autumn, business, acid, lemonade, night,
+          coffee, winter, dim, nord, sunset, caramellatte, abyss, silk;
+}
+
+@theme {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+/* TallCMS Core Styles */
+@import "../../../../resources/css/tallcms.css";

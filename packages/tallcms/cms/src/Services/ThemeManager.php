@@ -325,27 +325,47 @@ class ThemeManager
     }
 
     /**
-     * Discover themes from filesystem
+     * Discover themes from filesystem (user themes + bundled themes)
      */
     protected function discoverThemes(): Collection
     {
-        $themesPath = $this->getThemesPath();
+        $themes = collect();
+        $discoveredSlugs = [];
 
-        if (! File::exists($themesPath)) {
-            return collect();
+        // 1. Discover user themes (takes precedence)
+        $userThemesPath = $this->getThemesPath();
+        if (File::exists($userThemesPath)) {
+            foreach (File::directories($userThemesPath) as $directory) {
+                $theme = Theme::fromDirectory($directory);
+                if ($theme) {
+                    $themes->push($theme);
+                    $discoveredSlugs[] = $theme->slug;
+                }
+            }
         }
 
-        $themes = collect();
-        $directories = File::directories($themesPath);
-
-        foreach ($directories as $directory) {
-            $theme = Theme::fromDirectory($directory);
-            if ($theme) {
-                $themes->push($theme);
+        // 2. Discover bundled themes (shipped with package)
+        $bundledThemesPath = $this->getBundledThemesPath();
+        if (File::exists($bundledThemesPath)) {
+            foreach (File::directories($bundledThemesPath) as $directory) {
+                $theme = Theme::fromDirectory($directory);
+                // Only add if not already discovered (user themes take precedence)
+                if ($theme && ! in_array($theme->slug, $discoveredSlugs)) {
+                    $theme->bundled = true; // Mark as bundled theme
+                    $themes->push($theme);
+                }
             }
         }
 
         return $themes;
+    }
+
+    /**
+     * Get path to bundled themes (shipped with package)
+     */
+    public function getBundledThemesPath(): string
+    {
+        return dirname(__DIR__, 2).'/resources/themes';
     }
 
     /**
@@ -607,6 +627,10 @@ class ThemeManager
     {
         $activeTheme = $this->getActiveTheme();
 
+        if (! $activeTheme) {
+            return;
+        }
+
         // Get theme hierarchy (child to parent)
         $hierarchy = $activeTheme->getHierarchy();
 
@@ -622,6 +646,11 @@ class ThemeManager
 
                 // Also register view namespace for explicit theme loading
                 $this->registerThemeNamespace($theme);
+
+                // Allow themes to override tallcms:: namespaced views
+                // Theme can place overrides in: themes/{slug}/resources/views/
+                // e.g., layouts/app.blade.php will override tallcms::layouts.app
+                View::prependNamespace('tallcms', $themeViewsPath);
             }
         }
     }

@@ -85,18 +85,18 @@ class TestimonialsBlock extends RichContentCustomBlock
                                         FileUpload::make('author_image')
                                             ->label('Author Photo')
                                             ->image()
-                                            ->disk(cms_media_disk())
+                                            ->disk(\cms_media_disk())
                                             ->directory('testimonials')
-                                            ->visibility(cms_media_visibility())
+                                            ->visibility(\cms_media_visibility())
                                             ->imageEditor()
                                             ->circleCropper(),
 
                                         FileUpload::make('company_logo')
                                             ->label('Company Logo (Optional)')
                                             ->image()
-                                            ->disk(cms_media_disk())
+                                            ->disk(\cms_media_disk())
                                             ->directory('testimonials/logos')
-                                            ->visibility(cms_media_visibility()),
+                                            ->visibility(\cms_media_visibility()),
 
                                         Select::make('rating')
                                             ->label('Star Rating')
@@ -205,7 +205,7 @@ class TestimonialsBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
-        return view('cms.blocks.testimonials', [
+        return view('tallcms::cms.blocks.testimonials', [
             'id' => static::getId(),
             'heading' => $config['heading'] ?? '',
             'subheading' => $config['subheading'] ?? '',

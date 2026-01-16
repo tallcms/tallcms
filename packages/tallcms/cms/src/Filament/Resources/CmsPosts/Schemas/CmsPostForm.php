@@ -186,8 +186,8 @@ class CmsPostForm
                                             ->label('Featured Image')
                                             ->image()
                                             ->directory('cms/posts/featured-images')
-                                            ->disk(cms_media_disk())
-                                            ->visibility(cms_media_visibility())
+                                            ->disk(\cms_media_disk())
+                                            ->visibility(\cms_media_visibility())
                                             ->imageEditor()
                                             ->imageEditorAspectRatios([
                                                 '16:9',

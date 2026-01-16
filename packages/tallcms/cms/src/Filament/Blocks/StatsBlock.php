@@ -182,7 +182,7 @@ class StatsBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
-        return view('cms.blocks.stats', [
+        return view('tallcms::cms.blocks.stats', [
             'id' => static::getId(),
             'heading' => $config['heading'] ?? '',
             'stats' => $config['stats'] ?? [],

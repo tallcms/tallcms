@@ -44,9 +44,9 @@ class ParallaxBlock extends RichContentCustomBlock
                                     ->label('Background Image')
                                     ->required()
                                     ->image()
-                                    ->disk(cms_media_disk())
+                                    ->disk(\cms_media_disk())
                                     ->directory('parallax')
-                                    ->visibility(cms_media_visibility())
+                                    ->visibility(\cms_media_visibility())
                                     ->imageResizeMode('cover')
                                     ->imageResizeTargetWidth('1920')
                                     ->imageResizeTargetHeight('1080'),
@@ -142,7 +142,7 @@ class ParallaxBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
-        return view('cms.blocks.parallax', [
+        return view('tallcms::cms.blocks.parallax', [
             'id' => static::getId(),
             'image' => $config['image'] ?? null,
             'heading' => $config['heading'] ?? '',

@@ -71,9 +71,9 @@ class LogosBlock extends RichContentCustomBlock
                                             ->label('Logo Image')
                                             ->required()
                                             ->image()
-                                            ->disk(cms_media_disk())
+                                            ->disk(\cms_media_disk())
                                             ->directory('logos')
-                                            ->visibility(cms_media_visibility()),
+                                            ->visibility(\cms_media_visibility()),
 
                                         TextInput::make('alt')
                                             ->label('Company Name')
@@ -189,7 +189,7 @@ class LogosBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
-        return view('cms.blocks.logos', [
+        return view('tallcms::cms.blocks.logos', [
             'id' => static::getId(),
             'heading' => $config['heading'] ?? '',
             'logos' => $config['logos'] ?? [],

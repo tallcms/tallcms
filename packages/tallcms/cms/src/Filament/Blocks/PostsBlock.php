@@ -181,6 +181,6 @@ class PostsBlock extends RichContentCustomBlock
             $params['parentSlug'] = $parentSlug;
         }
 
-        return view('cms.blocks.posts', $params)->render();
+        return view('tallcms::cms.blocks.posts', $params)->render();
     }
 }

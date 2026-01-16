@@ -25,7 +25,7 @@ class CreateTallcmsMedia extends CreateRecord
         $files = is_array($uploadedFiles) ? $uploadedFiles : [$uploadedFiles];
         $createdRecords = [];
 
-        $disk = cms_media_disk();
+        $disk = \cms_media_disk();
 
         foreach ($files as $filePath) {
             $originalName = pathinfo($filePath, PATHINFO_BASENAME);

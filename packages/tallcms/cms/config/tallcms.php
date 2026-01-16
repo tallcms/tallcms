@@ -172,6 +172,99 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Plugin System
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for the TallCMS plugin system including license management.
+    | The Plugin Manager UI is always available, but local plugin loading
+    | requires explicit opt-in via plugin_mode.plugins_enabled.
+    |
+    */
+    'plugins' => [
+        // Path where plugins are stored
+        'path' => env('TALLCMS_PLUGINS_PATH', base_path('plugins')),
+
+        // Allow ZIP-based plugin uploads through admin UI
+        'allow_uploads' => env('TALLCMS_PLUGIN_ALLOW_UPLOADS', true),
+
+        // Maximum upload size for plugin ZIP files (bytes). Default: 50MB
+        'max_upload_size' => env('TALLCMS_PLUGIN_MAX_UPLOAD_SIZE', 50 * 1024 * 1024),
+
+        // Plugin discovery caching
+        'cache_enabled' => env('TALLCMS_PLUGIN_CACHE_ENABLED', true),
+        'cache_ttl' => 3600, // 1 hour
+
+        // Automatically run plugin migrations on install
+        'auto_migrate' => env('TALLCMS_PLUGIN_AUTO_MIGRATE', true),
+
+        // License management settings
+        'license' => [
+            // License proxy URL for official TallCMS plugins
+            'proxy_url' => env('TALLCMS_LICENSE_PROXY_URL', 'https://tallcms.com'),
+
+            // Cache TTL for license validation results (seconds). Default: 6 hours
+            'cache_ttl' => 21600,
+
+            // Grace period when license server unreachable (days). Default: 7
+            'offline_grace_days' => 7,
+
+            // Grace period after license expiration (days). Default: 14
+            'renewal_grace_days' => 14,
+
+            // How often to check for updates (seconds). Default: 24 hours
+            'update_check_interval' => 86400,
+        ],
+
+        // Official plugin catalog (shown in Plugin Manager)
+        'catalog' => [
+            'tallcms/pro' => [
+                'name' => 'TallCMS Pro',
+                'slug' => 'pro',
+                'vendor' => 'tallcms',
+                'description' => 'Advanced blocks, analytics, and integrations for TallCMS.',
+                'author' => 'TallCMS',
+                'homepage' => 'https://tallcms.com/pro',
+                'icon' => 'heroicon-o-sparkles',
+                'category' => 'official',
+                'featured' => true,
+                'purchase_url' => 'https://checkout.anystack.sh/tallcms-pro-plugin',
+            ],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Theme System
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for the TallCMS theme system. The Theme Manager UI is
+    | always available, but theme loading requires explicit opt-in via
+    | plugin_mode.themes_enabled in plugin mode.
+    |
+    */
+    'themes' => [
+        // Path where themes are stored
+        'path' => env('TALLCMS_THEMES_PATH', base_path('themes')),
+
+        // Allow ZIP-based theme uploads through admin UI
+        'allow_uploads' => env('TALLCMS_THEME_ALLOW_UPLOADS', true),
+
+        // Maximum upload size for theme ZIP files (bytes). Default: 100MB
+        'max_upload_size' => env('TALLCMS_THEME_MAX_UPLOAD_SIZE', 100 * 1024 * 1024),
+
+        // Theme discovery caching
+        'cache_enabled' => env('TALLCMS_THEME_CACHE_ENABLED', false),
+        'cache_ttl' => 3600, // 1 hour
+
+        // Preview session duration (minutes)
+        'preview_duration' => 30,
+
+        // Rollback availability window (hours)
+        'rollback_duration' => 24,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | System Updates (Standalone Mode Only)
     |--------------------------------------------------------------------------
     |

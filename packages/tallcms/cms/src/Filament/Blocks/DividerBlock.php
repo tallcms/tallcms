@@ -115,7 +115,7 @@ class DividerBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
-        return view('cms.blocks.divider', [
+        return view('tallcms::cms.blocks.divider', [
             'id' => static::getId(),
             'style' => $config['style'] ?? 'line',
             'height' => $config['height'] ?? 'medium',

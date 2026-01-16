@@ -111,11 +111,47 @@ if (! function_exists('active_theme')) {
     /**
      * Get the active theme instance
      *
-     * @return \TallCms\Cms\Models\Theme
+     * @return \TallCms\Cms\Models\Theme|null
      */
-    function active_theme(): \TallCms\Cms\Models\Theme
+    function active_theme(): ?\TallCms\Cms\Models\Theme
     {
         return theme_manager()->getActiveTheme();
+    }
+}
+
+if (! function_exists('daisyui_dark_preset')) {
+    /**
+     * Get the DaisyUI preset that represents the "dark" option
+     *
+     * @return string|null
+     */
+    function daisyui_dark_preset(): ?string
+    {
+        return active_theme()?->getDaisyUIPrefersDark();
+    }
+}
+
+if (! function_exists('daisyui_presets')) {
+    /**
+     * Get all available presets for theme-controller
+     *
+     * @return array<string>
+     */
+    function daisyui_presets(): array
+    {
+        return active_theme()?->getDaisyUIPresets() ?? ['light'];
+    }
+}
+
+if (! function_exists('supports_theme_controller')) {
+    /**
+     * Check if theme supports runtime theme switching
+     *
+     * @return bool
+     */
+    function supports_theme_controller(): bool
+    {
+        return active_theme()?->supportsThemeController() ?? false;
     }
 }
 
@@ -212,6 +248,179 @@ if (! function_exists('cms_uses_s3')) {
     function cms_uses_s3(): bool
     {
         return cms_media_disk() === 's3';
+    }
+}
+
+// Menu Helper Functions
+
+if (! function_exists('isMenuItemActive')) {
+    /**
+     * Check if a menu item URL matches the current request
+     */
+    function isMenuItemActive(?string $itemUrl): bool
+    {
+        if (empty($itemUrl)) {
+            return false;
+        }
+
+        // Check if item URL is external (different host)
+        $itemHost = parse_url($itemUrl, PHP_URL_HOST);
+        if ($itemHost && $itemHost !== request()->getHost()) {
+            return false;
+        }
+
+        $currentUrl = request()->url();
+        $currentPath = request()->path();
+
+        // Normalize the item URL
+        $itemUrl = rtrim($itemUrl, '/');
+        $itemPath = parse_url($itemUrl, PHP_URL_PATH) ?? '/';
+        $itemPath = rtrim($itemPath, '/') ?: '/';
+
+        // Normalize current path
+        $currentPath = '/' . ltrim($currentPath, '/');
+        $currentPath = rtrim($currentPath, '/') ?: '/';
+
+        // Exact match
+        if ($currentUrl === $itemUrl || $currentPath === $itemPath) {
+            return true;
+        }
+
+        // Homepage special case
+        if ($itemPath === '/' || $itemPath === '/home') {
+            return $currentPath === '/' || $currentPath === '/home';
+        }
+
+        return false;
+    }
+}
+
+if (! function_exists('buildMenuItemArray')) {
+    /**
+     * Recursively build menu item array with children
+     */
+    function buildMenuItemArray($item): array
+    {
+        $url = $item->getResolvedUrl();
+        $children = $item->children->map(function ($child) {
+            return buildMenuItemArray($child);
+        })->toArray();
+
+        // Check if this item is active
+        $isActive = isMenuItemActive($url);
+
+        // Check if any child is active (for parent highlighting)
+        $hasActiveChild = collect($children)->contains(function ($child) {
+            return $child['is_active'] || $child['has_active_child'];
+        });
+
+        return [
+            'id' => $item->id,
+            'label' => $item->label,
+            'url' => $url,
+            'type' => $item->type,
+            'target' => app('menu.url.resolver')->getTargetAttribute($item),
+            'icon' => $item->icon,
+            'css_class' => $item->css_class,
+            'is_active' => $isActive,
+            'has_active_child' => $hasActiveChild,
+            'children' => $children,
+        ];
+    }
+}
+
+if (! function_exists('menu')) {
+    /**
+     * Get a menu by location with resolved URLs
+     */
+    function menu(string $location): ?array
+    {
+        $menu = \TallCms\Cms\Models\TallcmsMenu::byLocation($location);
+
+        if (! $menu) {
+            return null;
+        }
+
+        // Get all menu items for this menu and build the tree structure
+        $items = $menu->allItems()
+            ->where('is_active', true)
+            ->with('page')
+            ->defaultOrder()
+            ->get()
+            ->toTree();
+
+        return $items->map(function ($item) {
+            return buildMenuItemArray($item);
+        })->toArray();
+    }
+}
+
+if (! function_exists('render_menu')) {
+    /**
+     * Render a menu as HTML
+     */
+    function render_menu(string $location, array $options = []): string
+    {
+        $menu = menu($location);
+
+        if (! $menu) {
+            return '';
+        }
+
+        $ulClass = $options['ul_class'] ?? 'menu';
+        $liClass = $options['li_class'] ?? 'menu-item';
+        $linkClass = $options['link_class'] ?? 'menu-link';
+
+        $html = "<ul class=\"{$ulClass}\">";
+
+        foreach ($menu as $item) {
+            $html .= render_menu_item($item, $liClass, $linkClass);
+        }
+
+        $html .= '</ul>';
+
+        return $html;
+    }
+}
+
+if (! function_exists('render_menu_item')) {
+    /**
+     * Render a single menu item
+     */
+    function render_menu_item(array $item, string $liClass = '', string $linkClass = ''): string
+    {
+        $hasChildren = ! empty($item['children']);
+        $liClass = trim($liClass . ($hasChildren ? ' has-children' : ''));
+
+        if ($item['css_class']) {
+            $liClass = trim($liClass . ' ' . $item['css_class']);
+        }
+
+        $html = "<li class=\"{$liClass}\">";
+
+        if ($item['url']) {
+            $target = $item['target'] === '_blank' ? ' target="_blank" rel="noopener"' : '';
+            $icon = $item['icon'] ? "<i class=\"{$item['icon']}\"></i> " : '';
+
+            $html .= "<a href=\"{$item['url']}\" class=\"{$linkClass}\"{$target}>";
+            $html .= $icon . htmlspecialchars($item['label']);
+            $html .= '</a>';
+        } else {
+            // Header/separator items without links
+            $html .= "<span class=\"{$linkClass}\">" . htmlspecialchars($item['label']) . '</span>';
+        }
+
+        if ($hasChildren) {
+            $html .= '<ul class="submenu">';
+            foreach ($item['children'] as $child) {
+                $html .= render_menu_item($child, 'submenu-item', $linkClass);
+            }
+            $html .= '</ul>';
+        }
+
+        $html .= '</li>';
+
+        return $html;
     }
 }
 

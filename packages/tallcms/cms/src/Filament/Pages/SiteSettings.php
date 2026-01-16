@@ -191,8 +191,8 @@ class SiteSettings extends Page implements HasForms
                         ->label('Site Logo')
                         ->image()
                         ->directory('site-assets')
-                        ->disk(cms_media_disk())
-                        ->visibility(cms_media_visibility())
+                        ->disk(\cms_media_disk())
+                        ->visibility(\cms_media_visibility())
                         ->helperText('Upload your site logo (PNG, JPG, or SVG)')
                         ->nullable(),
 
@@ -200,8 +200,8 @@ class SiteSettings extends Page implements HasForms
                         ->label('Favicon')
                         ->image()
                         ->directory('site-assets')
-                        ->disk(cms_media_disk())
-                        ->visibility(cms_media_visibility())
+                        ->disk(\cms_media_disk())
+                        ->visibility(\cms_media_visibility())
                         ->acceptedFileTypes(['image/x-icon', 'image/png'])
                         ->helperText('Upload favicon (.ico or .png, 16x16 or 32x32 pixels)')
                         ->nullable(),

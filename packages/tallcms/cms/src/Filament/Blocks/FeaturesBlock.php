@@ -86,9 +86,9 @@ class FeaturesBlock extends RichContentCustomBlock
                                         FileUpload::make('icon_image')
                                             ->label('Icon Image')
                                             ->image()
-                                            ->disk(cms_media_disk())
+                                            ->disk(\cms_media_disk())
                                             ->directory('features')
-                                            ->visibility(cms_media_visibility())
+                                            ->visibility(\cms_media_visibility())
                                             ->visible(fn (Get $get): bool => $get('icon_type') === 'image'),
 
                                         TextInput::make('emoji')
@@ -200,7 +200,7 @@ class FeaturesBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
-        return view('cms.blocks.features', [
+        return view('tallcms::cms.blocks.features', [
             'id' => static::getId(),
             'heading' => $config['heading'] ?? '',
             'subheading' => $config['subheading'] ?? '',

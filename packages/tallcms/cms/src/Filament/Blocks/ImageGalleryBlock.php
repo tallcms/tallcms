@@ -40,8 +40,8 @@ class ImageGalleryBlock extends RichContentCustomBlock
                     ->maxSize(5120)
                     ->multiple()
                     ->directory('cms/galleries')
-                    ->disk(cms_media_disk())
-                    ->visibility(cms_media_visibility())
+                    ->disk(\cms_media_disk())
+                    ->visibility(\cms_media_visibility())
                     ->maxFiles(12)
                     ->reorderable()
                     ->imageEditor()
@@ -107,7 +107,7 @@ class ImageGalleryBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
-        return view('cms.blocks.image-gallery', [
+        return view('tallcms::cms.blocks.image-gallery', [
             'id' => static::getId(),
             'title' => $config['title'] ?? '',
             'images' => $config['images'] ?? [],

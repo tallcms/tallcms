@@ -87,6 +87,11 @@ class Theme
 
     public array $extras = [];
 
+    /**
+     * Whether this theme is bundled with the package (not user-installed)
+     */
+    public bool $bundled = false;
+
     public function __construct(array $data, string $path)
     {
         $this->name = $data['name'] ?? 'Untitled Theme';

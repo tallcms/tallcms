@@ -7,7 +7,12 @@ namespace TallCms\Cms;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 use TallCms\Cms\Filament\Pages\MenuItemsManager;
+use TallCms\Cms\Filament\Pages\PluginManager;
 use TallCms\Cms\Filament\Pages\SiteSettings;
+use TallCms\Cms\Filament\Pages\SystemUpdates;
+use TallCms\Cms\Filament\Pages\ThemeManager;
+use TallCms\Cms\Filament\Pages\UpdateManual;
+use TallCms\Cms\Filament\Pages\UpdateProgress;
 use TallCms\Cms\Filament\Resources\CmsCategories\CmsCategoryResource;
 use TallCms\Cms\Filament\Resources\CmsPages\CmsPageResource;
 use TallCms\Cms\Filament\Resources\CmsPosts\CmsPostResource;
@@ -31,6 +36,12 @@ class TallCmsPlugin implements Plugin
     protected bool $hasMenus = true;
 
     protected bool $hasSiteSettings = true;
+
+    protected bool $hasPluginManager = true;
+
+    protected bool $hasThemeManager = true;
+
+    protected bool $hasSystemUpdates = true;
 
     public static function make(): static
     {
@@ -82,7 +93,39 @@ class TallCmsPlugin implements Plugin
             $pages[] = MenuItemsManager::class;
         }
 
+        // Plugin Manager and Theme Manager work in both modes
+        // (core services are always registered)
+        if ($this->hasPluginManager) {
+            $pages[] = PluginManager::class;
+        }
+
+        if ($this->hasThemeManager) {
+            $pages[] = ThemeManager::class;
+        }
+
+        // System Updates only available in standalone mode
+        // (requires TallCmsUpdater service and GitHub release infrastructure)
+        if ($this->isStandaloneMode() && $this->hasSystemUpdates) {
+            $pages[] = SystemUpdates::class;
+            $pages[] = UpdateManual::class;
+            $pages[] = UpdateProgress::class;
+        }
+
         return $pages;
+    }
+
+    /**
+     * Check if running in standalone mode.
+     */
+    protected function isStandaloneMode(): bool
+    {
+        // 1. Explicit config takes precedence
+        if (config('tallcms.mode') !== null) {
+            return config('tallcms.mode') === 'standalone';
+        }
+
+        // 2. Auto-detect: standalone has .tallcms-standalone marker
+        return file_exists(base_path('.tallcms-standalone'));
     }
 
     /**
@@ -203,6 +246,36 @@ class TallCmsPlugin implements Plugin
     public function withoutSiteSettings(): static
     {
         $this->hasSiteSettings = false;
+
+        return $this;
+    }
+
+    /**
+     * Disable plugin manager page.
+     */
+    public function withoutPluginManager(): static
+    {
+        $this->hasPluginManager = false;
+
+        return $this;
+    }
+
+    /**
+     * Disable theme manager page.
+     */
+    public function withoutThemeManager(): static
+    {
+        $this->hasThemeManager = false;
+
+        return $this;
+    }
+
+    /**
+     * Disable system updates pages.
+     */
+    public function withoutSystemUpdates(): static
+    {
+        $this->hasSystemUpdates = false;
 
         return $this;
     }

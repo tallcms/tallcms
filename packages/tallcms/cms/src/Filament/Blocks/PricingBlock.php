@@ -268,7 +268,7 @@ class PricingBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
-        return view('cms.blocks.pricing', [
+        return view('tallcms::cms.blocks.pricing', [
             'id' => static::getId(),
             'section_title' => $config['section_title'] ?? '',
             'section_subtitle' => $config['section_subtitle'] ?? '',

@@ -105,6 +105,10 @@ Disable specific components you don't need:
 
 After publishing the config file, customize these options:
 
+> **Frontend routes are disabled by default in plugin mode.**  
+> To render CMS pages in your host app, you must enable them explicitly
+> and set a non-empty `routes_prefix`.
+
 ```php
 // config/tallcms.php
 return [
@@ -118,6 +122,8 @@ return [
         // Enable frontend routes (requires prefix)
         'routes_enabled' => false,
         'routes_prefix' => 'cms', // e.g., /cms/page-slug
+        // Optional: enable catch-all slug routing (/{slug}) under the prefix
+        'catch_all_enabled' => false,
 
         // Enable theme system in plugin mode
         'themes_enabled' => false,
@@ -132,13 +138,22 @@ return [
 
 To render CMS pages on your frontend:
 
-**1. Enable routes in config:**
+**1. Enable routes in config (or .env):**
 
 ```php
 'plugin_mode' => [
     'routes_enabled' => true,
     'routes_prefix' => 'pages', // Pages accessible at /pages/{slug}
+    'catch_all_enabled' => true, // Enable /{slug} catch-all under the prefix
 ],
+```
+
+**.env example:**
+
+```
+TALLCMS_ROUTES_ENABLED=true
+TALLCMS_ROUTES_PREFIX=pages
+TALLCMS_CATCH_ALL_ENABLED=true
 ```
 
 **2. Publish frontend assets:**

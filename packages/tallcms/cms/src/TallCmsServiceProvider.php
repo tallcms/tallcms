@@ -25,6 +25,9 @@ class TallCmsServiceProvider extends PackageServiceProvider
         // Contracts
         'App\\Contracts\\ThemeInterface' => Contracts\ThemeInterface::class,
 
+        // Support
+        'App\\Support\\ThemeColors' => Support\ThemeColors::class,
+
         // Exceptions
         'App\\Exceptions\\ConfigurationException' => Exceptions\ConfigurationException::class,
         'App\\Exceptions\\DownloadException' => Exceptions\DownloadException::class,
@@ -260,6 +263,9 @@ class TallCmsServiceProvider extends PackageServiceProvider
         // Register class aliases for backwards compatibility
         $this->registerClassAliases();
 
+        // Register MenuUrlResolver singleton (needed for menu helper functions)
+        $this->app->singleton('menu.url.resolver', Services\MenuUrlResolver::class);
+
         // Register the PluginServiceProvider and ThemeServiceProvider
         $this->app->register(PluginServiceProvider::class);
         $this->app->register(ThemeServiceProvider::class);
@@ -291,8 +297,14 @@ class TallCmsServiceProvider extends PackageServiceProvider
     {
         parent::packageBooted();
 
+        // Register Livewire components
+        $this->registerLivewireComponents();
+
         // Register middleware aliases before loading routes
         $this->registerMiddlewareAliases();
+
+        // Register Blade component aliases for theme compatibility
+        $this->registerBladeComponentAliases();
 
         // Register assets only if published
         $cssPath = public_path('vendor/tallcms/tallcms.css');
@@ -314,6 +326,22 @@ class TallCmsServiceProvider extends PackageServiceProvider
     }
 
     /**
+     * Register Livewire components from the package.
+     *
+     * Component names must match Livewire's class-to-name conversion:
+     * TallCms\Cms\Livewire\RevisionHistory -> tall-cms.cms.livewire.revision-history
+     * This is required because Filament's Livewire::make() uses the class name.
+     */
+    protected function registerLivewireComponents(): void
+    {
+        if (class_exists(\Livewire\Livewire::class)) {
+            // Register with the exact names Livewire generates from class names
+            \Livewire\Livewire::component('tall-cms.cms.livewire.revision-history', Livewire\RevisionHistory::class);
+            \Livewire\Livewire::component('tall-cms.cms.livewire.cms-page-renderer', Livewire\CmsPageRenderer::class);
+        }
+    }
+
+    /**
      * Register middleware aliases used by package routes.
      */
     protected function registerMiddlewareAliases(): void
@@ -322,6 +350,27 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
         $router->aliasMiddleware('tallcms.maintenance', Http\Middleware\MaintenanceModeMiddleware::class);
         $router->aliasMiddleware('tallcms.theme-preview', Http\Middleware\ThemePreviewMiddleware::class);
+    }
+
+    /**
+     * Register Blade component aliases for theme compatibility.
+     *
+     * This allows themes to use <x-menu> instead of <x-tallcms::menu>
+     * making themes portable between standalone and plugin modes.
+     */
+    protected function registerBladeComponentAliases(): void
+    {
+        // Only register aliases in plugin mode to avoid conflicts with standalone app components
+        if ($this->isStandaloneMode()) {
+            return;
+        }
+
+        $blade = $this->app['blade.compiler'];
+
+        // Register anonymous component aliases that point to package views
+        // <x-menu> -> tallcms::components.menu
+        $blade->component('tallcms::components.menu', 'menu');
+        $blade->component('tallcms::components.menu-item', 'menu-item');
     }
 
     /**
@@ -363,7 +412,11 @@ class TallCmsServiceProvider extends PackageServiceProvider
             $this->checkPluginRegistration();
         });
 
-        // Plugin mode: routes are OPT-IN and require explicit prefix
+        // Always load essential admin routes (preview, contact API)
+        // These are needed for admin panel functionality regardless of frontend routes
+        $this->loadEssentialRoutes();
+
+        // Plugin mode: frontend routes are OPT-IN and require explicit prefix
         if (config('tallcms.plugin_mode.routes_enabled', false)) {
             $prefix = config('tallcms.plugin_mode.routes_prefix');
 
@@ -375,18 +428,44 @@ class TallCmsServiceProvider extends PackageServiceProvider
                 );
             }
 
-            // Verify assets are published before enabling frontend
+            // Log warning if assets aren't published (frontend styling may be incomplete)
+            // In plugin mode, the host app's CSS typically provides styling via DaisyUI/Tailwind
             if (! file_exists(public_path('vendor/tallcms/tallcms.css'))) {
-                throw new \RuntimeException(
-                    'TallCMS frontend routes require published assets. ' .
+                \Illuminate\Support\Facades\Log::warning(
+                    'TallCMS: Package assets not published. Frontend styling may be incomplete. ' .
                     'Run: php artisan vendor:publish --tag=tallcms-assets'
                 );
             }
 
             Route::prefix($prefix)
                 ->middleware(['web'])
-                ->group(__DIR__ . '/../routes/web.php');
+                ->group(__DIR__ . '/../routes/frontend.php');
         }
+    }
+
+    /**
+     * Load essential routes that are always needed (preview, contact API)
+     * These don't conflict with host app routes and are required for admin functionality
+     */
+    protected function loadEssentialRoutes(): void
+    {
+        Route::middleware(['web'])->group(function () {
+            // Preview routes (needed for admin preview buttons)
+            Route::get('/preview/share/{token}', [Http\Controllers\PreviewController::class, 'tokenPreview'])
+                ->middleware('throttle:60,1')
+                ->name('preview.token');
+
+            Route::middleware('auth')->group(function () {
+                Route::get('/preview/page/{page}', [Http\Controllers\PreviewController::class, 'page'])
+                    ->name('preview.page');
+                Route::get('/preview/post/{post}', [Http\Controllers\PreviewController::class, 'post'])
+                    ->name('preview.post');
+            });
+
+            // Contact form API (needed for contact form blocks)
+            Route::post('/api/tallcms/contact', [Http\Controllers\ContactFormController::class, 'submit'])
+                ->name('contact.submit');
+        });
     }
 
     /**

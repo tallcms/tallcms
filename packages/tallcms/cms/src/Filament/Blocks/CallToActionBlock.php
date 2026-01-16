@@ -198,7 +198,7 @@ class CallToActionBlock extends RichContentCustomBlock
         $buttonUrl = BlockLinkResolver::resolveButtonUrl($config, 'button');
         $secondaryButtonUrl = BlockLinkResolver::resolveButtonUrl($config, 'secondary_button');
 
-        return view('cms.blocks.call-to-action', [
+        return view('tallcms::cms.blocks.call-to-action', [
             'id' => static::getId(),
             'title' => $config['title'] ?? 'Call to Action Title',
             'description' => $config['description'] ?? '',

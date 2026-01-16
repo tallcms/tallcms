@@ -97,9 +97,9 @@ class TimelineBlock extends RichContentCustomBlock
                                         FileUpload::make('image')
                                             ->label('Image (Optional)')
                                             ->image()
-                                            ->disk(cms_media_disk())
+                                            ->disk(\cms_media_disk())
                                             ->directory('timeline')
-                                            ->visibility(cms_media_visibility())
+                                            ->visibility(\cms_media_visibility())
                                             ->imageResizeMode('cover')
                                             ->imageCropAspectRatio('16:9')
                                             ->imageResizeTargetWidth('800')
@@ -189,7 +189,7 @@ class TimelineBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
-        return view('cms.blocks.timeline', [
+        return view('tallcms::cms.blocks.timeline', [
             'id' => static::getId(),
             'heading' => $config['heading'] ?? '',
             'subheading' => $config['subheading'] ?? '',
