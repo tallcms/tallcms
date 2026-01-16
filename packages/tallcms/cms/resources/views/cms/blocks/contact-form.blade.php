@@ -12,7 +12,7 @@
 
     $jsConfig = [
         'formId' => $formId,
-        'submitUrl' => route('contact.submit'),
+        'submitUrl' => route('tallcms.contact.submit'),
         'successMessage' => $successMessage,
         'config' => $config,
         'signature' => $signature,

@@ -80,6 +80,10 @@ return [
         'api_routes_enabled' => env('TALLCMS_API_ROUTES_ENABLED', true),
         'preview_routes_enabled' => env('TALLCMS_PREVIEW_ROUTES_ENABLED', true),
 
+        // Optional prefix for essential routes (preview, contact API) to avoid conflicts
+        // e.g., 'tallcms' results in /tallcms/preview/page/{id}
+        'essential_routes_prefix' => env('TALLCMS_ESSENTIAL_ROUTES_PREFIX', ''),
+
         // Route exclusions pattern for catch-all route in plugin mode
         'route_exclusions' => env('TALLCMS_PLUGIN_ROUTE_EXCLUSIONS', '.*'),
 

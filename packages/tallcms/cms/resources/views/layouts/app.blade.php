@@ -32,7 +32,12 @@
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
 
     <!-- Scripts -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @if(file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @elseif(file_exists(public_path('vendor/tallcms/tallcms.css')))
+        <link rel="stylesheet" href="{{ asset('vendor/tallcms/tallcms.css') }}">
+        <script src="{{ asset('vendor/tallcms/tallcms.js') }}" defer></script>
+    @endif
     @livewireStyles
     <style>[x-cloak] { display: none !important; }</style>
 </head>

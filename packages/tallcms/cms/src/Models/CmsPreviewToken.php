@@ -161,7 +161,7 @@ class CmsPreviewToken extends Model
      */
     public function getPreviewUrl(): string
     {
-        return route('preview.token', ['token' => $this->token]);
+        return route('tallcms.preview.token', ['token' => $this->token]);
     }
 
     /**

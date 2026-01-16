@@ -445,26 +445,34 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
     /**
      * Load essential routes that are always needed (preview, contact API)
-     * These don't conflict with host app routes and are required for admin functionality
+     * These are required for admin functionality but can be prefixed to avoid conflicts
      */
     protected function loadEssentialRoutes(): void
     {
-        Route::middleware(['web'])->group(function () {
+        // Allow disabling essential routes entirely (host app will define their own)
+        if (! config('tallcms.plugin_mode.preview_routes_enabled', true)) {
+            return;
+        }
+
+        // Optional prefix for essential routes to avoid conflicts
+        $prefix = config('tallcms.plugin_mode.essential_routes_prefix', '');
+
+        Route::middleware(['web'])->prefix($prefix)->group(function () {
             // Preview routes (needed for admin preview buttons)
             Route::get('/preview/share/{token}', [Http\Controllers\PreviewController::class, 'tokenPreview'])
                 ->middleware('throttle:60,1')
-                ->name('preview.token');
+                ->name('tallcms.preview.token');
 
             Route::middleware('auth')->group(function () {
                 Route::get('/preview/page/{page}', [Http\Controllers\PreviewController::class, 'page'])
-                    ->name('preview.page');
+                    ->name('tallcms.preview.page');
                 Route::get('/preview/post/{post}', [Http\Controllers\PreviewController::class, 'post'])
-                    ->name('preview.post');
+                    ->name('tallcms.preview.post');
             });
 
             // Contact form API (needed for contact form blocks)
             Route::post('/api/tallcms/contact', [Http\Controllers\ContactFormController::class, 'submit'])
-                ->name('contact.submit');
+                ->name('tallcms.contact.submit');
         });
     }
 
