@@ -182,12 +182,12 @@ class ContactFormBlock extends RichContentCustomBlock
 
     public static function toPreviewHtml(array $config): string
     {
-        return static::renderBlock($config, 'cms.blocks.contact-form-preview');
+        return static::renderBlock($config, 'tallcms::cms.blocks.contact-form-preview');
     }
 
     public static function toHtml(array $config, array $data): string
     {
-        return static::renderBlock($config, 'cms.blocks.contact-form');
+        return static::renderBlock($config, 'tallcms::cms.blocks.contact-form');
     }
 
     protected static function renderBlock(array $config, string $view): string
