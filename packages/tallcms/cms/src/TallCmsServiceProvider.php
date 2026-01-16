@@ -430,14 +430,48 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
     /**
      * Get the migrations that should be published.
+     *
+     * These are CMS-specific migrations. App-specific migrations
+     * (users, cache, jobs, permissions) remain in the skeleton.
      */
     protected function getMigrations(): array
     {
-        // TODO: Add all 29 migrations
         return [
-            // 'create_tallcms_pages_table',
-            // 'create_tallcms_posts_table',
-            // etc.
+            // Core CMS tables
+            '2025_12_08_082455_create_tall_cms_pages_table',
+            '2025_12_08_082458_create_tall_cms_categories_table',
+            '2025_12_08_085200_create_tall_cms_posts_table',
+            '2025_12_08_085204_create_tall_cms_post_category_table',
+            '2025_12_08_094007_add_is_homepage_to_tallcms_pages_table',
+
+            // Site settings
+            '2025_12_09_045501_create_site_settings_table',
+            '2025_12_09_062630_rename_site_settings_to_tallcms_site_settings',
+
+            // Media library
+            '2025_12_09_062914_create_tallcms_media_table',
+            '2025_12_09_063854_create_tallcms_media_collections_table',
+            '2025_12_09_063922_modify_tallcms_media_table_for_collections',
+            '2025_12_09_064048_create_tallcms_media_collection_pivot_table',
+            '2025_12_09_064058_remove_collection_id_from_tallcms_media',
+
+            // Menus
+            '2025_12_09_092513_create_tallcms_menus_table',
+            '2025_12_09_092514_create_tallcms_menu_items_table',
+
+            // Contact submissions
+            '2025_12_21_150937_create_tallcms_contact_submissions_table',
+
+            // Publishing workflow & revisions
+            '2026_01_03_164841_add_publishing_workflow_fields',
+            '2026_01_03_164842_create_tallcms_revisions_table',
+            '2026_01_03_164843_create_tallcms_preview_tokens_table',
+            '2026_01_07_012959_add_revision_metadata_fields_to_tallcms_revisions_table',
+
+            // Plugin system
+            '2026_01_07_064340_create_tallcms_plugin_migrations_table',
+            '2026_01_09_133136_create_tallcms_plugin_licenses_table',
+            '2026_01_09_214045_migrate_pro_licenses_to_core',
         ];
     }
 
