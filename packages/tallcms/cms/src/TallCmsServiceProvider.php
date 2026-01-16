@@ -144,6 +144,27 @@ class TallCmsServiceProvider extends PackageServiceProvider
         'App\\Console\\Commands\\ThemeCacheClear' => Console\Commands\ThemeCacheClear::class,
         'App\\Console\\Commands\\ThemeInstallCommand' => Console\Commands\ThemeInstallCommand::class,
         'App\\Console\\Commands\\ThemeList' => Console\Commands\ThemeList::class,
+
+        // Filament Blocks
+        'App\\Filament\\Blocks\\CallToActionBlock' => Filament\Blocks\CallToActionBlock::class,
+        'App\\Filament\\Blocks\\ContactFormBlock' => Filament\Blocks\ContactFormBlock::class,
+        'App\\Filament\\Blocks\\ContentBlockBlock' => Filament\Blocks\ContentBlockBlock::class,
+        'App\\Filament\\Blocks\\DividerBlock' => Filament\Blocks\DividerBlock::class,
+        'App\\Filament\\Blocks\\FaqBlock' => Filament\Blocks\FaqBlock::class,
+        'App\\Filament\\Blocks\\FeaturesBlock' => Filament\Blocks\FeaturesBlock::class,
+        'App\\Filament\\Blocks\\HeroBlock' => Filament\Blocks\HeroBlock::class,
+        'App\\Filament\\Blocks\\ImageGalleryBlock' => Filament\Blocks\ImageGalleryBlock::class,
+        'App\\Filament\\Blocks\\LogosBlock' => Filament\Blocks\LogosBlock::class,
+        'App\\Filament\\Blocks\\ParallaxBlock' => Filament\Blocks\ParallaxBlock::class,
+        'App\\Filament\\Blocks\\PostsBlock' => Filament\Blocks\PostsBlock::class,
+        'App\\Filament\\Blocks\\PricingBlock' => Filament\Blocks\PricingBlock::class,
+        'App\\Filament\\Blocks\\StatsBlock' => Filament\Blocks\StatsBlock::class,
+        'App\\Filament\\Blocks\\TeamBlock' => Filament\Blocks\TeamBlock::class,
+        'App\\Filament\\Blocks\\TestimonialsBlock' => Filament\Blocks\TestimonialsBlock::class,
+        'App\\Filament\\Blocks\\TimelineBlock' => Filament\Blocks\TimelineBlock::class,
+
+        // Filament Block Concerns
+        'App\\Filament\\Blocks\\Concerns\\HasDaisyUIOptions' => Filament\Blocks\Concerns\HasDaisyUIOptions::class,
     ];
 
     public function configurePackage(Package $package): void

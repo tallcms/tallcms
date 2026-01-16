@@ -18,7 +18,7 @@ class CustomBlockDiscoveryService
     protected static ?Collection $discoveredBlocks = null;
 
     /**
-     * Discover all custom blocks in the application and plugins
+     * Discover all custom blocks in the application, package, and plugins
      */
     public static function discover(): Collection
     {
@@ -28,10 +28,16 @@ class CustomBlockDiscoveryService
 
         $blocks = collect();
 
-        // Discover blocks from the main application
-        $blockPath = app_path('Filament/Forms/Components/RichEditor/RichContentCustomBlocks');
-        if (File::exists($blockPath)) {
-            $blocks = $blocks->merge(self::discoverFromPath($blockPath));
+        // Discover blocks from the package (TallCms\Cms\Filament\Blocks)
+        $packageBlockPath = dirname(__DIR__).'/Filament/Blocks';
+        if (File::exists($packageBlockPath)) {
+            $blocks = $blocks->merge(self::discoverFromPath($packageBlockPath));
+        }
+
+        // Discover blocks from the main application (can override package blocks)
+        $appBlockPath = app_path('Filament/Forms/Components/RichEditor/RichContentCustomBlocks');
+        if (File::exists($appBlockPath)) {
+            $blocks = $blocks->merge(self::discoverFromPath($appBlockPath));
         }
 
         // Discover blocks from installed plugins
