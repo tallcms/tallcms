@@ -18,7 +18,12 @@ class CustomBlockDiscoveryService
     protected static ?Collection $discoveredBlocks = null;
 
     /**
-     * Discover all custom blocks in the application, package, and plugins
+     * Discover all custom blocks in the application, package, and plugins.
+     *
+     * Precedence (later sources override earlier by block ID):
+     * 1. Package blocks (base)
+     * 2. App blocks (override package)
+     * 3. Plugin blocks (override all)
      */
     public static function discover(): Collection
     {
@@ -35,15 +40,26 @@ class CustomBlockDiscoveryService
         }
 
         // Discover blocks from the main application (can override package blocks)
-        $appBlockPath = app_path('Filament/Forms/Components/RichEditor/RichContentCustomBlocks');
+        $appBlockPath = app_path('Filament/Blocks');
         if (File::exists($appBlockPath)) {
             $blocks = $blocks->merge(self::discoverFromPath($appBlockPath));
         }
 
-        // Discover blocks from installed plugins
+        // Discover blocks from installed plugins (can override all)
         $blocks = $blocks->merge(self::discoverFromPlugins());
 
-        return self::$discoveredBlocks = $blocks->unique()->sort();
+        // Dedupe by block ID - later sources override earlier ones
+        // keyBy() overwrites earlier entries when a later entry has the same key
+        $blocks = $blocks->keyBy(function ($className) {
+            try {
+                return $className::getId();
+            } catch (\Throwable $e) {
+                // Fallback to class name if getId() fails
+                return $className;
+            }
+        })->values();
+
+        return self::$discoveredBlocks = $blocks->sort()->values();
     }
 
     /**
