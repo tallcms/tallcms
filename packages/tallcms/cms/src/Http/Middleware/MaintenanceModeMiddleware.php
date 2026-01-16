@@ -57,6 +57,23 @@ class MaintenanceModeMiddleware
      */
     private function installationIncomplete(): bool
     {
+        // In plugin mode, skip installer.lock check if configured
+        // (host app doesn't use TallCMS's installer)
+        $skipInstallerCheck = config('tallcms.plugin_mode.skip_installer_check', true);
+        $isPluginMode = config('tallcms.mode') === 'plugin' ||
+            (config('tallcms.mode') === null && ! File::exists(base_path('.tallcms-standalone')));
+
+        if ($isPluginMode && $skipInstallerCheck) {
+            // In plugin mode, only check if database tables exist
+            try {
+                return ! Schema::hasTable((new SiteSetting)->getTable());
+            } catch (\Exception $e) {
+                // If we can't check the schema, skip maintenance mode
+                return true;
+            }
+        }
+
+        // Standalone mode: full installation checks
         // Installation is incomplete if:
         // 1. No installer lock file exists
         // 2. Database tables don't exist

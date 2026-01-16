@@ -171,7 +171,7 @@ class ContactFormController extends Controller
         ]);
 
         // Queue admin notification (uses site settings with fallback to mail config)
-        $adminEmail = settings('contact_email');
+        $adminEmail = \TallCms\Cms\Models\SiteSetting::get('contact_email');
         if ($adminEmail) {
             Mail::to($adminEmail)->queue(new ContactFormAdminNotification($submission));
         } else {

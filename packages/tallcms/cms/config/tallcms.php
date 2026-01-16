@@ -104,6 +104,11 @@ return [
         // User model class. Must implement TallCmsUserContract.
         // Default works with standard Laravel User model with HasRoles trait.
         'user_model' => env('TALLCMS_USER_MODEL', 'App\\Models\\User'),
+
+        // Skip installer.lock check for maintenance mode in plugin mode.
+        // In plugin mode, the host app doesn't use TallCMS's installer,
+        // so we assume the app is properly installed. Default: true
+        'skip_installer_check' => env('TALLCMS_SKIP_INSTALLER_CHECK', true),
     ],
 
     /*

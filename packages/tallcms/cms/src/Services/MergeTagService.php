@@ -7,6 +7,7 @@ namespace TallCms\Cms\Services;
 use Illuminate\Support\Facades\Storage;
 use TallCms\Cms\Models\CmsPage;
 use TallCms\Cms\Models\CmsPost;
+use TallCms\Cms\Models\SiteSetting;
 
 class MergeTagService
 {
@@ -44,31 +45,31 @@ class MergeTagService
     {
         $tags = [
             // Site-wide tags from settings
-            'site_name' => settings('site_name', config('app.name', 'TallCMS')),
-            'site_tagline' => settings('site_tagline', ''),
-            'site_description' => settings('site_description', ''),
+            'site_name' => SiteSetting::get('site_name', config('app.name', 'TallCMS')),
+            'site_tagline' => SiteSetting::get('site_tagline', ''),
+            'site_description' => SiteSetting::get('site_description', ''),
             'site_url' => config('app.url', url('/')),
             'current_year' => date('Y'),
             'current_date' => now()->format('F j, Y'),
 
             // Contact info from settings
-            'contact_email' => settings('contact_email', config('mail.from.address', 'hello@example.com')),
-            'contact_phone' => settings('contact_phone', ''),
-            'company_name' => settings('company_name', settings('site_name', config('app.name', 'TallCMS'))),
-            'company_address' => settings('company_address', ''),
+            'contact_email' => SiteSetting::get('contact_email', config('mail.from.address', 'hello@example.com')),
+            'contact_phone' => SiteSetting::get('contact_phone', ''),
+            'company_name' => SiteSetting::get('company_name', SiteSetting::get('site_name', config('app.name', 'TallCMS'))),
+            'company_address' => SiteSetting::get('company_address', ''),
 
             // Social media from settings
-            'social_facebook' => settings('social_facebook', ''),
-            'social_twitter' => settings('social_twitter', ''),
-            'social_linkedin' => settings('social_linkedin', ''),
-            'social_instagram' => settings('social_instagram', ''),
-            'social_youtube' => settings('social_youtube', ''),
-            'social_tiktok' => settings('social_tiktok', ''),
-            'newsletter_signup' => settings('newsletter_signup_url', '#newsletter'),
+            'social_facebook' => SiteSetting::get('social_facebook', ''),
+            'social_twitter' => SiteSetting::get('social_twitter', ''),
+            'social_linkedin' => SiteSetting::get('social_linkedin', ''),
+            'social_instagram' => SiteSetting::get('social_instagram', ''),
+            'social_youtube' => SiteSetting::get('social_youtube', ''),
+            'social_tiktok' => SiteSetting::get('social_tiktok', ''),
+            'newsletter_signup' => SiteSetting::get('newsletter_signup_url', '#newsletter'),
 
             // SEO and branding from settings
-            'logo_url' => settings('logo') ? Storage::url(settings('logo')) : '',
-            'favicon_url' => settings('favicon') ? Storage::url(settings('favicon')) : '',
+            'logo_url' => SiteSetting::get('logo') ? Storage::url(SiteSetting::get('logo')) : '',
+            'favicon_url' => SiteSetting::get('favicon') ? Storage::url(SiteSetting::get('favicon')) : '',
         ];
 
         // Add record-specific tags if record is provided
