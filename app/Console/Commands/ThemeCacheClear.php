@@ -2,22 +2,15 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
+use TallCms\Cms\Console\Commands\ThemeCacheClear as BaseThemeCacheClear;
 
-class ThemeCacheClear extends Command
+/**
+ * ThemeCacheClear - extends the package's command for backwards compatibility.
+ *
+ * This class exists so that existing code referencing App\Console\Commands\ThemeCacheClear
+ * continues to work. All functionality is provided by the tallcms/cms package.
+ */
+class ThemeCacheClear extends BaseThemeCacheClear
 {
-    protected $signature = 'theme:cache:clear';
-
-    protected $description = 'Clear the theme discovery cache';
-
-    public function handle()
-    {
-        $themeManager = app('theme.manager');
-
-        if ($themeManager->clearCache()) {
-            $this->info('Theme cache cleared successfully.');
-        } else {
-            $this->error('Failed to clear theme cache.');
-        }
-    }
+    // All functionality inherited from TallCms\Cms\Console\Commands\ThemeCacheClear
 }

@@ -121,6 +121,29 @@ class TallCmsServiceProvider extends PackageServiceProvider
         // Mail
         'App\\Mail\\ContactFormAdminNotification' => Mail\ContactFormAdminNotification::class,
         'App\\Mail\\ContactFormAutoReply' => Mail\ContactFormAutoReply::class,
+
+        // Console Commands
+        'App\\Console\\Commands\\CleanExpiredPreviewTokens' => Console\Commands\CleanExpiredPreviewTokens::class,
+        'App\\Console\\Commands\\LicenseTestCommand' => Console\Commands\LicenseTestCommand::class,
+        'App\\Console\\Commands\\MakePluginCommand' => Console\Commands\MakePluginCommand::class,
+        'App\\Console\\Commands\\MakeTallCmsBlock' => Console\Commands\MakeTallCmsBlock::class,
+        'App\\Console\\Commands\\MakeTheme' => Console\Commands\MakeTheme::class,
+        'App\\Console\\Commands\\PluginCleanupBackupsCommand' => Console\Commands\PluginCleanupBackupsCommand::class,
+        'App\\Console\\Commands\\PluginInstallCommand' => Console\Commands\PluginInstallCommand::class,
+        'App\\Console\\Commands\\PluginListCommand' => Console\Commands\PluginListCommand::class,
+        'App\\Console\\Commands\\PluginMigrateCommand' => Console\Commands\PluginMigrateCommand::class,
+        'App\\Console\\Commands\\PluginUninstallCommand' => Console\Commands\PluginUninstallCommand::class,
+        'App\\Console\\Commands\\TallCmsGenerateKeypair' => Console\Commands\TallCmsGenerateKeypair::class,
+        'App\\Console\\Commands\\TallCmsGenerateManifest' => Console\Commands\TallCmsGenerateManifest::class,
+        'App\\Console\\Commands\\TallCmsSetup' => Console\Commands\TallCmsSetup::class,
+        'App\\Console\\Commands\\TallCmsSignRelease' => Console\Commands\TallCmsSignRelease::class,
+        'App\\Console\\Commands\\TallCmsUpdate' => Console\Commands\TallCmsUpdate::class,
+        'App\\Console\\Commands\\TallCmsVersion' => Console\Commands\TallCmsVersion::class,
+        'App\\Console\\Commands\\ThemeActivate' => Console\Commands\ThemeActivate::class,
+        'App\\Console\\Commands\\ThemeBuild' => Console\Commands\ThemeBuild::class,
+        'App\\Console\\Commands\\ThemeCacheClear' => Console\Commands\ThemeCacheClear::class,
+        'App\\Console\\Commands\\ThemeInstallCommand' => Console\Commands\ThemeInstallCommand::class,
+        'App\\Console\\Commands\\ThemeList' => Console\Commands\ThemeList::class,
     ];
 
     public function configurePackage(Package $package): void
@@ -285,13 +308,38 @@ class TallCmsServiceProvider extends PackageServiceProvider
     protected function getCommands(): array
     {
         $commands = [
-            // Console\Commands\TallCmsInstall::class,
-            // Console\Commands\MakeTheme::class,
+            // Core commands available in all modes
+            Console\Commands\CleanExpiredPreviewTokens::class,
+            Console\Commands\MakeTallCmsBlock::class,
+
+            // Theme commands
+            Console\Commands\MakeTheme::class,
+            Console\Commands\ThemeActivate::class,
+            Console\Commands\ThemeBuild::class,
+            Console\Commands\ThemeCacheClear::class,
+            Console\Commands\ThemeInstallCommand::class,
+            Console\Commands\ThemeList::class,
+
+            // Plugin commands
+            Console\Commands\MakePluginCommand::class,
+            Console\Commands\PluginCleanupBackupsCommand::class,
+            Console\Commands\PluginInstallCommand::class,
+            Console\Commands\PluginListCommand::class,
+            Console\Commands\PluginMigrateCommand::class,
+            Console\Commands\PluginUninstallCommand::class,
         ];
 
-        // Only register updater commands in standalone mode
+        // Standalone-only commands (updater, setup, release signing)
         if ($this->isStandaloneMode()) {
-            // $commands[] = Console\Commands\TallCmsUpdate::class;
+            $commands = array_merge($commands, [
+                Console\Commands\TallCmsSetup::class,
+                Console\Commands\TallCmsUpdate::class,
+                Console\Commands\TallCmsVersion::class,
+                Console\Commands\TallCmsGenerateKeypair::class,
+                Console\Commands\TallCmsGenerateManifest::class,
+                Console\Commands\TallCmsSignRelease::class,
+                Console\Commands\LicenseTestCommand::class,
+            ]);
         }
 
         return $commands;

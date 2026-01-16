@@ -1,54 +1,16 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Console\Commands;
 
-use App\Services\TallCmsUpdater;
-use Illuminate\Console\Command;
+use TallCms\Cms\Console\Commands\TallCmsVersion as BaseTallCmsVersion;
 
-class TallCmsVersion extends Command
+/**
+ * TallCmsVersion - extends the package's command for backwards compatibility.
+ *
+ * This class exists so that existing code referencing App\Console\Commands\TallCmsVersion
+ * continues to work. All functionality is provided by the tallcms/cms package.
+ */
+class TallCmsVersion extends BaseTallCmsVersion
 {
-    protected $signature = 'tallcms:version
-                            {--check : Check for available updates}';
-
-    protected $description = 'Display TallCMS version information';
-
-    public function handle(TallCmsUpdater $updater): int
-    {
-        $currentVersion = config('tallcms.version');
-
-        $this->newLine();
-        $this->components->twoColumnDetail('TallCMS Version', $currentVersion);
-        $this->components->twoColumnDetail('Laravel Version', app()->version());
-        $this->components->twoColumnDetail('PHP Version', PHP_VERSION);
-        $this->newLine();
-
-        if ($this->option('check')) {
-            $this->info('Checking for updates...');
-
-            $latest = $updater->checkForUpdates();
-
-            if (! $latest) {
-                $this->warn('Could not check for updates. Check your network connection.');
-
-                return 1;
-            }
-
-            $this->components->twoColumnDetail('Latest Version', $latest['version']);
-            $this->components->twoColumnDetail('Released', $latest['published_at'] ?? 'Unknown');
-
-            if (version_compare($latest['version'], $currentVersion, '>')) {
-                $this->newLine();
-                $this->components->warn("Update available: {$currentVersion} → {$latest['version']}");
-                $this->line('  Run: php artisan tallcms:update');
-                $this->line('  Or update via Admin → Settings → System Updates');
-            } else {
-                $this->newLine();
-                $this->components->info('You are running the latest version.');
-            }
-        }
-
-        return 0;
-    }
+    // All functionality inherited from TallCms\Cms\Console\Commands\TallCmsVersion
 }
