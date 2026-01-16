@@ -56,7 +56,7 @@
             {{-- Form --}}
             <form x-show="!submitted" x-on:submit.prevent="submit" class="space-y-6">
                 @foreach($fields as $field)
-                    <x-form.dynamic-field :field="$field" :form-id="$formId" />
+                    <x-tallcms::form.dynamic-field :field="$field" :form-id="$formId" />
                 @endforeach
 
                 {{-- Honeypot --}}

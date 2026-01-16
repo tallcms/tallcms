@@ -371,6 +371,10 @@ class TallCmsServiceProvider extends PackageServiceProvider
         // <x-menu> -> tallcms::components.menu
         $blade->component('tallcms::components.menu', 'menu');
         $blade->component('tallcms::components.menu-item', 'menu-item');
+
+        // Form components used by contact form block
+        // <x-form.dynamic-field> -> tallcms::components.form.dynamic-field
+        $blade->component('tallcms::components.form.dynamic-field', 'form.dynamic-field');
     }
 
     /**

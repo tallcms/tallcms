@@ -22,7 +22,7 @@
 
         <div class="flex flex-col gap-4">
             @foreach($fields as $field)
-                <x-form.dynamic-field :field="$field" :form-id="$formId" :preview="true" />
+                <x-tallcms::form.dynamic-field :field="$field" :form-id="$formId" :preview="true" />
             @endforeach
 
             <div class="pt-2">
