@@ -32,11 +32,27 @@
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
 
     <!-- Scripts -->
-    @if(file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @elseif(file_exists(public_path('vendor/tallcms/tallcms.css')))
+    @php
+        // Determine asset loading strategy
+        // 1. Published package assets (plugin mode, no theme)
+        // 2. Vite hot reload (development, standalone mode)
+        // 3. Vite manifest (production, standalone mode)
+        $usePublishedAssets = file_exists(public_path('vendor/tallcms/tallcms.css'));
+        $useViteHot = file_exists(public_path('hot'));
+        $useViteManifest = false;
+
+        if (!$usePublishedAssets && !$useViteHot && file_exists(public_path('build/manifest.json'))) {
+            // Check if manifest contains TallCMS entrypoints before using @vite
+            $manifest = json_decode(file_get_contents(public_path('build/manifest.json')), true);
+            $useViteManifest = isset($manifest['resources/css/app.css']) || isset($manifest['resources/js/app.js']);
+        }
+    @endphp
+
+    @if($usePublishedAssets)
         <link rel="stylesheet" href="{{ asset('vendor/tallcms/tallcms.css') }}">
         <script src="{{ asset('vendor/tallcms/tallcms.js') }}" defer></script>
+    @elseif($useViteHot || $useViteManifest)
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
     @livewireStyles
     <style>[x-cloak] { display: none !important; }</style>

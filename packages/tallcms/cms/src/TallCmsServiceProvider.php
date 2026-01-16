@@ -453,31 +453,32 @@ class TallCmsServiceProvider extends PackageServiceProvider
      */
     protected function loadEssentialRoutes(): void
     {
-        // Allow disabling essential routes entirely (host app will define their own)
-        if (! config('tallcms.plugin_mode.preview_routes_enabled', true)) {
-            return;
-        }
-
         // Optional prefix for essential routes to avoid conflicts
         $prefix = config('tallcms.plugin_mode.essential_routes_prefix', '');
 
-        Route::middleware(['web'])->prefix($prefix)->group(function () {
-            // Preview routes (needed for admin preview buttons)
-            Route::get('/preview/share/{token}', [Http\Controllers\PreviewController::class, 'tokenPreview'])
-                ->middleware('throttle:60,1')
-                ->name('tallcms.preview.token');
+        // Preview routes (needed for admin preview buttons)
+        if (config('tallcms.plugin_mode.preview_routes_enabled', true)) {
+            Route::middleware(['web'])->prefix($prefix)->group(function () {
+                Route::get('/preview/share/{token}', [Http\Controllers\PreviewController::class, 'tokenPreview'])
+                    ->middleware('throttle:60,1')
+                    ->name('tallcms.preview.token');
 
-            Route::middleware('auth')->group(function () {
-                Route::get('/preview/page/{page}', [Http\Controllers\PreviewController::class, 'page'])
-                    ->name('tallcms.preview.page');
-                Route::get('/preview/post/{post}', [Http\Controllers\PreviewController::class, 'post'])
-                    ->name('tallcms.preview.post');
+                Route::middleware('auth')->group(function () {
+                    Route::get('/preview/page/{page}', [Http\Controllers\PreviewController::class, 'page'])
+                        ->name('tallcms.preview.page');
+                    Route::get('/preview/post/{post}', [Http\Controllers\PreviewController::class, 'post'])
+                        ->name('tallcms.preview.post');
+                });
             });
+        }
 
-            // Contact form API (needed for contact form blocks)
-            Route::post('/api/tallcms/contact', [Http\Controllers\ContactFormController::class, 'submit'])
-                ->name('tallcms.contact.submit');
-        });
+        // Contact form API (needed for contact form blocks)
+        if (config('tallcms.plugin_mode.api_routes_enabled', true)) {
+            Route::middleware(['web'])->prefix($prefix)->group(function () {
+                Route::post('/api/tallcms/contact', [Http\Controllers\ContactFormController::class, 'submit'])
+                    ->name('tallcms.contact.submit');
+            });
+        }
     }
 
     /**
