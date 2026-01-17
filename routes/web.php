@@ -46,20 +46,11 @@ Route::middleware('tallcms.maintenance')->group(function () {
 | Legacy Route Aliases (Backwards Compatibility)
 |--------------------------------------------------------------------------
 |
-| These aliases ensure existing code using old route names continues to work.
-| They can be removed in a future major version.
+| Legacy contact endpoint at old URL for backwards compatibility.
+| Preview routes use tallcms.* names only - legacy preview.* aliases
+| are registered via RouteServiceProvider::boot() if needed.
 |
 */
 
-// Legacy contact form endpoint (also register at old URL for backwards compat)
+// Legacy contact form endpoint (different URL, so safe to register)
 Route::post('/api/contact', [ContactFormController::class, 'submit'])->name('contact.submit');
-
-// Legacy preview route aliases
-Route::get('/preview/share/{token}', [PreviewController::class, 'tokenPreview'])
-    ->middleware('throttle:60,1')
-    ->name('preview.token');
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('/preview/page/{page}', [PreviewController::class, 'page'])->name('preview.page');
-    Route::get('/preview/post/{post}', [PreviewController::class, 'post'])->name('preview.post');
-});
