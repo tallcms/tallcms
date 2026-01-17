@@ -38,7 +38,7 @@ class EditCmsPage extends EditRecord
                 Action::make('preview')
                     ->label('Preview')
                     ->icon('heroicon-o-eye')
-                    ->url(fn () => route('tallcms.preview.page', $this->record))
+                    ->url(fn () => route('tallcms.preview.page', ['page' => $this->record->id]))
                     ->openUrlInNewTab(),
 
                 $this->getSharePreviewAction(),
