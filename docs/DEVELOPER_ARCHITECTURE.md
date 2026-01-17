@@ -147,9 +147,9 @@ The `.tallcms-standalone` file:
 - **Absent** = Plugin mode (minimal footprint)
 
 This file is:
-- Included in `tallcms/tallcms` skeleton
+- Included and tracked in `tallcms/tallcms` skeleton (MUST be committed)
 - NOT included in `tallcms/cms` package
-- Should NOT be committed to version control in user projects
+- Required for mode detection - if missing, set `TALLCMS_MODE=standalone` in `.env`
 
 ---
 
@@ -345,9 +345,9 @@ Route::get('/preview/page/{id}', ...)->name('tallcms.preview.page');
 route('tallcms.preview.page', ['id' => 1]);
 ```
 
-**Standalone mode:** Main routes use `tallcms.*` names. Legacy aliases (e.g., `contact.submit` at `/api/contact`) exist for backwards compatibility at different URLs.
+**Standalone mode:** Main routes use `tallcms.*` names. One legacy alias (`contact.submit` at `/api/contact`) exists for backwards compatibility.
 
-**Plugin mode:** All routes use `tallcms.*` names exclusively.
+**Plugin mode:** Essential routes use `tallcms.*` names. Frontend routes (when enabled) use the configurable `route_name_prefix` (defaults to `tallcms.`), e.g., `tallcms.cms.home`, `tallcms.cms.page`.
 
 ### Route Loading by Mode
 
@@ -683,9 +683,15 @@ When users publish package config (`php artisan vendor:publish`), they get a **s
 
 ### Adding a New Route
 
-1. Add to `packages/tallcms/cms/routes/web.php`
+**For essential routes** (preview, API endpoints):
+1. Register directly in `TallCmsServiceProvider::loadEssentialRoutes()`
 2. Use `tallcms.` prefix for route name
-3. Add to standalone `routes/web.php` if needed for backwards compatibility
+3. Add corresponding route to standalone `routes/web.php`
+
+**For frontend routes** (CMS pages):
+1. Add to `packages/tallcms/cms/routes/frontend.php`
+2. Route names will use the configured `route_name_prefix` (default: `tallcms.`)
+3. Add corresponding route to standalone `routes/web.php`
 
 ---
 

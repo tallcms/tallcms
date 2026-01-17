@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 |
 | Route names use tallcms.* prefix for consistency with plugin mode.
-| Legacy aliases (preview.*, contact.submit) are registered below
-| for backwards compatibility with existing code and bookmarks.
+| One legacy alias (contact.submit at /api/contact) is registered below
+| for backwards compatibility.
 |
 */
 
