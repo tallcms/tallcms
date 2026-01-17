@@ -30,12 +30,26 @@ class TallCmsRolesSeeder extends Seeder
     protected string $guardName = 'web';
 
     /**
+     * Shield permission separator (default ':' for Action:Model format).
+     */
+    protected string $separator = ':';
+
+    /**
+     * Shield permission case (default 'pascal' for CmsPage format).
+     */
+    protected string $case = 'pascal';
+
+    /**
      * Run the database seeds.
      */
     public function run(): void
     {
         // Allow guard to be configured via config
         $this->guardName = config('tallcms.auth.guard', $this->guardName);
+
+        // Read Shield's permission format settings
+        $this->separator = config('filament-shield.permission_prefixes.separator', ':');
+        $this->case = config('filament-shield.permission_prefixes.case', 'pascal');
 
         // Reset cached roles and permissions
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
@@ -116,29 +130,30 @@ class TallCmsRolesSeeder extends Seeder
     /**
      * Check if permission is for Administrator role.
      *
-     * Shield generates snake_case permissions like: view_any_cms_page, create_cms_post
+     * Shield permission format depends on config:
+     * - Default (pascal case, colon separator): Create:CmsPage, ViewAny:TallcmsMenu
+     * - Snake case with underscore: create_cms_page, view_any_tallcms_menu
      */
     protected function isAdministratorPermission(string $permission): bool
     {
-        // Allow all CMS content management (snake_case format from Shield)
-        if (str_contains($permission, 'cms_page') ||
-            str_contains($permission, 'cms_post') ||
-            str_contains($permission, 'cms_category') ||
-            str_contains($permission, 'tallcms_menu') ||
-            str_contains($permission, 'tallcms_media') ||
-            str_contains($permission, 'tallcms_contact_submission')) {
+        // Allow all CMS content management
+        if ($this->matchesModel($permission, 'CmsPage') ||
+            $this->matchesModel($permission, 'CmsPost') ||
+            $this->matchesModel($permission, 'CmsCategory') ||
+            $this->matchesModel($permission, 'TallcmsMenu') ||
+            $this->matchesModel($permission, 'TallcmsMedia') ||
+            $this->matchesModel($permission, 'TallcmsContactSubmission')) {
             return true;
         }
 
         // Allow user management (but exclude Shield roles)
-        if (str_contains($permission, '_user') &&
-            ! str_contains($permission, '_role') &&
-            ! str_contains($permission, 'shield')) {
+        if ($this->matchesModel($permission, 'User') &&
+            ! $this->matchesModel($permission, 'Role')) {
             return true;
         }
 
         // Allow site settings page
-        if (str_contains($permission, 'site_settings')) {
+        if ($this->matchesModel($permission, 'SiteSettings')) {
             return true;
         }
 
@@ -147,18 +162,16 @@ class TallCmsRolesSeeder extends Seeder
 
     /**
      * Check if permission is for Editor role.
-     *
-     * Shield generates snake_case permissions like: view_any_cms_page, create_cms_post
      */
     protected function isEditorPermission(string $permission): bool
     {
-        // Full content management (snake_case format from Shield)
-        if (str_contains($permission, 'cms_page') ||
-            str_contains($permission, 'cms_post') ||
-            str_contains($permission, 'cms_category') ||
-            str_contains($permission, 'tallcms_menu') ||
-            str_contains($permission, 'tallcms_media') ||
-            str_contains($permission, 'tallcms_contact_submission')) {
+        // Full content management
+        if ($this->matchesModel($permission, 'CmsPage') ||
+            $this->matchesModel($permission, 'CmsPost') ||
+            $this->matchesModel($permission, 'CmsCategory') ||
+            $this->matchesModel($permission, 'TallcmsMenu') ||
+            $this->matchesModel($permission, 'TallcmsMedia') ||
+            $this->matchesModel($permission, 'TallcmsContactSubmission')) {
             return true;
         }
 
@@ -168,50 +181,88 @@ class TallCmsRolesSeeder extends Seeder
 
     /**
      * Check if permission is for Author role.
-     *
-     * Shield generates snake_case permissions like: view_any_cms_page, create_cms_post
      */
     protected function isAuthorPermission(string $permission): bool
     {
         // Basic content permissions (view, create, update)
-        if (str_contains($permission, 'cms_page') || str_contains($permission, 'cms_post')) {
+        if ($this->matchesModel($permission, 'CmsPage') || $this->matchesModel($permission, 'CmsPost')) {
             // Allow ViewAny, View, Create, Update
-            if (str_contains($permission, 'view_any_') ||
-                str_contains($permission, 'view_') ||
-                str_contains($permission, 'create_') ||
-                str_contains($permission, 'update_')) {
+            if ($this->matchesAction($permission, 'ViewAny') ||
+                $this->matchesAction($permission, 'View') ||
+                $this->matchesAction($permission, 'Create') ||
+                $this->matchesAction($permission, 'Update')) {
                 return true;
             }
             // Exclude delete operations for security
         }
 
         // View categories only (but can't manage them)
-        if (str_contains($permission, 'cms_category') &&
-            (str_contains($permission, 'view_any_') || str_contains($permission, 'view_'))) {
+        if ($this->matchesModel($permission, 'CmsCategory') &&
+            ($this->matchesAction($permission, 'ViewAny') || $this->matchesAction($permission, 'View'))) {
             return true;
         }
 
         // Basic media operations
-        if (str_contains($permission, 'tallcms_media') &&
-            (str_contains($permission, 'view_any_') ||
-             str_contains($permission, 'view_') ||
-             str_contains($permission, 'create_') ||
-             str_contains($permission, 'update_'))) {
+        if ($this->matchesModel($permission, 'TallcmsMedia') &&
+            ($this->matchesAction($permission, 'ViewAny') ||
+             $this->matchesAction($permission, 'View') ||
+             $this->matchesAction($permission, 'Create') ||
+             $this->matchesAction($permission, 'Update'))) {
             return true;
         }
 
         // View contact submissions
-        if (str_contains($permission, 'tallcms_contact_submission') &&
-            (str_contains($permission, 'view_any_') || str_contains($permission, 'view_'))) {
+        if ($this->matchesModel($permission, 'TallcmsContactSubmission') &&
+            ($this->matchesAction($permission, 'ViewAny') || $this->matchesAction($permission, 'View'))) {
             return true;
         }
 
         // Menu viewing (view only)
-        if (str_contains($permission, 'tallcms_menu') &&
-            (str_contains($permission, 'view_any_') || str_contains($permission, 'view_'))) {
+        if ($this->matchesModel($permission, 'TallcmsMenu') &&
+            ($this->matchesAction($permission, 'ViewAny') || $this->matchesAction($permission, 'View'))) {
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * Check if permission contains the model name (format-aware).
+     *
+     * Handles both formats:
+     * - Pascal case: Create:CmsPage, ViewAny:TallcmsMenu
+     * - Snake case: create_cms_page, view_any_tallcms_menu
+     */
+    protected function matchesModel(string $permission, string $modelName): bool
+    {
+        if ($this->case === 'snake') {
+            // Convert CmsPage to cms_page for matching
+            $snakeModel = strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $modelName));
+
+            return str_contains($permission, $snakeModel);
+        }
+
+        // Pascal case - model name appears after separator
+        return str_contains($permission, $this->separator.$modelName);
+    }
+
+    /**
+     * Check if permission contains the action (format-aware).
+     *
+     * Handles both formats:
+     * - Pascal case: ViewAny:CmsPage, Create:CmsPost
+     * - Snake case: view_any_cms_page, create_cms_post
+     */
+    protected function matchesAction(string $permission, string $actionName): bool
+    {
+        if ($this->case === 'snake') {
+            // Convert ViewAny to view_any for matching
+            $snakeAction = strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $actionName));
+
+            return str_starts_with($permission, $snakeAction.'_');
+        }
+
+        // Pascal case - action appears before separator
+        return str_starts_with($permission, $actionName.$this->separator);
     }
 }

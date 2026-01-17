@@ -24,7 +24,7 @@ class TallCmsInstall extends Command
                             {--with-permissions : Generate Shield permissions}
                             {--with-roles : Seed default TallCMS roles}
                             {--with-assets : Publish frontend assets}
-                            {--panel=admin : Filament panel ID for Shield permissions}
+                            {--panel= : Filament panel ID for Shield permissions (defaults to config)}
                             {--force : Overwrite existing files}';
 
     /**
@@ -130,9 +130,12 @@ class TallCmsInstall extends Command
                 return false;
             }
 
+            // Use --panel option if provided, otherwise fall back to config
+            $panelId = $this->option('panel') ?: config('tallcms.filament.panel_id', 'admin');
+
             $this->callSilently('shield:generate', [
                 '--all' => true,
-                '--panel' => $this->option('panel'),
+                '--panel' => $panelId,
                 '--option' => 'policies_and_permissions',
             ]);
 

@@ -117,6 +117,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Authentication Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for authentication guards used by TallCMS roles and
+    | permissions. This should match your Filament panel's guard.
+    |
+    */
+    'auth' => [
+        // Guard name for roles and permissions (should match Filament panel guard)
+        'guard' => env('TALLCMS_AUTH_GUARD', 'web'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Filament Panel Configuration
     |--------------------------------------------------------------------------
     |
