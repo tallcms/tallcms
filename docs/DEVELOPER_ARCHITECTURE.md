@@ -345,9 +345,9 @@ Route::get('/preview/page/{id}', ...)->name('tallcms.preview.page');
 route('tallcms.preview.page', ['id' => 1]);
 ```
 
-**Standalone mode:** Main routes use `tallcms.*` names. One legacy alias (`contact.submit` at `/api/contact`) exists for backwards compatibility.
+**Standalone mode:** All routes use `tallcms.*` names.
 
-**Plugin mode:** Essential routes use `tallcms.*` names. Frontend routes (when enabled) use the configurable `route_name_prefix` (defaults to `tallcms.`), e.g., `tallcms.cms.home`, `tallcms.cms.page`.
+**Plugin mode:** All routes use `tallcms.*` names. Frontend routes (when enabled) use the configurable `route_name_prefix` (defaults to `tallcms.`), e.g., `tallcms.cms.home`, `tallcms.cms.page`.
 
 ### Route Loading by Mode
 
@@ -578,9 +578,7 @@ route('preview.page', $id);
 route('tallcms.preview.page', $id);
 ```
 
-**Fix**: Package code must always use `tallcms.*` route names to work in both modes.
-
-**Note**: Standalone's `routes/web.php` may have legacy aliases (e.g., `contact.submit`) at different URLs for backwards compatibility. These are app-level, not package-level.
+**Fix**: Always use `tallcms.*` route names in both package and standalone code.
 
 ### 4. Duplicating Code in Standalone
 

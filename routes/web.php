@@ -10,9 +10,7 @@ use Illuminate\Support\Facades\Route;
 | TallCMS Routes (Standalone Mode)
 |--------------------------------------------------------------------------
 |
-| Route names use tallcms.* prefix for consistency with plugin mode.
-| One legacy alias (contact.submit at /api/contact) is registered below
-| for backwards compatibility.
+| All route names use tallcms.* prefix for consistency with plugin mode.
 |
 */
 
@@ -41,16 +39,3 @@ Route::middleware('tallcms.maintenance')->group(function () {
         ->name('tallcms.cms.page');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Legacy Route Aliases (Backwards Compatibility)
-|--------------------------------------------------------------------------
-|
-| Legacy contact endpoint at old URL for backwards compatibility.
-| Preview routes use tallcms.* names only - legacy preview.* aliases
-| are registered via RouteServiceProvider::boot() if needed.
-|
-*/
-
-// Legacy contact form endpoint (different URL, so safe to register)
-Route::post('/api/contact', [ContactFormController::class, 'submit'])->name('contact.submit');
