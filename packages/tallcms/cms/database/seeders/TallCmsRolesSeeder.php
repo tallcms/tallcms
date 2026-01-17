@@ -47,9 +47,9 @@ class TallCmsRolesSeeder extends Seeder
         // Allow guard to be configured via config
         $this->guardName = config('tallcms.auth.guard', $this->guardName);
 
-        // Read Shield's permission format settings
-        $this->separator = config('filament-shield.permission_prefixes.separator', ':');
-        $this->case = config('filament-shield.permission_prefixes.case', 'pascal');
+        // Read Shield's permission format settings (filament-shield.permissions.*)
+        $this->separator = config('filament-shield.permissions.separator', ':');
+        $this->case = config('filament-shield.permissions.case', 'pascal');
 
         // Reset cached roles and permissions
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
@@ -229,9 +229,10 @@ class TallCmsRolesSeeder extends Seeder
     /**
      * Check if permission contains the model name (format-aware).
      *
-     * Handles both formats:
-     * - Pascal case: Create:CmsPage, ViewAny:TallcmsMenu
-     * - Snake case: create_cms_page, view_any_tallcms_menu
+     * Handles both formats using configured separator:
+     * - Pascal case with ':': Create:CmsPage, ViewAny:TallcmsMenu
+     * - Snake case with '_': create_cms_page, view_any_tallcms_menu
+     * - Custom combinations: create:cms_page (snake case, colon separator)
      */
     protected function matchesModel(string $permission, string $modelName): bool
     {
@@ -239,7 +240,8 @@ class TallCmsRolesSeeder extends Seeder
             // Convert CmsPage to cms_page for matching
             $snakeModel = strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $modelName));
 
-            return str_contains($permission, $snakeModel);
+            // Model appears after the separator
+            return str_contains($permission, $this->separator.$snakeModel);
         }
 
         // Pascal case - model name appears after separator
@@ -249,9 +251,10 @@ class TallCmsRolesSeeder extends Seeder
     /**
      * Check if permission contains the action (format-aware).
      *
-     * Handles both formats:
-     * - Pascal case: ViewAny:CmsPage, Create:CmsPost
-     * - Snake case: view_any_cms_page, create_cms_post
+     * Handles both formats using configured separator:
+     * - Pascal case with ':': ViewAny:CmsPage, Create:CmsPost
+     * - Snake case with '_': view_any_cms_page, create_cms_post
+     * - Custom combinations: view_any:cms_page (snake case, colon separator)
      */
     protected function matchesAction(string $permission, string $actionName): bool
     {
@@ -259,7 +262,8 @@ class TallCmsRolesSeeder extends Seeder
             // Convert ViewAny to view_any for matching
             $snakeAction = strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $actionName));
 
-            return str_starts_with($permission, $snakeAction.'_');
+            // Use configured separator (not hard-coded '_')
+            return str_starts_with($permission, $snakeAction.$this->separator);
         }
 
         // Pascal case - action appears before separator
