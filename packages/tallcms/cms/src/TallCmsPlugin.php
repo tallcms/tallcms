@@ -138,28 +138,20 @@ class TallCmsPlugin implements Plugin
 
     /**
      * Check if the plugin system is enabled.
-     * Always enabled in standalone mode, opt-in in plugin mode.
+     * Enabled by default in both standalone and plugin modes.
      */
     protected function isPluginSystemEnabled(): bool
     {
-        if ($this->isStandaloneMode()) {
-            return true;
-        }
-
-        return config('tallcms.plugin_mode.plugins_enabled', false);
+        return config('tallcms.plugin_mode.plugins_enabled', true);
     }
 
     /**
      * Check if the theme system is enabled.
-     * Always enabled in standalone mode, opt-in in plugin mode.
+     * Enabled by default in both standalone and plugin modes.
      */
     protected function isThemeSystemEnabled(): bool
     {
-        if ($this->isStandaloneMode()) {
-            return true;
-        }
-
-        return config('tallcms.plugin_mode.themes_enabled', false);
+        return config('tallcms.plugin_mode.themes_enabled', true);
     }
 
     /**

@@ -87,19 +87,19 @@ return [
         // Route exclusions pattern for catch-all route in plugin mode
         'route_exclusions' => env('TALLCMS_PLUGIN_ROUTE_EXCLUSIONS', '.*'),
 
-        // Enable the TallCMS plugin system in plugin mode.
-        // When false (default), PluginServiceProvider skips all plugin loading.
-        // Set to true to enable third-party TallCMS plugins in your Filament app.
-        'plugins_enabled' => env('TALLCMS_PLUGINS_ENABLED', false),
+        // Enable the TallCMS plugin system.
+        // When enabled, the Plugin Manager page is visible and third-party plugins can be loaded.
+        // Set to false to disable the plugin system entirely.
+        'plugins_enabled' => env('TALLCMS_PLUGINS_ENABLED', true),
 
         // Path to TallCMS plugins directory. Only used when plugins_enabled is true.
         // Defaults to base_path('plugins') if not set.
         'plugins_path' => env('TALLCMS_PLUGINS_PATH'),
 
-        // Enable the TallCMS theme system in plugin mode.
-        // When false (default), ThemeServiceProvider skips all theme loading.
-        // Set to true to enable TallCMS themes in your Filament app.
-        'themes_enabled' => env('TALLCMS_THEMES_ENABLED', false),
+        // Enable the TallCMS theme system.
+        // When enabled, the Theme Manager page is visible and themes can be loaded.
+        // Set to false to disable the theme system entirely.
+        'themes_enabled' => env('TALLCMS_THEMES_ENABLED', true),
 
         // Path to TallCMS themes directory. Only used when themes_enabled is true.
         // Defaults to base_path('themes') if not set.
