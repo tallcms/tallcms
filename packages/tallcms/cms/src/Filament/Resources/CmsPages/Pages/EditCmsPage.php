@@ -75,8 +75,7 @@ class EditCmsPage extends EditRecord
             ->modalSubmitActionLabel('Save Snapshot')
             ->action(function (array $data) {
                 // Skip ALL auto revision hooks for this save
-                $this->record->skipPreUpdateRevision = true;
-                $this->record->skipPostUpdateRevision = true;
+                $this->record->skipRevisions();
 
                 // Save form first to capture unsaved changes
                 $this->save();

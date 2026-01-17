@@ -87,6 +87,37 @@ trait HasRevisions
     }
 
     /**
+     * Skip the pre-update revision for the next save.
+     */
+    public function skipPreUpdateRevision(bool $skip = true): static
+    {
+        $this->skipPreUpdateRevision = $skip;
+
+        return $this;
+    }
+
+    /**
+     * Skip the post-update revision for the next save.
+     */
+    public function skipPostUpdateRevision(bool $skip = true): static
+    {
+        $this->skipPostUpdateRevision = $skip;
+
+        return $this;
+    }
+
+    /**
+     * Skip both pre and post update revisions for the next save.
+     */
+    public function skipRevisions(bool $skip = true): static
+    {
+        $this->skipPreUpdateRevision = $skip;
+        $this->skipPostUpdateRevision = $skip;
+
+        return $this;
+    }
+
+    /**
      * Get all revisions for this model
      */
     public function revisions(): MorphMany
