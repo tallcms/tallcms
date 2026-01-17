@@ -128,7 +128,7 @@ class PluginManager extends Page implements HasForms
     #[Computed]
     public function availablePlugins(): Collection
     {
-        $catalog = config('plugin.catalog', []);
+        $catalog = config('tallcms.plugins.catalog', []);
         $installedSlugs = $this->plugins->pluck('fullSlug')->toArray();
 
         return collect($catalog)
