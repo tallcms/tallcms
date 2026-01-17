@@ -231,6 +231,7 @@ return [
                 'icon' => 'heroicon-o-sparkles',
                 'category' => 'official',
                 'featured' => true,
+                'download_url' => 'https://anystack.sh/download/tallcms-pro-plugin',
                 'purchase_url' => 'https://checkout.anystack.sh/tallcms-pro-plugin',
             ],
         ],
