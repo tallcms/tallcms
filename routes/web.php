@@ -23,9 +23,10 @@ Route::get('/preview/share/{token}', [PreviewController::class, 'tokenPreview'])
     ->name('tallcms.preview.token');
 
 // Preview routes (admin only, can view drafts) - MUST be defined before catch-all route
-Route::middleware(['auth'])->group(function () {
-    Route::get('/preview/page/{page}', [PreviewController::class, 'page'])->name('tallcms.preview.page');
-    Route::get('/preview/post/{post}', [PreviewController::class, 'post'])->name('tallcms.preview.post');
+// Uses tallcms.preview-auth middleware for proper redirect to Filament login
+Route::middleware(['tallcms.preview-auth'])->group(function () {
+    Route::get('/preview/page/{page:id}', [PreviewController::class, 'page'])->name('tallcms.preview.page');
+    Route::get('/preview/post/{post:id}', [PreviewController::class, 'post'])->name('tallcms.preview.post');
 });
 
 // Clean CMS routing - all pages handled by one route with maintenance mode check

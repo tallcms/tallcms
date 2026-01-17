@@ -127,6 +127,11 @@ return [
     'auth' => [
         // Guard name for roles and permissions (should match Filament panel guard)
         'guard' => env('TALLCMS_AUTH_GUARD', 'web'),
+
+        // Login route for preview authentication redirect
+        // Can be a route name (e.g., 'filament.admin.auth.login') or URL
+        // Leave null to auto-detect Filament's login route
+        'login_route' => env('TALLCMS_LOGIN_ROUTE'),
     ],
 
     /*

@@ -350,6 +350,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
         $router->aliasMiddleware('tallcms.maintenance', Http\Middleware\MaintenanceModeMiddleware::class);
         $router->aliasMiddleware('tallcms.theme-preview', Http\Middleware\ThemePreviewMiddleware::class);
+        $router->aliasMiddleware('tallcms.preview-auth', Http\Middleware\PreviewAuthMiddleware::class);
     }
 
     /**
@@ -471,10 +472,11 @@ class TallCmsServiceProvider extends PackageServiceProvider
                     ->middleware('throttle:60,1')
                     ->name('tallcms.preview.token');
 
-                Route::middleware('auth')->group(function () {
-                    Route::get('/preview/page/{page}', [Http\Controllers\PreviewController::class, 'page'])
+                Route::middleware('tallcms.preview-auth')->group(function () {
+                    // Use explicit ID binding since models use slug as route key name
+                    Route::get('/preview/page/{page:id}', [Http\Controllers\PreviewController::class, 'page'])
                         ->name('tallcms.preview.page');
-                    Route::get('/preview/post/{post}', [Http\Controllers\PreviewController::class, 'post'])
+                    Route::get('/preview/post/{post:id}', [Http\Controllers\PreviewController::class, 'post'])
                         ->name('tallcms.preview.post');
                 });
             });
