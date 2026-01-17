@@ -611,6 +611,36 @@ if (config('tallcms.plugin_mode.themes_enabled', false)) {
 }
 ```
 
+### 8. Duplicate Route Definitions for "Aliases"
+
+Laravel only keeps **one route name per URI pattern**. Re-registering the same URI overwrites the previous name.
+
+```php
+// WRONG - Second definition overwrites the first!
+Route::get('/preview/page/{page}', ...)->name('tallcms.preview.page');
+Route::get('/preview/page/{page}', ...)->name('preview.page'); // tallcms.* is now gone!
+
+// CORRECT - One definition per URI, use service provider for aliases if needed
+Route::get('/preview/page/{page}', ...)->name('tallcms.preview.page');
+// Legacy aliases can be created via Route::aliasMiddleware or custom logic
+```
+
+**Fix**: Never re-register the same URI pattern with a different name. Use a single route name and implement proper aliasing in a service provider if backwards compatibility is needed.
+
+### 9. Published Config Gets Stale
+
+When users publish package config (`php artisan vendor:publish`), they get a **snapshot** that doesn't auto-update with package changes.
+
+```php
+// Package config updated with new 'download_url' field
+// But user's published config/tallcms.php doesn't have it!
+```
+
+**Solutions**:
+1. Document new config options in CHANGELOG
+2. Use sensible defaults so missing keys don't break functionality
+3. Consider API-based data for frequently changing content (e.g., plugin catalog)
+
 ---
 
 ## Quick Reference
