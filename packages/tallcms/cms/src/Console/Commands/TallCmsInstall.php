@@ -24,6 +24,7 @@ class TallCmsInstall extends Command
                             {--with-permissions : Generate Shield permissions}
                             {--with-roles : Seed default TallCMS roles}
                             {--with-assets : Publish frontend assets}
+                            {--panel=admin : Filament panel ID for Shield permissions}
                             {--force : Overwrite existing files}';
 
     /**
@@ -131,7 +132,7 @@ class TallCmsInstall extends Command
 
             $this->callSilently('shield:generate', [
                 '--all' => true,
-                '--panel' => 'admin',
+                '--panel' => $this->option('panel'),
                 '--option' => 'policies_and_permissions',
             ]);
 
@@ -145,19 +146,18 @@ class TallCmsInstall extends Command
     protected function seedRoles(): void
     {
         $this->components->task('Seeding default roles', function () {
-            // Check if the seeder exists
-            $seederClass = 'TallCms\Cms\Database\Seeders\TallCmsRolesSeeder';
+            $seederClass = \TallCms\Cms\Database\Seeders\TallCmsRolesSeeder::class;
 
-            if (! class_exists($seederClass)) {
-                // Try running the database seeder directly
+            try {
+                // Run the seeder directly via db:seed which handles autoloading
                 $this->callSilently('db:seed', ['--class' => $seederClass]);
 
                 return true;
+            } catch (\Throwable $e) {
+                $this->components->warn('Failed to seed roles: '.$e->getMessage());
+
+                return false;
             }
-
-            $this->callSilently('db:seed', ['--class' => $seederClass]);
-
-            return true;
         });
     }
 

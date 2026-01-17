@@ -24,10 +24,19 @@ use Spatie\Permission\PermissionRegistrar;
 class TallCmsRolesSeeder extends Seeder
 {
     /**
+     * The guard name to use for roles and permissions.
+     * Override this in a subclass or set via constructor if needed.
+     */
+    protected string $guardName = 'web';
+
+    /**
      * Run the database seeds.
      */
     public function run(): void
     {
+        // Allow guard to be configured via config
+        $this->guardName = config('tallcms.auth.guard', $this->guardName);
+
         // Reset cached roles and permissions
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
@@ -52,8 +61,8 @@ class TallCmsRolesSeeder extends Seeder
 
         foreach (array_keys($roles) as $roleName) {
             Role::firstOrCreate(
-                ['name' => $roleName, 'guard_name' => 'web'],
-                ['name' => $roleName, 'guard_name' => 'web']
+                ['name' => $roleName, 'guard_name' => $this->guardName],
+                ['name' => $roleName, 'guard_name' => $this->guardName]
             );
         }
     }
@@ -63,7 +72,7 @@ class TallCmsRolesSeeder extends Seeder
      */
     protected function assignPermissions(): void
     {
-        $allPermissions = Permission::where('guard_name', 'web')->get();
+        $allPermissions = Permission::where('guard_name', $this->guardName)->get();
 
         if ($allPermissions->isEmpty()) {
             // No permissions yet - this is expected if Shield hasn't run
@@ -106,28 +115,30 @@ class TallCmsRolesSeeder extends Seeder
 
     /**
      * Check if permission is for Administrator role.
+     *
+     * Shield generates snake_case permissions like: view_any_cms_page, create_cms_post
      */
     protected function isAdministratorPermission(string $permission): bool
     {
-        // Allow all CMS content management
-        if (str_contains($permission, 'CmsPage') ||
-            str_contains($permission, 'CmsPost') ||
-            str_contains($permission, 'CmsCategory') ||
-            str_contains($permission, 'TallcmsMenu') ||
-            str_contains($permission, 'TallcmsMedia') ||
-            str_contains($permission, 'TallcmsContactSubmission')) {
+        // Allow all CMS content management (snake_case format from Shield)
+        if (str_contains($permission, 'cms_page') ||
+            str_contains($permission, 'cms_post') ||
+            str_contains($permission, 'cms_category') ||
+            str_contains($permission, 'tallcms_menu') ||
+            str_contains($permission, 'tallcms_media') ||
+            str_contains($permission, 'tallcms_contact_submission')) {
             return true;
         }
 
         // Allow user management (but exclude Shield roles)
-        if (str_contains($permission, 'User') &&
-            ! str_contains($permission, 'Role') &&
-            ! str_contains($permission, 'Shield')) {
+        if (str_contains($permission, '_user') &&
+            ! str_contains($permission, '_role') &&
+            ! str_contains($permission, 'shield')) {
             return true;
         }
 
         // Allow site settings page
-        if (str_contains($permission, 'SiteSettings')) {
+        if (str_contains($permission, 'site_settings')) {
             return true;
         }
 
@@ -136,16 +147,18 @@ class TallCmsRolesSeeder extends Seeder
 
     /**
      * Check if permission is for Editor role.
+     *
+     * Shield generates snake_case permissions like: view_any_cms_page, create_cms_post
      */
     protected function isEditorPermission(string $permission): bool
     {
-        // Full content management
-        if (str_contains($permission, 'CmsPage') ||
-            str_contains($permission, 'CmsPost') ||
-            str_contains($permission, 'CmsCategory') ||
-            str_contains($permission, 'TallcmsMenu') ||
-            str_contains($permission, 'TallcmsMedia') ||
-            str_contains($permission, 'TallcmsContactSubmission')) {
+        // Full content management (snake_case format from Shield)
+        if (str_contains($permission, 'cms_page') ||
+            str_contains($permission, 'cms_post') ||
+            str_contains($permission, 'cms_category') ||
+            str_contains($permission, 'tallcms_menu') ||
+            str_contains($permission, 'tallcms_media') ||
+            str_contains($permission, 'tallcms_contact_submission')) {
             return true;
         }
 
@@ -155,11 +168,13 @@ class TallCmsRolesSeeder extends Seeder
 
     /**
      * Check if permission is for Author role.
+     *
+     * Shield generates snake_case permissions like: view_any_cms_page, create_cms_post
      */
     protected function isAuthorPermission(string $permission): bool
     {
         // Basic content permissions (view, create, update)
-        if (str_contains($permission, 'CmsPage') || str_contains($permission, 'CmsPost')) {
+        if (str_contains($permission, 'cms_page') || str_contains($permission, 'cms_post')) {
             // Allow ViewAny, View, Create, Update
             if (str_contains($permission, 'view_any_') ||
                 str_contains($permission, 'view_') ||
@@ -171,13 +186,13 @@ class TallCmsRolesSeeder extends Seeder
         }
 
         // View categories only (but can't manage them)
-        if (str_contains($permission, 'CmsCategory') &&
+        if (str_contains($permission, 'cms_category') &&
             (str_contains($permission, 'view_any_') || str_contains($permission, 'view_'))) {
             return true;
         }
 
         // Basic media operations
-        if (str_contains($permission, 'TallcmsMedia') &&
+        if (str_contains($permission, 'tallcms_media') &&
             (str_contains($permission, 'view_any_') ||
              str_contains($permission, 'view_') ||
              str_contains($permission, 'create_') ||
@@ -186,13 +201,13 @@ class TallCmsRolesSeeder extends Seeder
         }
 
         // View contact submissions
-        if (str_contains($permission, 'TallcmsContactSubmission') &&
+        if (str_contains($permission, 'tallcms_contact_submission') &&
             (str_contains($permission, 'view_any_') || str_contains($permission, 'view_'))) {
             return true;
         }
 
         // Menu viewing (view only)
-        if (str_contains($permission, 'TallcmsMenu') &&
+        if (str_contains($permission, 'tallcms_menu') &&
             (str_contains($permission, 'view_any_') || str_contains($permission, 'view_'))) {
             return true;
         }

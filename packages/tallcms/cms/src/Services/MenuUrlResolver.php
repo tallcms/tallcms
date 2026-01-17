@@ -59,13 +59,18 @@ class MenuUrlResolver
             return $url;
         }
 
-        // Apply routes prefix to relative URLs
+        // Apply routes prefix to relative URLs (both /about and about formats)
         $prefix = $this->getRoutesPrefix();
-        if ($prefix && str_starts_with($url, '/')) {
-            // Avoid double prefixing
-            if (! str_starts_with($url, '/'.$prefix)) {
-                return '/'.$prefix.ltrim($url, '/');
+        if ($prefix) {
+            // Normalize URL to have leading slash
+            $normalizedUrl = '/'.ltrim($url, '/');
+
+            // Avoid double prefixing - check if already has prefix with trailing slash
+            if (! str_starts_with($normalizedUrl, '/'.$prefix.'/') && $normalizedUrl !== '/'.$prefix) {
+                return '/'.$prefix.$normalizedUrl;
             }
+
+            return $normalizedUrl;
         }
 
         return $url;

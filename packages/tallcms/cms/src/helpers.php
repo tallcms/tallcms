@@ -47,12 +47,15 @@ if (! function_exists('tallcms_page_url')) {
     /**
      * Get a CMS page URL by slug, respecting routes prefix
      *
-     * @param  string  $slug  The page slug
+     * @param  string  $slug  The page slug (with or without leading slash)
      * @return string The full URL to the page
      */
     function tallcms_page_url(string $slug): string
     {
         $prefix = tallcms_routes_prefix();
+        // Normalize slug: remove leading/trailing slashes
+        $slug = trim($slug, '/');
+
         $path = $prefix ? '/'.$prefix.'/'.$slug : '/'.$slug;
 
         return url($path);
