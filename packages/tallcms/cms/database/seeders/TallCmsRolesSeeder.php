@@ -18,6 +18,14 @@ use Spatie\Permission\PermissionRegistrar;
  * - editor: Full content management
  * - author: Create and edit own content
  *
+ * Supported Shield permission formats:
+ * - pascal case with any separator (default: ViewAny:CmsPage)
+ * - snake case with any separator (e.g., view_any_cms_page)
+ *
+ * Unsupported formats (will throw RuntimeException):
+ * - camel, kebab, upper_snake, lower_snake
+ * For these, create a custom seeder extending this class.
+ *
  * Run after Shield has generated permissions:
  * php artisan db:seed --class="TallCms\Cms\Database\Seeders\TallCmsRolesSeeder"
  */
@@ -40,6 +48,12 @@ class TallCmsRolesSeeder extends Seeder
     protected string $case = 'pascal';
 
     /**
+     * Supported Shield permission case formats.
+     * Other formats (camel, kebab, upper_snake, lower_snake) are not supported.
+     */
+    protected const SUPPORTED_CASES = ['pascal', 'snake'];
+
+    /**
      * Run the database seeds.
      */
     public function run(): void
@@ -50,6 +64,16 @@ class TallCmsRolesSeeder extends Seeder
         // Read Shield's permission format settings (filament-shield.permissions.*)
         $this->separator = config('filament-shield.permissions.separator', ':');
         $this->case = config('filament-shield.permissions.case', 'pascal');
+
+        // Warn if using unsupported permission case format
+        if (! in_array($this->case, self::SUPPORTED_CASES, true)) {
+            $supported = implode(', ', self::SUPPORTED_CASES);
+            throw new \RuntimeException(
+                "TallCmsRolesSeeder only supports Shield permission cases: {$supported}. " .
+                "Current config: filament-shield.permissions.case = '{$this->case}'. " .
+                "Please change your Shield config or create a custom seeder."
+            );
+        }
 
         // Reset cached roles and permissions
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
