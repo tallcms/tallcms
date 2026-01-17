@@ -71,7 +71,7 @@ tallcms/tallcms (Standalone Application)
     ├── database/migrations/      # ALL CMS migrations live here
     ├── resources/views/          # Package views (tallcms:: namespace)
     ├── routes/
-    │   └── web.php               # Plugin mode routes
+    │   └── frontend.php          # Frontend catch-all routes (plugin mode)
     └── tests/                    # Package tests
 ```
 
@@ -149,7 +149,7 @@ The `.tallcms-standalone` file:
 This file is:
 - Included in `tallcms/tallcms` skeleton
 - NOT included in `tallcms/cms` package
-- Listed in `.gitignore` of the package
+- Should NOT be committed to version control in user projects
 
 ---
 
@@ -259,24 +259,25 @@ return [
     'mode' => env('TALLCMS_MODE'),  // null = auto-detect
 
     'database' => [
-        'table_prefix' => 'tallcms_',
+        'prefix' => 'tallcms_',  // Note: 'prefix' not 'table_prefix'
     ],
 
     'plugin_mode' => [
-        'routes_enabled' => true,
-        'routes_prefix' => 'cms',
-        'themes_enabled' => false,
-        'plugins_enabled' => true,
-        'preview_routes_enabled' => true,
-        'api_routes_enabled' => true,
+        'routes_enabled' => false,        // Default: false (opt-in)
+        'routes_prefix' => null,          // REQUIRED when routes_enabled=true
+        'route_name_prefix' => 'tallcms.',// Route name prefix
+        'themes_enabled' => false,        // Default: false (opt-in)
+        'plugins_enabled' => false,       // Default: false (opt-in)
+        'preview_routes_enabled' => true, // Essential routes on by default
+        'api_routes_enabled' => true,     // Essential routes on by default
     ],
 
     'plugins' => [
         'catalog' => [
             'tallcms/pro' => [
                 'name' => 'TallCMS Pro',
-                'download_url' => '...',  // Always include
-                'purchase_url' => '...',
+                'download_url' => '...',  // Required for download button
+                'purchase_url' => '...',  // Required for purchase button
             ],
         ],
     ],
@@ -336,42 +337,55 @@ return view('filament.pages.plugin-manager');
 
 ### Route Name Convention
 
-**All routes must use `tallcms.` prefix:**
+**Package code must always use `tallcms.*` prefix:**
 
 ```php
-// CORRECT
+// In package code - ALWAYS use tallcms.* prefix
 Route::get('/preview/page/{id}', ...)->name('tallcms.preview.page');
 route('tallcms.preview.page', ['id' => 1]);
-
-// WRONG - inconsistent naming
-Route::get('/preview/page/{id}', ...)->name('preview.page');
 ```
+
+**Standalone mode:** Main routes use `tallcms.*` names. Legacy aliases (e.g., `contact.submit` at `/api/contact`) exist for backwards compatibility at different URLs.
+
+**Plugin mode:** All routes use `tallcms.*` names exclusively.
 
 ### Route Loading by Mode
 
-```php
-// Standalone: routes/web.php loaded by Laravel
-// Plugin mode: packages/.../routes/web.php loaded by service provider
+**Standalone Mode:**
+- Routes defined in app's `routes/web.php` (loaded by Laravel)
+- Package routes are NOT loaded to avoid duplication
 
+**Plugin Mode:**
+- Essential routes registered directly in `TallCmsServiceProvider::loadEssentialRoutes()`
+- Frontend routes loaded from `routes/frontend.php` when `routes_enabled=true`
+
+```php
+// Frontend routes (opt-in via config)
 protected function loadPluginModeRoutes(): void
 {
-    if (config('tallcms.plugin_mode.routes_enabled', true)) {
-        $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
+    if (config('tallcms.plugin_mode.routes_enabled', false)) {
+        Route::middleware(['web', 'tallcms.maintenance'])
+            ->prefix(config('tallcms.plugin_mode.routes_prefix'))
+            ->group(__DIR__ . '/../routes/frontend.php');
     }
 }
 ```
 
 ### Essential Routes (Always Loaded in Plugin Mode)
 
+Essential routes are registered directly in the service provider (not from a routes file):
+
 ```php
 protected function loadEssentialRoutes(): void
 {
-    // Preview routes (if enabled)
+    // Preview routes (admin-only, for preview buttons)
     if (config('tallcms.plugin_mode.preview_routes_enabled', true)) {
-        Route::get('/preview/page/{id}', ...)->name('tallcms.preview.page');
+        Route::get('/preview/page/{page}', ...)->name('tallcms.preview.page');
+        Route::get('/preview/post/{post}', ...)->name('tallcms.preview.post');
+        Route::get('/preview/share/{token}', ...)->name('tallcms.preview.token');
     }
 
-    // API routes (if enabled)
+    // Contact form API (for contact form blocks)
     if (config('tallcms.plugin_mode.api_routes_enabled', true)) {
         Route::post('/api/tallcms/contact', ...)->name('tallcms.contact.submit');
     }
@@ -554,17 +568,19 @@ $catalog = config('tallcms.plugins.catalog');
 
 **Fix**: Always use full `tallcms.*` path.
 
-### 3. Unprefixed Route Names
+### 3. Unprefixed Route Names in Package Code
 
 ```php
-// WRONG
+// WRONG (in package code)
 route('preview.page', $id);
 
-// CORRECT
+// CORRECT (in package code)
 route('tallcms.preview.page', $id);
 ```
 
-**Fix**: Always use `tallcms.*` route names.
+**Fix**: Package code must always use `tallcms.*` route names to work in both modes.
+
+**Note**: Standalone's `routes/web.php` may have legacy aliases (e.g., `contact.submit`) at different URLs for backwards compatibility. These are app-level, not package-level.
 
 ### 4. Duplicating Code in Standalone
 
