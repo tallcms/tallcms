@@ -1,47 +1,50 @@
 <x-filament-panels::page>
     {{-- Available Plugins (not installed) --}}
     @if($this->availablePlugins->isNotEmpty())
-        <div class="mb-8">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <x-heroicon-o-sparkles class="w-5 h-5 text-primary-500" />
-                Available Plugins
-            </h2>
+        <x-filament::section>
+            <x-slot name="heading">
+                <div class="flex items-center gap-2">
+                    <x-heroicon-o-sparkles class="w-5 h-5 text-primary-500" />
+                    Available Plugins
+                </div>
+            </x-slot>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @foreach($this->availablePlugins as $plugin)
-                    <div class="bg-gradient-to-br from-primary-50 to-white dark:from-primary-900/20 dark:to-gray-900 rounded-lg shadow-sm border border-primary-200 dark:border-primary-800 p-4 relative overflow-hidden">
+                    <x-filament::section class="!p-4 relative">
                         {{-- Featured badge --}}
                         @if($plugin['featured'] ?? false)
-                            <div class="absolute top-0 right-0 bg-primary-500 text-white text-xs font-bold px-2 py-0.5 rounded-bl">
+                            <x-filament::badge color="primary" class="absolute top-2 right-2">
                                 Featured
-                            </div>
+                            </x-filament::badge>
                         @endif
 
                         <div class="flex items-start gap-3">
                             {{-- Icon --}}
-                            <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-100 dark:bg-white/5 flex items-center justify-center">
                                 @if($plugin['icon'] ?? null)
-                                    <x-dynamic-component :component="$plugin['icon']" class="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                                    <x-dynamic-component :component="$plugin['icon']" class="w-5 h-5 text-primary-500" />
                                 @else
-                                    <x-heroicon-o-puzzle-piece class="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                                    <x-heroicon-o-puzzle-piece class="w-5 h-5 text-primary-500" />
                                 @endif
                             </div>
 
                             {{-- Info --}}
                             <div class="flex-1 min-w-0">
-                                <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                                <h3 class="text-base font-semibold">
                                     {{ $plugin['name'] }}
                                 </h3>
-                                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
                                     {{ $plugin['description'] }}
                                 </p>
-                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-500">
+                                <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
                                     by {{ $plugin['author'] }}
                                 </p>
                             </div>
                         </div>
 
                         {{-- Actions --}}
-                        <div class="mt-4 flex items-center gap-2">
+                        <div class="mt-4 flex items-center gap-2 flex-wrap">
                             @if($plugin['download_url'] ?? null)
                                 <x-filament::button
                                     tag="a"
@@ -80,29 +83,29 @@
                                 </x-filament::button>
                             @endif
                         </div>
-                    </div>
+                    </x-filament::section>
                 @endforeach
             </div>
-        </div>
+        </x-filament::section>
     @endif
 
     {{-- Installed Plugins --}}
     @if($this->plugins->isNotEmpty())
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+        <div class="flex items-center gap-2 mb-4">
             <x-heroicon-o-check-circle class="w-5 h-5 text-success-500" />
-            Installed Plugins
-        </h2>
+            <h2 class="text-lg font-semibold">Installed Plugins</h2>
+        </div>
     @endif
 
     {{-- Plugin List --}}
-    <div class="space-y-4">
+    <div class="space-y-3">
         @foreach($this->plugins as $plugin)
             <x-filament::section class="!p-4">
                 <div class="flex items-start justify-between gap-4">
                     {{-- Plugin Info --}}
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 flex-wrap">
-                            <h3 class="text-base font-semibold text-gray-950 dark:text-white">
+                            <h3 class="text-base font-semibold">
                                 {{ $plugin['name'] }}
                             </h3>
                             <x-filament::badge color="gray" size="sm">
@@ -201,17 +204,19 @@
 
     {{-- Empty State --}}
     @if($this->plugins->isEmpty())
-        <div class="text-center py-12">
-            <x-heroicon-o-puzzle-piece class="mx-auto h-12 w-12 text-gray-400" />
-            <h3 class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No plugins installed</h3>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                @if($this->availablePlugins->isNotEmpty())
-                    Download a plugin from above or upload a ZIP file to get started.
-                @else
-                    Upload a plugin ZIP file to get started.
-                @endif
-            </p>
-        </div>
+        <x-filament::section>
+            <div class="text-center py-8">
+                <x-heroicon-o-puzzle-piece class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+                <h3 class="mt-2 text-sm font-semibold">No plugins installed</h3>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    @if($this->availablePlugins->isNotEmpty())
+                        Download a plugin from above or upload a ZIP file to get started.
+                    @else
+                        Upload a plugin ZIP file to get started.
+                    @endif
+                </p>
+            </div>
+        </x-filament::section>
     @endif
 
     {{-- Plugin Details Modal --}}
@@ -220,9 +225,9 @@
             <div class="flex items-center gap-3">
                 <span>{{ $pluginDetails['name'] ?? 'Plugin Details' }}</span>
                 @if($pluginDetails)
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                    <x-filament::badge color="gray" size="sm">
                         v{{ $pluginDetails['version'] }}
-                    </span>
+                    </x-filament::badge>
                 @endif
             </div>
         </x-slot>
@@ -257,23 +262,25 @@
 
                 {{-- Requirements Warning --}}
                 @if(!$pluginDetails['meetsRequirements'])
-                    <div class="p-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg border border-danger-200 dark:border-danger-800">
-                        <p class="font-medium text-danger-700 dark:text-danger-300">Requirements Not Met</p>
-                        <ul class="text-danger-600 dark:text-danger-400 mt-1 space-y-0.5">
+                    <x-filament::section compact class="!bg-danger-50 dark:!bg-danger-950 !border-danger-200 dark:!border-danger-800">
+                        <x-slot name="heading">
+                            <span class="text-danger-700 dark:text-danger-300">Requirements Not Met</span>
+                        </x-slot>
+                        <ul class="text-danger-600 dark:text-danger-400 space-y-0.5">
                             @foreach($pluginDetails['unmetRequirements'] as $requirement)
                                 <li>{{ $requirement }}</li>
                             @endforeach
                         </ul>
-                    </div>
+                    </x-filament::section>
                 @endif
 
                 {{-- Features --}}
-                <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Features</h4>
+                <x-filament::section compact>
+                    <x-slot name="heading">Features</x-slot>
                     <div class="grid grid-cols-2 gap-x-4 gap-y-1">
                         <div class="flex items-center gap-1.5">
                             @if($pluginDetails['hasFilamentPlugin'])
-                                <x-heroicon-s-check-circle class="w-4 h-4 text-green-500" />
+                                <x-heroicon-s-check-circle class="w-4 h-4 text-success-500" />
                                 <span class="text-gray-700 dark:text-gray-300">Filament Integration</span>
                             @else
                                 <x-heroicon-s-x-circle class="w-4 h-4 text-gray-300 dark:text-gray-600" />
@@ -282,7 +289,7 @@
                         </div>
                         <div class="flex items-center gap-1.5">
                             @if($pluginDetails['hasPublicRoutes'])
-                                <x-heroicon-s-check-circle class="w-4 h-4 text-green-500" />
+                                <x-heroicon-s-check-circle class="w-4 h-4 text-success-500" />
                                 <span class="text-gray-700 dark:text-gray-300">Public Routes</span>
                             @else
                                 <x-heroicon-s-x-circle class="w-4 h-4 text-gray-300 dark:text-gray-600" />
@@ -291,7 +298,7 @@
                         </div>
                         <div class="flex items-center gap-1.5">
                             @if($pluginDetails['hasPrefixedRoutes'])
-                                <x-heroicon-s-check-circle class="w-4 h-4 text-green-500" />
+                                <x-heroicon-s-check-circle class="w-4 h-4 text-success-500" />
                                 <span class="text-gray-700 dark:text-gray-300">Prefixed Routes</span>
                             @else
                                 <x-heroicon-s-x-circle class="w-4 h-4 text-gray-300 dark:text-gray-600" />
@@ -300,7 +307,7 @@
                         </div>
                         <div class="flex items-center gap-1.5">
                             @if($pluginDetails['hasMigrations'])
-                                <x-heroicon-s-check-circle class="w-4 h-4 text-green-500" />
+                                <x-heroicon-s-check-circle class="w-4 h-4 text-success-500" />
                                 <span class="text-gray-700 dark:text-gray-300">Migrations</span>
                             @else
                                 <x-heroicon-s-x-circle class="w-4 h-4 text-gray-300 dark:text-gray-600" />
@@ -308,29 +315,29 @@
                             @endif
                         </div>
                     </div>
-                </div>
+                </x-filament::section>
 
                 {{-- Public Routes --}}
                 @if(!empty($pluginDetails['publicRoutes']))
-                    <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
-                        <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Public Routes</h4>
+                    <x-filament::section compact>
+                        <x-slot name="heading">Public Routes</x-slot>
                         <ul class="space-y-1 font-mono text-xs">
                             @foreach($pluginDetails['publicRoutes'] as $route)
                                 <li class="text-gray-700 dark:text-gray-300">{{ $route }}</li>
                             @endforeach
                         </ul>
-                    </div>
+                    </x-filament::section>
                 @endif
 
                 {{-- Migrations --}}
                 @if(!empty($pluginDetails['migrations']))
-                    <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
-                        <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Migrations</h4>
+                    <x-filament::section compact>
+                        <x-slot name="heading">Migrations</x-slot>
                         <ul class="space-y-1">
                             @foreach($pluginDetails['migrations'] as $migration)
                                 <li class="flex items-center gap-2">
                                     @if($migration['ran'])
-                                        <x-heroicon-s-check-circle class="w-4 h-4 text-green-500 shrink-0" />
+                                        <x-heroicon-s-check-circle class="w-4 h-4 text-success-500 shrink-0" />
                                     @else
                                         <x-heroicon-s-clock class="w-4 h-4 text-warning-500 shrink-0" />
                                     @endif
@@ -341,30 +348,30 @@
                                 </li>
                             @endforeach
                         </ul>
-                    </div>
+                    </x-filament::section>
                 @endif
 
                 {{-- Tags --}}
                 @if(!empty($pluginDetails['tags']))
-                    <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
-                        <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Tags</h4>
+                    <x-filament::section compact>
+                        <x-slot name="heading">Tags</x-slot>
                         <div class="flex flex-wrap gap-1.5">
                             @foreach($pluginDetails['tags'] as $tag)
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                <x-filament::badge color="gray" size="sm">
                                     {{ $tag }}
-                                </span>
+                                </x-filament::badge>
                             @endforeach
                         </div>
-                    </div>
+                    </x-filament::section>
                 @endif
 
                 {{-- Plugin Information --}}
-                <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Information</h4>
+                <x-filament::section compact>
+                    <x-slot name="heading">Information</x-slot>
                     <dl class="grid grid-cols-2 gap-x-4 gap-y-1.5">
                         <div>
                             <dt class="text-gray-500 dark:text-gray-400">Author</dt>
-                            <dd class="text-gray-900 dark:text-white">
+                            <dd class="">
                                 @if($pluginDetails['authorUrl'])
                                     <a href="{{ $pluginDetails['authorUrl'] }}" target="_blank" class="text-primary-600 hover:underline">
                                         {{ $pluginDetails['author'] }}
@@ -377,51 +384,51 @@
                         @if($pluginDetails['license'])
                             <div>
                                 <dt class="text-gray-500 dark:text-gray-400">License</dt>
-                                <dd class="text-gray-900 dark:text-white">{{ $pluginDetails['license'] }}</dd>
+                                <dd class="">{{ $pluginDetails['license'] }}</dd>
                             </div>
                         @endif
                         <div>
                             <dt class="text-gray-500 dark:text-gray-400">Namespace</dt>
-                            <dd class="text-gray-900 dark:text-white font-mono text-xs">{{ $pluginDetails['namespace'] }}</dd>
+                            <dd class="font-mono text-xs">{{ $pluginDetails['namespace'] }}</dd>
                         </div>
                         <div>
                             <dt class="text-gray-500 dark:text-gray-400">Provider</dt>
-                            <dd class="text-gray-900 dark:text-white font-mono text-xs truncate" title="{{ $pluginDetails['provider'] }}">{{ class_basename($pluginDetails['provider']) }}</dd>
+                            <dd class="font-mono text-xs truncate" title="{{ $pluginDetails['provider'] }}">{{ class_basename($pluginDetails['provider']) }}</dd>
                         </div>
                     </dl>
-                </div>
+                </x-filament::section>
 
                 {{-- Compatibility --}}
                 @if(!empty($pluginDetails['compatibility']))
-                    <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
-                        <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Compatibility</h4>
+                    <x-filament::section compact>
+                        <x-slot name="heading">Compatibility</x-slot>
                         <dl class="grid grid-cols-2 gap-x-4 gap-y-1.5">
                             @if(!empty($pluginDetails['compatibility']['php']))
                                 <div>
                                     <dt class="text-gray-500 dark:text-gray-400">PHP</dt>
-                                    <dd class="text-gray-900 dark:text-white font-mono text-xs">{{ $pluginDetails['compatibility']['php'] }}</dd>
+                                    <dd class="font-mono text-xs">{{ $pluginDetails['compatibility']['php'] }}</dd>
                                 </div>
                             @endif
                             @if(!empty($pluginDetails['compatibility']['tallcms']))
                                 <div>
                                     <dt class="text-gray-500 dark:text-gray-400">TallCMS</dt>
-                                    <dd class="text-gray-900 dark:text-white font-mono text-xs">{{ $pluginDetails['compatibility']['tallcms'] }}</dd>
+                                    <dd class="font-mono text-xs">{{ $pluginDetails['compatibility']['tallcms'] }}</dd>
                                 </div>
                             @endif
                             @if(!empty($pluginDetails['compatibility']['extensions']))
                                 <div class="col-span-2">
                                     <dt class="text-gray-500 dark:text-gray-400">Extensions</dt>
-                                    <dd class="text-gray-900 dark:text-white">{{ implode(', ', $pluginDetails['compatibility']['extensions']) }}</dd>
+                                    <dd class="">{{ implode(', ', $pluginDetails['compatibility']['extensions']) }}</dd>
                                 </div>
                             @endif
                         </dl>
-                    </div>
+                    </x-filament::section>
                 @endif
 
                 {{-- Backups / Rollback --}}
                 @if(!empty($pluginDetails['backups']))
-                    <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
-                        <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Available Backups</h4>
+                    <x-filament::section compact>
+                        <x-slot name="heading">Available Backups</x-slot>
                         <ul class="space-y-2">
                             @foreach($pluginDetails['backups'] as $backup)
                                 <li class="flex items-center justify-between">
@@ -440,7 +447,7 @@
                                 </li>
                             @endforeach
                         </ul>
-                    </div>
+                    </x-filament::section>
                 @endif
 
                 {{-- Footer --}}

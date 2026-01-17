@@ -15,6 +15,8 @@ use Filament\Navigation\MenuItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Support\HtmlString;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -32,14 +34,32 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            // Note: preview.css loads daisyUI globally for block previews.
-            // daisyUI classes (btn, card, etc.) don't conflict with Filament's fi-* classes,
-            // but for stricter isolation, consider loading preview.css only in the
-            // RichEditor preview context via iframe or dynamic stylesheet injection.
+            // preview.css loads daisyUI for block previews.
+            // The renderHook below syncs Filament's dark mode with DaisyUI's data-theme attribute.
             ->viteTheme([
                 'resources/css/filament/admin/theme.css',
                 'resources/css/filament/admin/preview.css',
             ])
+            // Sync Filament's dark mode class with DaisyUI's data-theme attribute
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn () => new HtmlString(<<<'HTML'
+                <script>
+                    // Sync Filament dark mode (.dark class) with DaisyUI (data-theme attribute)
+                    (function() {
+                        function syncDarkMode() {
+                            const isDark = document.documentElement.classList.contains('dark');
+                            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+                        }
+                        // Initial sync
+                        syncDarkMode();
+                        // Watch for changes
+                        const observer = new MutationObserver(syncDarkMode);
+                        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+                    })();
+                </script>
+                HTML)
+            )
             ->login()
             ->passwordReset()
             ->profile(isSimple: false)

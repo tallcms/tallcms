@@ -1,19 +1,32 @@
 /**
- * Block Preview CSS - daisyUI isolated for RichEditor previews
+ * Block Preview CSS - daisyUI scoped for RichEditor previews
  *
  * This stylesheet provides daisyUI styling ONLY for block previews.
- * It should be loaded separately from the main admin theme.css
+ * DaisyUI is scoped to .cms-blocks wrapper to prevent interference with Filament UI.
  *
- * Loading strategy options:
- * 1. Inline <style> injected via JavaScript when preview renders
- * 2. Scoped to a wrapper element with [data-daisy-preview]
- * 3. Loaded dynamically via <link> when RichEditor mounts
+ * Dark mode: Uses Filament's .dark class (not system preference) for consistency.
+ * The .dark class is added to html element by Filament when dark mode is enabled.
  */
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+
+/* Load DaisyUI with explicit theme selection (not prefers-color-scheme) */
 @plugin "daisyui" {
-  /* Only light/dark - preview uses semantic classes, not theme-specific colors */
-  themes: light --default, dark --prefersdark;
+  themes: light --default, dark;
+}
+
+/*
+ * Sync Filament's dark mode class with DaisyUI's data-theme attribute.
+ * DaisyUI uses [data-theme="dark"] while Filament uses .dark class.
+ * This CSS ensures DaisyUI dark theme activates when Filament dark mode is on.
+ */
+:root.dark {
+  color-scheme: dark;
+}
+
+/* Scope DaisyUI base styles to block preview areas only */
+.cms-blocks {
+  /* DaisyUI components work here */
 }
 
 /* Scan block templates for class discovery */
