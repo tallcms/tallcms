@@ -357,11 +357,19 @@ class TallCmsServiceProvider extends PackageServiceProvider
      *
      * This allows themes to use <x-menu> instead of <x-tallcms::menu>
      * making themes portable between standalone and plugin modes.
+     *
+     * Only registered when themes are enabled to avoid overriding
+     * host app components with the same names.
      */
     protected function registerBladeComponentAliases(): void
     {
-        // Only register aliases in plugin mode to avoid conflicts with standalone app components
+        // Only register aliases in plugin mode when themes are enabled
+        // This prevents overriding host app components of the same name
         if ($this->isStandaloneMode()) {
+            return;
+        }
+
+        if (! config('tallcms.plugin_mode.themes_enabled', false)) {
             return;
         }
 
