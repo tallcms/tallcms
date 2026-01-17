@@ -205,7 +205,7 @@ class EditCmsPage extends EditRecord
                     ->body("Link expires in {$hours} hour(s). Click to copy.")
                     ->success()
                     ->actions([
-                        \Filament\Notifications\Actions\Action::make('copy')
+                        Action::make('copy')
                             ->label('Copy Link')
                             ->url($url)
                             ->openUrlInNewTab(),
