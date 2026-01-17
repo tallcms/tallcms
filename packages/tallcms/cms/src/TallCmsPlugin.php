@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TallCms\Cms;
 
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 use TallCms\Cms\Filament\Pages\MenuItemsManager;
@@ -20,6 +21,7 @@ use TallCms\Cms\Filament\Resources\CmsPosts\CmsPostResource;
 use TallCms\Cms\Filament\Resources\TallcmsContactSubmissions\TallcmsContactSubmissionResource;
 use TallCms\Cms\Filament\Resources\TallcmsMedia\TallcmsMediaResource;
 use TallCms\Cms\Filament\Resources\TallcmsMenus\TallcmsMenuResource;
+use TallCms\Cms\Filament\Resources\Users\UserResource;
 use TallCms\Cms\Filament\Widgets\MenuOverviewWidget;
 use TallCms\Cms\Filament\Widgets\PluginUpdatesWidget;
 
@@ -37,6 +39,8 @@ class TallCmsPlugin implements Plugin
 
     protected bool $hasMenus = true;
 
+    protected bool $hasUsers = true;
+
     protected bool $hasSiteSettings = true;
 
     protected bool $hasPluginManager = true;
@@ -44,6 +48,10 @@ class TallCmsPlugin implements Plugin
     protected bool $hasThemeManager = true;
 
     protected bool $hasSystemUpdates = true;
+
+    protected bool $hasShieldPlugin = true;
+
+    protected ?string $shieldNavigationGroup = 'User Management';
 
     public static function make(): static
     {
@@ -69,6 +77,17 @@ class TallCmsPlugin implements Plugin
             ->resources($this->getResources())
             ->pages($this->getPages())
             ->widgets($this->getWidgets());
+
+        // Register FilamentShieldPlugin for role/permission management
+        if ($this->hasShieldPlugin) {
+            $shieldPlugin = FilamentShieldPlugin::make();
+
+            if ($this->shieldNavigationGroup !== null) {
+                $shieldPlugin->navigationGroup($this->shieldNavigationGroup);
+            }
+
+            $panel->plugin($shieldPlugin);
+        }
     }
 
     public function boot(Panel $panel): void
@@ -211,6 +230,10 @@ class TallCmsPlugin implements Plugin
             $resources[] = TallcmsMenuResource::class;
         }
 
+        if ($this->hasUsers) {
+            $resources[] = UserResource::class;
+        }
+
         return $resources;
     }
 
@@ -275,6 +298,19 @@ class TallCmsPlugin implements Plugin
     }
 
     /**
+     * Disable users resource.
+     *
+     * Use this if your app already has a UserResource
+     * or you want to manage users differently.
+     */
+    public function withoutUsers(): static
+    {
+        $this->hasUsers = false;
+
+        return $this;
+    }
+
+    /**
      * Disable site settings page.
      */
     public function withoutSiteSettings(): static
@@ -310,6 +346,31 @@ class TallCmsPlugin implements Plugin
     public function withoutSystemUpdates(): static
     {
         $this->hasSystemUpdates = false;
+
+        return $this;
+    }
+
+    /**
+     * Disable automatic FilamentShieldPlugin registration.
+     *
+     * Use this if you want to register FilamentShieldPlugin yourself
+     * with custom configuration.
+     */
+    public function withoutShieldPlugin(): static
+    {
+        $this->hasShieldPlugin = false;
+
+        return $this;
+    }
+
+    /**
+     * Set the navigation group for Shield's role management.
+     *
+     * @param  string|null  $group  Navigation group name, or null to use Shield's default
+     */
+    public function shieldNavigationGroup(?string $group): static
+    {
+        $this->shieldNavigationGroup = $group;
 
         return $this;
     }
