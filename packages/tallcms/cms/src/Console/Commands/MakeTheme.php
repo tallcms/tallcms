@@ -601,7 +601,7 @@ GITIGNORE;
                 </ul>
             </div>
             <!-- Logo -->
-            <a href="{{ url('/') }}" class="btn btn-ghost text-xl font-bold">
+            <a href="{{ tallcms_home_url() }}" class="btn btn-ghost text-xl font-bold">
                 {{ config('app.name') }}
             </a>
         </div>

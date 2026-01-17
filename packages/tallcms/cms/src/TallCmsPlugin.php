@@ -7,6 +7,7 @@ namespace TallCms\Cms;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 use TallCms\Cms\Filament\Pages\MenuItemsManager;
+use TallCms\Cms\Filament\Pages\PluginLicenses;
 use TallCms\Cms\Filament\Pages\PluginManager;
 use TallCms\Cms\Filament\Pages\SiteSettings;
 use TallCms\Cms\Filament\Pages\SystemUpdates;
@@ -20,6 +21,7 @@ use TallCms\Cms\Filament\Resources\TallcmsContactSubmissions\TallcmsContactSubmi
 use TallCms\Cms\Filament\Resources\TallcmsMedia\TallcmsMediaResource;
 use TallCms\Cms\Filament\Resources\TallcmsMenus\TallcmsMenuResource;
 use TallCms\Cms\Filament\Widgets\MenuOverviewWidget;
+use TallCms\Cms\Filament\Widgets\PluginUpdatesWidget;
 
 class TallCmsPlugin implements Plugin
 {
@@ -93,13 +95,14 @@ class TallCmsPlugin implements Plugin
             $pages[] = MenuItemsManager::class;
         }
 
-        // Plugin Manager and Theme Manager work in both modes
-        // (core services are always registered)
-        if ($this->hasPluginManager) {
+        // Plugin Manager: visible in standalone mode OR when explicitly enabled in plugin mode
+        if ($this->hasPluginManager && $this->isPluginSystemEnabled()) {
             $pages[] = PluginManager::class;
+            $pages[] = PluginLicenses::class;
         }
 
-        if ($this->hasThemeManager) {
+        // Theme Manager: visible in standalone mode OR when explicitly enabled in plugin mode
+        if ($this->hasThemeManager && $this->isThemeSystemEnabled()) {
             $pages[] = ThemeManager::class;
         }
 
@@ -112,6 +115,32 @@ class TallCmsPlugin implements Plugin
         }
 
         return $pages;
+    }
+
+    /**
+     * Check if the plugin system is enabled.
+     * Always enabled in standalone mode, opt-in in plugin mode.
+     */
+    protected function isPluginSystemEnabled(): bool
+    {
+        if ($this->isStandaloneMode()) {
+            return true;
+        }
+
+        return config('tallcms.plugin_mode.plugins_enabled', false);
+    }
+
+    /**
+     * Check if the theme system is enabled.
+     * Always enabled in standalone mode, opt-in in plugin mode.
+     */
+    protected function isThemeSystemEnabled(): bool
+    {
+        if ($this->isStandaloneMode()) {
+            return true;
+        }
+
+        return config('tallcms.plugin_mode.themes_enabled', false);
     }
 
     /**
@@ -139,6 +168,11 @@ class TallCmsPlugin implements Plugin
 
         if ($this->hasMenus) {
             $widgets[] = MenuOverviewWidget::class;
+        }
+
+        // Plugin updates widget: only when plugin system is enabled
+        if ($this->hasPluginManager && $this->isPluginSystemEnabled()) {
+            $widgets[] = PluginUpdatesWidget::class;
         }
 
         return $widgets;

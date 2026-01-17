@@ -584,6 +584,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
             // Core commands available in all modes
             Console\Commands\CleanExpiredPreviewTokens::class,
             Console\Commands\MakeTallCmsBlock::class,
+            Console\Commands\TallCmsInstall::class,
 
             // Theme commands
             Console\Commands\MakeTheme::class,

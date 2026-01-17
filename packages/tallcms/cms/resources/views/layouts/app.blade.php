@@ -66,7 +66,7 @@
 
                     <!-- Logo -->
                     <div class="flex items-center">
-                        <a href="{{ url('/') }}" class="text-xl font-bold text-gray-900 hover:text-gray-700 transition-colors duration-200">
+                        <a href="{{ tallcms_home_url() }}" class="text-xl font-bold text-gray-900 hover:text-gray-700 transition-colors duration-200">
                             {{ config('app.name') }}
                         </a>
                     </div>

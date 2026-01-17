@@ -7,14 +7,57 @@ declare(strict_types=1);
  *
  * These helper functions provide convenient access to TallCMS functionality.
  * They are designed to gracefully degrade when the theme or plugin system
- * is not configured (plugin mode with null paths).
+ * is not configured (plugin mode with disabled themes/plugins).
  *
- * NOTE: This file is NOT autoloaded yet. It will be added to composer.json
- * autoload.files in Phase 2 after the models and services it depends on
- * (ThemeResolver, ThemeManager, CmsPost, etc.) are extracted to the package.
- *
- * Until then, the app's existing helpers.php takes precedence.
+ * This file is autoloaded via composer.json autoload.files.
  */
+
+// URL Helper Functions
+
+if (! function_exists('tallcms_routes_prefix')) {
+    /**
+     * Get the configured routes prefix for CMS frontend routes
+     *
+     * In plugin mode, CMS routes can be prefixed (e.g., '/cms') to avoid
+     * conflicts with the host application's routes.
+     *
+     * @return string The routes prefix (without leading/trailing slashes), or empty string
+     */
+    function tallcms_routes_prefix(): string
+    {
+        return trim(config('tallcms.plugin_mode.routes_prefix') ?? '', '/');
+    }
+}
+
+if (! function_exists('tallcms_home_url')) {
+    /**
+     * Get the CMS homepage URL, respecting routes prefix
+     *
+     * @return string The full URL to the CMS homepage
+     */
+    function tallcms_home_url(): string
+    {
+        $prefix = tallcms_routes_prefix();
+
+        return url($prefix ? '/'.$prefix : '/');
+    }
+}
+
+if (! function_exists('tallcms_page_url')) {
+    /**
+     * Get a CMS page URL by slug, respecting routes prefix
+     *
+     * @param  string  $slug  The page slug
+     * @return string The full URL to the page
+     */
+    function tallcms_page_url(string $slug): string
+    {
+        $prefix = tallcms_routes_prefix();
+        $path = $prefix ? '/'.$prefix.'/'.$slug : '/'.$slug;
+
+        return url($path);
+    }
+}
 
 // Theme Helper Functions
 
@@ -64,9 +107,9 @@ if (! function_exists('theme_text_presets')) {
      */
     function theme_text_presets(): array
     {
-        // Graceful degradation for plugin mode without themes
+        // Graceful degradation for plugin mode without themes enabled
         if (! app()->bound('theme.manager') ||
-            config('tallcms.plugin_mode.themes_path') === null) {
+            ! config('tallcms.plugin_mode.themes_enabled', false)) {
             return [
                 'primary' => [
                     'heading' => '#111827',

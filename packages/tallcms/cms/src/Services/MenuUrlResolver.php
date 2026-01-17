@@ -14,7 +14,7 @@ class MenuUrlResolver
         return match ($item->type) {
             'page' => $this->resolvePageUrl($item),
             'external' => $item->url,
-            'custom' => $item->url,
+            'custom' => $this->resolveCustomUrl($item),
             'separator', 'header' => null,
             default => null,
         };
@@ -28,14 +28,55 @@ class MenuUrlResolver
 
         $siteType = SiteSetting::get('site_type', 'multi-page');
         $page = $item->page;
+        $prefix = $this->getRoutesPrefix();
 
         if ($siteType === 'single-page') {
             // In SPA mode, everything links to anchors on homepage
             return $page->is_homepage ? '#top' : '#'.$page->slug;
         }
 
-        // Multi-page mode - homepage goes to root, others use their slug
-        return $page->is_homepage ? '/' : '/'.$page->slug;
+        // Multi-page mode - homepage goes to prefix root, others use prefix + slug
+        if ($page->is_homepage) {
+            return $prefix ? '/'.$prefix : '/';
+        }
+
+        return $prefix ? '/'.$prefix.'/'.$page->slug : '/'.$page->slug;
+    }
+
+    /**
+     * Resolve custom URL, applying routes prefix for relative paths
+     */
+    protected function resolveCustomUrl(TallcmsMenuItem $item): ?string
+    {
+        $url = $item->url;
+
+        if (! $url) {
+            return null;
+        }
+
+        // Don't modify external URLs or anchors
+        if (str_starts_with($url, 'http') || str_starts_with($url, '#') || str_starts_with($url, 'mailto:') || str_starts_with($url, 'tel:')) {
+            return $url;
+        }
+
+        // Apply routes prefix to relative URLs
+        $prefix = $this->getRoutesPrefix();
+        if ($prefix && str_starts_with($url, '/')) {
+            // Avoid double prefixing
+            if (! str_starts_with($url, '/'.$prefix)) {
+                return '/'.$prefix.ltrim($url, '/');
+            }
+        }
+
+        return $url;
+    }
+
+    /**
+     * Get the configured routes prefix for plugin mode
+     */
+    protected function getRoutesPrefix(): string
+    {
+        return trim(config('tallcms.plugin_mode.routes_prefix') ?? '', '/');
     }
 
     public function shouldOpenInNewTab(TallcmsMenuItem $item): bool
