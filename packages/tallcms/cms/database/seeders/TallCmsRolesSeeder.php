@@ -65,7 +65,7 @@ class TallCmsRolesSeeder extends Seeder
         $this->separator = config('filament-shield.permissions.separator', ':');
         $this->case = config('filament-shield.permissions.case', 'pascal');
 
-        // Warn if using unsupported permission case format
+        // Fail fast if using unsupported permission case format
         if (! in_array($this->case, self::SUPPORTED_CASES, true)) {
             $supported = implode(', ', self::SUPPORTED_CASES);
             throw new \RuntimeException(
