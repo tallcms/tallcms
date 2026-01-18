@@ -222,9 +222,11 @@ class TallCmsServiceProvider extends PackageServiceProvider
         'App\\Policies\\CmsCategoryPolicy' => Policies\CmsCategoryPolicy::class,
         'App\\Policies\\CmsPagePolicy' => Policies\CmsPagePolicy::class,
         'App\\Policies\\CmsPostPolicy' => Policies\CmsPostPolicy::class,
+        'App\\Policies\\RolePolicy' => Policies\RolePolicy::class,
         'App\\Policies\\TallcmsContactSubmissionPolicy' => Policies\TallcmsContactSubmissionPolicy::class,
         'App\\Policies\\TallcmsMediaPolicy' => Policies\TallcmsMediaPolicy::class,
         'App\\Policies\\TallcmsMenuPolicy' => Policies\TallcmsMenuPolicy::class,
+        'App\\Policies\\UserPolicy' => Policies\UserPolicy::class,
 
         // Filament Pages
         'App\\Filament\\Pages\\MenuItemsManager' => Filament\Pages\MenuItemsManager::class,

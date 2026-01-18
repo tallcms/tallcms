@@ -1,9 +1,9 @@
 <?php
 
-use App\Http\Controllers\ContactFormController;
-use App\Http\Controllers\PreviewController;
-use App\Livewire\CmsPageRenderer;
 use Illuminate\Support\Facades\Route;
+use TallCms\Cms\Http\Controllers\ContactFormController;
+use TallCms\Cms\Http\Controllers\PreviewController;
+use TallCms\Cms\Livewire\CmsPageRenderer;
 
 /*
 |--------------------------------------------------------------------------
