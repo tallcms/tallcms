@@ -28,17 +28,12 @@
         }
     ],
     "require": {
-        "tallcms/cms": "@dev",
         "php": "^8.2",
+        "tallcms/cms": "@dev",
         "aws/aws-sdk-php": "^3.369",
-        "bezhansalleh/filament-shield": "^4.0",
-        "ezyang/htmlpurifier": "^4.19",
-        "filament/filament": "^4.0",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
-        "league/flysystem-aws-s3-v3": "^3.30",
-        "paragonie/sodium_compat": "^2.0",
-        "wsmallnews/filament-nestedset": "^2.0"
+        "league/flysystem-aws-s3-v3": "^3.30"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -57,8 +52,7 @@
         },
         "files": [
             "app/Helpers/SiteSettings.php",
-            "app/Helpers/MenuHelpers.php",
-            "app/helpers.php"
+            "app/Helpers/MenuHelpers.php"
         ]
     },
     "autoload-dev": {

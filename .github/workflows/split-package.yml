@@ -1,0 +1,46 @@
+name: Split Package
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    name: Split tallcms/cms package
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Split packages/tallcms/cms to tallcms/cms
+        uses: danharrin/monorepo-split-github-action@v2.3.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.PACKAGE_SPLIT_TOKEN }}
+        with:
+          # Source directory in monorepo
+          package_directory: 'packages/tallcms/cms'
+
+          # Target repository for the package
+          repository_organization: 'tallcms'
+          repository_name: 'cms'
+
+          # User info for commits
+          user_name: 'TallCMS Bot'
+          user_email: 'bot@tallcms.com'
+
+          # Branch to push to
+          branch: 'main'
+
+          # Tag pattern (if this is a tag push, split the tag too)
+          tag: ${{ github.ref_type == 'tag' && github.ref_name || '' }}

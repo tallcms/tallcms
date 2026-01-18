@@ -3,9 +3,8 @@
 namespace App\Providers\Filament;
 
 use TallCms\Cms\Services\PluginLicenseService;
-use TallCms\Cms\Services\PluginManager;
 use TallCms\Cms\Services\ThemeResolver;
-use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+use TallCms\Cms\TallCmsPlugin;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -75,12 +74,9 @@ class AdminPanelProvider extends PanelProvider
                 'warning' => ThemeResolver::getCurrentTheme()->getColorPalette()['warning'],
                 'danger' => ThemeResolver::getCurrentTheme()->getColorPalette()['danger'],
             ])
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
                 AccountWidget::class,
                 FilamentInfoWidget::class,
@@ -96,7 +92,9 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            ->plugins($this->getFilamentPlugins())
+            ->plugins([
+                TallCmsPlugin::make(),
+            ])
             ->authMiddleware([
                 Authenticate::class,
             ])
@@ -119,29 +117,4 @@ class AdminPanelProvider extends PanelProvider
             });
     }
 
-    /**
-     * Get all Filament plugins including those from installed plugins
-     */
-    protected function getFilamentPlugins(): array
-    {
-        // Core plugins
-        $plugins = [
-            FilamentShieldPlugin::make()
-                ->navigationGroup('User Management'),
-        ];
-
-        // Add plugins from installed TallCMS plugins
-        try {
-            $pluginManager = app(PluginManager::class);
-            $pluginPlugins = $pluginManager->getFilamentPlugins();
-            $plugins = array_merge($plugins, $pluginPlugins);
-        } catch (\Throwable $e) {
-            // Log but don't fail if plugin loading fails
-            \Illuminate\Support\Facades\Log::warning('Failed to load Filament plugins from installed plugins', [
-                'error' => $e->getMessage(),
-            ]);
-        }
-
-        return $plugins;
-    }
 }

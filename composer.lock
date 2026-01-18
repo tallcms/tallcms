@@ -8798,11 +8798,11 @@
         },
         {
             "name": "tallcms/cms",
-            "version": "dev-tallcms-filament",
+            "version": "2.0.0",
             "dist": {
                 "type": "path",
                 "url": "./packages/tallcms/cms",
-                "reference": "4bbae4051e7d5dc6ebac01a396acd99b1b336b91"
+                "reference": "35f9d5465a222b42d5df6dd8339806c661062c21"
             },
             "require": {
                 "bezhansalleh/filament-shield": "^4.0",
@@ -8828,8 +8828,12 @@
             },
             "autoload": {
                 "psr-4": {
-                    "TallCms\\Cms\\": "src/"
-                }
+                    "TallCms\\Cms\\": "src/",
+                    "TallCms\\Cms\\Database\\Seeders\\": "database/seeders/"
+                },
+                "files": [
+                    "src/helpers.php"
+                ]
             },
             "autoload-dev": {
                 "psr-4": {
@@ -8849,11 +8853,14 @@
             "description": "TallCMS - A modern CMS for Filament admin panels. Works standalone or as a plugin in existing Filament apps.",
             "homepage": "https://tallcms.com",
             "keywords": [
+                "blog",
                 "cms",
                 "content-management",
                 "filament",
+                "filament-plugin",
                 "laravel",
                 "livewire",
+                "pages",
                 "tallstack"
             ],
             "support": {
@@ -8861,6 +8868,12 @@
                 "source": "https://github.com/tallcms/cms",
                 "docs": "https://tallcms.com/docs"
             },
+            "funding": [
+                {
+                    "type": "github",
+                    "url": "https://github.com/sponsors/tallcms"
+                }
+            ],
             "transport-options": {
                 "symlink": true,
                 "relative": true
