@@ -232,21 +232,45 @@ class TallCmsInstall extends Command
         // Reminder to register plugin
         $this->components->warn('Important: Make sure TallCmsPlugin is registered in your panel provider:');
         $this->newLine();
-        $this->line('    <fg=gray>// app/Providers/Filament/AdminPanelProvider.php</>');
         $this->line('    <fg=yellow>use</> TallCms\Cms\TallCmsPlugin;');
         $this->newLine();
         $this->line('    <fg=yellow>return</> <fg=magenta>$panel</>');
         $this->line('        ->plugin(TallCmsPlugin::make());');
         $this->newLine();
 
+        // Get the panel path dynamically
+        $panelPath = $this->getFilamentPanelPath();
+
         // Next steps
         $this->components->info('Next steps:');
         $this->components->bulletList([
-            'Visit <fg=cyan>/admin</> to access the admin panel',
+            "Visit <fg=cyan>{$panelPath}</> to access the admin panel",
             'Create your first page in <fg=cyan>CMS > Pages</>',
             'Configure menus in <fg=cyan>CMS > Menus</>',
         ]);
         $this->newLine();
+    }
+
+    /**
+     * Get the Filament panel path.
+     */
+    protected function getFilamentPanelPath(): string
+    {
+        try {
+            // Try to get the default panel's path
+            $panels = \Filament\Facades\Filament::getPanels();
+
+            if (! empty($panels)) {
+                // Get the first panel's path
+                $panel = reset($panels);
+
+                return '/'.$panel->getPath();
+            }
+        } catch (\Throwable) {
+            // Filament might not be fully booted
+        }
+
+        return '/admin';
     }
 
     /**
