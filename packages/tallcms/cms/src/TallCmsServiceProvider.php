@@ -589,6 +589,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
             Console\Commands\CleanExpiredPreviewTokens::class,
             Console\Commands\MakeTallCmsBlock::class,
             Console\Commands\TallCmsInstall::class,
+            Console\Commands\TallCmsSetup::class,
 
             // Theme commands
             Console\Commands\MakeTheme::class,
@@ -607,10 +608,9 @@ class TallCmsServiceProvider extends PackageServiceProvider
             Console\Commands\PluginUninstallCommand::class,
         ];
 
-        // Standalone-only commands (updater, setup, release signing)
+        // Standalone-only commands (updater, release signing)
         if ($this->isStandaloneMode()) {
             $commands = array_merge($commands, [
-                Console\Commands\TallCmsSetup::class,
                 Console\Commands\TallCmsUpdate::class,
                 Console\Commands\TallCmsVersion::class,
                 Console\Commands\TallCmsGenerateKeypair::class,
