@@ -257,20 +257,35 @@ class TallCmsInstall extends Command
     protected function getFilamentPanelPath(): string
     {
         try {
-            // Try to get the default panel's path
+            // Try to get the default panel's path from Filament
             $panels = \Filament\Facades\Filament::getPanels();
 
             if (! empty($panels)) {
-                // Get the first panel's path
                 $panel = reset($panels);
+                $path = $panel->getPath();
 
-                return '/'.$panel->getPath();
+                if ($path) {
+                    return '/'.$path;
+                }
             }
         } catch (\Throwable) {
-            // Filament might not be fully booted
+            // Filament might not be fully booted during CLI
         }
 
-        return '/admin';
+        // Try to detect from panel provider files
+        $providerPath = app_path('Providers/Filament');
+        if (is_dir($providerPath)) {
+            $files = glob($providerPath.'/*PanelProvider.php');
+            foreach ($files as $file) {
+                $content = file_get_contents($file);
+                // Look for ->path('something') in the provider
+                if (preg_match('/->path\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/', $content, $matches)) {
+                    return '/'.$matches[1];
+                }
+            }
+        }
+
+        return 'your admin panel';
     }
 
     /**
