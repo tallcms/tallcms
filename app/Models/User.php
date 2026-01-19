@@ -24,6 +24,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         'email',
         'password',
         'is_active',
+        'email_verified_at',
     ];
 
     /**

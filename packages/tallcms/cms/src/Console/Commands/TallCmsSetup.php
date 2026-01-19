@@ -2,7 +2,6 @@
 
 namespace TallCms\Cms\Console\Commands;
 
-use TallCms\Cms\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -61,8 +60,10 @@ class TallCmsSetup extends Command
     protected function isAlreadySetup(): bool
     {
         try {
+            $userModel = $this->getUserModel();
+
             return Role::where('name', 'super_admin')->exists() &&
-                   User::role('super_admin')->exists();
+                   $userModel::role('super_admin')->exists();
         } catch (\Exception) {
             // Tables don't exist yet, so setup is not complete
             return false;
@@ -110,8 +111,10 @@ class TallCmsSetup extends Command
     {
         $this->info('👤 Setting up admin user...');
 
+        $userModel = $this->getUserModel();
+
         // Check if we have an existing user
-        $existingUser = User::first();
+        $existingUser = $userModel::first();
 
         if ($existingUser && ! $this->option('force')) {
             $makeAdmin = $this->confirm("Found existing user ({$existingUser->email}). Make them super admin?", true);
@@ -144,7 +147,7 @@ class TallCmsSetup extends Command
             if (! $this->isValidEmail($email)) {
                 throw new \RuntimeException("Invalid email format: {$email}. Please provide a valid email address.");
             }
-            if (User::where('email', $email)->exists()) {
+            if ($userModel::where('email', $email)->exists()) {
                 throw new \RuntimeException("Email already exists: {$email}. Please use a different email address.");
             }
         } else {
@@ -152,7 +155,7 @@ class TallCmsSetup extends Command
             if ($email === null) {
                 $email = $this->ask('Admin email address');
             }
-            while (! $email || ! $this->isValidEmail($email) || User::where('email', $email)->exists()) {
+            while (! $email || ! $this->isValidEmail($email) || $userModel::where('email', $email)->exists()) {
                 if (! $email) {
                     $this->error('Email address is required.');
                 } elseif (! $this->isValidEmail($email)) {
@@ -186,7 +189,7 @@ class TallCmsSetup extends Command
         }
 
         // Create the user
-        $user = User::create([
+        $user = $userModel::create([
             'name' => $name,
             'email' => $email,
             'password' => Hash::make($password),
@@ -328,5 +331,17 @@ class TallCmsSetup extends Command
         return Validator::make(['email' => $email], [
             'email' => 'required|email',
         ])->passes();
+    }
+
+    /**
+     * Get the User model class from auth configuration.
+     *
+     * @return class-string<\Illuminate\Foundation\Auth\User>
+     */
+    protected function getUserModel(): string
+    {
+        $provider = config('auth.guards.web.provider');
+
+        return config("auth.providers.{$provider}.model", \App\Models\User::class);
     }
 }

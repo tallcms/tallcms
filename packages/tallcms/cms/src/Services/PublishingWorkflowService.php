@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace TallCms\Cms\Services;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use TallCms\Cms\Models\CmsPage;
 use TallCms\Cms\Models\CmsPost;
-use TallCms\Cms\Models\User;
 use TallCms\Cms\Notifications\ContentApprovedNotification;
 use TallCms\Cms\Notifications\ContentRejectedNotification;
 use TallCms\Cms\Notifications\ContentSubmittedForReviewNotification;
@@ -75,7 +75,8 @@ class PublishingWorkflowService
     {
         $permission = $this->getApprovePermission($content);
 
-        $approvers = User::permission($permission)->get();
+        $userModel = $this->getUserModel();
+        $approvers = $userModel::permission($permission)->get();
 
         foreach ($approvers as $approver) {
             // Don't notify the submitter
@@ -106,7 +107,7 @@ class PublishingWorkflowService
     /**
      * Check if user can submit content for review
      */
-    public function canSubmitForReview(Model $content, ?User $user = null): bool
+    public function canSubmitForReview(Model $content, ?Authenticatable $user = null): bool
     {
         $user = $user ?? auth()->user();
 
@@ -126,7 +127,7 @@ class PublishingWorkflowService
     /**
      * Check if user can approve content
      */
-    public function canApprove(Model $content, ?User $user = null): bool
+    public function canApprove(Model $content, ?Authenticatable $user = null): bool
     {
         $user = $user ?? auth()->user();
 
@@ -146,7 +147,7 @@ class PublishingWorkflowService
     /**
      * Check if user can reject content
      */
-    public function canReject(Model $content, ?User $user = null): bool
+    public function canReject(Model $content, ?Authenticatable $user = null): bool
     {
         $user = $user ?? auth()->user();
 
@@ -233,5 +234,17 @@ class PublishingWorkflowService
             ->take($limit)
             ->values()
             ->all();
+    }
+
+    /**
+     * Get the User model class from auth configuration.
+     *
+     * @return class-string<\Illuminate\Foundation\Auth\User>
+     */
+    protected function getUserModel(): string
+    {
+        $provider = config('auth.guards.web.provider');
+
+        return config("auth.providers.{$provider}.model", \App\Models\User::class);
     }
 }
