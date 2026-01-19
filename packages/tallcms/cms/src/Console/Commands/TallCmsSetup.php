@@ -87,7 +87,7 @@ class TallCmsSetup extends Command
             $this->line("  ✓ Created role: {$roleName}");
         }
 
-        // Generate Shield permissions first, then run seeder
+        // Generate Shield permissions
         // Credit: Using Filament Shield by Bezhan Salleh for role-based permissions
         // https://github.com/bezhanSalleh/filament-shield
         $this->info('🛡️  Generating Shield permissions...');
@@ -97,8 +97,15 @@ class TallCmsSetup extends Command
             '--option' => 'policies_and_permissions',
         ]);
 
-        $this->info('🛡️  Running Shield seeder for permissions...');
-        $this->call('db:seed', ['--class' => 'ShieldSeeder']);
+        // Run ShieldSeeder if it exists (standalone mode)
+        // In plugin mode, shield:generate already created the permissions
+        if (class_exists('Database\\Seeders\\ShieldSeeder')) {
+            $this->info('🛡️  Running Shield seeder for permissions...');
+            $this->call('db:seed', ['--class' => 'ShieldSeeder']);
+        }
+
+        // Assign all permissions to super_admin role
+        $this->assignSuperAdminPermissions();
 
         // Now customize the role permissions for our CMS roles
         $this->customizeRolePermissions();
@@ -203,17 +210,33 @@ class TallCmsSetup extends Command
         $this->info("✅ Super admin user created: {$email}");
     }
 
+    /**
+     * Assign all permissions to super_admin role.
+     * This replicates what ShieldSeeder does in standalone mode.
+     */
+    protected function assignSuperAdminPermissions(): void
+    {
+        $superAdminRole = Role::where('name', 'super_admin')->first();
+
+        if (! $superAdminRole) {
+            return;
+        }
+
+        $allPermissions = Permission::all();
+        $superAdminRole->syncPermissions($allPermissions);
+    }
+
     protected function customizeRolePermissions(): void
     {
         $allPermissions = Permission::all();
 
         if ($allPermissions->isEmpty()) {
-            $this->error('No permissions found! Shield seeder may have failed.');
+            $this->error('No permissions found! Shield generation may have failed.');
 
             return;
         }
 
-        // Super Admin already has all permissions from Shield seeder
+        // Super Admin has all permissions (assigned in assignSuperAdminPermissions)
         $superAdminRole = Role::where('name', 'super_admin')->first();
         $this->line("  ✓ Super Admin: {$superAdminRole->permissions->count()} permissions (full access)");
 
