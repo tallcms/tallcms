@@ -194,6 +194,9 @@ class TallCmsSetup extends Command
             '--option' => 'policies_and_permissions',
         ]);
 
+        // Create custom CMS permissions not covered by Shield
+        $this->createCustomCmsPermissions();
+
         // Run ShieldSeeder if it exists (standalone mode)
         if (class_exists('Database\\Seeders\\ShieldSeeder')) {
             $this->info('Running Shield seeder for permissions...');
@@ -319,6 +322,46 @@ class TallCmsSetup extends Command
     }
 
     /**
+     * Create custom CMS permissions not covered by Shield's standard CRUD generation.
+     * These are workflow-related permissions for content approval and revision viewing.
+     */
+    protected function createCustomCmsPermissions(): void
+    {
+        $this->info('Creating custom CMS permissions...');
+
+        // Custom permissions for CMS workflow features
+        $customPermissions = [
+            // Content approval workflow
+            'Approve:CmsPage' => 'Approve pages for publication',
+            'Approve:CmsPost' => 'Approve posts for publication',
+
+            // Submit for review (authors)
+            'SubmitForReview:CmsPage' => 'Submit pages for review',
+            'SubmitForReview:CmsPost' => 'Submit posts for review',
+
+            // Revision history access
+            'ViewRevisions:CmsPage' => 'View page revision history',
+            'ViewRevisions:CmsPost' => 'View post revision history',
+
+            // Restore revisions
+            'RestoreRevisions:CmsPage' => 'Restore page revisions',
+            'RestoreRevisions:CmsPost' => 'Restore post revisions',
+
+            // Preview link generation
+            'GeneratePreviewLink:CmsPage' => 'Generate shareable preview links for pages',
+            'GeneratePreviewLink:CmsPost' => 'Generate shareable preview links for posts',
+        ];
+
+        foreach ($customPermissions as $name => $description) {
+            Permission::firstOrCreate([
+                'name' => $name,
+                'guard_name' => $this->guardName,
+            ]);
+            $this->line("  Created permission: {$name}");
+        }
+    }
+
+    /**
      * Assign all permissions to super_admin role.
      */
     protected function assignSuperAdminPermissions(): void
@@ -434,15 +477,16 @@ class TallCmsSetup extends Command
 
         // Basic content permissions (view, create, update) for pages and posts
         if (str_contains($lower, 'cmspage') || str_contains($lower, 'cmspost')) {
-            // Allow ViewAny, View, Create, Update (check for common permission prefixes)
+            // Allow ViewAny, View, Create, Update, SubmitForReview (check for common permission prefixes)
             if (str_contains($lower, 'viewany') ||
                 str_contains($lower, 'view_any') ||
                 (str_contains($lower, 'view') && ! str_contains($lower, 'any')) ||
                 str_contains($lower, 'create') ||
-                str_contains($lower, 'update')) {
+                str_contains($lower, 'update') ||
+                str_contains($lower, 'submitforreview')) {
                 return true;
             }
-            // Exclude Delete, ForceDelete, Restore for security
+            // Exclude Delete, ForceDelete, Restore, Approve for security
         }
 
         // View categories only (but can't manage them)
