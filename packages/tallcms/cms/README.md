@@ -26,16 +26,9 @@ A modern, feature-rich CMS package for Laravel Filament. Works as a standalone a
 
 ### As a Filament Plugin (Recommended)
 
-Add TallCMS to your existing Filament application.
+Add TallCMS to your Laravel application.
 
 > **Note:** TallCMS v2.x requires Filament 4.x (not Filament 5) because filament-shield doesn't yet have a Filament 5 compatible release.
-
-**Prerequisites:** You must have Filament installed and configured first:
-
-```bash
-composer require filament/filament:"^4.0"
-php artisan filament:install --panels
-```
 
 **1. Install via Composer:**
 
@@ -43,7 +36,15 @@ php artisan filament:install --panels
 composer require tallcms/cms
 ```
 
-**2. Add HasRoles Trait to User Model:**
+This will also install Filament 4.x as a dependency.
+
+**2. Configure Filament (if not already done):**
+
+```bash
+php artisan filament:install --panels
+```
+
+**3. Add HasRoles Trait to User Model:**
 
 Your `User` model must use the `HasRoles` trait from Spatie Permission:
 
@@ -57,7 +58,7 @@ class User extends Authenticatable
 }
 ```
 
-**3. Register the plugin in your Panel Provider:**
+**4. Register the plugin in your Panel Provider:**
 
 ```php
 use TallCms\Cms\TallCmsPlugin;
@@ -72,14 +73,14 @@ public function panel(Panel $panel): Panel
 
 > **Important:** You must register `TallCmsPlugin` in your panel provider. The CMS resources will not appear in your admin panel without this step.
 
-**4. Run the installer:**
+**5. Run the installer:**
 
 ```bash
 php artisan tallcms:install
 ```
 
 This single command handles everything:
-- Checks prerequisites (HasRoles trait, etc.)
+- Checks prerequisites (HasRoles trait, panel provider, etc.)
 - Publishes Spatie Permission migrations
 - Runs all database migrations
 - Sets up roles and permissions via Filament Shield

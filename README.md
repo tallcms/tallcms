@@ -111,16 +111,7 @@ Visit `http://localhost:8000/install` to complete setup.
 
 ## Plugin Installation
 
-For existing Filament applications, install the CMS as a plugin.
-
-### Prerequisites
-
-You must have Filament installed and configured first:
-
-```bash
-composer require filament/filament:"^4.0"
-php artisan filament:install --panels
-```
+Add CMS features to your Laravel application.
 
 > **Note:** TallCMS v2.x requires Filament 4.x (not Filament 5) because filament-shield doesn't yet have a Filament 5 compatible release.
 
@@ -130,7 +121,17 @@ php artisan filament:install --panels
 composer require tallcms/cms
 ```
 
-### 2. Add HasRoles Trait to User Model
+This will also install Filament 4.x as a dependency.
+
+### 2. Configure Filament
+
+If you don't have a Filament panel yet, create one:
+
+```bash
+php artisan filament:install --panels
+```
+
+### 3. Add HasRoles Trait to User Model
 
 Your `User` model must use the `HasRoles` trait:
 
@@ -144,7 +145,7 @@ class User extends Authenticatable
 }
 ```
 
-### 3. Register the Plugin
+### 4. Register the Plugin
 
 Add `TallCmsPlugin` to your panel provider (e.g., `AdminPanelProvider.php`):
 
@@ -158,14 +159,14 @@ public function panel(Panel $panel): Panel
 }
 ```
 
-### 4. Run the Installer
+### 5. Run the Installer
 
 ```bash
 php artisan tallcms:install
 ```
 
 This single command will:
-- Check prerequisites (HasRoles trait, etc.)
+- Check prerequisites (HasRoles trait, panel provider, etc.)
 - Publish and run migrations
 - Setup roles and permissions
 - Create your admin user
