@@ -76,6 +76,10 @@ class CmsPageResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        try {
+            return (string) static::getModel()::count();
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

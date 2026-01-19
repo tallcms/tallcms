@@ -57,9 +57,13 @@ class TallcmsContactSubmissionResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $count = static::getModel()::unread()->count();
+        try {
+            $count = static::getModel()::unread()->count();
 
-        return $count > 0 ? (string) $count : null;
+            return $count > 0 ? (string) $count : null;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     public static function getNavigationBadgeColor(): ?string
