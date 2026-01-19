@@ -7,11 +7,19 @@ declare(strict_types=1);
 | TallCMS Frontend Routes (Plugin Mode)
 |--------------------------------------------------------------------------
 |
-| These routes handle CMS page rendering on the frontend.
+| These routes handle CMS page rendering for /{slug} paths.
 | Only loaded when tallcms.plugin_mode.routes_enabled is true.
 |
-| Set TALLCMS_ROUTES_PREFIX in .env to add a prefix (e.g., /cms/about).
-| Leave it empty for root-level routes (e.g., /about).
+| NOTE: The homepage (/) is NOT registered here. To let the CMS handle /,
+| add this to your routes/web.php:
+|
+|     use TallCms\Cms\Livewire\CmsPageRenderer;
+|
+|     if (config('tallcms.plugin_mode.routes_enabled')) {
+|         Route::get('/', CmsPageRenderer::class)->defaults('slug', '/');
+|     } else {
+|         Route::get('/', fn () => view('welcome'));
+|     }
 |
 */
 
@@ -22,11 +30,6 @@ use TallCms\Cms\Livewire\CmsPageRenderer;
 $namePrefix = config('tallcms.plugin_mode.route_name_prefix', 'tallcms.');
 
 Route::name($namePrefix)->middleware('tallcms.maintenance')->group(function () {
-    // Homepage route
-    Route::get('/', CmsPageRenderer::class)
-        ->defaults('slug', '/')
-        ->name('cms.home');
-
     // Page routes - exclude common app paths to avoid conflicts
     // This regex excludes: admin paths, api paths, livewire, sanctum, etc.
     $defaultExclusions = '^(?!admin|app|api|livewire|sanctum|_).*$';

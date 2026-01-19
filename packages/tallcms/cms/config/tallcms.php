@@ -64,12 +64,20 @@ return [
     |
     */
     'plugin_mode' => [
-        // Enable frontend CMS page routes.
+        // Enable frontend CMS page routes for /{slug} paths.
         // Set TALLCMS_ROUTES_ENABLED=true in .env to enable.
         // Routes automatically exclude common app paths (admin, api, livewire, etc.)
         //
-        // NOTE: If you want the CMS to handle your homepage (/), remove any existing
-        // '/' route from your routes/web.php file (e.g., the default welcome route).
+        // NOTE: The homepage (/) must be configured in your routes/web.php:
+        //
+        //     use TallCms\Cms\Livewire\CmsPageRenderer;
+        //
+        //     if (config('tallcms.plugin_mode.routes_enabled')) {
+        //         Route::get('/', CmsPageRenderer::class)->defaults('slug', '/');
+        //     } else {
+        //         Route::get('/', fn () => view('welcome'));
+        //     }
+        //
         'routes_enabled' => env('TALLCMS_ROUTES_ENABLED', false),
 
         // Optional URL prefix for CMS routes (e.g., 'cms' results in /cms/about)

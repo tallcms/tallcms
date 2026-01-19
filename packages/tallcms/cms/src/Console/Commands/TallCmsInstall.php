@@ -342,11 +342,20 @@ class TallCmsInstall extends Command
         // Frontend routes info
         $this->components->info('Enable frontend routes (optional):');
         $this->newLine();
-        $this->line('    Add to your <fg=cyan>.env</> file:');
-        $this->line('    <fg=green>TALLCMS_ROUTES_ENABLED=true</>');
+        $this->line('    1. Add to your <fg=cyan>.env</> file:');
+        $this->line('       <fg=green>TALLCMS_ROUTES_ENABLED=true</>');
         $this->newLine();
-        $this->line('    <fg=gray>This registers CMS pages at root level (/about, /contact, etc.)</>');
-        $this->line('    <fg=gray>If you have a homepage in routes/web.php, remove it to let the CMS handle /.</>');
+        $this->line('    2. Update your <fg=cyan>routes/web.php</> for the homepage:');
+        $this->newLine();
+        $this->line('       <fg=yellow>use</> TallCms\Cms\Livewire\CmsPageRenderer;');
+        $this->newLine();
+        $this->line('       <fg=magenta>if</> (config(<fg=green>\'tallcms.plugin_mode.routes_enabled\'</>)) {');
+        $this->line('           Route::get(<fg=green>\'/\'</>, CmsPageRenderer::class)->defaults(<fg=green>\'slug\'</>, <fg=green>\'/\'</>);');
+        $this->line('       } <fg=magenta>else</> {');
+        $this->line('           Route::get(<fg=green>\'/\'</>, <fg=magenta>fn</> () => view(<fg=green>\'welcome\'</>));');
+        $this->line('       }');
+        $this->newLine();
+        $this->line('    <fg=gray>CMS handles /{slug} routes automatically. Mark a page as homepage in admin.</>');
         $this->newLine();
     }
 
