@@ -135,10 +135,6 @@ Disable specific components you don't need:
 
 After publishing the config file, customize these options:
 
-> **Frontend routes are disabled by default in plugin mode.**  
-> To render CMS pages in your host app, you must enable them explicitly
-> and set a non-empty `routes_prefix`.
-
 ```php
 // config/tallcms.php
 return [
@@ -149,11 +145,11 @@ return [
         // Custom user model (defaults to App\Models\User)
         'user_model' => App\Models\User::class,
 
-        // Enable frontend routes (requires prefix)
+        // Enable frontend routes for /{slug} paths
         'routes_enabled' => false,
-        'routes_prefix' => 'cms', // e.g., /cms/page-slug
-        // Optional: enable catch-all slug routing (/{slug}) under the prefix
-        'catch_all_enabled' => false,
+
+        // Optional URL prefix (e.g., 'cms' for /cms/about)
+        'routes_prefix' => '',
 
         // Enable theme system in plugin mode
         'themes_enabled' => false,
@@ -166,36 +162,58 @@ return [
 
 ## Frontend Routes (Optional)
 
-To render CMS pages on your frontend:
+Frontend routes are **disabled by default** in plugin mode to avoid conflicts with your app's routes.
 
-**1. Enable routes in config (or .env):**
+### 1. Enable CMS Routes
+
+Add to your `.env` file:
+
+```env
+TALLCMS_ROUTES_ENABLED=true
+```
+
+This registers `/{slug}` routes for CMS pages (e.g., `/about`, `/contact`).
+Routes automatically exclude common paths like `/admin`, `/api`, `/livewire`, etc.
+
+### 2. Configure the Homepage
+
+The homepage (`/`) is **not** automatically registered to avoid hijacking your app's root route.
+Update your `routes/web.php` to explicitly handle it:
 
 ```php
-'plugin_mode' => [
-    'routes_enabled' => true,
-    'routes_prefix' => 'pages', // Pages accessible at /pages/{slug}
-    'catch_all_enabled' => true, // Enable /{slug} catch-all under the prefix
-],
+use TallCms\Cms\Livewire\CmsPageRenderer;
+
+if (config('tallcms.plugin_mode.routes_enabled')) {
+    Route::get('/', CmsPageRenderer::class)->defaults('slug', '/');
+} else {
+    Route::get('/', fn () => view('welcome'));
+}
 ```
 
-**.env example:**
+Then mark a CMS page as "Homepage" in the admin panel.
 
-```
-TALLCMS_ROUTES_ENABLED=true
-TALLCMS_ROUTES_PREFIX=pages
-TALLCMS_CATCH_ALL_ENABLED=true
-```
+### 3. Publish Assets (Optional)
 
-**2. Publish frontend assets:**
+For frontend styling:
 
 ```bash
 php artisan vendor:publish --tag=tallcms-assets
 ```
 
-**3. (Optional) Publish and customize views:**
+### 4. Publish Views (Optional)
+
+To customize templates:
 
 ```bash
 php artisan vendor:publish --tag=tallcms-views
+```
+
+### Route Prefix (Optional)
+
+To prefix all CMS routes (e.g., `/cms/about` instead of `/about`):
+
+```env
+TALLCMS_ROUTES_PREFIX=cms
 ```
 
 ## Content Blocks
