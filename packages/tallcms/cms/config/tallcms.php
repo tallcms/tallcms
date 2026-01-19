@@ -64,28 +64,27 @@ return [
     |
     */
     'plugin_mode' => [
-        // Enable frontend routes. IMPORTANT: When enabled, routes_prefix is REQUIRED
-        // to prevent the catch-all /{slug} route from conflicting with your app's routes.
+        // Enable frontend CMS page routes.
+        // Set TALLCMS_ROUTES_ENABLED=true in .env to enable.
+        // Routes automatically exclude common app paths (admin, api, livewire, etc.)
         'routes_enabled' => env('TALLCMS_ROUTES_ENABLED', false),
 
-        // URL prefix for CMS routes (e.g., 'cms' results in /cms/about, /cms/blog)
-        // REQUIRED when routes_enabled is true. Must not be empty.
-        'routes_prefix' => env('TALLCMS_ROUTES_PREFIX'),
+        // Optional URL prefix for CMS routes (e.g., 'cms' results in /cms/about)
+        // Leave empty for root-level routes (e.g., /about, /contact)
+        // When empty, smart exclusions prevent conflicts with your app routes.
+        'routes_prefix' => env('TALLCMS_ROUTES_PREFIX', ''),
 
         // Route name prefix for plugin mode (e.g., 'tallcms.' results in tallcms.cms.page)
         'route_name_prefix' => env('TALLCMS_PLUGIN_ROUTE_NAME_PREFIX', 'tallcms.'),
 
-        // Granular route toggles for plugin mode
-        'catch_all_enabled' => env('TALLCMS_CATCH_ALL_ENABLED', false),
-        'api_routes_enabled' => env('TALLCMS_API_ROUTES_ENABLED', true),
-        'preview_routes_enabled' => env('TALLCMS_PREVIEW_ROUTES_ENABLED', true),
+        // Route exclusion pattern - paths matching this regex are excluded from CMS routing.
+        // Default excludes: admin, app, api, livewire, sanctum, and underscore-prefixed paths.
+        // Customize if your app uses other reserved paths.
+        'route_exclusions' => env('TALLCMS_ROUTE_EXCLUSIONS', '^(?!admin|app|api|livewire|sanctum|_).*$'),
 
         // Optional prefix for essential routes (preview, contact API) to avoid conflicts
         // e.g., 'tallcms' results in /tallcms/preview/page/{id}
         'essential_routes_prefix' => env('TALLCMS_ESSENTIAL_ROUTES_PREFIX', ''),
-
-        // Route exclusions pattern for catch-all route in plugin mode
-        'route_exclusions' => env('TALLCMS_PLUGIN_ROUTE_EXCLUSIONS', '.*'),
 
         // Enable the TallCMS plugin system.
         // When enabled, the Plugin Manager page is visible and third-party plugins can be loaded.

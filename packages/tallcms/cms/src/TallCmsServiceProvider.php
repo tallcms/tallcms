@@ -441,20 +441,11 @@ class TallCmsServiceProvider extends PackageServiceProvider
         // These are needed for admin panel functionality regardless of frontend routes
         $this->loadEssentialRoutes();
 
-        // Plugin mode: frontend routes are OPT-IN and require explicit prefix
+        // Plugin mode: frontend routes are OPT-IN
         if (config('tallcms.plugin_mode.routes_enabled', false)) {
-            $prefix = config('tallcms.plugin_mode.routes_prefix');
-
-            // REQUIRE prefix in plugin mode to avoid route conflicts
-            if (empty($prefix)) {
-                throw new \RuntimeException(
-                    'TallCMS: routes_prefix is required in plugin mode. ' .
-                    'Set tallcms.plugin_mode.routes_prefix to a value like "cms" or "pages".'
-                );
-            }
+            $prefix = config('tallcms.plugin_mode.routes_prefix', '');
 
             // Log warning if assets aren't published (frontend styling may be incomplete)
-            // In plugin mode, the host app's CSS typically provides styling via DaisyUI/Tailwind
             if (! file_exists(public_path('vendor/tallcms/tallcms.css'))) {
                 \Illuminate\Support\Facades\Log::warning(
                     'TallCMS: Package assets not published. Frontend styling may be incomplete. ' .
