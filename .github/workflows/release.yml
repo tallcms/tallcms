@@ -78,6 +78,20 @@ jobs:
           }
           EOF
 
+      - name: Prepare composer.json for standalone release
+        run: |
+          # Remove local path repository and update tallcms/cms to use Packagist
+          # Get the version from the tag (e.g., v2.0.2 -> 2.0.2)
+          VERSION="${{ steps.version.outputs.version }}"
+          VERSION="${VERSION#v}"  # Remove 'v' prefix if present
+
+          # Remove repositories section and update tallcms/cms version constraint
+          jq 'del(.repositories) | .require["tallcms/cms"] = "^'${VERSION%.*}'"' composer.json > composer.json.tmp
+          mv composer.json.tmp composer.json
+
+          echo "Updated composer.json for standalone release:"
+          cat composer.json | jq '.repositories, .require["tallcms/cms"]'
+
       - name: Prepare release directory
         run: |
           mkdir -p release
@@ -87,6 +101,7 @@ jobs:
             --exclude='.git' \
             --exclude='.github' \
             --exclude='release' \
+            --exclude='packages' \
             --exclude='tests' \
             --exclude='.env' \
             --exclude='.env.backup' \
