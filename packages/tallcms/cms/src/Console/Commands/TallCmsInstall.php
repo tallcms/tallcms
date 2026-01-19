@@ -338,6 +338,16 @@ class TallCmsInstall extends Command
             'Configure menus in <fg=cyan>CMS > Menus</>',
         ]);
         $this->newLine();
+
+        // Frontend routes info
+        $this->components->info('Enable frontend routes (optional):');
+        $this->newLine();
+        $this->line('    Add to your <fg=cyan>.env</> file:');
+        $this->line('    <fg=green>TALLCMS_ROUTES_ENABLED=true</>');
+        $this->newLine();
+        $this->line('    <fg=gray>This registers CMS pages at root level (/about, /contact, etc.)</>');
+        $this->line('    <fg=gray>If you have a homepage in routes/web.php, remove it to let the CMS handle /.</>');
+        $this->newLine();
     }
 
     /**

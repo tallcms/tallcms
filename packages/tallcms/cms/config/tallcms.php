@@ -67,6 +67,9 @@ return [
         // Enable frontend CMS page routes.
         // Set TALLCMS_ROUTES_ENABLED=true in .env to enable.
         // Routes automatically exclude common app paths (admin, api, livewire, etc.)
+        //
+        // NOTE: If you want the CMS to handle your homepage (/), remove any existing
+        // '/' route from your routes/web.php file (e.g., the default welcome route).
         'routes_enabled' => env('TALLCMS_ROUTES_ENABLED', false),
 
         // Optional URL prefix for CMS routes (e.g., 'cms' results in /cms/about)
