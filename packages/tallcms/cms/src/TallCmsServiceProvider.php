@@ -309,7 +309,16 @@ class TallCmsServiceProvider extends PackageServiceProvider
         // Register Blade component aliases for theme compatibility
         $this->registerBladeComponentAliases();
 
-        // Register assets only if published
+        // Register admin CSS for block previews (DaisyUI components)
+        // This is loaded from the package directly, no publishing required
+        $adminCssPath = __DIR__.'/../resources/dist/tallcms-admin.css';
+        if (file_exists($adminCssPath)) {
+            FilamentAsset::register([
+                Css::make('tallcms-admin', $adminCssPath),
+            ], 'tallcms/cms');
+        }
+
+        // Register frontend assets if published (optional)
         $cssPath = public_path('vendor/tallcms/tallcms.css');
         $jsPath = public_path('vendor/tallcms/tallcms.js');
 
