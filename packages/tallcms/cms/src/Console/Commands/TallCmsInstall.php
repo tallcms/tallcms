@@ -35,7 +35,7 @@ class TallCmsInstall extends Command
     public function handle(): int
     {
         $this->newLine();
-        $this->components->info('🚀 Installing TallCMS...');
+        $this->components->info('Installing TallCMS...');
         $this->newLine();
 
         // Check if already installed
@@ -67,7 +67,10 @@ class TallCmsInstall extends Command
             $this->runMigrations();
         }
 
-        // Step 5: Run tallcms:setup for roles and permissions
+        // Step 5: Publish assets (needed for frontend routes)
+        $this->publishAssets();
+
+        // Step 6: Run tallcms:setup for roles and permissions
         if (! $this->option('skip-setup')) {
             $this->runSetup();
         }
@@ -84,7 +87,9 @@ class TallCmsInstall extends Command
     protected function isAlreadyInstalled(): bool
     {
         try {
-            return Schema::hasTable('tallcms_pages') &&
+            $prefix = config('tallcms.database.prefix', 'tallcms_');
+
+            return Schema::hasTable($prefix.'pages') &&
                    Schema::hasTable('roles') &&
                    \Spatie\Permission\Models\Role::where('name', 'super_admin')->exists();
         } catch (\Exception) {
@@ -119,9 +124,8 @@ class TallCmsInstall extends Command
             ];
         }
 
-        // Check 2: Filament panel provider exists
-        $panelProviderPath = app_path('Providers/Filament');
-        if (! is_dir($panelProviderPath) || empty(glob($panelProviderPath.'/*PanelProvider.php'))) {
+        // Check 2: Filament panel provider exists (more flexible detection)
+        if (! $this->hasFilamentPanel()) {
             $errors[] = [
                 'issue' => 'No Filament panel provider found',
                 'fix' => "Install and configure Filament first:\n\n".
@@ -166,6 +170,52 @@ class TallCmsInstall extends Command
     }
 
     /**
+     * Check if a Filament panel exists.
+     * More flexible than just checking for *PanelProvider.php naming.
+     */
+    protected function hasFilamentPanel(): bool
+    {
+        // Check standard location
+        $panelProviderPath = app_path('Providers/Filament');
+        if (is_dir($panelProviderPath) && ! empty(glob($panelProviderPath.'/*.php'))) {
+            return true;
+        }
+
+        // Check if Filament can return any panels
+        try {
+            $panels = \Filament\Facades\Filament::getPanels();
+            if (! empty($panels)) {
+                return true;
+            }
+        } catch (\Throwable) {
+            // Filament may not be fully booted
+        }
+
+        // Check for any registered panel provider in bootstrap/providers.php
+        $providersPath = base_path('bootstrap/providers.php');
+        if (file_exists($providersPath)) {
+            $content = file_get_contents($providersPath);
+            if (str_contains($content, 'PanelProvider') || str_contains($content, 'Filament')) {
+                return true;
+            }
+        }
+
+        // Check app/Providers for any Filament panel providers
+        $appProvidersPath = app_path('Providers');
+        if (is_dir($appProvidersPath)) {
+            foreach (glob($appProvidersPath.'/*.php') as $file) {
+                $content = file_get_contents($file);
+                if (str_contains($content, 'extends PanelProvider') ||
+                    str_contains($content, 'Filament\\Panel')) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Publish Spatie Permission migrations if not already published.
      */
     protected function publishPermissionMigrations(): void
@@ -181,7 +231,7 @@ class TallCmsInstall extends Command
 
         $this->components->task('Publishing Spatie Permission migrations', function () {
             $this->callSilently('vendor:publish', [
-                '--provider' => 'Spatie\Permission\PermissionServiceProvider',
+                '--provider' => 'Spatie\\Permission\\PermissionServiceProvider',
             ]);
 
             return true;
@@ -195,8 +245,23 @@ class TallCmsInstall extends Command
     {
         $this->components->task('Publishing TallCMS configuration', function () {
             $this->callSilently('vendor:publish', [
-                '--provider' => 'TallCms\Cms\TallCmsServiceProvider',
+                '--provider' => 'TallCms\\Cms\\TallCmsServiceProvider',
                 '--tag' => 'tallcms-config',
+            ]);
+
+            return true;
+        });
+    }
+
+    /**
+     * Publish TallCMS assets (CSS, JS for frontend).
+     */
+    protected function publishAssets(): void
+    {
+        $this->components->task('Publishing TallCMS assets', function () {
+            $this->callSilently('vendor:publish', [
+                '--provider' => 'TallCms\\Cms\\TallCmsServiceProvider',
+                '--tag' => 'tallcms-assets',
             ]);
 
             return true;
@@ -234,13 +299,13 @@ class TallCmsInstall extends Command
     protected function showCompletionMessage(): void
     {
         $this->newLine();
-        $this->components->info('✅ TallCMS installed successfully!');
+        $this->components->info('TallCMS installed successfully!');
         $this->newLine();
 
         // Reminder to register plugin
         $this->components->warn('Important: Make sure TallCmsPlugin is registered in your panel provider:');
         $this->newLine();
-        $this->line('    <fg=yellow>use</> TallCms\Cms\TallCmsPlugin;');
+        $this->line('    <fg=yellow>use</> TallCms\\Cms\\TallCmsPlugin;');
         $this->newLine();
         $this->line('    <fg=yellow>return</> <fg=magenta>$panel</>');
         $this->line('        ->plugin(TallCmsPlugin::make());');
@@ -264,8 +329,14 @@ class TallCmsInstall extends Command
      */
     protected function getFilamentPanelPath(): string
     {
+        // First check tallcms config
+        $configPath = config('tallcms.filament.panel_path');
+        if ($configPath) {
+            return '/'.ltrim($configPath, '/');
+        }
+
+        // Try to get the default panel's path from Filament
         try {
-            // Try to get the default panel's path from Filament
             $panels = \Filament\Facades\Filament::getPanels();
 
             if (! empty($panels)) {
@@ -273,7 +344,7 @@ class TallCmsInstall extends Command
                 $path = $panel->getPath();
 
                 if ($path) {
-                    return '/'.$path;
+                    return '/'.ltrim($path, '/');
                 }
             }
         } catch (\Throwable) {
@@ -283,7 +354,7 @@ class TallCmsInstall extends Command
         // Try to detect from panel provider files
         $providerPath = app_path('Providers/Filament');
         if (is_dir($providerPath)) {
-            $files = glob($providerPath.'/*PanelProvider.php');
+            $files = glob($providerPath.'/*.php');
             foreach ($files as $file) {
                 $content = file_get_contents($file);
                 // Look for ->path('something') in the provider
@@ -293,15 +364,37 @@ class TallCmsInstall extends Command
             }
         }
 
-        return 'your admin panel';
+        // Check app/Providers for any Filament panel providers
+        $appProvidersPath = app_path('Providers');
+        if (is_dir($appProvidersPath)) {
+            foreach (glob($appProvidersPath.'/*.php') as $file) {
+                $content = file_get_contents($file);
+                if (str_contains($content, 'extends PanelProvider') ||
+                    str_contains($content, 'Filament\\Panel')) {
+                    if (preg_match('/->path\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/', $content, $matches)) {
+                        return '/'.$matches[1];
+                    }
+                }
+            }
+        }
+
+        return '/admin';
     }
 
     /**
-     * Get the User model class from auth configuration.
+     * Get the User model class from TallCMS config or auth configuration.
      */
     protected function getUserModel(): string
     {
-        $provider = config('auth.guards.web.provider');
+        // First check TallCMS plugin mode config
+        $tallcmsUserModel = config('tallcms.plugin_mode.user_model');
+        if ($tallcmsUserModel && class_exists($tallcmsUserModel)) {
+            return $tallcmsUserModel;
+        }
+
+        // Fall back to auth config using the configured guard
+        $guard = config('tallcms.auth.guard', 'web');
+        $provider = config("auth.guards.{$guard}.provider");
 
         return config("auth.providers.{$provider}.model", \App\Models\User::class);
     }

@@ -4,6 +4,7 @@ namespace TallCms\Cms\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -15,7 +16,7 @@ class TallCmsSetup extends Command
      *
      * @var string
      */
-    protected $signature = 'tallcms:setup 
+    protected $signature = 'tallcms:setup
                             {--force : Force setup even if already configured}
                             {--name= : Admin full name}
                             {--email= : Admin email address}
@@ -29,12 +30,26 @@ class TallCmsSetup extends Command
     protected $description = 'Setup TallCMS with initial roles, permissions, and admin user';
 
     /**
+     * The guard name for roles/permissions.
+     */
+    protected string $guardName;
+
+    /**
+     * The Filament panel ID.
+     */
+    protected string $panelId;
+
+    /**
      * Execute the console command.
      */
     public function handle()
     {
-        $this->info('🚀 Setting up TallCMS...');
+        $this->info('Setting up TallCMS...');
         $this->newLine();
+
+        // Initialize configuration
+        $this->guardName = config('tallcms.auth.guard', 'web');
+        $this->panelId = $this->detectPanelId();
 
         // Check if already setup
         if (! $this->option('force') && $this->isAlreadySetup()) {
@@ -51,10 +66,89 @@ class TallCmsSetup extends Command
         $this->createAdminUser();
 
         $this->newLine();
-        $this->info('✅ TallCMS setup completed successfully!');
-        $this->info('You can now access the admin panel at /admin');
+        $this->info('TallCMS setup completed successfully!');
+
+        $panelPath = $this->detectPanelPath();
+        $this->info("You can now access the admin panel at {$panelPath}");
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Detect the Filament panel ID from configuration or panel providers.
+     */
+    protected function detectPanelId(): string
+    {
+        // First check tallcms config
+        $configPanelId = config('tallcms.filament.panel_id');
+        if ($configPanelId) {
+            return $configPanelId;
+        }
+
+        // Try to detect from Filament panels
+        try {
+            $panels = \Filament\Facades\Filament::getPanels();
+            if (! empty($panels)) {
+                return array_key_first($panels);
+            }
+        } catch (\Throwable) {
+            // Filament not fully booted
+        }
+
+        // Try to detect from panel provider files
+        $providerPath = app_path('Providers/Filament');
+        if (is_dir($providerPath)) {
+            $files = glob($providerPath.'/*Provider.php');
+            foreach ($files as $file) {
+                $content = file_get_contents($file);
+                // Look for ->id('something') in the provider
+                if (preg_match('/->id\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/', $content, $matches)) {
+                    return $matches[1];
+                }
+            }
+        }
+
+        return 'admin';
+    }
+
+    /**
+     * Detect the Filament panel path.
+     */
+    protected function detectPanelPath(): string
+    {
+        // First check tallcms config
+        $configPanelPath = config('tallcms.filament.panel_path');
+        if ($configPanelPath) {
+            return '/' . ltrim($configPanelPath, '/');
+        }
+
+        // Try to get from Filament panels
+        try {
+            $panels = \Filament\Facades\Filament::getPanels();
+            if (! empty($panels)) {
+                $panel = reset($panels);
+                $path = $panel->getPath();
+                if ($path) {
+                    return '/' . ltrim($path, '/');
+                }
+            }
+        } catch (\Throwable) {
+            // Filament not fully booted
+        }
+
+        // Try to detect from panel provider files
+        $providerPath = app_path('Providers/Filament');
+        if (is_dir($providerPath)) {
+            $files = glob($providerPath.'/*Provider.php');
+            foreach ($files as $file) {
+                $content = file_get_contents($file);
+                if (preg_match('/->path\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/', $content, $matches)) {
+                    return '/' . ltrim($matches[1], '/');
+                }
+            }
+        }
+
+        return '/admin';
     }
 
     protected function isAlreadySetup(): bool
@@ -62,7 +156,9 @@ class TallCmsSetup extends Command
         try {
             $userModel = $this->getUserModel();
 
-            return Role::where('name', 'super_admin')->exists() &&
+            return Role::where('name', 'super_admin')
+                    ->where('guard_name', $this->guardName)
+                    ->exists() &&
                    $userModel::role('super_admin')->exists();
         } catch (\Exception) {
             // Tables don't exist yet, so setup is not complete
@@ -72,9 +168,9 @@ class TallCmsSetup extends Command
 
     protected function createRolesAndPermissions(): void
     {
-        $this->info('📝 Creating roles and permissions...');
+        $this->info('Creating roles and permissions...');
 
-        // Create roles
+        // Create roles with proper guard
         $roles = [
             'super_admin' => 'Super Administrator - Complete system access',
             'administrator' => 'Administrator - Full content and limited user management',
@@ -83,24 +179,24 @@ class TallCmsSetup extends Command
         ];
 
         foreach (array_keys($roles) as $roleName) {
-            Role::firstOrCreate(['name' => $roleName]);
-            $this->line("  ✓ Created role: {$roleName}");
+            Role::firstOrCreate([
+                'name' => $roleName,
+                'guard_name' => $this->guardName,
+            ]);
+            $this->line("  Created role: {$roleName}");
         }
 
         // Generate Shield permissions
-        // Credit: Using Filament Shield by Bezhan Salleh for role-based permissions
-        // https://github.com/bezhanSalleh/filament-shield
-        $this->info('🛡️  Generating Shield permissions...');
+        $this->info('Generating Shield permissions...');
         $this->call('shield:generate', [
             '--all' => true,
-            '--panel' => 'admin',
+            '--panel' => $this->panelId,
             '--option' => 'policies_and_permissions',
         ]);
 
         // Run ShieldSeeder if it exists (standalone mode)
-        // In plugin mode, shield:generate already created the permissions
         if (class_exists('Database\\Seeders\\ShieldSeeder')) {
-            $this->info('🛡️  Running Shield seeder for permissions...');
+            $this->info('Running Shield seeder for permissions...');
             $this->call('db:seed', ['--class' => 'ShieldSeeder']);
         }
 
@@ -110,13 +206,13 @@ class TallCmsSetup extends Command
         // Now customize the role permissions for our CMS roles
         $this->customizeRolePermissions();
 
-        $this->info('✅ Roles and permissions created!');
+        $this->info('Roles and permissions created!');
         $this->newLine();
     }
 
     protected function createAdminUser(): void
     {
-        $this->info('👤 Setting up admin user...');
+        $this->info('Setting up admin user...');
 
         $userModel = $this->getUserModel();
 
@@ -128,7 +224,7 @@ class TallCmsSetup extends Command
 
             if ($makeAdmin) {
                 $existingUser->assignRole('super_admin');
-                $this->info("✅ {$existingUser->email} is now a super admin!");
+                $this->info("{$existingUser->email} is now a super admin!");
 
                 return;
             }
@@ -195,40 +291,53 @@ class TallCmsSetup extends Command
             }
         }
 
-        // Create the user
-        $user = $userModel::create([
+        // Build user data with only columns that exist
+        $userData = [
             'name' => $name,
             'email' => $email,
             'password' => Hash::make($password),
-            'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
+        ];
+
+        // Check for optional columns and add them if they exist
+        $tableName = (new $userModel)->getTable();
+
+        if (Schema::hasColumn($tableName, 'is_active')) {
+            $userData['is_active'] = true;
+        }
+
+        if (Schema::hasColumn($tableName, 'email_verified_at')) {
+            $userData['email_verified_at'] = now();
+        }
+
+        // Create the user
+        $user = $userModel::create($userData);
 
         // Assign super admin role
         $user->assignRole('super_admin');
 
-        $this->info("✅ Super admin user created: {$email}");
+        $this->info("Super admin user created: {$email}");
     }
 
     /**
      * Assign all permissions to super_admin role.
-     * This replicates what ShieldSeeder does in standalone mode.
      */
     protected function assignSuperAdminPermissions(): void
     {
-        $superAdminRole = Role::where('name', 'super_admin')->first();
+        $superAdminRole = Role::where('name', 'super_admin')
+            ->where('guard_name', $this->guardName)
+            ->first();
 
         if (! $superAdminRole) {
             return;
         }
 
-        $allPermissions = Permission::all();
+        $allPermissions = Permission::where('guard_name', $this->guardName)->get();
         $superAdminRole->syncPermissions($allPermissions);
     }
 
     protected function customizeRolePermissions(): void
     {
-        $allPermissions = Permission::all();
+        $allPermissions = Permission::where('guard_name', $this->guardName)->get();
 
         if ($allPermissions->isEmpty()) {
             $this->error('No permissions found! Shield generation may have failed.');
@@ -236,113 +345,132 @@ class TallCmsSetup extends Command
             return;
         }
 
+        // Get Shield's permission format from config
+        $separator = config('filament-shield.permissions.separator', ':');
+        $case = config('filament-shield.permissions.case', 'pascal');
+
         // Super Admin has all permissions (assigned in assignSuperAdminPermissions)
-        $superAdminRole = Role::where('name', 'super_admin')->first();
-        $this->line("  ✓ Super Admin: {$superAdminRole->permissions->count()} permissions (full access)");
+        $superAdminRole = Role::where('name', 'super_admin')
+            ->where('guard_name', $this->guardName)
+            ->first();
+        $this->line("  Super Admin: {$superAdminRole->permissions->count()} permissions (full access)");
 
         // Administrator: Content + limited user management + some settings
-        $administratorPermissions = $allPermissions->filter(function ($permission) {
-            return $this->isAdministratorPermission($permission->name);
+        $administratorPermissions = $allPermissions->filter(function ($permission) use ($separator, $case) {
+            return $this->isAdministratorPermission($permission->name, $separator, $case);
         });
-        $administratorRole = Role::where('name', 'administrator')->first();
+        $administratorRole = Role::where('name', 'administrator')
+            ->where('guard_name', $this->guardName)
+            ->first();
         $administratorRole->syncPermissions($administratorPermissions);
-        $this->line("  ✓ Administrator: {$administratorPermissions->count()} permissions (content + users + settings)");
+        $this->line("  Administrator: {$administratorPermissions->count()} permissions (content + users + settings)");
 
         // Editor: Full content management, no users/settings
-        $editorPermissions = $allPermissions->filter(function ($permission) {
-            return $this->isEditorPermission($permission->name);
+        $editorPermissions = $allPermissions->filter(function ($permission) use ($separator, $case) {
+            return $this->isEditorPermission($permission->name, $separator, $case);
         });
-        $editorRole = Role::where('name', 'editor')->first();
+        $editorRole = Role::where('name', 'editor')
+            ->where('guard_name', $this->guardName)
+            ->first();
         $editorRole->syncPermissions($editorPermissions);
-        $this->line("  ✓ Editor: {$editorPermissions->count()} permissions (content management only)");
+        $this->line("  Editor: {$editorPermissions->count()} permissions (content management only)");
 
         // Author: Own content + basic operations
-        $authorPermissions = $allPermissions->filter(function ($permission) {
-            return $this->isAuthorPermission($permission->name);
+        $authorPermissions = $allPermissions->filter(function ($permission) use ($separator, $case) {
+            return $this->isAuthorPermission($permission->name, $separator, $case);
         });
-        $authorRole = Role::where('name', 'author')->first();
+        $authorRole = Role::where('name', 'author')
+            ->where('guard_name', $this->guardName)
+            ->first();
         $authorRole->syncPermissions($authorPermissions);
-        $this->line("  ✓ Author: {$authorPermissions->count()} permissions (basic content creation)");
+        $this->line("  Author: {$authorPermissions->count()} permissions (basic content creation)");
     }
 
-    protected function isAdministratorPermission(string $permission): bool
+    /**
+     * Check if permission is for content resources (case-insensitive).
+     */
+    protected function isContentResource(string $permission): bool
     {
-        // Allow all content management (CmsPage, CmsPost, CmsCategory)
-        if (str_contains($permission, 'CmsPage') ||
-            str_contains($permission, 'CmsPost') ||
-            str_contains($permission, 'CmsCategory') ||
-            str_contains($permission, 'TallcmsMenu') ||
-            str_contains($permission, 'TallcmsMedia')) {
+        $lower = strtolower($permission);
+        return str_contains($lower, 'cmspage') ||
+               str_contains($lower, 'cmspost') ||
+               str_contains($lower, 'cmscategory') ||
+               str_contains($lower, 'tallcmsmenu') ||
+               str_contains($lower, 'tallcmsmedia');
+    }
+
+    protected function isAdministratorPermission(string $permission, string $separator, string $case): bool
+    {
+        // Allow all content management (case-insensitive check)
+        if ($this->isContentResource($permission)) {
             return true;
         }
 
         // Allow user management (but exclude Shield roles)
-        if (str_contains($permission, 'User') &&
-            ! str_contains($permission, 'Role') &&
-            ! str_contains($permission, 'Shield')) {
+        $lower = strtolower($permission);
+        if (str_contains($lower, 'user') &&
+            ! str_contains($lower, 'role') &&
+            ! str_contains($lower, 'shield')) {
             return true;
         }
 
         // Allow site settings page
-        if (str_contains($permission, 'SiteSettings')) {
+        if (str_contains($lower, 'sitesettings')) {
             return true;
         }
 
         return false;
     }
 
-    protected function isEditorPermission(string $permission): bool
+    protected function isEditorPermission(string $permission, string $separator, string $case): bool
     {
         // Full content management
-        if (str_contains($permission, 'CmsPage') ||
-            str_contains($permission, 'CmsPost') ||
-            str_contains($permission, 'CmsCategory') ||
-            str_contains($permission, 'TallcmsMenu') ||
-            str_contains($permission, 'TallcmsMedia')) {
-            return true;
-        }
-
-        // No user management, no settings, no system features
-        return false;
+        return $this->isContentResource($permission);
     }
 
-    protected function isAuthorPermission(string $permission): bool
+    protected function isAuthorPermission(string $permission, string $separator, string $case): bool
     {
-        // Basic content permissions (view, create, update)
-        if (str_contains($permission, 'CmsPage') || str_contains($permission, 'CmsPost')) {
-            // Allow ViewAny, View, Create, Update
-            if (str_contains($permission, 'ViewAny:') ||
-                str_contains($permission, 'View:') ||
-                str_contains($permission, 'Create:') ||
-                str_contains($permission, 'Update:')) {
+        $lower = strtolower($permission);
+
+        // Basic content permissions (view, create, update) for pages and posts
+        if (str_contains($lower, 'cmspage') || str_contains($lower, 'cmspost')) {
+            // Allow ViewAny, View, Create, Update (check for common permission prefixes)
+            if (str_contains($lower, 'viewany') ||
+                str_contains($lower, 'view_any') ||
+                (str_contains($lower, 'view') && ! str_contains($lower, 'any')) ||
+                str_contains($lower, 'create') ||
+                str_contains($lower, 'update')) {
                 return true;
             }
             // Exclude Delete, ForceDelete, Restore for security
         }
 
         // View categories only (but can't manage them)
-        if (str_contains($permission, 'CmsCategory') &&
-            (str_contains($permission, 'ViewAny:') || str_contains($permission, 'View:'))) {
+        if (str_contains($lower, 'cmscategory') &&
+            (str_contains($lower, 'viewany') || str_contains($lower, 'view_any') ||
+             (str_contains($lower, 'view') && ! str_contains($lower, 'any')))) {
             return true;
         }
 
         // Basic media operations
-        if (str_contains($permission, 'TallcmsMedia') &&
-            (str_contains($permission, 'ViewAny:') ||
-             str_contains($permission, 'View:') ||
-             str_contains($permission, 'Create:') ||
-             str_contains($permission, 'Update:'))) {
+        if (str_contains($lower, 'tallcmsmedia') &&
+            (str_contains($lower, 'viewany') ||
+             str_contains($lower, 'view_any') ||
+             (str_contains($lower, 'view') && ! str_contains($lower, 'any')) ||
+             str_contains($lower, 'create') ||
+             str_contains($lower, 'update'))) {
             return true;
         }
 
         // Basic dashboard access
-        if ($permission === 'view_dashboard') {
+        if ($lower === 'view_dashboard') {
             return true;
         }
 
         // Menu management (view only)
-        if (str_contains($permission, 'TallcmsMenu') &&
-            (str_contains($permission, 'ViewAny:') || str_contains($permission, 'View:'))) {
+        if (str_contains($lower, 'tallcmsmenu') &&
+            (str_contains($lower, 'viewany') || str_contains($lower, 'view_any') ||
+             (str_contains($lower, 'view') && ! str_contains($lower, 'any')))) {
             return true;
         }
 
@@ -357,13 +485,21 @@ class TallCmsSetup extends Command
     }
 
     /**
-     * Get the User model class from auth configuration.
+     * Get the User model class from TallCMS config or auth configuration.
      *
      * @return class-string<\Illuminate\Foundation\Auth\User>
      */
     protected function getUserModel(): string
     {
-        $provider = config('auth.guards.web.provider');
+        // First check TallCMS plugin mode config
+        $tallcmsUserModel = config('tallcms.plugin_mode.user_model');
+        if ($tallcmsUserModel && class_exists($tallcmsUserModel)) {
+            return $tallcmsUserModel;
+        }
+
+        // Fall back to auth config using the configured guard
+        $guard = config('tallcms.auth.guard', 'web');
+        $provider = config("auth.guards.{$guard}.provider");
 
         return config("auth.providers.{$provider}.model", \App\Models\User::class);
     }
