@@ -113,13 +113,17 @@ Visit `http://localhost:8000/install` to complete setup.
 
 For existing Filament applications, install the CMS as a plugin:
 
+### 1. Install the Package
+
 ```bash
 composer require tallcms/cms
-php artisan vendor:publish --tag=tallcms-migrations
-php artisan migrate
 ```
 
-Register in your panel provider:
+> **Note:** TallCMS v2.x requires Filament 4.x (not Filament 5) because filament-shield doesn't yet have a Filament 5 compatible release.
+
+### 2. Register the Plugin
+
+Add `TallCmsPlugin` to your panel provider (e.g., `AdminPanelProvider.php`):
 
 ```php
 use TallCms\Cms\TallCmsPlugin;
@@ -130,6 +134,20 @@ public function panel(Panel $panel): Panel
         ->plugin(TallCmsPlugin::make());
 }
 ```
+
+### 3. Run Migrations
+
+```bash
+php artisan migrate
+```
+
+### 4. Setup Roles & Permissions
+
+```bash
+php artisan tallcms:setup
+```
+
+This creates the default roles (Super Admin, Administrator, Editor, Author) and assigns permissions via Filament Shield.
 
 ### Frontend Routes (Plugin Mode)
 
@@ -259,7 +277,16 @@ See [Theme Development Guide](docs/THEME_DEVELOPMENT.md) for details.
 
 **"CMS resources not appearing"**
 - Ensure `TallCmsPlugin::make()` is registered in your panel provider
-- Run `php artisan vendor:publish --tag=tallcms-migrations` and migrate
+- Run `php artisan migrate` to create the CMS tables
+- Run `php artisan tallcms:setup` to configure roles and permissions
+
+**"No such table: tallcms_menus"**
+- Migrations haven't run yet. Run `php artisan migrate`
+
+**"Nothing to migrate" but tables missing**
+- Clear config cache: `php artisan config:clear`
+- Re-run package discovery: `php artisan package:discover`
+- Then run migrations again: `php artisan migrate`
 
 ## System Updates
 

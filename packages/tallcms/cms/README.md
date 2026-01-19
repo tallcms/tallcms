@@ -28,20 +28,15 @@ A modern, feature-rich CMS package for Laravel Filament. Works as a standalone a
 
 Add TallCMS to your existing Filament application:
 
+> **Note:** TallCMS v2.x requires Filament 4.x (not Filament 5) because filament-shield doesn't yet have a Filament 5 compatible release.
+
 **1. Install via Composer:**
 
 ```bash
 composer require tallcms/cms
 ```
 
-**2. Publish and run migrations:**
-
-```bash
-php artisan vendor:publish --tag=tallcms-migrations
-php artisan migrate
-```
-
-**3. Register the plugin in your Panel Provider:**
+**2. Register the plugin in your Panel Provider:**
 
 ```php
 use TallCms\Cms\TallCmsPlugin;
@@ -56,7 +51,21 @@ public function panel(Panel $panel): Panel
 
 > **Important:** You must register `TallCmsPlugin` in your panel provider. The CMS resources will not appear in your admin panel without this step.
 
-**4. (Optional) Publish configuration:**
+**3. Run migrations:**
+
+```bash
+php artisan migrate
+```
+
+**4. Setup roles and permissions:**
+
+```bash
+php artisan tallcms:setup
+```
+
+This creates the default roles (Super Admin, Administrator, Editor, Author) and assigns permissions via Filament Shield.
+
+**5. (Optional) Publish configuration:**
 
 ```bash
 php artisan vendor:publish --tag=tallcms-config
@@ -320,6 +329,12 @@ TallCMS creates these tables (all prefixed with `tallcms_`):
 | `make:tallcms-block` | Create a custom content block |
 | `tallcms:clean-preview-tokens` | Remove expired preview tokens |
 
+### Setup Command
+
+| Command | Description |
+|---------|-------------|
+| `tallcms:setup` | Setup roles, permissions, and admin user |
+
 ### Standalone-Only Commands
 
 These commands are only available in standalone mode:
@@ -328,7 +343,6 @@ These commands are only available in standalone mode:
 |---------|-------------|
 | `tallcms:update` | Update to latest version |
 | `tallcms:version` | Display current version |
-| `tallcms:setup` | Initial setup wizard |
 
 ## Permissions
 
