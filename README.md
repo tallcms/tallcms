@@ -173,19 +173,50 @@ This single command will:
 
 ### Frontend Routes (Plugin Mode)
 
-Frontend routes are **disabled by default** in plugin mode to avoid conflicts.
-If you want CMS pages to render in your host app, enable them explicitly:
+Frontend routes are **disabled by default** in plugin mode to avoid conflicts with your app's routes.
 
-```
+#### 1. Enable CMS Routes
+
+Add to your `.env` file:
+
+```env
 TALLCMS_ROUTES_ENABLED=true
-TALLCMS_ROUTES_PREFIX=cms
-TALLCMS_CATCH_ALL_ENABLED=true
 ```
 
-Then publish assets:
+This registers `/{slug}` routes for CMS pages (e.g., `/about`, `/contact`).
+Routes automatically exclude common paths like `/admin`, `/api`, `/livewire`, etc.
+
+#### 2. Configure the Homepage
+
+The homepage (`/`) is **not** automatically registered to avoid hijacking your app's root route.
+Update your `routes/web.php` to explicitly handle it:
+
+```php
+use TallCms\Cms\Livewire\CmsPageRenderer;
+
+if (config('tallcms.plugin_mode.routes_enabled')) {
+    Route::get('/', CmsPageRenderer::class)->defaults('slug', '/');
+} else {
+    Route::get('/', fn () => view('welcome'));
+}
+```
+
+Then mark a CMS page as "Homepage" in the admin panel.
+
+#### 3. Publish Assets (Optional)
+
+For frontend styling:
 
 ```bash
 php artisan vendor:publish --tag=tallcms-assets
+```
+
+#### Route Prefix (Optional)
+
+To prefix all CMS routes (e.g., `/cms/about` instead of `/about`):
+
+```env
+TALLCMS_ROUTES_PREFIX=cms
 ```
 
 ### Selective Features
