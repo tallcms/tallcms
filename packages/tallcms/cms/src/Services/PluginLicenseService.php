@@ -30,9 +30,13 @@ class PluginLicenseService
     /**
      * Check if a plugin has ever been licensed (activated_at exists)
      *
-     * This is used for watermark logic - once a license has been activated,
-     * the watermark should never show again, even if the license expires.
-     * Expired licenses only lose access to updates, not functionality.
+     * This is used for watermark logic:
+     * - Expired license: watermarks stay hidden (user paid, just not renewing)
+     * - Deactivated license: watermarks return (user transferred license elsewhere)
+     *
+     * The distinction is important for different user intent:
+     * - Expiration = continuing to use what you paid for
+     * - Deactivation = explicitly freeing the license for another site
      */
     public function hasEverBeenLicensed(string $pluginSlug): bool
     {
@@ -234,7 +238,11 @@ class PluginLicenseService
         // Only mark license as invalid if proxy confirmed deactivation
         // Don't invalidate locally if proxy call failed (network/500) - license may still be active
         if ($result['success']) {
+            // Clear activated_at so hasEverBeenLicensed() returns false
+            // This is different from expiration - deactivation means the user
+            // is transferring the license elsewhere, so watermarks should return
             $license->status = 'invalid';
+            $license->activated_at = null;
             $license->save();
 
             // Clear cached state

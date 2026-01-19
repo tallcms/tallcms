@@ -7,6 +7,7 @@ namespace TallCms\Cms;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
+use Illuminate\Support\Facades\Log;
 use TallCms\Cms\Filament\Pages\MenuItemsManager;
 use TallCms\Cms\Filament\Pages\PluginLicenses;
 use TallCms\Cms\Filament\Pages\PluginManager;
@@ -87,6 +88,34 @@ class TallCmsPlugin implements Plugin
             }
 
             $panel->plugin($shieldPlugin);
+        }
+
+        // Register Filament plugins from installed TallCMS plugins
+        $this->registerInstalledPluginFilamentPlugins($panel);
+    }
+
+    /**
+     * Register Filament plugins from installed TallCMS plugins.
+     */
+    protected function registerInstalledPluginFilamentPlugins(Panel $panel): void
+    {
+        // Only register if plugin system is enabled
+        if (! $this->isPluginSystemEnabled()) {
+            return;
+        }
+
+        try {
+            $pluginManager = app(Services\PluginManager::class);
+            $filamentPlugins = $pluginManager->getFilamentPlugins();
+
+            foreach ($filamentPlugins as $filamentPlugin) {
+                $panel->plugin($filamentPlugin);
+            }
+        } catch (\Throwable $e) {
+            // Don't let plugin registration failures break the admin panel
+            Log::warning('Failed to register installed plugin Filament plugins', [
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 

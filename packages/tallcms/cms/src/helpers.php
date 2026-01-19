@@ -470,6 +470,55 @@ if (! function_exists('render_menu_item')) {
     }
 }
 
+// Plugin License Helper Functions
+
+if (! function_exists('plugin_is_licensed')) {
+    /**
+     * Check if a plugin has a valid license
+     *
+     * This performs the full license validation check (database + API if needed).
+     * Use this for gating premium features.
+     *
+     * @param  string  $pluginSlug  The plugin's license slug (e.g., 'tallcms-pro')
+     * @return bool True if the plugin has a valid license
+     */
+    function plugin_is_licensed(string $pluginSlug): bool
+    {
+        try {
+            $licenseService = app(\TallCms\Cms\Services\PluginLicenseService::class);
+
+            return $licenseService->isValid($pluginSlug);
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+}
+
+if (! function_exists('plugin_has_been_licensed')) {
+    /**
+     * Check if a plugin has ever been licensed (for watermark logic)
+     *
+     * Returns true if the plugin has been licensed at any point, even if
+     * the license has since expired. Use this for watermark display logic
+     * where you want to hide watermarks once a user has paid.
+     *
+     * Note: Returns false after license deactivation (user transferred license).
+     *
+     * @param  string  $pluginSlug  The plugin's license slug (e.g., 'tallcms-pro')
+     * @return bool True if the plugin has ever been licensed
+     */
+    function plugin_has_been_licensed(string $pluginSlug): bool
+    {
+        try {
+            $licenseService = app(\TallCms\Cms\Services\PluginLicenseService::class);
+
+            return $licenseService->hasEverBeenLicensed($pluginSlug);
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+}
+
 // CMS Content Helper Functions
 
 if (! function_exists('cms_post_url')) {
