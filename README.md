@@ -131,6 +131,23 @@ public function panel(Panel $panel): Panel
 }
 ```
 
+### Frontend Routes (Plugin Mode)
+
+Frontend routes are **disabled by default** in plugin mode to avoid conflicts.
+If you want CMS pages to render in your host app, enable them explicitly:
+
+```
+TALLCMS_ROUTES_ENABLED=true
+TALLCMS_ROUTES_PREFIX=cms
+TALLCMS_CATCH_ALL_ENABLED=true
+```
+
+Then publish assets:
+
+```bash
+php artisan vendor:publish --tag=tallcms-assets
+```
+
 ### Selective Features
 
 Disable components you don't need:
