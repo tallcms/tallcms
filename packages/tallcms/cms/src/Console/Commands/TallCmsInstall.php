@@ -70,7 +70,10 @@ class TallCmsInstall extends Command
         // Step 5: Publish assets (needed for frontend routes)
         $this->publishAssets();
 
-        // Step 6: Run tallcms:setup for roles and permissions
+        // Step 6: Publish Filament assets (required for admin panel CSS)
+        $this->publishFilamentAssets();
+
+        // Step 7: Run tallcms:setup for roles and permissions
         if (! $this->option('skip-setup')) {
             $this->runSetup();
         }
@@ -263,6 +266,19 @@ class TallCmsInstall extends Command
                 '--provider' => 'TallCms\\Cms\\TallCmsServiceProvider',
                 '--tag' => 'tallcms-assets',
             ]);
+
+            return true;
+        });
+    }
+
+    /**
+     * Publish Filament assets (required for admin panel CSS).
+     * This creates symlinks/copies for all Filament package assets including TallCMS admin CSS.
+     */
+    protected function publishFilamentAssets(): void
+    {
+        $this->components->task('Publishing Filament assets', function () {
+            $this->callSilently('filament:assets');
 
             return true;
         });

@@ -1,0 +1,13 @@
+{
+  "name": "@tallcms/cms",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:admin": "npx @tailwindcss/cli@4 -i ./resources/css/admin.css -o ./resources/dist/tallcms-admin.css --minify"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.0",
+    "daisyui": "^5.0.0",
+    "tailwindcss": "^4.1.0"
+  }
+}

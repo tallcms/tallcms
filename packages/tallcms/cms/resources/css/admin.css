@@ -1,0 +1,31 @@
+/**
+ * TallCMS Admin Preview CSS
+ *
+ * This stylesheet provides Tailwind utilities and DaisyUI components
+ * for block previews in the Filament admin panel.
+ *
+ * Built with Tailwind CSS v4 and DaisyUI v5.
+ */
+
+@import "tailwindcss";
+
+@plugin "daisyui" {
+  themes: light --default, dark;
+}
+
+/* Scan block templates for class discovery */
+@source "../views/cms/blocks/**/*.blade.php";
+@source "../views/filament/**/*.blade.php";
+
+/*
+ * Sync Filament's dark mode class with DaisyUI's data-theme attribute.
+ * DaisyUI uses [data-theme="dark"] while Filament uses .dark class.
+ */
+:root.dark {
+  color-scheme: dark;
+}
+
+/* Ensure DaisyUI dark theme activates when Filament dark mode is on */
+.dark .fi-fo-rich-editor-custom-block-preview {
+  color-scheme: dark;
+}
