@@ -253,6 +253,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
             ->hasConfigFile(['tallcms', 'theme'])
             ->hasViews('tallcms')
             ->hasMigrations($this->getMigrations())
+            ->runsMigrations()
             ->hasTranslations()
             ->hasAssets()
             ->hasCommands($this->getCommands());
