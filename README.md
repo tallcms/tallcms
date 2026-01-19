@@ -121,7 +121,21 @@ composer require tallcms/cms
 
 > **Note:** TallCMS v2.x requires Filament 4.x (not Filament 5) because filament-shield doesn't yet have a Filament 5 compatible release.
 
-### 2. Register the Plugin
+### 2. Add HasRoles Trait to User Model
+
+Your `User` model must use the `HasRoles` trait:
+
+```php
+use Spatie\Permission\Traits\HasRoles;
+
+class User extends Authenticatable
+{
+    use HasFactory, HasRoles, Notifiable;
+    // ...
+}
+```
+
+### 3. Register the Plugin
 
 Add `TallCmsPlugin` to your panel provider (e.g., `AdminPanelProvider.php`):
 
@@ -135,40 +149,17 @@ public function panel(Panel $panel): Panel
 }
 ```
 
-### 3. Add HasRoles Trait to User Model
-
-Your `User` model must use the `HasRoles` trait from Spatie Permission:
-
-```php
-use Spatie\Permission\Traits\HasRoles;
-
-class User extends Authenticatable
-{
-    use HasFactory, HasRoles, Notifiable;
-
-    // ...
-}
-```
-
-### 4. Publish Permission Migrations
+### 4. Run the Installer
 
 ```bash
-php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
+php artisan tallcms:install
 ```
 
-### 5. Run Migrations
-
-```bash
-php artisan migrate
-```
-
-### 6. Setup Roles & Permissions
-
-```bash
-php artisan tallcms:setup
-```
-
-This creates the default roles (Super Admin, Administrator, Editor, Author) and assigns permissions via Filament Shield.
+This single command will:
+- Check prerequisites (HasRoles trait, etc.)
+- Publish and run migrations
+- Setup roles and permissions
+- Create your admin user
 
 ### Frontend Routes (Plugin Mode)
 

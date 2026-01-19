@@ -46,7 +46,6 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     use HasFactory, HasRoles, Notifiable;
-
     // ...
 }
 ```
@@ -66,25 +65,18 @@ public function panel(Panel $panel): Panel
 
 > **Important:** You must register `TallCmsPlugin` in your panel provider. The CMS resources will not appear in your admin panel without this step.
 
-**4. Publish Permission Migrations:**
+**4. Run the installer:**
 
 ```bash
-php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
+php artisan tallcms:install
 ```
 
-**5. Run migrations:**
-
-```bash
-php artisan migrate
-```
-
-**6. Setup roles and permissions:**
-
-```bash
-php artisan tallcms:setup
-```
-
-This creates the default roles (Super Admin, Administrator, Editor, Author) and assigns permissions via Filament Shield.
+This single command handles everything:
+- Checks prerequisites (HasRoles trait, etc.)
+- Publishes Spatie Permission migrations
+- Runs all database migrations
+- Sets up roles and permissions via Filament Shield
+- Creates your admin user
 
 **5. (Optional) Publish configuration:**
 
