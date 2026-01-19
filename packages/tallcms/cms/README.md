@@ -26,9 +26,16 @@ A modern, feature-rich CMS package for Laravel Filament. Works as a standalone a
 
 ### As a Filament Plugin (Recommended)
 
-Add TallCMS to your existing Filament application:
+Add TallCMS to your existing Filament application.
 
 > **Note:** TallCMS v2.x requires Filament 4.x (not Filament 5) because filament-shield doesn't yet have a Filament 5 compatible release.
+
+**Prerequisites:** You must have Filament installed and configured first:
+
+```bash
+composer require filament/filament:"^4.0"
+php artisan filament:install --panels
+```
 
 **1. Install via Composer:**
 

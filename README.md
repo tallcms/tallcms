@@ -111,15 +111,24 @@ Visit `http://localhost:8000/install` to complete setup.
 
 ## Plugin Installation
 
-For existing Filament applications, install the CMS as a plugin:
+For existing Filament applications, install the CMS as a plugin.
+
+### Prerequisites
+
+You must have Filament installed and configured first:
+
+```bash
+composer require filament/filament:"^4.0"
+php artisan filament:install --panels
+```
+
+> **Note:** TallCMS v2.x requires Filament 4.x (not Filament 5) because filament-shield doesn't yet have a Filament 5 compatible release.
 
 ### 1. Install the Package
 
 ```bash
 composer require tallcms/cms
 ```
-
-> **Note:** TallCMS v2.x requires Filament 4.x (not Filament 5) because filament-shield doesn't yet have a Filament 5 compatible release.
 
 ### 2. Add HasRoles Trait to User Model
 

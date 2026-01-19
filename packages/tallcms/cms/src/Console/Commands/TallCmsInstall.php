@@ -119,8 +119,16 @@ class TallCmsInstall extends Command
             ];
         }
 
-        // Check 2: TallCmsPlugin registered (check if we can detect it)
-        // This is harder to check, so we'll just remind them in the completion message
+        // Check 2: Filament panel provider exists
+        $panelProviderPath = app_path('Providers/Filament');
+        if (! is_dir($panelProviderPath) || empty(glob($panelProviderPath.'/*PanelProvider.php'))) {
+            $errors[] = [
+                'issue' => 'No Filament panel provider found',
+                'fix' => "Install and configure Filament first:\n\n".
+                    "    composer require filament/filament:\"^4.0\"\n".
+                    "    php artisan filament:install --panels",
+            ];
+        }
 
         // Check 3: Filament Shield installed
         if (! class_exists(\BezhanSalleh\FilamentShield\FilamentShieldServiceProvider::class)) {
