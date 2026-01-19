@@ -36,7 +36,22 @@ Add TallCMS to your existing Filament application:
 composer require tallcms/cms
 ```
 
-**2. Register the plugin in your Panel Provider:**
+**2. Add HasRoles Trait to User Model:**
+
+Your `User` model must use the `HasRoles` trait from Spatie Permission:
+
+```php
+use Spatie\Permission\Traits\HasRoles;
+
+class User extends Authenticatable
+{
+    use HasFactory, HasRoles, Notifiable;
+
+    // ...
+}
+```
+
+**3. Register the plugin in your Panel Provider:**
 
 ```php
 use TallCms\Cms\TallCmsPlugin;
@@ -51,13 +66,19 @@ public function panel(Panel $panel): Panel
 
 > **Important:** You must register `TallCmsPlugin` in your panel provider. The CMS resources will not appear in your admin panel without this step.
 
-**3. Run migrations:**
+**4. Publish Permission Migrations:**
+
+```bash
+php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
+```
+
+**5. Run migrations:**
 
 ```bash
 php artisan migrate
 ```
 
-**4. Setup roles and permissions:**
+**6. Setup roles and permissions:**
 
 ```bash
 php artisan tallcms:setup

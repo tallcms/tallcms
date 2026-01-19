@@ -135,13 +135,34 @@ public function panel(Panel $panel): Panel
 }
 ```
 
-### 3. Run Migrations
+### 3. Add HasRoles Trait to User Model
+
+Your `User` model must use the `HasRoles` trait from Spatie Permission:
+
+```php
+use Spatie\Permission\Traits\HasRoles;
+
+class User extends Authenticatable
+{
+    use HasFactory, HasRoles, Notifiable;
+
+    // ...
+}
+```
+
+### 4. Publish Permission Migrations
+
+```bash
+php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
+```
+
+### 5. Run Migrations
 
 ```bash
 php artisan migrate
 ```
 
-### 4. Setup Roles & Permissions
+### 6. Setup Roles & Permissions
 
 ```bash
 php artisan tallcms:setup
@@ -287,6 +308,14 @@ See [Theme Development Guide](docs/THEME_DEVELOPMENT.md) for details.
 - Clear config cache: `php artisan config:clear`
 - Re-run package discovery: `php artisan package:discover`
 - Then run migrations again: `php artisan migrate`
+
+**"Call to undefined method assignRole()"**
+- Your User model is missing the `HasRoles` trait
+- Add `use Spatie\Permission\Traits\HasRoles;` and include it in your model
+
+**"No such table: roles"**
+- Run `php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"`
+- Then run `php artisan migrate`
 
 ## System Updates
 
