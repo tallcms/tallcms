@@ -136,7 +136,7 @@ class Plugin
      */
     protected static function discoverFromFilesystem(): Collection
     {
-        $pluginsPath = config('tallcms.plugin_mode.plugins_path') ?? base_path('plugins');
+        $pluginsPath = config('tallcms.plugins.path') ?? base_path('plugins');
 
         if (! File::exists($pluginsPath)) {
             return collect();

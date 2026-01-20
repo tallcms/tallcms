@@ -3,10 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:admin": "npx @tailwindcss/cli@4 -i ./resources/css/admin.css -o ./resources/dist/tallcms-admin.css --minify"
+    "build:admin": "npx @tailwindcss/cli@4 -i ./resources/css/admin.css -o ./resources/dist/tallcms-admin.css --minify",
+    "build:frontend": "npx @tailwindcss/cli@4 -i ./resources/css/frontend.css -o ./resources/dist/tallcms.css --minify",
+    "build": "npm run build:admin && npm run build:frontend"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.0",
+    "@tailwindcss/typography": "^0.5.16",
     "daisyui": "^5.0.0",
     "tailwindcss": "^4.1.0"
   }

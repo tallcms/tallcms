@@ -26,6 +26,16 @@ class TallcmsMenuResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Menus';
 
+    public static function getNavigationGroup(): ?string
+    {
+        return config('tallcms.filament.navigation_group') ?? 'Content Management';
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return config('tallcms.filament.navigation_sort') ?? 5;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return TallcmsMenuForm::configure($schema);

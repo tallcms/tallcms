@@ -258,17 +258,21 @@ class TallCmsInstall extends Command
 
     /**
      * Publish TallCMS assets (CSS, JS for frontend).
+     * Note: Uses --force to ensure latest assets are published.
      */
     protected function publishAssets(): void
     {
-        $this->components->task('Publishing TallCMS assets', function () {
+        $this->components->task('Publishing TallCMS assets to public/vendor/tallcms/', function () {
             $this->callSilently('vendor:publish', [
                 '--provider' => 'TallCms\\Cms\\TallCmsServiceProvider',
                 '--tag' => 'tallcms-assets',
+                '--force' => true,
             ]);
 
             return true;
         });
+
+        $this->components->info('Note: This overwrites any customized TallCMS assets in public/vendor/tallcms/');
     }
 
     /**
@@ -342,20 +346,20 @@ class TallCmsInstall extends Command
         // Frontend routes info
         $this->components->info('Enable frontend routes (optional):');
         $this->newLine();
-        $this->line('    1. Add to your <fg=cyan>.env</> file:');
+        $this->line('    Add to your <fg=cyan>.env</> file:');
         $this->line('       <fg=green>TALLCMS_ROUTES_ENABLED=true</>');
         $this->newLine();
-        $this->line('    2. Update your <fg=cyan>routes/web.php</> for the homepage:');
+        $this->components->warn('Warning: Without a prefix, this will register the / route and override your app\'s homepage.');
+        $this->line('    To avoid this, set: <fg=green>TALLCMS_ROUTES_PREFIX=cms</>');
         $this->newLine();
-        $this->line('       <fg=yellow>use</> TallCms\Cms\Livewire\CmsPageRenderer;');
+        $this->line('    <fg=gray>Then mark a CMS page as "Homepage" in the admin panel.</>');
         $this->newLine();
-        $this->line('       <fg=magenta>if</> (config(<fg=green>\'tallcms.plugin_mode.routes_enabled\'</>)) {');
-        $this->line('           Route::get(<fg=green>\'/\'</>, CmsPageRenderer::class)->defaults(<fg=green>\'slug\'</>, <fg=green>\'/\'</>);');
-        $this->line('       } <fg=magenta>else</> {');
-        $this->line('           Route::get(<fg=green>\'/\'</>, <fg=magenta>fn</> () => view(<fg=green>\'welcome\'</>));');
-        $this->line('       }');
-        $this->newLine();
-        $this->line('    <fg=gray>CMS handles /{slug} routes automatically. Mark a page as homepage in admin.</>');
+
+        // Alpine.js requirement
+        $this->components->info('Frontend requirements:');
+        $this->line('    TallCMS frontend pages require <fg=cyan>Alpine.js</>.');
+        $this->line('    Most Laravel apps include it via Livewire. If loading Alpine separately,');
+        $this->line('    ensure it loads <fg=yellow>before</> tallcms.js (Alpine components use alpine:init).');
         $this->newLine();
 
         // Star the repo prompt

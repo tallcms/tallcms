@@ -21,11 +21,17 @@ class PluginLicenses extends Page implements HasForms
 
     protected static ?string $title = 'Plugin Licenses';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Settings';
-
-    protected static ?int $navigationSort = 65;
-
     protected string $view = 'tallcms::filament.pages.plugin-licenses';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return config('tallcms.filament.navigation_group') ?? 'Settings';
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return config('tallcms.filament.navigation_sort') ?? 65;
+    }
 
     public ?string $selected_plugin = null;
 

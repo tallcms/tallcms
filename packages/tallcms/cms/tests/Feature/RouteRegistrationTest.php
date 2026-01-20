@@ -79,12 +79,12 @@ class RouteRegistrationTest extends TestCase
         $postMiddleware = $postRoute->middleware();
 
         $this->assertTrue(
-            in_array('auth', $pageMiddleware) || in_array('auth:web', $pageMiddleware),
-            'Preview page route should require authentication'
+            in_array('tallcms.preview-auth', $pageMiddleware),
+            'Preview page route should require authentication via tallcms.preview-auth middleware'
         );
         $this->assertTrue(
-            in_array('auth', $postMiddleware) || in_array('auth:web', $postMiddleware),
-            'Preview post route should require authentication'
+            in_array('tallcms.preview-auth', $postMiddleware),
+            'Preview post route should require authentication via tallcms.preview-auth middleware'
         );
     }
 

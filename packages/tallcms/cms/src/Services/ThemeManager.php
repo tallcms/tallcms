@@ -1094,7 +1094,7 @@ class ThemeManager
      */
     public function getThemesPath(): string
     {
-        return config('tallcms.plugin_mode.themes_path') ?? base_path('themes');
+        return config('tallcms.themes.path') ?? base_path('themes');
     }
 
     /**

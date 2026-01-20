@@ -41,21 +41,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Route Configuration (Standalone Mode)
-    |--------------------------------------------------------------------------
-    |
-    | These settings apply to standalone mode route naming and exclusions.
-    |
-    */
-    'route_name_prefix' => env('TALLCMS_ROUTE_NAME_PREFIX', ''),
-
-    'route_exclusions' => env(
-        'TALLCMS_ROUTE_EXCLUSIONS',
-        '^(?!preview|admin|livewire|storage|api|install).*'
-    ),
-
-    /*
-    |--------------------------------------------------------------------------
     | Plugin Mode Settings
     |--------------------------------------------------------------------------
     |
@@ -64,24 +49,13 @@ return [
     |
     */
     'plugin_mode' => [
-        // Enable frontend CMS page routes for /{slug} paths.
-        // Set TALLCMS_ROUTES_ENABLED=true in .env to enable.
-        // Routes automatically exclude common app paths (admin, api, livewire, etc.)
-        //
-        // NOTE: The homepage (/) must be configured in your routes/web.php:
-        //
-        //     use TallCms\Cms\Livewire\CmsPageRenderer;
-        //
-        //     if (config('tallcms.plugin_mode.routes_enabled')) {
-        //         Route::get('/', CmsPageRenderer::class)->defaults('slug', '/');
-        //     } else {
-        //         Route::get('/', fn () => view('welcome'));
-        //     }
-        //
+        // Enable frontend CMS page routes.
+        // When enabled, TallCMS registers both / (homepage) and /{slug} routes.
+        // WARNING: Without a prefix, this will override your app's homepage route!
         'routes_enabled' => env('TALLCMS_ROUTES_ENABLED', false),
 
-        // Optional URL prefix for CMS routes (e.g., 'cms' results in /cms/about)
-        // Leave empty for root-level routes (e.g., /about, /contact)
+        // Optional URL prefix for CMS routes (e.g., 'cms' results in /cms and /cms/{slug})
+        // Leave empty for root-level routes (/, /about, /contact)
         // When empty, smart exclusions prevent conflicts with your app routes.
         'routes_prefix' => env('TALLCMS_ROUTES_PREFIX', ''),
 
@@ -89,9 +63,19 @@ return [
         'route_name_prefix' => env('TALLCMS_PLUGIN_ROUTE_NAME_PREFIX', 'tallcms.'),
 
         // Route exclusion pattern - paths matching this regex are excluded from CMS routing.
-        // Default excludes: admin, app, api, livewire, sanctum, and underscore-prefixed paths.
-        // Customize if your app uses other reserved paths.
-        'route_exclusions' => env('TALLCMS_ROUTE_EXCLUSIONS', '^(?!admin|app|api|livewire|sanctum|_).*$'),
+        // Default excludes common Laravel/Filament paths. Panel path is auto-excluded.
+        // Customize via TALLCMS_ROUTE_EXCLUSIONS if your app uses other reserved paths.
+        'route_exclusions' => env('TALLCMS_PLUGIN_ROUTE_EXCLUSIONS',
+            env('TALLCMS_ROUTE_EXCLUSIONS', // backward compat
+                '^(?!admin|app|api|livewire|sanctum|storage|build|vendor|health|_).*$'
+            )
+        ),
+
+        // Enable preview routes (/preview/page/{id}, /preview/post/{id})
+        'preview_routes_enabled' => env('TALLCMS_PREVIEW_ROUTES_ENABLED', true),
+
+        // Enable API routes (/api/contact)
+        'api_routes_enabled' => env('TALLCMS_API_ROUTES_ENABLED', true),
 
         // Optional prefix for essential routes (preview, contact API) to avoid conflicts
         // e.g., 'tallcms' results in /tallcms/preview/page/{id}
@@ -99,21 +83,11 @@ return [
 
         // Enable the TallCMS plugin system.
         // When enabled, the Plugin Manager page is visible and third-party plugins can be loaded.
-        // Set to false to disable the plugin system entirely.
         'plugins_enabled' => env('TALLCMS_PLUGINS_ENABLED', true),
-
-        // Path to TallCMS plugins directory. Only used when plugins_enabled is true.
-        // Defaults to base_path('plugins') if not set.
-        'plugins_path' => env('TALLCMS_PLUGINS_PATH'),
 
         // Enable the TallCMS theme system.
         // When enabled, the Theme Manager page is visible and themes can be loaded.
-        // Set to false to disable the theme system entirely.
         'themes_enabled' => env('TALLCMS_THEMES_ENABLED', true),
-
-        // Path to TallCMS themes directory. Only used when themes_enabled is true.
-        // Defaults to base_path('themes') if not set.
-        'themes_path' => env('TALLCMS_THEMES_PATH'),
 
         // User model class. Must implement TallCmsUserContract.
         // Default works with standard Laravel User model with HasRoles trait.
@@ -161,8 +135,13 @@ return [
         // Panel path for URL construction and middleware exclusions
         'panel_path' => env('TALLCMS_PANEL_PATH', 'admin'),
 
-        'navigation_group' => 'CMS',
-        'navigation_sort' => null,
+        // Navigation group override - when set, ALL TallCMS resources/pages use this group.
+        // Leave unset (null) to use per-resource defaults (Content Management, Settings, etc.)
+        'navigation_group' => env('TALLCMS_NAVIGATION_GROUP'),
+
+        // Navigation sort override - when set, ALL TallCMS resources/pages use this sort.
+        // Leave unset (null) to use per-resource defaults.
+        'navigation_sort' => env('TALLCMS_NAVIGATION_SORT'),
     ],
 
     /*

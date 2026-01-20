@@ -26,6 +26,16 @@ class TallcmsMediaResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Media Files';
 
+    public static function getNavigationGroup(): ?string
+    {
+        return config('tallcms.filament.navigation_group') ?? 'Content Management';
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return config('tallcms.filament.navigation_sort') ?? 4;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return TallcmsMediaForm::configure($schema);

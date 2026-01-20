@@ -1,0 +1,71 @@
+/* ============================================
+   TallCMS Core Styles
+   This file contains styles that are shared across
+   all themes. Themes should import this file.
+   ============================================ */
+
+/* ============================================
+   CMS Content - Inline Text Styling
+   Applies prose-like typography to content typed
+   directly in the Rich Editor (not inside blocks)
+   ============================================ */
+.cms-content {
+    /* Direct paragraph children */
+    & > p {
+        @apply max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-base leading-relaxed text-base-content;
+    }
+
+    /* Direct heading children */
+    & > h1 {
+        @apply max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4 text-4xl font-bold text-base-content;
+    }
+
+    & > h2 {
+        @apply max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4 text-3xl font-bold text-base-content;
+    }
+
+    & > h3 {
+        @apply max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-3 text-2xl font-semibold text-base-content;
+    }
+
+    & > h4 {
+        @apply max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2 text-xl font-semibold text-base-content;
+    }
+
+    /* Direct list children */
+    & > ul, & > ol {
+        @apply max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-base leading-relaxed text-base-content;
+    }
+
+    & > ul {
+        @apply list-disc list-inside;
+    }
+
+    & > ol {
+        @apply list-decimal list-inside;
+    }
+
+    & > ul li, & > ol li {
+        @apply mb-2;
+    }
+
+    /* Direct blockquote children */
+    & > blockquote {
+        @apply max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 my-4 border-l-4 border-primary pl-6 italic text-base-content/80;
+    }
+
+    /* Links in inline content */
+    & > p a, & > ul a, & > ol a, & > blockquote a {
+        @apply text-primary hover:text-primary/80 underline;
+    }
+
+    /* Code in inline content */
+    & > p code, & > li code {
+        @apply bg-base-200 px-1.5 py-0.5 rounded text-sm font-mono;
+    }
+
+    /* Horizontal rules */
+    & > hr {
+        @apply max-w-4xl mx-auto my-8 border-base-300;
+    }
+}

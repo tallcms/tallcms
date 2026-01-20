@@ -54,7 +54,7 @@ class ConfigOptionsTest extends TestCase
             'routes_enabled',
             'routes_prefix',
             'route_name_prefix',
-            'catch_all_enabled',
+            'route_exclusions',
             'api_routes_enabled',
             'preview_routes_enabled',
             'essential_routes_prefix',

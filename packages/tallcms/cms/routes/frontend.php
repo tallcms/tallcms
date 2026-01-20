@@ -7,19 +7,11 @@ declare(strict_types=1);
 | TallCMS Frontend Routes (Plugin Mode)
 |--------------------------------------------------------------------------
 |
-| These routes handle CMS page rendering for /{slug} paths.
+| These routes handle CMS page rendering for / and /{slug} paths.
 | Only loaded when tallcms.plugin_mode.routes_enabled is true.
 |
-| NOTE: The homepage (/) is NOT registered here. To let the CMS handle /,
-| add this to your routes/web.php:
-|
-|     use TallCms\Cms\Livewire\CmsPageRenderer;
-|
-|     if (config('tallcms.plugin_mode.routes_enabled')) {
-|         Route::get('/', CmsPageRenderer::class)->defaults('slug', '/');
-|     } else {
-|         Route::get('/', fn () => view('welcome'));
-|     }
+| WARNING: Without a prefix, this will register the / route and override
+| your app's homepage. Set TALLCMS_ROUTES_PREFIX to use a different base path.
 |
 */
 
@@ -30,11 +22,18 @@ use TallCms\Cms\Livewire\CmsPageRenderer;
 $namePrefix = config('tallcms.plugin_mode.route_name_prefix', 'tallcms.');
 
 Route::name($namePrefix)->middleware('tallcms.maintenance')->group(function () {
-    // Page routes - exclude common app paths to avoid conflicts
-    // This regex excludes: admin paths, api paths, livewire, sanctum, etc.
-    $defaultExclusions = '^(?!admin|app|api|livewire|sanctum|_).*$';
+    // Build exclusion pattern with auto-excluded panel path
+    $panelPath = preg_quote(config('tallcms.filament.panel_path', 'admin'), '/');
+    $defaultExclusions = "^(?!{$panelPath}|app|api|livewire|sanctum|storage|build|vendor|health|_).*$";
     $pattern = config('tallcms.plugin_mode.route_exclusions', $defaultExclusions);
 
+    // Homepage route - always register when routes are enabled
+    // This WILL override your app's / route if no prefix is set!
+    Route::get('/', CmsPageRenderer::class)
+        ->defaults('slug', '/')
+        ->name('cms.home');
+
+    // Catch-all page route with exclusions
     Route::get('/{slug}', CmsPageRenderer::class)
         ->where('slug', $pattern)
         ->name('cms.page');

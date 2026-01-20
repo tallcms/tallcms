@@ -43,7 +43,7 @@ class ConfigSchemaTest extends TestCase
             'routes_enabled',
             'routes_prefix',
             'route_name_prefix',
-            'catch_all_enabled',
+            'route_exclusions',
             'api_routes_enabled',
             'preview_routes_enabled',
             'plugins_enabled',
@@ -243,15 +243,15 @@ class ConfigSchemaTest extends TestCase
             'API routes should be enabled by default'
         );
 
-        // Themes and plugins disabled by default in plugin mode
-        $this->assertFalse(
+        // Themes and plugins enabled by default in plugin mode
+        $this->assertTrue(
             config('tallcms.plugin_mode.themes_enabled'),
-            'Themes should be disabled by default in plugin mode'
+            'Themes should be enabled by default in plugin mode'
         );
 
-        $this->assertFalse(
+        $this->assertTrue(
             config('tallcms.plugin_mode.plugins_enabled'),
-            'Plugins should be disabled by default in plugin mode'
+            'Plugins should be enabled by default in plugin mode'
         );
     }
 }

@@ -20,10 +20,6 @@ class SystemUpdates extends Page
 
     protected static ?string $title = 'System Updates';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Settings';
-
-    protected static ?int $navigationSort = 100;
-
     /**
      * Only register in standalone mode (not plugin mode)
      */
@@ -59,6 +55,16 @@ class SystemUpdates extends Page
     public static function getNavigationIcon(): string
     {
         return 'heroicon-o-arrow-path';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return config('tallcms.filament.navigation_group') ?? 'Settings';
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return config('tallcms.filament.navigation_sort') ?? 100;
     }
 
     public function mount(): void

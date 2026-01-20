@@ -1,0 +1,18 @@
+/*
+ * TallCMS Frontend CSS
+ * This file compiles Tailwind CSS + DaisyUI for plugin mode frontend pages.
+ * Build with: npm run build:frontend
+ */
+
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@plugin "daisyui" { themes: light --default, dark; }
+
+/* Import core CMS styles for .cms-content */
+@import "./tallcms.css";
+
+/* Scan ALL templates and PHP files for class usage */
+@source "../views/**/*.blade.php";                /* All package views */
+@source "../../src/Livewire/**/*.php";            /* Livewire components */
+@source "../../src/Filament/Blocks/**/*.php";     /* Block schemas */
+@source "../../src/Concerns/*.php";               /* HasDaisyUIOptions trait */
