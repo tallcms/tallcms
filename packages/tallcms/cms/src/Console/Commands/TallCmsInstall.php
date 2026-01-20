@@ -357,6 +357,21 @@ class TallCmsInstall extends Command
         $this->newLine();
         $this->line('    <fg=gray>CMS handles /{slug} routes automatically. Mark a page as homepage in admin.</>');
         $this->newLine();
+
+        // Star the repo prompt
+        if ($this->confirm('All done! Would you like to show some love by starring the TallCMS repo?', false)) {
+            $repoUrl = 'https://github.com/tallcms/tallcms';
+
+            if (PHP_OS_FAMILY === 'Darwin') {
+                exec("open {$repoUrl}");
+            } elseif (PHP_OS_FAMILY === 'Linux') {
+                exec("xdg-open {$repoUrl}");
+            } elseif (PHP_OS_FAMILY === 'Windows') {
+                exec("start {$repoUrl}");
+            }
+
+            $this->components->info('Thank you! Your support means a lot to us.');
+        }
     }
 
     /**
