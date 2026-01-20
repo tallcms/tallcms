@@ -29,12 +29,12 @@ class TallcmsContactSubmissionResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Content Management';
+        return config('tallcms.filament.navigation_group') ?? 'Content Management';
     }
 
     public static function getNavigationSort(): ?int
     {
-        return 50;
+        return config('tallcms.filament.navigation_sort') ?? 50;
     }
 
     public static function table(Table $table): Table

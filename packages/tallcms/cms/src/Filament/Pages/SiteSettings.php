@@ -25,13 +25,21 @@ class SiteSettings extends Page implements HasForms
 
     protected static ?string $title = 'Site Settings';
 
-    protected static ?int $navigationSort = 99;
-
     public ?array $data = [];
 
     public static function getNavigationIcon(): string
     {
         return 'heroicon-o-cog-8-tooth';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return config('tallcms.filament.navigation_group') ?? 'Settings';
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return config('tallcms.filament.navigation_sort') ?? 99;
     }
 
     public function mount(): void

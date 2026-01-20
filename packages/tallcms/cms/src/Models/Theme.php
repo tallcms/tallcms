@@ -315,7 +315,7 @@ class Theme
      */
     protected static function discoverFromFilesystem(): Collection
     {
-        $themesPath = config('tallcms.plugin_mode.themes_path') ?? base_path('themes');
+        $themesPath = config('tallcms.themes.path') ?? base_path('themes');
 
         if (! File::exists($themesPath)) {
             return collect();

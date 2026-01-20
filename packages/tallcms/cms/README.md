@@ -172,19 +172,28 @@ Add to your `.env` file:
 TALLCMS_ROUTES_ENABLED=true
 ```
 
-This registers `/{slug}` routes for CMS pages (e.g., `/about`, `/contact`).
-Routes automatically exclude common paths like `/admin`, `/api`, `/livewire`, etc.
+This registers both `/` (homepage) and `/{slug}` routes for CMS pages.
+Routes automatically exclude common paths like `/admin`, `/api`, `/livewire`, `/storage`, etc.
+
+> ⚠️ **Warning:** When `TALLCMS_ROUTES_ENABLED=true` without a prefix, TallCMS
+> registers the `/` route. This will override your app's homepage. To avoid this,
+> either set `TALLCMS_ROUTES_PREFIX=cms` or remove your app's `/` route.
 
 ### 2. Configure the Homepage
 
-If `routes_prefix` is empty, TallCMS automatically registers `/` as the CMS homepage.
-To keep your app's own `/` route, either set a prefix (e.g., `cms`) or disable CMS routes.
+Mark a CMS page as "Homepage" in the admin panel. TallCMS will serve it at `/` (or `/{prefix}` if using a prefix).
 
-When you want CMS on `/`, make sure your app does **not** register its own `/` route.
+### 3. Route Prefix (Optional)
 
-Then mark a CMS page as "Homepage" in the admin panel.
+To prefix all CMS routes (e.g., `/cms/about` instead of `/about`):
 
-### 3. Publish Assets (Optional)
+```env
+TALLCMS_ROUTES_PREFIX=cms
+```
+
+With a prefix, the routes become `/cms` (homepage) and `/cms/{slug}` (pages).
+
+### 4. Publish Assets (Optional)
 
 For frontend styling:
 
@@ -192,7 +201,7 @@ For frontend styling:
 php artisan vendor:publish --tag=tallcms-assets
 ```
 
-### 4. Publish Views (Optional)
+### 5. Publish Views (Optional)
 
 To customize templates:
 
@@ -200,15 +209,13 @@ To customize templates:
 php artisan vendor:publish --tag=tallcms-views
 ```
 
-### Route Prefix (Optional)
+### Prerequisites for Frontend Routes
 
-To prefix all CMS routes (e.g., `/cms/about` instead of `/about`):
+TallCMS frontend pages require **Alpine.js**.
 
-Note: with a prefix, the CMS homepage becomes `/{prefix}` (e.g., `/cms`).
-
-```env
-TALLCMS_ROUTES_PREFIX=cms
-```
+Most Laravel apps include Alpine via Livewire. If your app loads Alpine
+separately, ensure it's loaded BEFORE tallcms.js, as TallCMS registers
+components on `alpine:init`.
 
 ## Content Blocks
 

@@ -183,19 +183,28 @@ Add to your `.env` file:
 TALLCMS_ROUTES_ENABLED=true
 ```
 
-This registers `/{slug}` routes for CMS pages (e.g., `/about`, `/contact`).
-Routes automatically exclude common paths like `/admin`, `/api`, `/livewire`, etc.
+This registers both `/` (homepage) and `/{slug}` routes for CMS pages.
+Routes automatically exclude common paths like `/admin`, `/api`, `/livewire`, `/storage`, etc.
+
+> ⚠️ **Warning:** When `TALLCMS_ROUTES_ENABLED=true` without a prefix, TallCMS
+> registers the `/` route. This will override your app's homepage. To avoid this,
+> either set `TALLCMS_ROUTES_PREFIX=cms` or remove your app's `/` route.
 
 #### 2. Configure the Homepage
 
-If `routes_prefix` is empty, TallCMS automatically registers `/` as the CMS homepage.
-To keep your app's own `/` route, set a prefix (e.g., `cms`) or disable CMS routes.
+Mark a CMS page as "Homepage" in the admin panel. TallCMS will serve it at `/` (or `/{prefix}` if using a prefix).
 
-When you want CMS on `/`, make sure your app does **not** register its own `/` route.
+#### 3. Route Prefix (Optional)
 
-Then mark a CMS page as "Homepage" in the admin panel.
+To prefix all CMS routes (e.g., `/cms/about` instead of `/about`):
 
-#### 3. Publish Assets (Optional)
+```env
+TALLCMS_ROUTES_PREFIX=cms
+```
+
+With a prefix, the routes become `/cms` (homepage) and `/cms/{slug}` (pages).
+
+#### 4. Publish Assets (Optional)
 
 For frontend styling:
 
@@ -203,15 +212,10 @@ For frontend styling:
 php artisan vendor:publish --tag=tallcms-assets
 ```
 
-#### Route Prefix (Optional)
+#### Prerequisites for Frontend
 
-To prefix all CMS routes (e.g., `/cms/about` instead of `/about`):
-
-Note: with a prefix, the CMS homepage becomes `/{prefix}` (e.g., `/cms`).
-
-```env
-TALLCMS_ROUTES_PREFIX=cms
-```
+TallCMS frontend pages require **Alpine.js**. Most Laravel apps include it via Livewire.
+If loading Alpine separately, ensure it loads before tallcms.js (components use `alpine:init`).
 
 ### Selective Features
 

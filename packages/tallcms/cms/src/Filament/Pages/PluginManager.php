@@ -40,12 +40,12 @@ class PluginManager extends Page implements HasForms
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Settings';
+        return config('tallcms.filament.navigation_group') ?? 'Settings';
     }
 
     public static function getNavigationSort(): ?int
     {
-        return 60;
+        return config('tallcms.filament.navigation_sort') ?? 60;
     }
 
     public static function getNavigationBadge(): ?string
