@@ -177,18 +177,10 @@ Routes automatically exclude common paths like `/admin`, `/api`, `/livewire`, et
 
 ### 2. Configure the Homepage
 
-The homepage (`/`) is **not** automatically registered to avoid hijacking your app's root route.
-Update your `routes/web.php` to explicitly handle it:
+If `routes_prefix` is empty, TallCMS automatically registers `/` as the CMS homepage.
+To keep your app's own `/` route, either set a prefix (e.g., `cms`) or disable CMS routes.
 
-```php
-use TallCms\Cms\Livewire\CmsPageRenderer;
-
-if (config('tallcms.plugin_mode.routes_enabled')) {
-    Route::get('/', CmsPageRenderer::class)->defaults('slug', '/');
-} else {
-    Route::get('/', fn () => view('welcome'));
-}
-```
+When you want CMS on `/`, make sure your app does **not** register its own `/` route.
 
 Then mark a CMS page as "Homepage" in the admin panel.
 
@@ -211,6 +203,8 @@ php artisan vendor:publish --tag=tallcms-views
 ### Route Prefix (Optional)
 
 To prefix all CMS routes (e.g., `/cms/about` instead of `/about`):
+
+Note: with a prefix, the CMS homepage becomes `/{prefix}` (e.g., `/cms`).
 
 ```env
 TALLCMS_ROUTES_PREFIX=cms
