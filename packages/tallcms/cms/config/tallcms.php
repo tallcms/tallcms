@@ -135,13 +135,16 @@ return [
         // Panel path for URL construction and middleware exclusions
         'panel_path' => env('TALLCMS_PANEL_PATH', 'admin'),
 
-        // Navigation group override - when set, ALL TallCMS resources/pages use this group.
+        // Navigation group override - when set, CMS resources/pages use this group.
+        // Note: UserResource stays in 'User Management' regardless of this setting.
         // Leave unset (null) to use per-resource defaults (Content Management, Settings, etc.)
         'navigation_group' => env('TALLCMS_NAVIGATION_GROUP'),
 
-        // Navigation sort override - when set, ALL TallCMS resources/pages use this sort.
+        // Navigation sort override - when set, CMS resources/pages use this sort.
         // Leave unset (null) to use per-resource defaults.
-        'navigation_sort' => env('TALLCMS_NAVIGATION_SORT'),
+        'navigation_sort' => env('TALLCMS_NAVIGATION_SORT') !== null
+            ? (int) env('TALLCMS_NAVIGATION_SORT')
+            : null,
     ],
 
     /*

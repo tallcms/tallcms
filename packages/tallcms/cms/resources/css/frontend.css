@@ -12,7 +12,6 @@
 @import "./tallcms.css";
 
 /* Scan ALL templates and PHP files for class usage */
-@source "../views/**/*.blade.php";                /* All package views */
-@source "../../src/Livewire/**/*.php";            /* Livewire components */
-@source "../../src/Filament/Blocks/**/*.php";     /* Block schemas */
-@source "../../src/Concerns/*.php";               /* HasDaisyUIOptions trait */
+@source "../views/**/*.blade.php";                        /* All package views */
+@source "../../src/Livewire/**/*.php";                    /* Livewire components */
+@source "../../src/Filament/Blocks/**/*.php";             /* Block schemas + HasDaisyUIOptions trait */
