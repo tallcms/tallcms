@@ -7,6 +7,10 @@
 
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
 
+    {{-- Load Vite assets (Tailwind CSS, DaisyUI, block styles) --}}
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    {{-- Fallback for plugin mode without Vite --}}
     @if(file_exists(public_path('vendor/tallcms/tallcms.css')))
         <link rel="stylesheet" href="{{ asset('vendor/tallcms/tallcms.css') }}">
     @endif
