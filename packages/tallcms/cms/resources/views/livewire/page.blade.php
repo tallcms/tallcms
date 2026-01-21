@@ -55,8 +55,18 @@
         </article>
     </div>
 @else
-    {{-- Block Canvas - All content is composed of blocks --}}
+    {{-- Block Canvas --}}
     <div class="cms-content w-full">
-        {!! $renderedContent !!}
+        {{-- Homepage content --}}
+        <section id="top">
+            {!! $renderedContent !!}
+        </section>
+
+        {{-- SPA Mode: Other pages as sections --}}
+        @foreach($allPages as $pageData)
+            <section id="{{ $pageData['anchor'] }}">
+                {!! $pageData['content'] !!}
+            </section>
+        @endforeach
     </div>
 @endif

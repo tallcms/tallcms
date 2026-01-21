@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\View;
 use Livewire\Component;
 use TallCms\Cms\Models\CmsPage;
 use TallCms\Cms\Models\CmsPost;
+use TallCms\Cms\Models\SiteSetting;
 use TallCms\Cms\Services\CustomBlockDiscoveryService;
 use TallCms\Cms\Services\MergeTagService;
 
@@ -21,6 +22,8 @@ class CmsPageRenderer extends Component
     public string $renderedContent;
 
     public string $parentSlug = '';
+
+    public array $allPages = [];
 
     public function mount(string $slug = '/')
     {
@@ -36,6 +39,33 @@ class CmsPageRenderer extends Component
 
             $this->page = $homepage;
             $this->renderPageContent();
+
+            // SPA Mode: Load all pages as sections on homepage
+            $siteType = SiteSetting::get('site_type', 'multi-page');
+            if ($siteType === 'single-page') {
+                // Hierarchical ordering: parents by sort_order, children grouped after parent by sort_order
+                $this->allPages = CmsPage::where('is_homepage', false)
+                    ->published()
+                    ->orderByRaw('
+                        COALESCE(
+                            (SELECT sort_order FROM tallcms_pages AS parent WHERE parent.id = tallcms_pages.parent_id),
+                            sort_order
+                        ),
+                        parent_id IS NOT NULL,
+                        sort_order
+                    ')
+                    ->get()
+                    ->map(function ($page) {
+                        return [
+                            'id' => $page->id,
+                            'slug' => $page->slug,
+                            'anchor' => tallcms_slug_to_anchor($page->slug, $page->id),
+                            'title' => $page->title,
+                            'content' => $this->renderSinglePageContent($page),
+                        ];
+                    })
+                    ->toArray();
+            }
 
             return;
         }
@@ -246,16 +276,37 @@ class CmsPageRenderer extends Component
         $this->renderedContent = MergeTagService::replaceTags($renderedContent, $this->page);
     }
 
+    /**
+     * Render content for a single page section (SPA mode)
+     */
+    protected function renderSinglePageContent(CmsPage $page): string
+    {
+        // Temporarily set cmsPageSlug for this section (for posts block URLs)
+        $previousSlug = View::shared('cmsPageSlug');
+        View::share('cmsPageSlug', $page->slug);
+
+        $rendered = RichContentRenderer::make($page->content)
+            ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
+            ->toUnsafeHtml();
+
+        $result = MergeTagService::replaceTags($rendered, $page);
+
+        // Restore previous slug to avoid bleeding into subsequent views
+        View::share('cmsPageSlug', $previousSlug);
+
+        return $result;
+    }
+
     public function render()
     {
         // Determine metadata based on whether we're showing a post or page
         if ($this->post) {
             $title = $this->post->meta_title ?: $this->post->title;
-            $description = $this->post->meta_description ?: $this->post->excerpt;
+            $description = $this->post->meta_description ?: $this->post->excerpt ?: SiteSetting::get('site_description', '');
             $featuredImage = $this->post->featured_image;
         } else {
             $title = $this->page->meta_title ?: $this->page->title;
-            $description = $this->page->meta_description;
+            $description = $this->page->meta_description ?: SiteSetting::get('site_description', '');
             $featuredImage = $this->page->featured_image;
         }
 

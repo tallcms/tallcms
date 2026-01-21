@@ -79,7 +79,7 @@ class MaintenanceModeMiddleware
         // 2. Database tables don't exist
         // 3. .env doesn't exist
 
-        if (! File::exists(storage_path('installer.lock'))) {
+        if (! File::exists(base_path('installer.lock')) && ! File::exists(storage_path('installer.lock'))) {
             return true;
         }
 
