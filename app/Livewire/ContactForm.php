@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use TallCms\Cms\Models\SiteSetting;
 
 class ContactForm extends Component
 {
@@ -78,26 +79,40 @@ class ContactForm extends Component
         $formDataWithMeta = [];
         $submitterName = null;
         $submitterEmail = null;
+        $hasAnyValue = false;
 
         foreach ($this->config['fields'] ?? [] as $field) {
             $value = $this->formData[$field['name']] ?? '';
+            $trimmedValue = is_string($value) ? trim($value) : $value;
 
             $formDataWithMeta[] = [
                 'name' => $field['name'],
                 'label' => $field['label'],
                 'type' => $field['type'],
-                'value' => $value,
+                'value' => $trimmedValue,
             ];
 
+            // Track if any field has a non-empty value
+            if (! empty($trimmedValue)) {
+                $hasAnyValue = true;
+            }
+
             // Extract name from field explicitly named 'name'
-            if ($submitterName === null && $field['name'] === 'name' && ! empty($value)) {
-                $submitterName = $value;
+            if ($submitterName === null && $field['name'] === 'name' && ! empty($trimmedValue)) {
+                $submitterName = $trimmedValue;
             }
 
             // Extract email from first email-type field with a value
-            if ($submitterEmail === null && $field['type'] === 'email' && ! empty($value)) {
-                $submitterEmail = $value;
+            if ($submitterEmail === null && $field['type'] === 'email' && ! empty($trimmedValue)) {
+                $submitterEmail = $trimmedValue;
             }
+        }
+
+        // Reject completely empty submissions
+        if (! $hasAnyValue) {
+            $this->addError('form', 'Please fill in at least one field.');
+
+            return;
         }
 
         // Store submission
@@ -108,8 +123,8 @@ class ContactForm extends Component
             'page_url' => request()->header('Referer', request()->url()),
         ]);
 
-        // Queue admin notification if configured
-        $adminEmail = config('tallcms.contact_email');
+        // Queue admin notification (Site Settings with config fallback)
+        $adminEmail = SiteSetting::get('contact_email') ?: config('tallcms.contact_email');
         if ($adminEmail) {
             Mail::to($adminEmail)->queue(new ContactFormAdminNotification($submission));
         }
