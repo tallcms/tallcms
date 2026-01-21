@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Enums\ContentStatus;
+use TallCms\Cms\Enums\ContentStatus;
 use App\Models\CmsPage;
 use App\Models\CmsPost;
 use App\Models\User;

@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Enums\ContentStatus;
+use TallCms\Cms\Enums\ContentStatus;
 use App\Models\CmsPost;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
