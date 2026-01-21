@@ -43,28 +43,7 @@ class CmsPageRenderer extends Component
             // SPA Mode: Load all pages as sections on homepage
             $siteType = SiteSetting::get('site_type', 'multi-page');
             if ($siteType === 'single-page') {
-                // Hierarchical ordering: parents by sort_order, children grouped after parent by sort_order
-                $this->allPages = CmsPage::where('is_homepage', false)
-                    ->published()
-                    ->orderByRaw('
-                        COALESCE(
-                            (SELECT sort_order FROM tallcms_pages AS parent WHERE parent.id = tallcms_pages.parent_id),
-                            sort_order
-                        ),
-                        parent_id IS NOT NULL,
-                        sort_order
-                    ')
-                    ->get()
-                    ->map(function ($page) {
-                        return [
-                            'id' => $page->id,
-                            'slug' => $page->slug,
-                            'anchor' => tallcms_slug_to_anchor($page->slug, $page->id),
-                            'title' => $page->title,
-                            'content' => $this->renderSinglePageContent($page),
-                        ];
-                    })
-                    ->toArray();
+                $this->allPages = $this->loadSpaPages();
             }
 
             return;
@@ -295,6 +274,51 @@ class CmsPageRenderer extends Component
         View::share('cmsPageSlug', $previousSlug);
 
         return $result;
+    }
+
+    /**
+     * Load pages for SPA mode with proper hierarchical ordering.
+     * Parents are sorted by sort_order, children grouped directly after their parent.
+     */
+    protected function loadSpaPages(): array
+    {
+        // Get all non-homepage published pages
+        $pages = CmsPage::where('is_homepage', false)
+            ->published()
+            ->orderBy('sort_order')
+            ->get();
+
+        // Build hierarchical order: top-level pages first, then each parent's children
+        $ordered = collect();
+        $processed = collect();
+
+        // Process top-level pages (no parent) first
+        $topLevel = $pages->whereNull('parent_id')->sortBy('sort_order');
+        foreach ($topLevel as $parent) {
+            $ordered->push($parent);
+            $processed->push($parent->id);
+
+            // Add this parent's children directly after
+            $children = $pages->where('parent_id', $parent->id)->sortBy('sort_order');
+            foreach ($children as $child) {
+                $ordered->push($child);
+                $processed->push($child->id);
+            }
+        }
+
+        // Add any remaining pages (orphans or deeper nesting not yet processed)
+        $remaining = $pages->whereNotIn('id', $processed->toArray());
+        $ordered = $ordered->concat($remaining);
+
+        return $ordered->map(function ($page) {
+            return [
+                'id' => $page->id,
+                'slug' => $page->slug,
+                'anchor' => tallcms_slug_to_anchor($page->slug, $page->id),
+                'title' => $page->title,
+                'content' => $this->renderSinglePageContent($page),
+            ];
+        })->toArray();
     }
 
     public function render()
