@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\View;
 use Livewire\Component;
 use TallCms\Cms\Models\CmsPage;
 use TallCms\Cms\Models\CmsPost;
+use TallCms\Cms\Models\SiteSetting;
 use TallCms\Cms\Services\CustomBlockDiscoveryService;
 use TallCms\Cms\Services\MergeTagService;
 
@@ -21,6 +22,8 @@ class CmsPageRenderer extends Component
     public string $renderedContent;
 
     public string $parentSlug = '';
+
+    public array $allPages = [];
 
     public function mount(string $slug = '/')
     {
@@ -36,6 +39,12 @@ class CmsPageRenderer extends Component
 
             $this->page = $homepage;
             $this->renderPageContent();
+
+            // SPA Mode: Load all pages as sections on homepage
+            $siteType = SiteSetting::get('site_type', 'multi-page');
+            if ($siteType === 'single-page') {
+                $this->allPages = $this->loadSpaPages();
+            }
 
             return;
         }
@@ -246,16 +255,82 @@ class CmsPageRenderer extends Component
         $this->renderedContent = MergeTagService::replaceTags($renderedContent, $this->page);
     }
 
+    /**
+     * Render content for a single page section (SPA mode)
+     */
+    protected function renderSinglePageContent(CmsPage $page): string
+    {
+        // Temporarily set cmsPageSlug for this section (for posts block URLs)
+        $previousSlug = View::shared('cmsPageSlug');
+        View::share('cmsPageSlug', $page->slug);
+
+        $rendered = RichContentRenderer::make($page->content)
+            ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
+            ->toUnsafeHtml();
+
+        $result = MergeTagService::replaceTags($rendered, $page);
+
+        // Restore previous slug to avoid bleeding into subsequent views
+        View::share('cmsPageSlug', $previousSlug);
+
+        return $result;
+    }
+
+    /**
+     * Load pages for SPA mode with proper hierarchical ordering.
+     * Parents are sorted by sort_order, children grouped directly after their parent.
+     */
+    protected function loadSpaPages(): array
+    {
+        // Get all non-homepage published pages
+        $pages = CmsPage::where('is_homepage', false)
+            ->published()
+            ->orderBy('sort_order')
+            ->get();
+
+        // Build hierarchical order: top-level pages first, then each parent's children
+        $ordered = collect();
+        $processed = collect();
+
+        // Process top-level pages (no parent) first
+        $topLevel = $pages->whereNull('parent_id')->sortBy('sort_order');
+        foreach ($topLevel as $parent) {
+            $ordered->push($parent);
+            $processed->push($parent->id);
+
+            // Add this parent's children directly after
+            $children = $pages->where('parent_id', $parent->id)->sortBy('sort_order');
+            foreach ($children as $child) {
+                $ordered->push($child);
+                $processed->push($child->id);
+            }
+        }
+
+        // Add any remaining pages (orphans or deeper nesting not yet processed)
+        $remaining = $pages->whereNotIn('id', $processed->toArray());
+        $ordered = $ordered->concat($remaining);
+
+        return $ordered->map(function ($page) {
+            return [
+                'id' => $page->id,
+                'slug' => $page->slug,
+                'anchor' => tallcms_slug_to_anchor($page->slug, $page->id),
+                'title' => $page->title,
+                'content' => $this->renderSinglePageContent($page),
+            ];
+        })->toArray();
+    }
+
     public function render()
     {
         // Determine metadata based on whether we're showing a post or page
         if ($this->post) {
             $title = $this->post->meta_title ?: $this->post->title;
-            $description = $this->post->meta_description ?: $this->post->excerpt;
+            $description = $this->post->meta_description ?: $this->post->excerpt ?: SiteSetting::get('site_description', '');
             $featuredImage = $this->post->featured_image;
         } else {
             $title = $this->page->meta_title ?: $this->page->title;
-            $description = $this->page->meta_description;
+            $description = $this->page->meta_description ?: SiteSetting::get('site_description', '');
             $featuredImage = $this->page->featured_image;
         }
 

@@ -68,8 +68,8 @@ class MergeTagService
             'newsletter_signup' => SiteSetting::get('newsletter_signup_url', '#newsletter'),
 
             // SEO and branding from settings
-            'logo_url' => SiteSetting::get('logo') ? Storage::url(SiteSetting::get('logo')) : '',
-            'favicon_url' => SiteSetting::get('favicon') ? Storage::url(SiteSetting::get('favicon')) : '',
+            'logo_url' => SiteSetting::get('logo') ? Storage::disk(cms_media_disk())->url(SiteSetting::get('logo')) : '',
+            'favicon_url' => SiteSetting::get('favicon') ? Storage::disk(cms_media_disk())->url(SiteSetting::get('favicon')) : '',
         ];
 
         // Add record-specific tags if record is provided

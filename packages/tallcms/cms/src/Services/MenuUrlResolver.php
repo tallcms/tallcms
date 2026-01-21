@@ -32,7 +32,7 @@ class MenuUrlResolver
 
         if ($siteType === 'single-page') {
             // In SPA mode, everything links to anchors on homepage
-            return $page->is_homepage ? '#top' : '#'.$page->slug;
+            return $page->is_homepage ? '#top' : '#'.tallcms_slug_to_anchor($page->slug, $page->id);
         }
 
         // Multi-page mode - homepage goes to prefix root, others use prefix + slug

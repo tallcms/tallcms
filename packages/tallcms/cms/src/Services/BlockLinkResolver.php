@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TallCms\Cms\Services;
 
 use TallCms\Cms\Models\CmsPage;
+use TallCms\Cms\Models\SiteSetting;
 
 class BlockLinkResolver
 {
@@ -21,6 +22,11 @@ class BlockLinkResolver
                 if ($pageId) {
                     $page = CmsPage::where('id', $pageId)->where('status', 'published')->first();
                     if ($page) {
+                        $siteType = SiteSetting::get('site_type', 'multi-page');
+                        if ($siteType === 'single-page') {
+                            return $page->is_homepage ? '#top' : '#'.tallcms_slug_to_anchor($page->slug, $page->id);
+                        }
+
                         return $page->is_homepage ? '/' : '/'.$page->slug;
                     }
                 }

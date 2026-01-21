@@ -536,3 +536,29 @@ if (! function_exists('cms_post_url')) {
         return route('tallcms.cms.page', ['slug' => $slug]);
     }
 }
+
+// SPA Mode Helper Functions
+
+if (! function_exists('tallcms_slug_to_anchor')) {
+    /**
+     * Convert a page slug to a valid HTML anchor ID for SPA mode.
+     * Replaces slashes with hyphens and appends page ID for uniqueness.
+     *
+     * Format: {slug-with-hyphens}-{page_id}
+     * Examples:
+     *   - 'about' (ID 5) → 'about-5'
+     *   - 'about/team' (ID 42) → 'about-team-42'
+     *
+     * IMPORTANT: The page ID suffix prevents anchor collisions when multiple
+     * pages have similar slugs (e.g., 'services' and 'about/services').
+     * Any manually created anchor links in content must use this format.
+     *
+     * @param  string  $slug  The page slug (e.g., 'about/team')
+     * @param  int  $pageId  The page ID for collision prevention
+     * @return string Valid anchor ID (e.g., 'about-team-42')
+     */
+    function tallcms_slug_to_anchor(string $slug, int $pageId): string
+    {
+        return str_replace('/', '-', $slug) . '-' . $pageId;
+    }
+}
