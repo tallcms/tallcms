@@ -176,8 +176,10 @@ This registers both `/` (homepage) and `/{slug}` routes for CMS pages.
 Routes automatically exclude common paths like `/admin`, `/api`, `/livewire`, `/storage`, etc.
 
 > ⚠️ **Warning:** When `TALLCMS_ROUTES_ENABLED=true` without a prefix, TallCMS
-> registers the `/` route. This will override your app's homepage. To avoid this,
-> either set `TALLCMS_ROUTES_PREFIX=cms` or remove your app's `/` route.
+> registers the `/` route. However, Laravel loads your app's `routes/web.php` after
+> package routes, so **you must remove the default `/` route from `routes/web.php`**
+> for TallCMS to handle your homepage. Alternatively, set `TALLCMS_ROUTES_PREFIX=cms`
+> to avoid the conflict.
 
 ### 2. Configure the Homepage
 
