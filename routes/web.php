@@ -34,21 +34,21 @@ Route::middleware(['tallcms.preview-auth'])->group(function () {
     Route::get('/preview/post/{post:id}', [PreviewController::class, 'post'])->name('tallcms.preview.post');
 });
 
-// SEO routes (sitemap, robots.txt, RSS feeds, archives) - MUST be before catch-all
+// Core SEO routes - MUST be at root level for search engine discovery
 Route::middleware('tallcms.maintenance')->group(function () {
-    // Sitemap routes
     Route::get('/robots.txt', [RobotsController::class, 'index'])->name('tallcms.seo.robots');
     Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('tallcms.seo.sitemap');
     Route::get('/sitemap-pages.xml', [SitemapController::class, 'pages'])->name('tallcms.seo.sitemap.pages');
     Route::get('/sitemap-posts-{page}.xml', [SitemapController::class, 'posts'])->name('tallcms.seo.sitemap.posts')->where('page', '[0-9]+');
     Route::get('/sitemap-categories.xml', [SitemapController::class, 'categories'])->name('tallcms.seo.sitemap.categories');
     Route::get('/sitemap-authors.xml', [SitemapController::class, 'authors'])->name('tallcms.seo.sitemap.authors');
+});
 
-    // RSS Feed routes
+// Archive routes (RSS feeds, category/author pages) - MUST be before catch-all
+// In plugin mode these are opt-in via archive_routes_enabled config
+Route::middleware('tallcms.maintenance')->group(function () {
     Route::get('/feed', [RssFeedController::class, 'index'])->name('tallcms.feed');
     Route::get('/feed/category/{slug}', [RssFeedController::class, 'category'])->name('tallcms.feed.category');
-
-    // Archive routes
     Route::get('/category/{slug}', [CategoryArchiveController::class, 'show'])->name('tallcms.category.show');
     Route::get('/author/{authorSlug}', [AuthorArchiveController::class, 'show'])->name('tallcms.author.show');
 });

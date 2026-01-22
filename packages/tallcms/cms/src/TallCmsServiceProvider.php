@@ -493,10 +493,17 @@ class TallCmsServiceProvider extends PackageServiceProvider
             });
         }
 
-        // SEO routes (sitemap, robots.txt, RSS feeds, archive pages)
-        // These don't conflict with app routes - they use standard SEO paths
+        // Core SEO routes (sitemap.xml, robots.txt)
+        // Always at root level - no prefix - search engines expect standard locations
         if (config('tallcms.plugin_mode.seo_routes_enabled', true)) {
-            Route::middleware(['web'])->prefix($prefix)->group(__DIR__ . '/../routes/seo.php');
+            Route::middleware(['web'])->group(__DIR__ . '/../routes/seo.php');
+        }
+
+        // Archive routes (RSS feed, category/author archives)
+        // Optional prefix to avoid conflicts with host app routes
+        if (config('tallcms.plugin_mode.archive_routes_enabled', false)) {
+            $archivePrefix = config('tallcms.plugin_mode.archive_routes_prefix', '');
+            Route::middleware(['web'])->prefix($archivePrefix)->group(__DIR__ . '/../routes/archives.php');
         }
     }
 
