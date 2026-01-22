@@ -28,10 +28,10 @@
     $metaType = $type;
 
     // Get RSS feed URL for auto-discovery
+    // Only show if RSS is enabled in settings AND the feed route actually exists
     $rssEnabled = SiteSetting::get('seo_rss_enabled', true);
-    $prefix = config('tallcms.plugin_mode.routes_prefix', '');
-    $prefix = $prefix ? "/{$prefix}" : '';
-    $feedUrl = url($prefix . '/feed');
+    $feedRouteExists = Route::has('tallcms.feed');
+    $feedUrl = $feedRouteExists ? route('tallcms.feed') : null;
 @endphp
 
 {{-- Page Title --}}
@@ -116,7 +116,7 @@
 @endif
 @endif
 
-{{-- RSS Feed Auto-Discovery --}}
-@if($rssEnabled)
+{{-- RSS Feed Auto-Discovery (only if route exists and RSS enabled) --}}
+@if($rssEnabled && $feedUrl)
 <link rel="alternate" type="application/rss+xml" title="{{ $siteName }} RSS Feed" href="{{ $feedUrl }}">
 @endif

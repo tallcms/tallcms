@@ -31,8 +31,6 @@
                 @foreach($posts as $post)
                     @php
                         $postUrl = \TallCms\Cms\Services\SeoService::getPostUrl($post);
-                        $prefix = config('tallcms.plugin_mode.routes_prefix', '');
-                        $prefix = $prefix ? "/{$prefix}" : '';
                     @endphp
                     <article class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
                         @if($post->featured_image)
@@ -60,7 +58,7 @@
                             @endif
                             <div class="mt-4 flex flex-wrap gap-2">
                                 @foreach($post->categories as $cat)
-                                    <a href="{{ url($prefix . '/category/' . $cat->slug) }}"
+                                    <a href="{{ Route::has('tallcms.category.show') ? route('tallcms.category.show', $cat->slug) : url('/category/' . $cat->slug) }}"
                                        class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition-colors">
                                         {{ $cat->name }}
                                     </a>
