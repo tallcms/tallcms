@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ request()->cookie('theme', 'light') }}"
+      x-data="{ theme: localStorage.getItem('theme') || 'light' }"
+      x-init="$el.setAttribute('data-theme', theme)"
+      @theme-changed.window="theme = $event.detail; localStorage.setItem('theme', theme); $el.setAttribute('data-theme', theme)">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -239,5 +242,13 @@
     </div>
 
     @livewireScripts
+
+    {{-- Preserve theme across wire:navigate --}}
+    <script>
+        document.addEventListener('livewire:navigated', () => {
+            const theme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+        });
+    </script>
 </body>
 </html>

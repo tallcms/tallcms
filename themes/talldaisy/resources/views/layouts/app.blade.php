@@ -48,9 +48,46 @@
     <style>
         [x-cloak] { display: none !important; }
         html { scroll-behavior: smooth; }
+
+        /* Navigation progress bar */
+        #nav-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: oklch(var(--p));
+            z-index: 9999;
+            transform: scaleX(0);
+            transform-origin: left;
+            pointer-events: none;
+        }
+        #nav-progress.loading {
+            animation: nav-progress 2s ease-out forwards;
+        }
+        #nav-progress.done {
+            animation: none;
+            transform: scaleX(1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        @keyframes nav-progress {
+            0% { transform: scaleX(0); }
+            20% { transform: scaleX(0.5); }
+            80% { transform: scaleX(0.8); }
+            100% { transform: scaleX(0.95); }
+        }
+
+        /* Content fade during navigation */
+        .page-transitioning {
+            opacity: 0.5;
+            transition: opacity 0.1s ease;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-base-100 text-base-content">
+    <!-- Navigation Progress Bar -->
+    <div class="navigation-progress" id="nav-progress"></div>
     @if(supports_theme_controller())
     <!-- Theme Drawer Wrapper -->
     <div class="drawer drawer-end">
@@ -243,15 +280,52 @@
                 if (drawer) drawer.checked = false;
             }
 
-            // Initialize: mark current theme as active
-            const savedTheme = localStorage.getItem('theme') ||
-                              document.documentElement.getAttribute('data-theme') ||
-                              'light';
-            document.querySelectorAll('.theme-btn').forEach(btn => {
-                btn.classList.toggle('btn-active', btn.dataset.themeValue === savedTheme);
-                btn.addEventListener('click', function() {
-                    setTheme(this.dataset.themeValue);
+            function initThemeButtons() {
+                const savedTheme = localStorage.getItem('theme') ||
+                                  document.documentElement.getAttribute('data-theme') ||
+                                  'light';
+                document.querySelectorAll('.theme-btn').forEach(btn => {
+                    btn.classList.toggle('btn-active', btn.dataset.themeValue === savedTheme);
+                    // Remove existing listener to avoid duplicates after navigation
+                    btn.removeEventListener('click', btn._themeClickHandler);
+                    btn._themeClickHandler = function() {
+                        setTheme(this.dataset.themeValue);
+                    };
+                    btn.addEventListener('click', btn._themeClickHandler);
                 });
+            }
+
+            // Initialize on page load
+            initThemeButtons();
+
+            // Navigation transitions
+            document.addEventListener('livewire:navigate', function() {
+                const bar = document.getElementById('nav-progress');
+                const main = document.querySelector('main');
+                if (bar) {
+                    bar.classList.remove('done');
+                    bar.classList.add('loading');
+                }
+                if (main) {
+                    main.classList.add('page-transitioning');
+                }
+            });
+
+            document.addEventListener('livewire:navigated', function() {
+                const bar = document.getElementById('nav-progress');
+                const main = document.querySelector('main');
+                if (bar) {
+                    bar.classList.remove('loading');
+                    bar.classList.add('done');
+                    setTimeout(() => bar.classList.remove('done'), 400);
+                }
+                if (main) {
+                    main.classList.remove('page-transitioning');
+                }
+                // Re-apply saved theme
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                initThemeButtons();
             });
         })();
     </script>

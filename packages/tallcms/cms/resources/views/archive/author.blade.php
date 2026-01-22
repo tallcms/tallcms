@@ -71,10 +71,10 @@
                 @endforeach
             </div>
 
-            {{-- Pagination --}}
+            {{-- Pagination (DaisyUI) --}}
             @if($posts->hasPages())
                 <div class="mt-12 max-w-7xl mx-auto">
-                    {{ $posts->links() }}
+                    <x-tallcms::pagination :paginator="$posts" />
                 </div>
             @endif
         @else

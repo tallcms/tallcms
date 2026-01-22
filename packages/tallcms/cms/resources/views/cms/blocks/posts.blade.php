@@ -367,10 +367,10 @@
                 </div>
             @endif
 
-            {{-- Pagination --}}
+            {{-- Pagination (DaisyUI) --}}
             @if($isPaginated && $posts->hasPages())
-                <div class="mt-8 flex justify-center">
-                    {{ $posts->links() }}
+                <div class="mt-8">
+                    <x-tallcms::pagination :paginator="$posts" :paramName="$paginationParam" />
                 </div>
             @endif
         @endif
