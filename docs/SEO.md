@@ -72,10 +72,9 @@ Priority is automatically calculated:
 
 ### Caching
 
-Sitemaps are cached for 1 hour by default. Cache is automatically invalidated when:
-- Pages or posts are published/unpublished
-- Categories are created/updated/deleted
-- Author information changes
+Sitemaps are cached for 1 hour by default. You can clear the sitemap cache from
+**Admin > Settings > SEO Settings** (Save or Clear Sitemap Cache), or wait for
+the cache TTL to expire.
 
 ---
 
@@ -118,6 +117,10 @@ TallCMS provides RSS 2.0 feeds for blog content.
 | `/feed` | Main RSS feed (all published posts) |
 | `/feed/category/{slug}` | Category-specific feed |
 
+In plugin mode, archive routes are disabled by default. Enable
+`tallcms.plugin_mode.archive_routes_enabled` to serve these endpoints. If
+`archive_routes_prefix` is set, the URLs are prefixed (e.g., `/blog/feed`).
+
 ### Feed Content
 
 Each feed item includes:
@@ -125,17 +128,23 @@ Each feed item includes:
 - Excerpt or full content (configurable)
 - Author name
 - Publication date
-- Categories/tags
+- Categories
 - Permalink
 
 ### Auto-Discovery
 
-Add the RSS auto-discovery link to your layout's `<head>`:
+If you're already using `<x-tallcms::seo.meta-tags>`, the RSS auto-discovery
+link is included when RSS is enabled. Otherwise add it manually:
 
 ```blade
+@php
+$prefix = config('tallcms.plugin_mode.archive_routes_prefix', '');
+$prefix = $prefix ? "/{$prefix}" : '';
+@endphp
+
 <link rel="alternate" type="application/rss+xml"
       title="{{ config('app.name') }} RSS Feed"
-      href="{{ url('/feed') }}">
+      href="{{ url($prefix . '/feed') }}">
 ```
 
 ### Configuration
@@ -151,6 +160,9 @@ RSS settings are available in **Admin > Settings > SEO Settings**:
 ## Archive Pages
 
 TallCMS provides archive pages for browsing content by category or author.
+In plugin mode, these routes are opt-in via
+`tallcms.plugin_mode.archive_routes_enabled`. If `archive_routes_prefix` is set,
+the URLs are prefixed (e.g., `/blog/category/{slug}`).
 
 ### Category Archives
 
