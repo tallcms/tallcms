@@ -152,6 +152,9 @@ jobs:
           cd release
           # Remove old vendor (has references to local packages/)
           rm -rf vendor
+          # Remove composer.lock so we can resolve fresh from Packagist
+          # (the lock file has the old local path version)
+          rm -f composer.lock
           # Install fresh from Packagist
           composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
