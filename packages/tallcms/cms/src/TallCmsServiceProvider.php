@@ -492,6 +492,19 @@ class TallCmsServiceProvider extends PackageServiceProvider
                     ->name('tallcms.contact.submit');
             });
         }
+
+        // Core SEO routes (sitemap.xml, robots.txt)
+        // Always at root level - no prefix - search engines expect standard locations
+        if (config('tallcms.plugin_mode.seo_routes_enabled', true)) {
+            Route::middleware(['web'])->group(__DIR__ . '/../routes/seo.php');
+        }
+
+        // Archive routes (RSS feed, category/author archives)
+        // Optional prefix to avoid conflicts with host app routes
+        if (config('tallcms.plugin_mode.archive_routes_enabled', false)) {
+            $archivePrefix = config('tallcms.plugin_mode.archive_routes_prefix', '');
+            Route::middleware(['web'])->prefix($archivePrefix)->group(__DIR__ . '/../routes/archives.php');
+        }
     }
 
     /**
@@ -577,6 +590,9 @@ class TallCmsServiceProvider extends PackageServiceProvider
             '2026_01_07_064340_create_tallcms_plugin_migrations_table',
             '2026_01_09_133136_create_tallcms_plugin_licenses_table',
             '2026_01_09_214045_migrate_pro_licenses_to_core',
+
+            // SEO & Author features
+            '2026_01_22_000001_add_author_fields_to_users_table',
         ];
     }
 
@@ -587,6 +603,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
     {
         $commands = [
             // Core commands available in all modes
+            Console\Commands\BackfillAuthorSlugs::class,
             Console\Commands\CleanExpiredPreviewTokens::class,
             Console\Commands\MakeTallCmsBlock::class,
             Console\Commands\TallCmsInstall::class,

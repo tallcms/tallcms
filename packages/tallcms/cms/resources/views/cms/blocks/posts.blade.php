@@ -2,6 +2,7 @@
     use TallCms\Cms\Models\CmsPost;
     use TallCms\Cms\Models\CmsCategory;
     use Illuminate\Support\Facades\Storage;
+    use Illuminate\Support\Str;
 
     // Block configuration with defaults
     $configCategories = $categories ?? [];
@@ -23,6 +24,22 @@
     $sectionBackground = $background ?? 'bg-base-100';
     $sectionPaddingClass = $padding ?? 'py-16';
     $isPreview = $isPreview ?? false;
+
+    // Pagination configuration
+    $enablePagination = $enable_pagination ?? false;
+    $perPage = (int) ($per_page ?? 12);
+
+    // Block UUID for pagination - use persisted UUID or generate stable fallback
+    $blockUuid = $block_uuid ?? null;
+    if (!$blockUuid) {
+        // Fallback: use a static counter to ensure unique IDs for multiple blocks on same page
+        // Combined with page slug for cross-page uniqueness
+        static $blockCounter = 0;
+        $blockCounter++;
+        $pageSlugForId = $cmsPageSlug ?? request()->route('slug') ?? 'home';
+        $blockUuid = 'legacy-' . substr(md5($pageSlugForId), 0, 4) . '-' . $blockCounter;
+    }
+    $paginationParam = "posts_{$blockUuid}";
 
     // Get parent slug - try multiple sources in order of preference:
     // 1. Passed directly to template ($parentSlug)
@@ -63,8 +80,13 @@
         $query->featured();
     }
 
+    // Track if we're using pagination
+    $isPaginated = false;
+    $posts = collect();
+
     // Handle sorting and retrieval
     if ($sortBy === 'manual' && !empty($pinnedPosts)) {
+        // Manual selection doesn't support pagination
         $manualQuery = CmsPost::query()->with(['categories', 'author']);
 
         if (!$showDrafts) {
@@ -101,7 +123,20 @@
                 break;
         }
 
-        $posts = $query->offset($offset)->limit($postsCount)->get();
+        // Use pagination or simple limit
+        // Note: offset and pagination are mutually exclusive - offset is ignored when pagination is enabled
+        if ($enablePagination && !$isPreview && $offset === 0) {
+            $currentPage = (int) request()->input($paginationParam, 1);
+            $posts = $query->paginate($perPage, ['*'], $paginationParam, $currentPage)
+                ->withQueryString();
+            $isPaginated = true;
+        } else {
+            // Simple limit/offset mode (no pagination)
+            if ($offset > 0) {
+                $query->skip($offset);
+            }
+            $posts = $query->limit($postsCount)->get();
+        }
     }
 
     // Section spacing
@@ -329,6 +364,13 @@
                             </div>
                         </article>
                     @endforeach
+                </div>
+            @endif
+
+            {{-- Pagination (DaisyUI) --}}
+            @if($isPaginated && $posts->hasPages())
+                <div class="mt-8">
+                    <x-tallcms::pagination :paginator="$posts" :paramName="$paginationParam" />
                 </div>
             @endif
         @endif

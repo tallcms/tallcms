@@ -81,6 +81,20 @@ return [
         // e.g., 'tallcms' results in /tallcms/preview/page/{id}
         'essential_routes_prefix' => env('TALLCMS_ESSENTIAL_ROUTES_PREFIX', ''),
 
+        // Enable core SEO routes (sitemap.xml, robots.txt).
+        // These are always registered at root level (no prefix) since search
+        // engines expect them at standard locations. Safe to enable.
+        'seo_routes_enabled' => env('TALLCMS_SEO_ROUTES_ENABLED', true),
+
+        // Enable archive routes (RSS feed, category archives, author archives).
+        // These routes (/feed, /category/{slug}, /author/{slug}) may conflict
+        // with your app's routes. Disabled by default in plugin mode.
+        'archive_routes_enabled' => env('TALLCMS_ARCHIVE_ROUTES_ENABLED', false),
+
+        // Optional prefix for archive routes to avoid conflicts.
+        // e.g., 'blog' results in /blog/feed, /blog/category/{slug}, /blog/author/{slug}
+        'archive_routes_prefix' => env('TALLCMS_ARCHIVE_ROUTES_PREFIX', ''),
+
         // Enable the TallCMS plugin system.
         // When enabled, the Plugin Manager page is visible and third-party plugins can be loaded.
         'plugins_enabled' => env('TALLCMS_PLUGINS_ENABLED', true),

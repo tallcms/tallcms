@@ -5,9 +5,12 @@ namespace App\Models;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
 use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
+use TallCms\Cms\Models\CmsPost;
 
 class User extends Authenticatable implements FilamentUser, HasAppAuthentication
 {
@@ -25,6 +28,9 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         'password',
         'is_active',
         'email_verified_at',
+        'slug',
+        'bio',
+        'twitter_handle',
     ];
 
     /**
@@ -51,6 +57,55 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             'app_authentication_secret' => 'encrypted',
             'is_active' => 'boolean',
         ];
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Auto-generate slug on create (if not provided)
+        static::creating(function ($user) {
+            if (empty($user->slug)) {
+                $slug = Str::slug($user->name);
+                if (! empty($slug)) {
+                    $user->slug = static::generateUniqueSlug($slug);
+                }
+                // Leave slug NULL if empty - will be set in created event
+                // This avoids unique constraint violations with concurrent creates
+            }
+        });
+
+        // Set ID-based slug if still null (empty/non-Latin names)
+        static::created(function ($user) {
+            if (empty($user->slug)) {
+                $user->slug = static::generateUniqueSlug("user-{$user->getKey()}");
+                $user->saveQuietly();
+            }
+        });
+    }
+
+    /**
+     * Generate a unique slug with collision handling.
+     */
+    public static function generateUniqueSlug(string $baseSlug): string
+    {
+        $slug = $baseSlug;
+        $counter = 1;
+
+        while (static::where('slug', $slug)->exists()) {
+            $slug = $baseSlug.'-'.$counter;
+            $counter++;
+        }
+
+        return $slug;
+    }
+
+    /**
+     * Get the posts authored by this user.
+     */
+    public function posts(): HasMany
+    {
+        return $this->hasMany(CmsPost::class, 'author_id');
     }
 
     public function canAccessPanel(\Filament\Panel $panel): bool

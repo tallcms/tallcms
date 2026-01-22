@@ -13,6 +13,9 @@ declare(strict_types=1);
 | WARNING: Without a prefix, this will register the / route and override
 | your app's homepage. Set TALLCMS_ROUTES_PREFIX to use a different base path.
 |
+| NOTE: SEO routes (sitemap, robots.txt, RSS, archives) are in routes/seo.php
+| and loaded separately via seo_routes_enabled (default: true).
+|
 */
 
 use Illuminate\Support\Facades\Route;
