@@ -553,25 +553,24 @@ GITIGNORE;
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>{{ \$title ?? config('app.name') }}</title>
+    {{-- SEO Meta Tags --}}
+    <x-tallcms::seo.meta-tags
+        :title="\$title ?? null"
+        :description="\$description ?? null"
+        :image="isset(\$featuredImage) && \$featuredImage ? Storage::disk(cms_media_disk())->url(\$featuredImage) : null"
+        :type="\$seoType ?? 'website'"
+        :article="\$seoArticle ?? null"
+        :twitter="\$seoTwitter ?? null"
+        :profile="\$seoProfile ?? null"
+    />
 
-    @if(isset(\$description))
-        <meta name="description" content="{{ \$description }}">
-    @endif
-
-    @if(isset(\$featuredImage))
-        <meta property="og:image" content="{{ Storage::url(\$featuredImage) }}">
-        <meta property="twitter:image" content="{{ Storage::url(\$featuredImage) }}">
-    @endif
-
-    <meta property="og:title" content="{{ \$title ?? config('app.name') }}">
-    <meta property="og:description" content="{{ \$description ?? '' }}">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ request()->url() }}">
-
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ \$title ?? config('app.name') }}">
-    <meta name="twitter:description" content="{{ \$description ?? '' }}">
+    {{-- Structured Data --}}
+    <x-tallcms::seo.structured-data
+        :page="\$seoPage ?? null"
+        :post="\$seoPost ?? null"
+        :breadcrumbs="\$seoBreadcrumbs ?? null"
+        :includeWebsite="\$seoIncludeWebsite ?? false"
+    />
 
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
