@@ -1,8 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use TallCms\Cms\Http\Controllers\AuthorArchiveController;
+use TallCms\Cms\Http\Controllers\CategoryArchiveController;
 use TallCms\Cms\Http\Controllers\ContactFormController;
 use TallCms\Cms\Http\Controllers\PreviewController;
+use TallCms\Cms\Http\Controllers\RobotsController;
+use TallCms\Cms\Http\Controllers\RssFeedController;
+use TallCms\Cms\Http\Controllers\SitemapController;
 use TallCms\Cms\Livewire\CmsPageRenderer;
 
 /*
@@ -29,14 +34,33 @@ Route::middleware(['tallcms.preview-auth'])->group(function () {
     Route::get('/preview/post/{post:id}', [PreviewController::class, 'post'])->name('tallcms.preview.post');
 });
 
+// SEO routes (sitemap, robots.txt, RSS feeds, archives) - MUST be before catch-all
+Route::middleware('tallcms.maintenance')->group(function () {
+    // Sitemap routes
+    Route::get('/robots.txt', [RobotsController::class, 'index'])->name('tallcms.seo.robots');
+    Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('tallcms.seo.sitemap');
+    Route::get('/sitemap-pages.xml', [SitemapController::class, 'pages'])->name('tallcms.seo.sitemap.pages');
+    Route::get('/sitemap-posts-{page}.xml', [SitemapController::class, 'posts'])->name('tallcms.seo.sitemap.posts')->where('page', '[0-9]+');
+    Route::get('/sitemap-categories.xml', [SitemapController::class, 'categories'])->name('tallcms.seo.sitemap.categories');
+    Route::get('/sitemap-authors.xml', [SitemapController::class, 'authors'])->name('tallcms.seo.sitemap.authors');
+
+    // RSS Feed routes
+    Route::get('/feed', [RssFeedController::class, 'index'])->name('tallcms.feed');
+    Route::get('/feed/category/{slug}', [RssFeedController::class, 'category'])->name('tallcms.feed.category');
+
+    // Archive routes
+    Route::get('/category/{slug}', [CategoryArchiveController::class, 'show'])->name('tallcms.category.show');
+    Route::get('/author/{authorSlug}', [AuthorArchiveController::class, 'show'])->name('tallcms.author.show');
+});
+
 // Clean CMS routing - all pages handled by one route with maintenance mode check
 // Maintenance middleware now handles installation checks internally
 Route::middleware('tallcms.maintenance')->group(function () {
     Route::get('/', CmsPageRenderer::class)->defaults('slug', '/')->name('tallcms.cms.home');
-    // Exclude preview, admin, livewire, storage, api, and install routes
+    // Exclude preview, admin, livewire, storage, api, install, feed, sitemap, category, author routes
     // Supports nested slugs for posts (e.g., /blog/my-post)
     Route::get('/{slug}', CmsPageRenderer::class)
-        ->where('slug', '^(?!preview|admin|livewire|storage|api|install).*')
+        ->where('slug', '^(?!preview|admin|livewire|storage|api|install|feed|sitemap|category|author|robots\.txt).*')
         ->name('tallcms.cms.page');
 });
 

@@ -81,6 +81,11 @@ return [
         // e.g., 'tallcms' results in /tallcms/preview/page/{id}
         'essential_routes_prefix' => env('TALLCMS_ESSENTIAL_ROUTES_PREFIX', ''),
 
+        // Enable SEO routes (sitemap, robots.txt, RSS feeds, archive pages).
+        // These routes don't conflict with your app - they use standard SEO paths.
+        // Enabled by default since they're essential for search engine discovery.
+        'seo_routes_enabled' => env('TALLCMS_SEO_ROUTES_ENABLED', true),
+
         // Enable the TallCMS plugin system.
         // When enabled, the Plugin Manager page is visible and third-party plugins can be loaded.
         'plugins_enabled' => env('TALLCMS_PLUGINS_ENABLED', true),

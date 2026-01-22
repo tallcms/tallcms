@@ -492,6 +492,12 @@ class TallCmsServiceProvider extends PackageServiceProvider
                     ->name('tallcms.contact.submit');
             });
         }
+
+        // SEO routes (sitemap, robots.txt, RSS feeds, archive pages)
+        // These don't conflict with app routes - they use standard SEO paths
+        if (config('tallcms.plugin_mode.seo_routes_enabled', true)) {
+            Route::middleware(['web'])->prefix($prefix)->group(__DIR__ . '/../routes/seo.php');
+        }
     }
 
     /**
