@@ -620,7 +620,8 @@ GITIGNORE;
 
     <!-- Main Content -->
     <main>
-        {{ \$slot }}
+        {{ \$slot ?? '' }}
+        @yield('content')
     </main>
 
     <!-- Footer -->

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace TallCms\Cms\Http\Controllers;
 
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use TallCms\Cms\Models\CmsPost;
@@ -17,14 +19,25 @@ class AuthorArchiveController extends Controller
     {
         // Get the configured user model
         $userModel = config('tallcms.plugin_mode.user_model', \App\Models\User::class);
+        $author = null;
 
-        // Find author by slug
-        $author = $userModel::where('slug', $authorSlug)->first();
+        // Try to find author by slug (if column exists)
+        $userTable = (new $userModel)->getTable();
+        if (Schema::hasColumn($userTable, 'slug')) {
+            $author = $userModel::where('slug', $authorSlug)->first();
+        }
 
         // Fallback: try user-{id} pattern
         if (! $author && Str::startsWith($authorSlug, 'user-')) {
             $id = Str::after($authorSlug, 'user-');
-            $author = $userModel::find($id);
+            if (is_numeric($id)) {
+                $author = $userModel::find($id);
+            }
+        }
+
+        // Final fallback: try finding by ID directly (for backwards compatibility)
+        if (! $author && is_numeric($authorSlug)) {
+            $author = $userModel::find($authorSlug);
         }
 
         // 404 if author not found
