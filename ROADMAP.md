@@ -128,17 +128,17 @@ Focus: Complete the blogging experience, SEO tools, and one-click system updates
 ### Blog Frontend
 - [x] Public blog listing page (via Posts block)
 - [x] Individual post pages with SEO-friendly URLs
-- [ ] Category archive pages
-- [ ] Author archive pages
-- [ ] Pagination
-- [ ] RSS feed
+- [x] Category archive pages
+- [x] Author archive pages
+- [x] Pagination
+- [x] RSS feed (main and per-category)
 
 ### SEO Enhancements
-- [ ] XML sitemap generation
-- [ ] robots.txt editor
-- [ ] Open Graph meta tags
-- [ ] Twitter Card meta tags
-- [ ] Structured data (JSON-LD) for articles
+- [x] XML sitemap generation (with chunking for large sites)
+- [x] robots.txt editor
+- [x] Open Graph meta tags
+- [x] Twitter Card meta tags
+- [x] Structured data (JSON-LD) for articles
 
 ### Content Improvements
 - [ ] Full-text search across pages and posts
@@ -304,6 +304,8 @@ Focus: Restructure TallCMS as a Filament plugin for broader reach and easier ado
 ### Installation Experience
 - [x] Auto-register pages, resources, and widgets via `TallCmsPlugin`
 - [x] Configurable URL prefixes (`plugin_mode.routes_prefix`)
+- [x] Separate SEO routes control (`seo_routes_enabled`, always at root)
+- [x] Opt-in archive routes with prefix (`archive_routes_enabled`, `archive_routes_prefix`)
 - [x] Selective component registration (`withoutPages()`, `withoutPosts()`, etc.)
 - [x] Multi-panel support with dynamic URL generation
 - [x] Asset publishing and customization
@@ -371,7 +373,7 @@ We welcome community input on our roadmap:
 |---------|--------|-------|------------|
 | v1.0 | ✅ Released | Foundation | Core CMS, Themes, Plugins, Permissions |
 | v1.1 | ✅ Released | UI Polish | daisyUI 5, semantic CSS classes |
-| v1.2 | ✅ Released | Content & SEO | Blog frontend, System Updates |
+| v1.2 | ✅ Released | Content & SEO | Blog frontend, SEO tools, System Updates |
 | v1.3 | 📋 Planned | Global | Multilingual support, RTL |
 | v1.4 | 📋 Planned | Developers | REST API, CLI tools, Webhooks |
 | v1.5 | 📋 Planned | AI | Content generation, Auto-optimization |
@@ -390,4 +392,4 @@ We welcome community input on our roadmap:
 
 ---
 
-*Last updated: January 2026*
+*Last updated: January 22, 2026*
