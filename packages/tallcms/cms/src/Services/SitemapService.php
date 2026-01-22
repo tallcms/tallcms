@@ -88,15 +88,23 @@ class SitemapService
             $userInstance = new $userModel;
             $userTable = $userInstance->getTable();
             $userKey = $userInstance->getKeyName();
+            $userConnection = $userInstance->getConnectionName();
             $postsTable = (new CmsPost)->getTable();
 
-            $authorsWithPosts = DB::table($userTable)
+            // Use the user model's connection (may differ from default)
+            $db = $userConnection ? DB::connection($userConnection) : DB::connection();
+
+            $authorsWithPosts = $db->table($userTable)
                 ->whereExists(function ($q) use ($postsTable, $userTable, $userKey) {
                     $q->select(DB::raw(1))
                         ->from($postsTable)
                         ->whereColumn('author_id', "{$userTable}.{$userKey}")
                         ->where('status', 'published')
-                        ->where('published_at', '<=', now());
+                        // Match published() scope: NULL or past published_at
+                        ->where(function ($q2) {
+                            $q2->whereNull('published_at')
+                                ->orWhere('published_at', '<=', now());
+                        });
                 })
                 ->count();
 

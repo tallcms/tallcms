@@ -307,7 +307,11 @@ class SeoService
      * Returns null if the homepage has the PostsBlock (posts at root),
      * or the slug of the first non-homepage page with a PostsBlock.
      *
-     * Results are cached for performance.
+     * Note: When multiple pages contain PostsBlocks, the first page by
+     * sort_order is selected. This provides deterministic canonical URLs
+     * but may not match user expectations if posts appear on multiple pages.
+     *
+     * Results are cached for performance within a single request.
      */
     public static function getBlogParentSlug(): ?string
     {
@@ -350,6 +354,8 @@ class SeoService
 
     /**
      * Check if a page contains a PostsBlock.
+     *
+     * Detects PostsBlock in both JSON content structures and rendered HTML.
      */
     protected static function pageHasPostsBlock(CmsPage $page): bool
     {
@@ -360,7 +366,13 @@ class SeoService
         $content = $page->content;
 
         if (is_string($content)) {
+            // Check for JSON patterns
             if (str_contains($content, '"id":"posts"') || str_contains($content, "'id':'posts'")) {
+                return true;
+            }
+
+            // Check for rendered HTML pattern (data-id="posts" attribute)
+            if (str_contains($content, 'data-id="posts"') || str_contains($content, "data-id='posts'")) {
                 return true;
             }
 
