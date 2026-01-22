@@ -29,17 +29,15 @@
     $enablePagination = $enable_pagination ?? false;
     $perPage = (int) ($per_page ?? 12);
 
-    // Block UUID for pagination - use persisted UUID or generate deterministic fallback
+    // Block UUID for pagination - use persisted UUID or generate stable fallback
     $blockUuid = $block_uuid ?? null;
     if (!$blockUuid) {
-        // Fallback: generate deterministic ID from page slug + config signature
+        // Fallback: use a static counter to ensure unique IDs for multiple blocks on same page
+        // Combined with page slug for cross-page uniqueness
+        static $blockCounter = 0;
+        $blockCounter++;
         $pageSlugForId = $cmsPageSlug ?? request()->route('slug') ?? 'home';
-        $configSignature = md5(json_encode([
-            'categories' => $configCategories,
-            'layout' => $layout,
-            'featured_only' => $featuredOnly,
-        ]));
-        $blockUuid = 'legacy-' . substr(md5($pageSlugForId . '-' . $configSignature), 0, 8);
+        $blockUuid = 'legacy-' . substr(md5($pageSlugForId), 0, 4) . '-' . $blockCounter;
     }
     $paginationParam = "posts_{$blockUuid}";
 
@@ -125,18 +123,18 @@
                 break;
         }
 
-        // Apply offset if set
-        if ($offset > 0) {
-            $query->skip($offset);
-        }
-
         // Use pagination or simple limit
-        if ($enablePagination && !$isPreview) {
+        // Note: offset and pagination are mutually exclusive - offset is ignored when pagination is enabled
+        if ($enablePagination && !$isPreview && $offset === 0) {
             $currentPage = (int) request()->input($paginationParam, 1);
             $posts = $query->paginate($perPage, ['*'], $paginationParam, $currentPage)
                 ->withQueryString();
             $isPaginated = true;
         } else {
+            // Simple limit/offset mode (no pagination)
+            if ($offset > 0) {
+                $query->skip($offset);
+            }
             $posts = $query->limit($postsCount)->get();
         }
     }

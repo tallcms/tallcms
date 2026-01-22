@@ -89,7 +89,7 @@ class PostsBlock extends RichContentCustomBlock
                     ->numeric()
                     ->default(0)
                     ->minValue(0)
-                    ->helperText('Skip first N posts (useful for multi-section layouts)'),
+                    ->helperText('Skip first N posts (incompatible with pagination - use one or the other)'),
 
                 Select::make('sort_by')
                     ->label('Sort By')

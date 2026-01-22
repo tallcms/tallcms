@@ -85,14 +85,16 @@ class SitemapService
 
             // Authors (only those with published posts)
             $userModel = config('tallcms.plugin_mode.user_model', \App\Models\User::class);
-            $userTable = (new $userModel)->getTable();
+            $userInstance = new $userModel;
+            $userTable = $userInstance->getTable();
+            $userKey = $userInstance->getKeyName();
             $postsTable = (new CmsPost)->getTable();
 
             $authorsWithPosts = DB::table($userTable)
-                ->whereExists(function ($q) use ($postsTable, $userTable) {
+                ->whereExists(function ($q) use ($postsTable, $userTable, $userKey) {
                     $q->select(DB::raw(1))
                         ->from($postsTable)
-                        ->whereColumn('author_id', "{$userTable}.id")
+                        ->whereColumn('author_id', "{$userTable}.{$userKey}")
                         ->where('status', 'published')
                         ->where('published_at', '<=', now());
                 })
@@ -142,8 +144,6 @@ class SitemapService
         $cacheKey = "sitemap:posts:{$page}";
 
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($page) {
-            $prefix = self::getPrefix();
-            $baseUrl = rtrim(config('app.url'), '/');
             $offset = ($page - 1) * self::CHUNK_SIZE;
 
             return CmsPost::published()
@@ -151,9 +151,9 @@ class SitemapService
                 ->skip($offset)
                 ->take(self::CHUNK_SIZE)
                 ->get()
-                ->map(function ($post) use ($baseUrl, $prefix) {
+                ->map(function ($post) {
                     return [
-                        'loc' => $baseUrl.$prefix.'/'.$post->slug,
+                        'loc' => SeoService::getPostUrl($post),
                         'lastmod' => $post->updated_at?->toIso8601String(),
                         'changefreq' => 'weekly',
                         'priority' => $post->is_featured ? '0.9' : '0.7',

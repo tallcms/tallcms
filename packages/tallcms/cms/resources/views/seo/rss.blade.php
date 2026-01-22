@@ -15,9 +15,16 @@
 
         @foreach($posts as $post)
             @php
-                $prefix = config('tallcms.plugin_mode.routes_prefix', '');
-                $prefix = $prefix ? "/{$prefix}" : '';
-                $postUrl = url($prefix . '/' . $post->slug);
+                $postUrl = \TallCms\Cms\Services\SeoService::getPostUrl($post);
+
+                // Get description - use excerpt, or render content and extract plain text
+                $description = $post->excerpt;
+                if (empty($description) && $post->content) {
+                    $rendered = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($post->content)
+                        ->customBlocks(\TallCms\Cms\Services\CustomBlockDiscoveryService::getBlocksArray())
+                        ->toUnsafeHtml();
+                    $description = Str::limit(strip_tags($rendered), 300);
+                }
             @endphp
             <item>
                 <title><![CDATA[{{ $post->title }}]]></title>
@@ -33,7 +40,7 @@
                     <category><![CDATA[{{ $category->name }}]]></category>
                 @endforeach
 
-                <description><![CDATA[{{ $post->excerpt ?? Str::limit(strip_tags($post->content), 300) }}]]></description>
+                <description><![CDATA[{{ $description }}]]></description>
 
                 @if($includeFullContent && $post->content)
                     @php

@@ -20,9 +20,9 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
                 @foreach($posts as $post)
                     @php
+                        $postUrl = \TallCms\Cms\Services\SeoService::getPostUrl($post);
                         $prefix = config('tallcms.plugin_mode.routes_prefix', '');
                         $prefix = $prefix ? "/{$prefix}" : '';
-                        $postUrl = url($prefix . '/' . $post->slug);
                     @endphp
                     <article class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
                         @if($post->featured_image)

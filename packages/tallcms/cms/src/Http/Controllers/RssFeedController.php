@@ -9,6 +9,7 @@ use Illuminate\Routing\Controller;
 use TallCms\Cms\Models\CmsCategory;
 use TallCms\Cms\Models\CmsPost;
 use TallCms\Cms\Models\SiteSetting;
+use TallCms\Cms\Services\SeoService;
 
 class RssFeedController extends Controller
 {
@@ -34,7 +35,7 @@ class RssFeedController extends Controller
         return $this->buildFeed($posts, [
             'title' => SiteSetting::get('site_name', config('app.name')).' RSS Feed',
             'description' => SiteSetting::get('site_description', ''),
-            'link' => url('/'),
+            'link' => SeoService::getCmsBaseUrl(),
             'feedLink' => $this->getFeedUrl(),
             'includeFullContent' => $includeFullContent,
         ]);

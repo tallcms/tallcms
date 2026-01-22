@@ -279,4 +279,130 @@ class SeoService
 
         return null;
     }
+
+    /**
+     * Get the canonical URL for a post.
+     *
+     * Posts can be nested under a page containing a PostsBlock (e.g., /blog/post-slug)
+     * or at the root if the homepage contains a PostsBlock (e.g., /post-slug).
+     */
+    public static function getPostUrl(CmsPost $post): string
+    {
+        $prefix = config('tallcms.plugin_mode.routes_prefix', '');
+        $prefix = $prefix ? "/{$prefix}" : '';
+        $baseUrl = rtrim(config('app.url'), '/');
+
+        $blogParent = static::getBlogParentSlug();
+
+        if ($blogParent) {
+            return $baseUrl.$prefix.'/'.$blogParent.'/'.$post->slug;
+        }
+
+        return $baseUrl.$prefix.'/'.$post->slug;
+    }
+
+    /**
+     * Get the blog parent page slug (the page containing a PostsBlock).
+     *
+     * Returns null if the homepage has the PostsBlock (posts at root),
+     * or the slug of the first non-homepage page with a PostsBlock.
+     *
+     * Results are cached for performance.
+     */
+    public static function getBlogParentSlug(): ?string
+    {
+        static $cached = null;
+        static $resolved = false;
+
+        if ($resolved) {
+            return $cached;
+        }
+
+        $resolved = true;
+
+        // First check homepage
+        $homepage = CmsPage::where('is_homepage', true)->published()->first();
+        if ($homepage && static::pageHasPostsBlock($homepage)) {
+            $cached = null; // Posts at root
+
+            return $cached;
+        }
+
+        // Find first non-homepage page with a PostsBlock
+        $pages = CmsPage::where('is_homepage', false)
+            ->published()
+            ->orderBy('sort_order')
+            ->get();
+
+        foreach ($pages as $page) {
+            if (static::pageHasPostsBlock($page)) {
+                $cached = $page->slug;
+
+                return $cached;
+            }
+        }
+
+        // No page with PostsBlock found, default to root
+        $cached = null;
+
+        return $cached;
+    }
+
+    /**
+     * Check if a page contains a PostsBlock.
+     */
+    protected static function pageHasPostsBlock(CmsPage $page): bool
+    {
+        if (empty($page->content)) {
+            return false;
+        }
+
+        $content = $page->content;
+
+        if (is_string($content)) {
+            if (str_contains($content, '"id":"posts"') || str_contains($content, "'id':'posts'")) {
+                return true;
+            }
+
+            $decoded = json_decode($content, true);
+            if (is_array($decoded)) {
+                return static::searchForPostsBlock($decoded);
+            }
+        }
+
+        if (is_array($content)) {
+            return static::searchForPostsBlock($content);
+        }
+
+        return false;
+    }
+
+    /**
+     * Recursively search for posts block in content structure.
+     */
+    protected static function searchForPostsBlock(array $content): bool
+    {
+        foreach ($content as $key => $value) {
+            if ($key === 'id' && $value === 'posts') {
+                return true;
+            }
+
+            if (is_array($value) && static::searchForPostsBlock($value)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the CMS base URL (respects plugin mode prefix).
+     */
+    public static function getCmsBaseUrl(): string
+    {
+        $prefix = config('tallcms.plugin_mode.routes_prefix', '');
+        $prefix = $prefix ? "/{$prefix}" : '';
+
+        return rtrim(config('app.url'), '/').$prefix;
+    }
 }
