@@ -577,6 +577,9 @@ class TallCmsServiceProvider extends PackageServiceProvider
             '2026_01_07_064340_create_tallcms_plugin_migrations_table',
             '2026_01_09_133136_create_tallcms_plugin_licenses_table',
             '2026_01_09_214045_migrate_pro_licenses_to_core',
+
+            // SEO & Author features
+            '2026_01_22_000001_add_author_fields_to_users_table',
         ];
     }
 
@@ -587,6 +590,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
     {
         $commands = [
             // Core commands available in all modes
+            Console\Commands\BackfillAuthorSlugs::class,
             Console\Commands\CleanExpiredPreviewTokens::class,
             Console\Commands\MakeTallCmsBlock::class,
             Console\Commands\TallCmsInstall::class,

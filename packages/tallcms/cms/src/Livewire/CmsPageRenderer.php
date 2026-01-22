@@ -12,6 +12,7 @@ use TallCms\Cms\Models\CmsPost;
 use TallCms\Cms\Models\SiteSetting;
 use TallCms\Cms\Services\CustomBlockDiscoveryService;
 use TallCms\Cms\Services\MergeTagService;
+use TallCms\Cms\Services\SeoService;
 
 class CmsPageRenderer extends Component
 {
@@ -323,15 +324,66 @@ class CmsPageRenderer extends Component
 
     public function render()
     {
-        // Determine metadata based on whether we're showing a post or page
+        // Determine metadata and SEO context based on content type
         if ($this->post) {
-            $title = $this->post->meta_title ?: $this->post->title;
-            $description = $this->post->meta_description ?: $this->post->excerpt ?: SiteSetting::get('site_description', '');
+            // Post/Article SEO
+            $metaTags = SeoService::getPostMetaTags($this->post);
+            $title = $metaTags['title'];
+            $description = $metaTags['description'];
             $featuredImage = $this->post->featured_image;
+            $seoType = 'article';
+            $seoArticle = $metaTags['article'];
+            $seoTwitter = $metaTags['twitter'];
+            $seoPost = $this->post;
+            $seoPage = null;
+            $seoIncludeWebsite = false;
+
+            // Build breadcrumbs for post
+            $prefix = config('tallcms.plugin_mode.routes_prefix', '');
+            $prefix = $prefix ? "/{$prefix}" : '';
+            $seoBreadcrumbs = [
+                ['name' => 'Home', 'url' => url($prefix ?: '/')],
+            ];
+
+            // Add parent page breadcrumb if post is under a page
+            if ($this->parentSlug) {
+                $seoBreadcrumbs[] = [
+                    'name' => $this->page->title,
+                    'url' => url($prefix.'/'.$this->parentSlug),
+                ];
+            }
+
+            // Add post title as final breadcrumb
+            $seoBreadcrumbs[] = [
+                'name' => $this->post->title,
+                'url' => request()->url(),
+            ];
         } else {
-            $title = $this->page->meta_title ?: $this->page->title;
-            $description = $this->page->meta_description ?: SiteSetting::get('site_description', '');
+            // Page SEO
+            $metaTags = SeoService::getMetaTags($this->page);
+            $title = $metaTags['title'];
+            $description = $metaTags['description'];
             $featuredImage = $this->page->featured_image;
+            $seoType = 'website';
+            $seoArticle = null;
+            $seoTwitter = null;
+            $seoPost = null;
+            $seoPage = $this->page;
+            $seoIncludeWebsite = $this->page->is_homepage;
+
+            // Build breadcrumbs for page
+            $prefix = config('tallcms.plugin_mode.routes_prefix', '');
+            $prefix = $prefix ? "/{$prefix}" : '';
+
+            if ($this->page->is_homepage) {
+                // Homepage doesn't need breadcrumbs
+                $seoBreadcrumbs = null;
+            } else {
+                $seoBreadcrumbs = [
+                    ['name' => 'Home', 'url' => url($prefix ?: '/')],
+                    ['name' => $this->page->title, 'url' => request()->url()],
+                ];
+            }
         }
 
         return view('tallcms::livewire.page')
@@ -339,6 +391,13 @@ class CmsPageRenderer extends Component
                 'title' => $title,
                 'description' => $description,
                 'featuredImage' => $featuredImage,
+                'seoType' => $seoType,
+                'seoArticle' => $seoArticle,
+                'seoTwitter' => $seoTwitter,
+                'seoPost' => $seoPost,
+                'seoPage' => $seoPage,
+                'seoBreadcrumbs' => $seoBreadcrumbs,
+                'seoIncludeWebsite' => $seoIncludeWebsite,
             ]);
     }
 }

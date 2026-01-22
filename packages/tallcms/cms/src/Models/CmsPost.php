@@ -102,6 +102,34 @@ class CmsPost extends Model
         });
     }
 
+    /**
+     * Scope posts to a specific author by their slug.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $authorSlug
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByAuthor($query, string $authorSlug)
+    {
+        $userModel = config('tallcms.plugin_mode.user_model', \App\Models\User::class);
+
+        // Find author by slug
+        $author = $userModel::where('slug', $authorSlug)->first();
+
+        // Fallback: try user-{id} pattern
+        if (! $author && Str::startsWith($authorSlug, 'user-')) {
+            $id = Str::after($authorSlug, 'user-');
+            $author = $userModel::find($id);
+        }
+
+        if ($author) {
+            return $query->where('author_id', $author->getKey());
+        }
+
+        // No author found - return empty result set
+        return $query->whereRaw('1 = 0');
+    }
+
     public function getRouteKeyName(): string
     {
         return 'slug';

@@ -2,6 +2,7 @@
     use TallCms\Cms\Models\CmsPost;
     use TallCms\Cms\Models\CmsCategory;
     use Illuminate\Support\Facades\Storage;
+    use Illuminate\Support\Str;
 
     // Block configuration with defaults
     $configCategories = $categories ?? [];
@@ -23,6 +24,24 @@
     $sectionBackground = $background ?? 'bg-base-100';
     $sectionPaddingClass = $padding ?? 'py-16';
     $isPreview = $isPreview ?? false;
+
+    // Pagination configuration
+    $enablePagination = $enable_pagination ?? false;
+    $perPage = (int) ($per_page ?? 12);
+
+    // Block UUID for pagination - use persisted UUID or generate deterministic fallback
+    $blockUuid = $block_uuid ?? null;
+    if (!$blockUuid) {
+        // Fallback: generate deterministic ID from page slug + config signature
+        $pageSlugForId = $cmsPageSlug ?? request()->route('slug') ?? 'home';
+        $configSignature = md5(json_encode([
+            'categories' => $configCategories,
+            'layout' => $layout,
+            'featured_only' => $featuredOnly,
+        ]));
+        $blockUuid = 'legacy-' . substr(md5($pageSlugForId . '-' . $configSignature), 0, 8);
+    }
+    $paginationParam = "posts_{$blockUuid}";
 
     // Get parent slug - try multiple sources in order of preference:
     // 1. Passed directly to template ($parentSlug)
@@ -63,8 +82,13 @@
         $query->featured();
     }
 
+    // Track if we're using pagination
+    $isPaginated = false;
+    $posts = collect();
+
     // Handle sorting and retrieval
     if ($sortBy === 'manual' && !empty($pinnedPosts)) {
+        // Manual selection doesn't support pagination
         $manualQuery = CmsPost::query()->with(['categories', 'author']);
 
         if (!$showDrafts) {
@@ -101,7 +125,20 @@
                 break;
         }
 
-        $posts = $query->offset($offset)->limit($postsCount)->get();
+        // Apply offset if set
+        if ($offset > 0) {
+            $query->skip($offset);
+        }
+
+        // Use pagination or simple limit
+        if ($enablePagination && !$isPreview) {
+            $currentPage = (int) request()->input($paginationParam, 1);
+            $posts = $query->paginate($perPage, ['*'], $paginationParam, $currentPage)
+                ->withQueryString();
+            $isPaginated = true;
+        } else {
+            $posts = $query->limit($postsCount)->get();
+        }
     }
 
     // Section spacing
@@ -329,6 +366,13 @@
                             </div>
                         </article>
                     @endforeach
+                </div>
+            @endif
+
+            {{-- Pagination --}}
+            @if($isPaginated && $posts->hasPages())
+                <div class="mt-8 flex justify-center">
+                    {{ $posts->links() }}
                 </div>
             @endif
         @endif
