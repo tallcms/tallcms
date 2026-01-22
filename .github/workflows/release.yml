@@ -147,6 +147,14 @@ jobs:
           touch storage/logs/.gitkeep
           touch bootstrap/cache/.gitkeep
 
+      - name: Reinstall dependencies in release directory
+        run: |
+          cd release
+          # Remove old vendor (has references to local packages/)
+          rm -rf vendor
+          # Install fresh from Packagist
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
       - name: Setup Laravel environment
         run: |
           cd release
