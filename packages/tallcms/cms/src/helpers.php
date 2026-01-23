@@ -832,3 +832,53 @@ if (! function_exists('tallcms_i18n_enabled')) {
         return (bool) tallcms_i18n_config('enabled', false);
     }
 }
+
+if (! function_exists('tallcms_current_slug')) {
+    /**
+     * Extract the clean content slug from the current request path.
+     *
+     * Strips routes_prefix and locale prefix from the current URL to get
+     * the actual content slug. Useful for language switchers and alternate URL generation.
+     *
+     * Examples:
+     * - /cms/zh-CN/blog/post → blog/post
+     * - /zh-CN/about → about
+     * - /cms/about → about
+     * - /about → about
+     * - / or /cms or /zh-CN → '' (empty for homepage)
+     *
+     * @return string The clean content slug (without prefixes)
+     */
+    function tallcms_current_slug(): string
+    {
+        $path = trim(request()->path(), '/');
+
+        if ($path === '' || $path === '/') {
+            return '';
+        }
+
+        // Strip routes_prefix if present
+        $routesPrefix = trim(config('tallcms.plugin_mode.routes_prefix', ''), '/');
+        if ($routesPrefix && str_starts_with($path, $routesPrefix . '/')) {
+            $path = substr($path, strlen($routesPrefix) + 1);
+        } elseif ($routesPrefix && $path === $routesPrefix) {
+            return '';
+        }
+
+        // Strip locale prefix if i18n is enabled with prefix strategy
+        if (tallcms_i18n_config('enabled', false) && config('tallcms.i18n.url_strategy', 'prefix') === 'prefix') {
+            $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+            foreach ($registry->getLocaleCodes() as $localeCode) {
+                $bcp47 = \TallCms\Cms\Services\LocaleRegistry::toBcp47($localeCode);
+                if (str_starts_with($path, $bcp47 . '/')) {
+                    $path = substr($path, strlen($bcp47) + 1);
+                    break;
+                } elseif ($path === $bcp47) {
+                    return '';
+                }
+            }
+        }
+
+        return $path;
+    }
+}

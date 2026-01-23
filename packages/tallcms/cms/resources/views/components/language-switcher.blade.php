@@ -21,7 +21,7 @@
     } else {
         // Fallback: use current page URL with locale prefix
         foreach ($locales as $code => $locale) {
-            $alternateUrls[$code] = tallcms_localized_url(request()->path(), $code);
+            $alternateUrls[$code] = tallcms_localized_url(tallcms_current_slug(), $code);
         }
     }
 
@@ -63,7 +63,7 @@
             >
                 <div class="py-1" role="none">
                     @foreach($locales as $code => $locale)
-                        @php $url = $alternateUrls[$code] ?? tallcms_localized_url(request()->path(), $code); @endphp
+                        @php $url = $alternateUrls[$code] ?? tallcms_localized_url(tallcms_current_slug(), $code); @endphp
                         <a
                             href="{{ url($url) }}"
                             class="flex items-center gap-2 px-4 py-2 text-sm {{ $code === $currentLocale ? 'bg-gray-100 text-gray-900 font-medium' : 'text-gray-700 hover:bg-gray-50' }}"
@@ -90,7 +90,7 @@
     @elseif($style === 'links')
         <nav class="flex items-center gap-2" {{ $attributes }} aria-label="Language selector">
             @foreach($locales as $code => $locale)
-                @php $url = $alternateUrls[$code] ?? tallcms_localized_url(request()->path(), $code); @endphp
+                @php $url = $alternateUrls[$code] ?? tallcms_localized_url(tallcms_current_slug(), $code); @endphp
                 <a
                     href="{{ url($url) }}"
                     class="px-2 py-1 text-sm {{ $code === $currentLocale ? 'font-bold text-primary-600' : 'text-gray-600 hover:text-gray-900' }}"
@@ -112,7 +112,7 @@
     @elseif($style === 'buttons')
         <div class="inline-flex rounded-md shadow-sm" {{ $attributes }} role="group" aria-label="Language selector">
             @foreach($locales as $code => $locale)
-                @php $url = $alternateUrls[$code] ?? tallcms_localized_url(request()->path(), $code); @endphp
+                @php $url = $alternateUrls[$code] ?? tallcms_localized_url(tallcms_current_slug(), $code); @endphp
                 <a
                     href="{{ url($url) }}"
                     class="px-4 py-2 text-sm font-medium border {{ $loop->first ? 'rounded-l-lg' : '' }} {{ $loop->last ? 'rounded-r-lg' : '' }} {{ $code === $currentLocale ? 'bg-primary-600 text-white border-primary-600 z-10' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50' }} {{ !$loop->first ? '-ml-px' : '' }}"

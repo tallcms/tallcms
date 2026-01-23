@@ -21,7 +21,7 @@
     } else {
         // Fallback: use current page URL with locale prefix
         foreach ($locales as $code => $locale) {
-            $alternateUrls[$code] = tallcms_localized_url(request()->path(), $code);
+            $alternateUrls[$code] = tallcms_localized_url(tallcms_current_slug(), $code);
         }
     }
 
@@ -45,7 +45,7 @@
     </div>
     <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow-lg border border-base-300">
         @foreach($locales as $code => $locale)
-            @php $url = $alternateUrls[$code] ?? tallcms_localized_url(request()->path(), $code); @endphp
+            @php $url = $alternateUrls[$code] ?? tallcms_localized_url(tallcms_current_slug(), $code); @endphp
             <li>
                 <a href="{{ url($url) }}"
                    class="{{ $code === $currentLocale ? 'active' : '' }}"
