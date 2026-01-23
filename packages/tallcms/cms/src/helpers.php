@@ -562,3 +562,147 @@ if (! function_exists('tallcms_slug_to_anchor')) {
         return str_replace('/', '-', $slug) . '-' . $pageId;
     }
 }
+
+// Internationalization (i18n) Helper Functions
+
+if (! function_exists('tallcms_i18n_config')) {
+    /**
+     * Get i18n config value, checking SiteSetting first, then config.
+     * This bridges admin UI settings to runtime configuration.
+     *
+     * @param  string  $key  Config key (e.g., 'enabled', 'default_locale')
+     * @param  mixed  $default  Default value if not found
+     * @return mixed The config value
+     */
+    function tallcms_i18n_config(string $key, mixed $default = null): mixed
+    {
+        // Map config keys to SiteSetting keys
+        $settingMap = [
+            'enabled' => 'i18n_enabled',
+            'default_locale' => 'default_locale',
+            'hide_default_locale' => 'hide_default_locale',
+        ];
+
+        if (isset($settingMap[$key])) {
+            $settingKey = $settingMap[$key];
+            // Wrap in try-catch for when table doesn't exist (e.g., during tests)
+            try {
+                $dbValue = \TallCms\Cms\Models\SiteSetting::get($settingKey);
+
+                if ($dbValue !== null) {
+                    return $dbValue;
+                }
+            } catch (\Throwable) {
+                // Table doesn't exist yet, fall through to config
+            }
+        }
+
+        // Fall back to config
+        return config("tallcms.i18n.{$key}", $default);
+    }
+}
+
+if (! function_exists('tallcms_localized_url')) {
+    /**
+     * Generate a locale-aware URL.
+     * - prefix strategy: /es-MX/about (BCP-47 format in path)
+     * - none strategy: /about?lang=es-MX (BCP-47 format in query param)
+     *
+     * @param  string  $slug  The page/post slug
+     * @param  string|null  $locale  Internal locale code (es_mx). Uses current if null.
+     * @return string Full URL with locale indicator
+     */
+    function tallcms_localized_url(string $slug, ?string $locale = null): string
+    {
+        $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+        $locale = $locale ?? app()->getLocale();
+        $default = $registry->getDefaultLocale();
+        $hideDefault = tallcms_i18n_config('hide_default_locale', true);
+        $urlStrategy = config('tallcms.i18n.url_strategy', 'prefix');
+
+        // Normalize slug
+        $slug = ltrim($slug, '/');
+        $baseUrl = $slug === '' || $slug === '/' ? '/' : '/' . $slug;
+
+        // If i18n disabled, return simple URL
+        if (! tallcms_i18n_config('enabled', false)) {
+            return $baseUrl;
+        }
+
+        // Strategy: 'none' - use query parameter ?lang=
+        if ($urlStrategy === 'none') {
+            // Skip lang param for default locale if hideDefault enabled
+            if ($hideDefault && $locale === $default) {
+                return $baseUrl;
+            }
+            // Append ?lang= with BCP-47 format
+            $bcp47 = \TallCms\Cms\Services\LocaleRegistry::toBcp47($locale);
+
+            return $baseUrl . '?lang=' . $bcp47;
+        }
+
+        // Strategy: 'prefix' - use path prefix
+        $prefix = '';
+        if (! $hideDefault || $locale !== $default) {
+            // Convert internal format (es_mx) to BCP-47 (es-MX) for URL
+            $prefix = \TallCms\Cms\Services\LocaleRegistry::toBcp47($locale);
+        }
+
+        // Build URL
+        if ($baseUrl === '/') {
+            return $prefix ? '/' . $prefix : '/';
+        }
+
+        return $prefix ? '/' . $prefix . $baseUrl : $baseUrl;
+    }
+}
+
+if (! function_exists('tallcms_alternate_urls')) {
+    /**
+     * Get alternate URLs for all translations of a model.
+     * Returns array keyed by internal locale code with BCP-47 formatted URLs.
+     *
+     * @param  \Illuminate\Database\Eloquent\Model  $model  Model with HasTranslatableContent
+     * @return array<string, string> [locale => url]
+     */
+    function tallcms_alternate_urls($model): array
+    {
+        $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+        $urls = [];
+
+        foreach ($registry->getLocaleCodes() as $locale) {
+            // Only include locales with actual translations
+            $slug = $model->getTranslation('slug', $locale, false);
+            if ($slug !== null) {
+                $urls[$locale] = tallcms_localized_url($slug, $locale);
+            }
+        }
+
+        return $urls;
+    }
+}
+
+if (! function_exists('tallcms_current_locale')) {
+    /**
+     * Get current locale with i18n awareness.
+     * Returns the app locale, which is set by SetLocaleMiddleware.
+     *
+     * @return string Current locale code
+     */
+    function tallcms_current_locale(): string
+    {
+        return app()->getLocale();
+    }
+}
+
+if (! function_exists('tallcms_i18n_enabled')) {
+    /**
+     * Check if i18n is enabled.
+     *
+     * @return bool True if multilingual features are enabled
+     */
+    function tallcms_i18n_enabled(): bool
+    {
+        return (bool) tallcms_i18n_config('enabled', false);
+    }
+}

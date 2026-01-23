@@ -35,7 +35,7 @@ class CmsPostForm
                                     ->columns(2)
                                     ->schema([
                                         TextInput::make('title')
-                                            ->required()
+                                            ->required(fn () => ! tallcms_i18n_enabled())
                                             ->maxLength(255)
                                             ->live(onBlur: true)
                                             ->afterStateUpdated(fn (string $state, callable $set) => $set('slug', Str::slug($state))
@@ -43,9 +43,9 @@ class CmsPostForm
                                             ->columnSpan(1),
 
                                         TextInput::make('slug')
-                                            ->required()
+                                            ->required(fn () => ! tallcms_i18n_enabled())
                                             ->maxLength(255)
-                                            ->unique(CmsPost::class, 'slug', ignoreRecord: true)
+                                            ->when(! tallcms_i18n_enabled(), fn ($field) => $field->unique(CmsPost::class, 'slug', ignoreRecord: true))
                                             ->rules(['alpha_dash'])
                                             ->helperText('Used in the URL')
                                             ->columnSpan(1),

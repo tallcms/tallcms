@@ -2,20 +2,22 @@
 
 namespace TallCms\Cms\Filament\Resources\CmsPosts;
 
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use LaraZeus\SpatieTranslatable\Resources\Concerns\Translatable;
 use TallCms\Cms\Filament\Resources\CmsPosts\Pages\CreateCmsPost;
 use TallCms\Cms\Filament\Resources\CmsPosts\Pages\EditCmsPost;
 use TallCms\Cms\Filament\Resources\CmsPosts\Pages\ListCmsPosts;
 use TallCms\Cms\Filament\Resources\CmsPosts\Schemas\CmsPostForm;
 use TallCms\Cms\Filament\Resources\CmsPosts\Tables\CmsPostsTable;
 use TallCms\Cms\Models\CmsPost;
-use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class CmsPostResource extends Resource
 {
+    use Translatable;
     protected static ?string $model = CmsPost::class;
 
     protected static ?string $pluralModelLabel = 'Posts';

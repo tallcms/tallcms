@@ -97,4 +97,40 @@ return [
         // The public key below is a placeholder - replace with your actual key.
         'public_key' => env('TALLCMS_UPDATE_PUBLIC_KEY', '6c41c964c60dd5341f7ba649dcda6e6de4b0b7afac2fbb9489527987907d35a9'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Internationalization (i18n)
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for multilingual content support.
+    |
+    */
+    'i18n' => [
+        // Master switch for multilingual features
+        'enabled' => env('TALLCMS_I18N_ENABLED', false),
+
+        // Available locales
+        'locales' => [
+            'en' => [
+                'label' => 'English',
+                'native' => 'English',
+                'rtl' => false,
+            ],
+            'zh_CN' => [
+                'label' => 'Chinese (Simplified)',
+                'native' => '简体中文',
+                'rtl' => false,
+            ],
+        ],
+
+        // Default/fallback locale
+        'default_locale' => env('TALLCMS_DEFAULT_LOCALE', 'en'),
+
+        // URL strategy: 'prefix' (/en/about) or 'none' (query param)
+        'url_strategy' => 'prefix',
+
+        // Hide default locale from URL (/ instead of /en/)
+        'hide_default_locale' => env('TALLCMS_HIDE_DEFAULT_LOCALE', true),
+    ],
 ];

@@ -266,12 +266,11 @@ trait HasRevisions
 
         return $this->revisions()->create([
             'user_id' => auth()->id(),
-            'title' => $this->getOriginal('title') ?? $this->title,
-            'excerpt' => $this->getOriginal('excerpt'),
-            // Use getRawOriginal to store exact database value (JSON string, not decoded array)
-            'content' => $this->getRawOriginal('content'),
-            'meta_title' => $this->getOriginal('meta_title'),
-            'meta_description' => $this->getOriginal('meta_description'),
+            'title' => $this->serializeForRevision($this->getOriginal('title') ?? $this->title),
+            'excerpt' => $this->serializeForRevision($this->getOriginal('excerpt')),
+            'content' => $this->serializeForRevision($this->getOriginal('content')),
+            'meta_title' => $this->serializeForRevision($this->getOriginal('meta_title')),
+            'meta_description' => $this->serializeForRevision($this->getOriginal('meta_description')),
             'featured_image' => $this->getOriginal('featured_image'),
             'additional_data' => $this->getAdditionalRevisionData(),
             'revision_number' => $nextNumber,
@@ -288,19 +287,13 @@ trait HasRevisions
     {
         $nextNumber = ($this->revisions()->max('revision_number') ?? 0) + 1;
 
-        // Get the raw content value - encode if array
-        $content = $this->getAttributes()['content'] ?? null;
-        if (is_array($content)) {
-            $content = json_encode($content);
-        }
-
         return $this->revisions()->create([
             'user_id' => auth()->id(),
-            'title' => $this->title,
-            'excerpt' => $this->excerpt,
-            'content' => $content,
-            'meta_title' => $this->meta_title,
-            'meta_description' => $this->meta_description,
+            'title' => $this->serializeForRevision($this->getAttributes()['title'] ?? null),
+            'excerpt' => $this->serializeForRevision($this->getAttributes()['excerpt'] ?? null),
+            'content' => $this->serializeForRevision($this->getAttributes()['content'] ?? null),
+            'meta_title' => $this->serializeForRevision($this->getAttributes()['meta_title'] ?? null),
+            'meta_description' => $this->serializeForRevision($this->getAttributes()['meta_description'] ?? null),
             'featured_image' => $this->featured_image,
             'additional_data' => $this->getAdditionalRevisionData(),
             'revision_number' => $nextNumber,
@@ -322,6 +315,44 @@ trait HasRevisions
     }
 
     /**
+     * Serialize a value for storage in the revision table.
+     * Arrays (translatable fields) are JSON-encoded, other values pass through.
+     */
+    protected function serializeForRevision(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_array($value)) {
+            return json_encode($value);
+        }
+
+        return (string) $value;
+    }
+
+    /**
+     * Deserialize a value from the revision table.
+     * JSON strings are decoded back to arrays for translatable fields.
+     */
+    protected function deserializeFromRevision(mixed $value): mixed
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        // Return as-is if not valid JSON or already an array
+        return $value;
+    }
+
+    /**
      * Get additional data to store with the revision
      * Override in model if needed
      */
@@ -340,28 +371,19 @@ trait HasRevisions
      */
     public function restoreRevision(CmsRevision $revision): void
     {
-        // Content is stored as raw string in revision, decode for models with array cast
-        $content = $revision->content;
-        if (is_string($content)) {
-            $decoded = json_decode($content, true);
-            if (json_last_error() === JSON_ERROR_NONE) {
-                $content = $decoded;
-            }
-            // If not valid JSON, keep as string (legacy HTML content)
-        }
-
         // Skip pre-update revision (avoid redundant audit entry - current state is already latest revision)
         // Force post-update revision (bypass throttle to record the restored state)
         $this->skipPreUpdateRevision = true;
         $this->forcePostUpdateRevision = true;
 
         // Use forceFill to bypass guarded/cast issues
+        // Deserialize translatable fields (stored as JSON strings in revision table)
         $this->forceFill([
-            'title' => $revision->title,
-            'excerpt' => $revision->excerpt,
-            'content' => $content,
-            'meta_title' => $revision->meta_title,
-            'meta_description' => $revision->meta_description,
+            'title' => $this->deserializeFromRevision($revision->title),
+            'excerpt' => $this->deserializeFromRevision($revision->excerpt),
+            'content' => $this->deserializeFromRevision($revision->content),
+            'meta_title' => $this->deserializeFromRevision($revision->meta_title),
+            'meta_description' => $this->deserializeFromRevision($revision->meta_description),
             'featured_image' => $revision->featured_image,
         ])->save();
     }

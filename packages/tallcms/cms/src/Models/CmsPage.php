@@ -10,9 +10,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use TallCms\Cms\Casts\TranslatableArray;
 use TallCms\Cms\Models\Concerns\HasPreviewTokens;
 use TallCms\Cms\Models\Concerns\HasPublishingWorkflow;
 use TallCms\Cms\Models\Concerns\HasRevisions;
+use TallCms\Cms\Models\Concerns\HasTranslatableContent;
 
 class CmsPage extends Model
 {
@@ -20,9 +22,23 @@ class CmsPage extends Model
     use HasPreviewTokens;
     use HasPublishingWorkflow;
     use HasRevisions;
+    use HasTranslatableContent;
     use SoftDeletes;
 
     protected $table = 'tallcms_pages';
+
+    /**
+     * Translatable attributes for Spatie Laravel Translatable.
+     *
+     * @var array<string>
+     */
+    public array $translatable = [
+        'title',
+        'slug',
+        'content',
+        'meta_title',
+        'meta_description',
+    ];
 
     protected $fillable = [
         'title',
@@ -47,7 +63,7 @@ class CmsPage extends Model
     ];
 
     protected $casts = [
-        'content' => 'array',
+        'content' => TranslatableArray::class,
         'published_at' => 'datetime',
         'is_homepage' => 'boolean',
         'approved_at' => 'datetime',
@@ -100,12 +116,22 @@ class CmsPage extends Model
 
     public function scopeWithSlug($query, string $slug)
     {
-        return $query->where('slug', $slug);
+        // Slug is stored as JSON (translatable), so use JSON query
+        // This works regardless of whether i18n is enabled
+        $locale = config('app.locale', 'en');
+        $driver = $query->getConnection()->getDriverName();
+
+        return match ($driver) {
+            'sqlite' => $query->whereRaw("JSON_EXTRACT(slug, '$.{$locale}') = ?", [$slug]),
+            'pgsql' => $query->whereRaw("slug::jsonb ->> ? = ?", [$locale, $slug]),
+            default => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(slug, '$.\"" . $locale . "\"')) = ?", [$slug]),
+        };
     }
 
     public function getRouteKeyName(): string
     {
-        return 'slug';
+        // Use ID for route binding since slug is now stored as JSON (translatable)
+        return 'id';
     }
 
     public function scopeHomepage($query)
@@ -119,16 +145,44 @@ class CmsPage extends Model
     }
 
     /**
-     * Generate a unique slug from title
+     * Generate a unique slug from title.
+     *
+     * When i18n is enabled, this delegates to the trait's locale-aware version.
+     * When i18n is disabled, uses simple slug generation.
+     *
+     * @param  string  $title  The title to generate slug from
+     * @param  string|null  $locale  The locale (only used when i18n is enabled)
      */
-    public function generateUniqueSlug(string $title): string
+    public function generateUniqueSlug(string $title, ?string $locale = null): string
     {
+        // When i18n is enabled, use the trait's locale-aware version
+        if (tallcms_i18n_enabled()) {
+            $locale = $locale ?? app()->getLocale();
+            $baseSlug = Str::slug($title);
+            $slug = $baseSlug;
+            $counter = 1;
+
+            // Check reserved slugs (locale codes)
+            $reserved = app(\TallCms\Cms\Services\LocaleRegistry::class)->getReservedSlugs();
+            if (in_array($slug, $reserved)) {
+                $slug = $baseSlug . '-page';
+            }
+
+            while ($this->localizedSlugExists($slug, $locale)) {
+                $slug = $baseSlug . '-' . $counter;
+                $counter++;
+            }
+
+            return $slug;
+        }
+
+        // Non-i18n mode: simple slug generation
         $baseSlug = Str::slug($title);
         $slug = $baseSlug;
         $counter = 1;
 
         while ($this->slugExists($slug)) {
-            $slug = $baseSlug.'-'.$counter;
+            $slug = $baseSlug . '-' . $counter;
             $counter++;
         }
 
@@ -136,11 +190,20 @@ class CmsPage extends Model
     }
 
     /**
-     * Check if slug already exists (excluding current record)
+     * Check if slug already exists (excluding current record).
+     * Used when i18n is disabled, but data is still stored as JSON.
      */
     protected function slugExists(string $slug): bool
     {
-        $query = static::where('slug', $slug);
+        $locale = config('app.locale', 'en');
+        $query = static::query();
+        $driver = $query->getConnection()->getDriverName();
+
+        match ($driver) {
+            'sqlite' => $query->whereRaw("JSON_EXTRACT(slug, '$.{$locale}') = ?", [$slug]),
+            'pgsql' => $query->whereRaw("slug::jsonb ->> ? = ?", [$locale, $slug]),
+            default => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(slug, '$.\"" . $locale . "\"')) = ?", [$slug]),
+        };
 
         if ($this->exists) {
             $query->where('id', '!=', $this->id);

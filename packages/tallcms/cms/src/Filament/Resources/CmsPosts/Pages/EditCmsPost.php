@@ -2,26 +2,33 @@
 
 namespace TallCms\Cms\Filament\Resources\CmsPosts\Pages;
 
-use TallCms\Cms\Filament\Resources\CmsPosts\CmsPostResource;
-use TallCms\Cms\Services\PublishingWorkflowService;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
+use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
 use Filament\Actions\RestoreAction;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use LaraZeus\SpatieTranslatable\Resources\Pages\EditRecord\Concerns\Translatable;
+use TallCms\Cms\Filament\Resources\CmsPosts\CmsPostResource;
+use TallCms\Cms\Services\PublishingWorkflowService;
 
 class EditCmsPost extends EditRecord
 {
+    use Translatable;
+
     protected static string $resource = CmsPostResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            // Locale Switcher for translations
+            LocaleSwitcher::make(),
+
             // Workflow Actions Group
             ActionGroup::make([
                 $this->getSubmitForReviewAction(),

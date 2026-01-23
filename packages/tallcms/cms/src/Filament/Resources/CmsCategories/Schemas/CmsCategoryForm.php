@@ -18,16 +18,16 @@ class CmsCategoryForm
             ->columns(2)
             ->components([
                 TextInput::make('name')
-                    ->required()
+                    ->required(fn () => ! tallcms_i18n_enabled())
                     ->maxLength(255)
                     ->live(onBlur: true)
                     ->afterStateUpdated(fn (string $state, ?string $old, callable $set) => $set('slug', Str::slug($state))
                     ),
 
                 TextInput::make('slug')
-                    ->required()
+                    ->required(fn () => ! tallcms_i18n_enabled())
                     ->maxLength(255)
-                    ->unique(CmsCategory::class, 'slug', ignoreRecord: true)
+                    ->when(! tallcms_i18n_enabled(), fn ($field) => $field->unique(CmsCategory::class, 'slug', ignoreRecord: true))
                     ->rules(['alpha_dash'])
                     ->helperText('Used in the URL. Only letters, numbers, hyphens and underscores allowed.'),
 

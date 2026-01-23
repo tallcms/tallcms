@@ -281,6 +281,51 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Internationalization (i18n)
+    |--------------------------------------------------------------------------
+    |
+    | Core i18n configuration. Locales are merged from multiple sources:
+    | - Config: Base locales (always available)
+    | - Plugins: Can ADD new locale codes (cannot override config)
+    | - DB: Can MODIFY existing locales (enable/disable/rename, cannot add)
+    |
+    */
+    'i18n' => [
+        // Master switch for multilingual features
+        'enabled' => env('TALLCMS_I18N_ENABLED', false),
+
+        // Base locales (always available, plugins can add new ones, DB can modify existing)
+        'locales' => [
+            'en' => [
+                'label' => 'English',
+                'native' => 'English',
+                'rtl' => false,
+            ],
+            'zh_CN' => [
+                'label' => 'Chinese (Simplified)',
+                'native' => '简体中文',
+                'rtl' => false,
+            ],
+        ],
+
+        // Default/fallback locale (must exist in registry)
+        'default_locale' => env('TALLCMS_DEFAULT_LOCALE', 'en'),
+
+        // URL strategy: 'prefix' (/en/about) or 'none' (query param fallback)
+        'url_strategy' => 'prefix',
+
+        // Hide default locale from URL (/ instead of /en/)
+        'hide_default_locale' => env('TALLCMS_HIDE_DEFAULT_LOCALE', true),
+
+        // Fallback when translation missing: 'default', 'empty', 'key'
+        'fallback_behavior' => 'default',
+
+        // Remember locale preference in session
+        'remember_locale' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | System Updates (Standalone Mode Only)
     |--------------------------------------------------------------------------
     |

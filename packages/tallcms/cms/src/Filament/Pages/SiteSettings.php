@@ -2,7 +2,6 @@
 
 namespace TallCms\Cms\Filament\Pages;
 
-use TallCms\Cms\Models\SiteSetting;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -14,6 +13,8 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
+use TallCms\Cms\Models\SiteSetting;
+use TallCms\Cms\Services\LocaleRegistry;
 
 class SiteSettings extends Page implements HasForms
 {
@@ -73,6 +74,11 @@ class SiteSettings extends Page implements HasForms
             // System settings
             'maintenance_mode' => SiteSetting::get('maintenance_mode', false),
             'maintenance_message' => SiteSetting::get('maintenance_message', 'We\'re currently performing scheduled maintenance. Please check back soon!'),
+
+            // i18n settings
+            'i18n_enabled' => SiteSetting::get('i18n_enabled', config('tallcms.i18n.enabled', false)),
+            'default_locale' => SiteSetting::get('default_locale', config('tallcms.i18n.default_locale', 'en')),
+            'hide_default_locale' => SiteSetting::get('hide_default_locale', config('tallcms.i18n.hide_default_locale', true)),
         ]);
     }
 
@@ -234,12 +240,52 @@ class SiteSettings extends Page implements HasForms
                         ->visible(fn ($get) => $get('maintenance_mode'))
                         ->columnSpanFull(),
                 ]),
+
+            Section::make('Languages (i18n)')
+                ->description('Configure multilingual support for your content. Note: Run the migration and install the Spatie Translatable plugin to enable i18n.')
+                ->schema([
+                    Toggle::make('i18n_enabled')
+                        ->label('Enable Multilingual Support')
+                        ->helperText('When enabled, content can be translated into multiple languages. Requires filament/spatie-laravel-translatable-plugin.')
+                        ->live()
+                        ->columnSpanFull(),
+
+                    Select::make('default_locale')
+                        ->label('Default Language')
+                        ->options(fn () => $this->getLocaleOptions())
+                        ->searchable()
+                        ->required()
+                        ->helperText('The primary language for your site. Used when no translation exists for the requested locale.')
+                        ->visible(fn ($get) => $get('i18n_enabled')),
+
+                    Toggle::make('hide_default_locale')
+                        ->label('Hide Default Language in URLs')
+                        ->helperText('When enabled, the default language is accessed at / instead of /en/. Other languages use prefixes like /es/, /fr/.')
+                        ->default(true)
+                        ->visible(fn ($get) => $get('i18n_enabled')),
+                ])
+                ->columns(2),
         ];
     }
 
     protected function getFormStatePath(): string
     {
         return 'data';
+    }
+
+    /**
+     * Get available locale options for the select field.
+     */
+    protected function getLocaleOptions(): array
+    {
+        try {
+            $registry = app(LocaleRegistry::class);
+
+            return $registry->getLocaleOptions();
+        } catch (\Throwable) {
+            // Fallback if registry not available
+            return ['en' => 'English'];
+        }
     }
 
     public function save(): void
@@ -250,7 +296,7 @@ class SiteSettings extends Page implements HasForms
             if ($value !== null) {
                 $type = match ($key) {
                     'logo', 'favicon' => 'file',
-                    'maintenance_mode' => 'boolean',
+                    'maintenance_mode', 'i18n_enabled', 'hide_default_locale' => 'boolean',
                     default => 'text',
                 };
 
@@ -261,6 +307,7 @@ class SiteSettings extends Page implements HasForms
                     'social_youtube', 'social_tiktok', 'newsletter_signup_url' => 'social',
                     'logo', 'favicon' => 'branding',
                     'maintenance_mode', 'maintenance_message' => 'maintenance',
+                    'i18n_enabled', 'default_locale', 'hide_default_locale' => 'i18n',
                     default => 'general',
                 };
 
@@ -270,6 +317,15 @@ class SiteSettings extends Page implements HasForms
 
         // Clear all settings cache
         SiteSetting::clearCache();
+
+        // Clear locale registry cache if i18n settings changed
+        if (isset($data['i18n_enabled']) || isset($data['default_locale']) || isset($data['hide_default_locale'])) {
+            try {
+                app(LocaleRegistry::class)->clearCache();
+            } catch (\Throwable) {
+                // Ignore if registry not available
+            }
+        }
 
         Notification::make()
             ->title('Settings saved successfully!')
