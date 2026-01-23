@@ -269,6 +269,10 @@ class TallCmsServiceProvider extends PackageServiceProvider
         // Register MenuUrlResolver singleton (needed for menu helper functions)
         $this->app->singleton('menu.url.resolver', Services\MenuUrlResolver::class);
 
+        // Register LocaleRegistry singleton (needed for i18n features)
+        $this->app->singleton(Services\LocaleRegistry::class);
+        $this->app->alias(Services\LocaleRegistry::class, 'tallcms.locales');
+
         // Register the PluginServiceProvider and ThemeServiceProvider
         $this->app->register(PluginServiceProvider::class);
         $this->app->register(ThemeServiceProvider::class);
@@ -363,6 +367,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
         $router->aliasMiddleware('tallcms.maintenance', Http\Middleware\MaintenanceModeMiddleware::class);
         $router->aliasMiddleware('tallcms.theme-preview', Http\Middleware\ThemePreviewMiddleware::class);
         $router->aliasMiddleware('tallcms.preview-auth', Http\Middleware\PreviewAuthMiddleware::class);
+        $router->aliasMiddleware('tallcms.set-locale', Http\Middleware\SetLocaleMiddleware::class);
     }
 
     /**
@@ -593,6 +598,9 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
             // SEO & Author features
             '2026_01_22_000001_add_author_fields_to_users_table',
+
+            // Multilingual support
+            '2026_01_23_000001_add_multilingual_support',
         ];
     }
 

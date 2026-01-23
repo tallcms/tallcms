@@ -2,20 +2,22 @@
 
 namespace TallCms\Cms\Filament\Resources\CmsCategories;
 
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use LaraZeus\SpatieTranslatable\Resources\Concerns\Translatable;
 use TallCms\Cms\Filament\Resources\CmsCategories\Pages\CreateCmsCategory;
 use TallCms\Cms\Filament\Resources\CmsCategories\Pages\EditCmsCategory;
 use TallCms\Cms\Filament\Resources\CmsCategories\Pages\ListCmsCategories;
 use TallCms\Cms\Filament\Resources\CmsCategories\Schemas\CmsCategoryForm;
 use TallCms\Cms\Filament\Resources\CmsCategories\Tables\CmsCategoriesTable;
 use TallCms\Cms\Models\CmsCategory;
-use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class CmsCategoryResource extends Resource
 {
+    use Translatable;
     protected static ?string $model = CmsCategory::class;
 
     protected static ?string $pluralModelLabel = 'Categories';

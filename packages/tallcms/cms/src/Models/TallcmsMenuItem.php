@@ -8,12 +8,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Kalnoy\Nestedset\NodeTrait;
+use TallCms\Cms\Models\Concerns\HasTranslatableContent;
 
 class TallcmsMenuItem extends Model
 {
+    use HasTranslatableContent;
     use NodeTrait;
 
     protected $table = 'tallcms_menu_items';
+
+    /**
+     * Translatable attributes for Spatie Laravel Translatable.
+     *
+     * @var array<string>
+     */
+    public array $translatable = [
+        'label',
+    ];
 
     protected $fillable = [
         'menu_id',

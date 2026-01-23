@@ -525,15 +525,25 @@ if (! function_exists('cms_post_url')) {
     /**
      * Generate URL for a post within a parent page context
      *
+     * Automatically handles:
+     * - Localized slugs when i18n is enabled
+     * - Routes prefix in plugin mode
+     * - Locale prefix when url_strategy is 'prefix'
+     *
      * @param  \TallCms\Cms\Models\CmsPost  $post  The post to generate URL for
      * @param  string  $parentSlug  The parent page slug (e.g., 'blog')
      * @return string The full URL to the post
      */
     function cms_post_url(\TallCms\Cms\Models\CmsPost $post, string $parentSlug): string
     {
-        $slug = trim($parentSlug, '/') . '/' . $post->slug;
+        // Get the localized post slug
+        $postSlug = tallcms_i18n_enabled()
+            ? ($post->getTranslation('slug', app()->getLocale(), false) ?? $post->slug)
+            : $post->slug;
 
-        return route('tallcms.cms.page', ['slug' => $slug]);
+        $slug = trim($parentSlug, '/') . '/' . $postSlug;
+
+        return tallcms_localized_url($slug);
     }
 }
 
@@ -560,5 +570,337 @@ if (! function_exists('tallcms_slug_to_anchor')) {
     function tallcms_slug_to_anchor(string $slug, int $pageId): string
     {
         return str_replace('/', '-', $slug) . '-' . $pageId;
+    }
+}
+
+// Internationalization (i18n) Helper Functions
+
+if (! function_exists('tallcms_i18n_config')) {
+    /**
+     * Get i18n config value, checking SiteSetting first, then config.
+     * This bridges admin UI settings to runtime configuration.
+     *
+     * @param  string  $key  Config key (e.g., 'enabled', 'default_locale')
+     * @param  mixed  $default  Default value if not found
+     * @return mixed The config value
+     */
+    function tallcms_i18n_config(string $key, mixed $default = null): mixed
+    {
+        // Map config keys to SiteSetting keys
+        $settingMap = [
+            'enabled' => 'i18n_enabled',
+            'default_locale' => 'default_locale',
+            'hide_default_locale' => 'hide_default_locale',
+        ];
+
+        if (isset($settingMap[$key])) {
+            $settingKey = $settingMap[$key];
+            // Wrap in try-catch for when table doesn't exist (e.g., during tests)
+            try {
+                $dbValue = \TallCms\Cms\Models\SiteSetting::get($settingKey);
+
+                if ($dbValue !== null) {
+                    return $dbValue;
+                }
+            } catch (\Throwable) {
+                // Table doesn't exist yet, fall through to config
+            }
+        }
+
+        // Fall back to config
+        return config("tallcms.i18n.{$key}", $default);
+    }
+}
+
+if (! function_exists('tallcms_localized_url')) {
+    /**
+     * Generate a locale-aware URL.
+     * - prefix strategy: /es-MX/about (BCP-47 format in path)
+     * - none strategy: /about?lang=es-MX (BCP-47 format in query param)
+     *
+     * In plugin mode with routes_prefix set, URLs will be prefixed:
+     * - /cms/es-MX/about (when routes_prefix='cms')
+     *
+     * IMPORTANT: This function expects a clean content slug (e.g., 'about', 'blog/post-title'),
+     * NOT a pre-built URL path. Passing a URL that already contains locale or routes prefixes
+     * will result in double-prefixing. Use validation rules (UniqueTranslatableSlug, reserved
+     * slugs) to prevent slugs that conflict with locale codes.
+     *
+     * @param  string  $slug  The page/post slug (clean, without prefixes)
+     * @param  string|null  $locale  Internal locale code (es_mx). Uses current if null.
+     * @return string Full URL with locale indicator
+     */
+    function tallcms_localized_url(string $slug, ?string $locale = null): string
+    {
+        $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+        $locale = $locale ?? app()->getLocale();
+        $default = $registry->getDefaultLocale();
+        $hideDefault = tallcms_i18n_config('hide_default_locale', true);
+        $urlStrategy = config('tallcms.i18n.url_strategy', 'prefix');
+
+        // Get routes prefix for plugin mode
+        $routesPrefixRaw = config('tallcms.plugin_mode.routes_prefix', '');
+        $routesPrefix = $routesPrefixRaw ? '/' . trim($routesPrefixRaw, '/') : '';
+
+        // Normalize slug - remove leading/trailing slashes
+        $slug = trim($slug, '/');
+        $baseSlug = $slug === '' ? '' : '/' . $slug;
+
+        // If i18n disabled, return simple URL with routes prefix
+        if (! tallcms_i18n_config('enabled', false)) {
+            return $routesPrefix . ($baseSlug ?: '/');
+        }
+
+        // Strategy: 'none' - use query parameter ?lang=
+        if ($urlStrategy === 'none') {
+            $baseUrl = $routesPrefix . ($baseSlug ?: '/');
+            // Skip lang param for default locale if hideDefault enabled
+            if ($hideDefault && $locale === $default) {
+                return $baseUrl;
+            }
+            // Append ?lang= with BCP-47 format
+            $bcp47 = \TallCms\Cms\Services\LocaleRegistry::toBcp47($locale);
+
+            return $baseUrl . '?lang=' . $bcp47;
+        }
+
+        // Strategy: 'prefix' - use path prefix
+        $localePrefix = '';
+        if (! $hideDefault || $locale !== $default) {
+            // Convert internal format (es_mx) to BCP-47 (es-MX) for URL
+            $localePrefix = '/' . \TallCms\Cms\Services\LocaleRegistry::toBcp47($locale);
+        }
+
+        // Build URL: routes_prefix + locale_prefix + slug
+        $url = $routesPrefix . $localePrefix . $baseSlug;
+
+        return $url ?: '/';
+    }
+}
+
+if (! function_exists('tallcms_resolve_custom_url')) {
+    /**
+     * Resolve a custom URL, handling both clean slugs and already-prefixed paths.
+     *
+     * This function is designed for user-entered URLs in menus and buttons where:
+     * - User may enter a clean slug (e.g., 'about', 'blog/post')
+     * - User may enter an absolute path with prefixes (e.g., '/cms/zh-CN/page')
+     *
+     * A path is considered "fully qualified" only if it has ALL required prefixes:
+     * - routes_prefix (if configured in plugin mode)
+     * - locale prefix (if i18n enabled with prefix strategy and hide_default_locale=false)
+     *
+     * Paths missing required prefixes are normalized through tallcms_localized_url().
+     *
+     * @param  string  $url  The custom URL or slug
+     * @return string Resolved URL
+     */
+    function tallcms_resolve_custom_url(string $url): string
+    {
+        $url = trim($url);
+
+        if ($url === '' || $url === '/') {
+            return tallcms_localized_url('/');
+        }
+
+        // Absolute paths (starting with /) may already be prefixed
+        if (str_starts_with($url, '/')) {
+            $routesPrefix = trim(config('tallcms.plugin_mode.routes_prefix', ''), '/');
+            $pathWithoutSlash = ltrim($url, '/');
+            $i18nEnabled = tallcms_i18n_config('enabled', false);
+            $urlStrategy = config('tallcms.i18n.url_strategy', 'prefix');
+            $hideDefault = tallcms_i18n_config('hide_default_locale', true);
+
+            // Track what we find in the path
+            $hasRoutesPrefix = false;
+            $hasLocalePrefix = false;
+            $foundLocale = null;
+            $slugAfterPrefixes = $pathWithoutSlash;
+
+            // Step 1: Check for routes_prefix at the start
+            if ($routesPrefix) {
+                if (str_starts_with($pathWithoutSlash, $routesPrefix . '/')) {
+                    $hasRoutesPrefix = true;
+                    $slugAfterPrefixes = substr($pathWithoutSlash, strlen($routesPrefix) + 1);
+                } elseif ($pathWithoutSlash === $routesPrefix) {
+                    $hasRoutesPrefix = true;
+                    $slugAfterPrefixes = '';
+                }
+            }
+
+            // Step 2: Check for locale prefix (after routes_prefix if present, or at start)
+            if ($i18nEnabled && $urlStrategy === 'prefix') {
+                $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+                $pathToCheck = $slugAfterPrefixes;
+
+                // Also check original path for locale-only URLs like /zh-CN/page
+                if (! $hasRoutesPrefix) {
+                    $pathToCheck = $pathWithoutSlash;
+                }
+
+                foreach ($registry->getLocaleCodes() as $localeCode) {
+                    $bcp47 = \TallCms\Cms\Services\LocaleRegistry::toBcp47($localeCode);
+                    if (str_starts_with($pathToCheck, $bcp47 . '/')) {
+                        $hasLocalePrefix = true;
+                        $foundLocale = $localeCode;
+                        $slugAfterPrefixes = substr($pathToCheck, strlen($bcp47) + 1);
+                        break;
+                    } elseif ($pathToCheck === $bcp47) {
+                        $hasLocalePrefix = true;
+                        $foundLocale = $localeCode;
+                        $slugAfterPrefixes = '';
+                        break;
+                    }
+                }
+            }
+
+            // Determine what's required
+            $needsRoutesPrefix = ! empty($routesPrefix);
+            $registry = $i18nEnabled ? app(\TallCms\Cms\Services\LocaleRegistry::class) : null;
+            $defaultLocale = $registry?->getDefaultLocale();
+
+            // Special case: hide_default_locale=true and URL has default locale prefix
+            // These should be normalized to unprefixed URLs (e.g., /en/about → /about)
+            if ($hideDefault && $hasLocalePrefix && $foundLocale === $defaultLocale) {
+                // Strip the default locale prefix and rebuild
+                return tallcms_localized_url($slugAfterPrefixes, $defaultLocale);
+            }
+
+            // For non-default locales, locale prefix is always needed when i18n prefix strategy is active
+            $needsLocalePrefix = $i18nEnabled && $urlStrategy === 'prefix' && ! $hideDefault;
+
+            // Case 1: Fully qualified (has all required prefixes)
+            // For non-default locales with hide_default_locale=true, having locale prefix is correct
+            if ($hasLocalePrefix && $foundLocale !== $defaultLocale) {
+                // Non-default locale with prefix - check routes_prefix requirement
+                if ($hasRoutesPrefix || ! $needsRoutesPrefix) {
+                    return $url;
+                }
+                // Missing routes_prefix, rebuild with correct prefix
+                return tallcms_localized_url($slugAfterPrefixes, $foundLocale);
+            }
+
+            // Case 2: No locale prefix and no routes prefix requirement issue
+            if ((! $hasLocalePrefix || ! $needsLocalePrefix) &&
+                ($hasRoutesPrefix || ! $needsRoutesPrefix)) {
+                return $url;
+            }
+
+            // Case 3: Has locale but missing routes_prefix
+            if ($hasLocalePrefix && $needsRoutesPrefix && ! $hasRoutesPrefix) {
+                return tallcms_localized_url($slugAfterPrefixes, $foundLocale);
+            }
+
+            // Case 4: Has routes_prefix but missing required locale
+            if ($hasRoutesPrefix && $needsLocalePrefix && ! $hasLocalePrefix) {
+                return tallcms_localized_url($slugAfterPrefixes);
+            }
+
+            // Case 5: Neither prefix found - treat remaining as slug
+            return tallcms_localized_url($slugAfterPrefixes);
+        }
+
+        // Relative path - treat as slug
+        return tallcms_localized_url($url);
+    }
+}
+
+if (! function_exists('tallcms_alternate_urls')) {
+    /**
+     * Get alternate URLs for all translations of a model.
+     * Returns array keyed by internal locale code with BCP-47 formatted URLs.
+     *
+     * @param  \Illuminate\Database\Eloquent\Model  $model  Model with HasTranslatableContent
+     * @return array<string, string> [locale => url]
+     */
+    function tallcms_alternate_urls($model): array
+    {
+        $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+        $urls = [];
+
+        foreach ($registry->getLocaleCodes() as $locale) {
+            // Only include locales with actual translations
+            $slug = $model->getTranslation('slug', $locale, false);
+            if ($slug !== null) {
+                $urls[$locale] = tallcms_localized_url($slug, $locale);
+            }
+        }
+
+        return $urls;
+    }
+}
+
+if (! function_exists('tallcms_current_locale')) {
+    /**
+     * Get current locale with i18n awareness.
+     * Returns the app locale, which is set by SetLocaleMiddleware.
+     *
+     * @return string Current locale code
+     */
+    function tallcms_current_locale(): string
+    {
+        return app()->getLocale();
+    }
+}
+
+if (! function_exists('tallcms_i18n_enabled')) {
+    /**
+     * Check if i18n is enabled.
+     *
+     * @return bool True if multilingual features are enabled
+     */
+    function tallcms_i18n_enabled(): bool
+    {
+        return (bool) tallcms_i18n_config('enabled', false);
+    }
+}
+
+if (! function_exists('tallcms_current_slug')) {
+    /**
+     * Extract the clean content slug from the current request path.
+     *
+     * Strips routes_prefix and locale prefix from the current URL to get
+     * the actual content slug. Useful for language switchers and alternate URL generation.
+     *
+     * Examples:
+     * - /cms/zh-CN/blog/post → blog/post
+     * - /zh-CN/about → about
+     * - /cms/about → about
+     * - /about → about
+     * - / or /cms or /zh-CN → '' (empty for homepage)
+     *
+     * @return string The clean content slug (without prefixes)
+     */
+    function tallcms_current_slug(): string
+    {
+        $path = trim(request()->path(), '/');
+
+        if ($path === '' || $path === '/') {
+            return '';
+        }
+
+        // Strip routes_prefix if present
+        $routesPrefix = trim(config('tallcms.plugin_mode.routes_prefix', ''), '/');
+        if ($routesPrefix && str_starts_with($path, $routesPrefix . '/')) {
+            $path = substr($path, strlen($routesPrefix) + 1);
+        } elseif ($routesPrefix && $path === $routesPrefix) {
+            return '';
+        }
+
+        // Strip locale prefix if i18n is enabled with prefix strategy
+        if (tallcms_i18n_config('enabled', false) && config('tallcms.i18n.url_strategy', 'prefix') === 'prefix') {
+            $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+            foreach ($registry->getLocaleCodes() as $localeCode) {
+                $bcp47 = \TallCms\Cms\Services\LocaleRegistry::toBcp47($localeCode);
+                if (str_starts_with($path, $bcp47 . '/')) {
+                    $path = substr($path, strlen($bcp47) + 1);
+                    break;
+                } elseif ($path === $bcp47) {
+                    return '';
+                }
+            }
+        }
+
+        return $path;
     }
 }

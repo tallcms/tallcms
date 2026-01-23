@@ -36,7 +36,9 @@
     // Check for category filter from query string
     $filterCategorySlug = request()->query('category');
     $filterCategory = $filterCategorySlug
-        ? CmsCategory::where('slug', $filterCategorySlug)->first()
+        ? (tallcms_i18n_enabled()
+            ? CmsCategory::withLocalizedSlug($filterCategorySlug)->first()
+            : CmsCategory::withSlug($filterCategorySlug)->first())
         : null;
 
     // Determine if we should show drafts (preview mode for authenticated users)

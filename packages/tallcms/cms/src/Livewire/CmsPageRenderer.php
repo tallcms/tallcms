@@ -11,6 +11,7 @@ use TallCms\Cms\Models\CmsPage;
 use TallCms\Cms\Models\CmsPost;
 use TallCms\Cms\Models\SiteSetting;
 use TallCms\Cms\Services\CustomBlockDiscoveryService;
+use TallCms\Cms\Services\LocaleRegistry;
 use TallCms\Cms\Services\MergeTagService;
 use TallCms\Cms\Services\SeoService;
 
@@ -26,8 +27,16 @@ class CmsPageRenderer extends Component
 
     public array $allPages = [];
 
-    public function mount(string $slug = '/')
+    public function mount(string $slug = '/', ?string $locale = null)
     {
+        // Set locale if i18n enabled and locale provided
+        if (tallcms_i18n_enabled() && $locale) {
+            $registry = app(LocaleRegistry::class);
+            if ($registry->isValidLocale($locale)) {
+                app()->setLocale($locale);
+            }
+        }
+
         // Handle root URL - find homepage or show welcome
         if ($slug === '/') {
             $homepage = CmsPage::where('is_homepage', true)
@@ -66,10 +75,10 @@ class CmsPageRenderer extends Component
             }
         }
 
-        // Try to find page by exact slug
-        $page = CmsPage::withSlug($cleanSlug)
-            ->published()
-            ->first();
+        // Try to find page by slug (use localized lookup when i18n enabled)
+        $page = tallcms_i18n_enabled()
+            ? CmsPage::withLocalizedSlug($cleanSlug)->published()->first()
+            : CmsPage::withSlug($cleanSlug)->published()->first();
 
         if ($page) {
             $this->page = $page;
@@ -84,9 +93,10 @@ class CmsPageRenderer extends Component
             ->first();
 
         if ($homepage && $this->pageHasPostsBlock($homepage)) {
-            $post = CmsPost::withSlug($cleanSlug)
-                ->with(['categories', 'author'])
-                ->first();
+            // Use localized lookup for posts when i18n enabled
+            $post = tallcms_i18n_enabled()
+                ? CmsPost::withLocalizedSlug($cleanSlug)->with(['categories', 'author'])->first()
+                : CmsPost::withSlug($cleanSlug)->with(['categories', 'author'])->first();
 
             if ($post) {
                 $canView = $post->isPublished() ||
@@ -117,10 +127,10 @@ class CmsPageRenderer extends Component
         $childSlug = array_pop($segments);
         $parentSlug = implode('/', $segments);
 
-        // Try to find parent page
-        $parentPage = CmsPage::withSlug($parentSlug)
-            ->published()
-            ->first();
+        // Try to find parent page (use localized lookup when i18n enabled)
+        $parentPage = tallcms_i18n_enabled()
+            ? CmsPage::withLocalizedSlug($parentSlug)->published()->first()
+            : CmsPage::withSlug($parentSlug)->published()->first();
 
         if (! $parentPage) {
             return false;
@@ -128,10 +138,10 @@ class CmsPageRenderer extends Component
 
         // Check if parent page has a PostsBlock
         if ($this->pageHasPostsBlock($parentPage)) {
-            // Try to find the post
-            $post = CmsPost::withSlug($childSlug)
-                ->with(['categories', 'author'])
-                ->first();
+            // Try to find the post (use localized lookup when i18n enabled)
+            $post = tallcms_i18n_enabled()
+                ? CmsPost::withLocalizedSlug($childSlug)->with(['categories', 'author'])->first()
+                : CmsPost::withSlug($childSlug)->with(['categories', 'author'])->first();
 
             if ($post) {
                 // Check publish status (allow drafts for authenticated users in preview)
@@ -150,9 +160,9 @@ class CmsPageRenderer extends Component
         }
 
         // Not a post - try to find a page with the full nested slug
-        $nestedPage = CmsPage::withSlug($slug)
-            ->published()
-            ->first();
+        $nestedPage = tallcms_i18n_enabled()
+            ? CmsPage::withLocalizedSlug($slug)->published()->first()
+            : CmsPage::withSlug($slug)->published()->first();
 
         if ($nestedPage) {
             $this->page = $nestedPage;

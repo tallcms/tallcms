@@ -2,20 +2,22 @@
 
 namespace TallCms\Cms\Filament\Resources\CmsPages;
 
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use LaraZeus\SpatieTranslatable\Resources\Concerns\Translatable;
 use TallCms\Cms\Filament\Resources\CmsPages\Pages\CreateCmsPage;
 use TallCms\Cms\Filament\Resources\CmsPages\Pages\EditCmsPage;
 use TallCms\Cms\Filament\Resources\CmsPages\Pages\ListCmsPages;
 use TallCms\Cms\Filament\Resources\CmsPages\Schemas\CmsPageForm;
 use TallCms\Cms\Filament\Resources\CmsPages\Tables\CmsPagesTable;
 use TallCms\Cms\Models\CmsPage;
-use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class CmsPageResource extends Resource
 {
+    use Translatable;
     protected static ?string $model = CmsPage::class;
 
     protected static ?string $pluralModelLabel = 'Pages';

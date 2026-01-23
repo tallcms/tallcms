@@ -131,6 +131,9 @@
                 </div>
 
                 <div class="navbar-end gap-2">
+                    <!-- Language Switcher -->
+                    @include('theme.talldaisy::components.language-switcher')
+
                     <!-- Theme Switcher -->
                     @if(supports_theme_controller())
                         @include('theme.talldaisy::components.theme-switcher')

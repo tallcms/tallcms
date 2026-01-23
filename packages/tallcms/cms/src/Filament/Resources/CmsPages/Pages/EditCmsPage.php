@@ -2,8 +2,6 @@
 
 namespace TallCms\Cms\Filament\Resources\CmsPages\Pages;
 
-use TallCms\Cms\Filament\Resources\CmsPages\CmsPageResource;
-use TallCms\Cms\Services\PublishingWorkflowService;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -14,14 +12,23 @@ use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
+use LaraZeus\SpatieTranslatable\Resources\Pages\EditRecord\Concerns\Translatable;
+use TallCms\Cms\Filament\Resources\CmsPages\CmsPageResource;
+use TallCms\Cms\Services\PublishingWorkflowService;
 
 class EditCmsPage extends EditRecord
 {
+    use Translatable;
+
     protected static string $resource = CmsPageResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            // Locale Switcher for translations
+            LocaleSwitcher::make(),
+
             // Workflow Actions Group
             ActionGroup::make([
                 $this->getSubmitForReviewAction(),

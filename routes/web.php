@@ -9,6 +9,7 @@ use TallCms\Cms\Http\Controllers\RobotsController;
 use TallCms\Cms\Http\Controllers\RssFeedController;
 use TallCms\Cms\Http\Controllers\SitemapController;
 use TallCms\Cms\Livewire\CmsPageRenderer;
+use TallCms\Cms\Services\LocaleRegistry;
 
 /*
 |--------------------------------------------------------------------------
@@ -55,12 +56,67 @@ Route::middleware('tallcms.maintenance')->group(function () {
 
 // Clean CMS routing - all pages handled by one route with maintenance mode check
 // Maintenance middleware now handles installation checks internally
-Route::middleware('tallcms.maintenance')->group(function () {
-    Route::get('/', CmsPageRenderer::class)->defaults('slug', '/')->name('tallcms.cms.home');
-    // Exclude preview, admin, livewire, storage, api, install, feed, sitemap, category, author routes
-    // Supports nested slugs for posts (e.g., /blog/my-post)
-    Route::get('/{slug}', CmsPageRenderer::class)
-        ->where('slug', '^(?!preview|admin|livewire|storage|api|install|feed|sitemap|category|author|robots\.txt).*')
-        ->name('tallcms.cms.page');
+// When i18n is enabled with 'prefix' strategy, routes are registered for each locale
+$i18nEnabled = config('tallcms.i18n.enabled', false);
+$urlStrategy = config('tallcms.i18n.url_strategy', 'prefix');
+$hideDefault = config('tallcms.i18n.hide_default_locale', true);
+$baseExclusions = 'preview|admin|livewire|storage|api|install|feed|sitemap|category|author|robots\.txt';
+
+Route::middleware(['tallcms.maintenance', 'tallcms.set-locale'])->group(function () use ($i18nEnabled, $urlStrategy, $hideDefault, $baseExclusions) {
+    if ($i18nEnabled && $urlStrategy === 'prefix') {
+        // Multilingual routes with locale prefix
+        $registry = app(LocaleRegistry::class);
+        $locales = $registry->getLocaleCodes();
+        $default = $registry->getDefaultLocale();
+
+        // Build locale exclusion pattern for the catch-all route (when hideDefault=true)
+        $localeExclusions = [];
+        foreach ($locales as $locale) {
+            if ($locale !== $default) {
+                $bcp47 = LocaleRegistry::toBcp47($locale);
+                $localeExclusions[] = preg_quote($bcp47, '/');
+            }
+        }
+        $localePattern = $localeExclusions ? '|' . implode('|', $localeExclusions) : '';
+
+        // Register ALL locale routes with prefixes
+        foreach ($locales as $locale) {
+            $publicPrefix = LocaleRegistry::toBcp47($locale);
+            $isDefault = ($locale === $default);
+
+            // When hideDefault=true and this is default locale, use empty prefix
+            // When hideDefault=false, ALL locales get prefixes (no unprefixed routes)
+            $prefix = ($hideDefault && $isDefault) ? '' : $publicPrefix;
+
+            // Route name suffix: default locale without prefix gets no suffix
+            $nameSuffix = ($hideDefault && $isDefault) ? '' : ".{$locale}";
+
+            $pattern = "^(?!{$baseExclusions}).*";
+
+            Route::prefix($prefix)->group(function () use ($locale, $pattern, $nameSuffix, $hideDefault, $isDefault, $localePattern, $baseExclusions) {
+                // For unprefixed default locale routes, exclude other locale prefixes
+                $routePattern = ($hideDefault && $isDefault)
+                    ? "^(?!{$baseExclusions}{$localePattern}).*"
+                    : $pattern;
+
+                Route::get('/', CmsPageRenderer::class)
+                    ->defaults('slug', '/')
+                    ->defaults('locale', $locale)
+                    ->name('tallcms.cms.home' . $nameSuffix);
+
+                Route::get('/{slug}', CmsPageRenderer::class)
+                    ->where('slug', $routePattern)
+                    ->defaults('locale', $locale)
+                    ->name('tallcms.cms.page' . $nameSuffix);
+            });
+        }
+    } else {
+        // Non-i18n routes (existing behavior)
+        $pattern = "^(?!{$baseExclusions}).*";
+        Route::get('/', CmsPageRenderer::class)->defaults('slug', '/')->name('tallcms.cms.home');
+        Route::get('/{slug}', CmsPageRenderer::class)
+            ->where('slug', $pattern)
+            ->name('tallcms.cms.page');
+    }
 });
 

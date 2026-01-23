@@ -64,12 +64,22 @@ return [
 
         // Route exclusion pattern - paths matching this regex are excluded from CMS routing.
         // Default excludes common Laravel/Filament paths. Panel path is auto-excluded.
-        // Customize via TALLCMS_ROUTE_EXCLUSIONS if your app uses other reserved paths.
+        //
+        // In NON-i18n mode with standard format (^(?!foo|bar).*$): Merged with base exclusions.
+        // In NON-i18n mode with custom regex: Used as-is, replaces default pattern entirely.
+        //   NOTE: When using custom regex, 'additional_exclusions' is ignored.
+        // In i18n mode: Only standard negative lookahead format is merged; other formats ignored.
         'route_exclusions' => env('TALLCMS_PLUGIN_ROUTE_EXCLUSIONS',
             env('TALLCMS_ROUTE_EXCLUSIONS', // backward compat
                 '^(?!admin|app|api|livewire|sanctum|storage|build|vendor|health|_).*$'
             )
         ),
+
+        // Additional route exclusions as pipe-separated list (e.g., 'dashboard|settings|profile').
+        // Merged with base exclusions when using standard route_exclusions format.
+        // NOTE: Ignored when route_exclusions is set to a non-standard custom regex.
+        // Recommended for i18n mode where custom regex is not supported.
+        'additional_exclusions' => env('TALLCMS_ADDITIONAL_EXCLUSIONS', ''),
 
         // Enable preview routes (/preview/page/{id}, /preview/post/{id})
         'preview_routes_enabled' => env('TALLCMS_PREVIEW_ROUTES_ENABLED', true),
@@ -291,6 +301,51 @@ return [
 
         // Rollback availability window (hours)
         'rollback_duration' => 24,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Internationalization (i18n)
+    |--------------------------------------------------------------------------
+    |
+    | Core i18n configuration. Locales are merged from multiple sources:
+    | - Config: Base locales (always available)
+    | - Plugins: Can ADD new locale codes (cannot override config)
+    | - DB: Can MODIFY existing locales (enable/disable/rename, cannot add)
+    |
+    */
+    'i18n' => [
+        // Master switch for multilingual features
+        'enabled' => env('TALLCMS_I18N_ENABLED', false),
+
+        // Base locales (always available, plugins can add new ones, DB can modify existing)
+        'locales' => [
+            'en' => [
+                'label' => 'English',
+                'native' => 'English',
+                'rtl' => false,
+            ],
+            'zh_CN' => [
+                'label' => 'Chinese (Simplified)',
+                'native' => '简体中文',
+                'rtl' => false,
+            ],
+        ],
+
+        // Default/fallback locale (must exist in registry)
+        'default_locale' => env('TALLCMS_DEFAULT_LOCALE', 'en'),
+
+        // URL strategy: 'prefix' (/en/about) or 'none' (query param fallback)
+        'url_strategy' => 'prefix',
+
+        // Hide default locale from URL (/ instead of /en/)
+        'hide_default_locale' => env('TALLCMS_HIDE_DEFAULT_LOCALE', true),
+
+        // Fallback when translation missing: 'default', 'empty', 'key'
+        'fallback_behavior' => 'default',
+
+        // Remember locale preference in session
+        'remember_locale' => true,
     ],
 
     /*

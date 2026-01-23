@@ -53,7 +53,9 @@
     // Check for category filter from query string
     $filterCategorySlug = request()->query('category');
     $filterCategory = $filterCategorySlug
-        ? CmsCategory::where('slug', $filterCategorySlug)->first()
+        ? (tallcms_i18n_enabled()
+            ? CmsCategory::withLocalizedSlug($filterCategorySlug)->first()
+            : CmsCategory::withSlug($filterCategorySlug)->first())
         : null;
 
     // Determine if we should show drafts (preview mode for authenticated users)
@@ -149,35 +151,46 @@
         default => 'sm:grid-cols-2 lg:grid-cols-3'
     };
 
-    // Helper to generate post URL
+    // Helper to generate post URL (uses localized URL helper)
     $getPostUrl = function($post) use ($parentSlug, $isPreview) {
         if ($isPreview) {
             return '#';
         }
-        $slug = empty($parentSlug) ? $post->slug : $parentSlug . '/' . $post->slug;
-        return route('tallcms.cms.page', ['slug' => $slug]);
+        // Get the localized post slug
+        $postSlug = tallcms_i18n_enabled()
+            ? ($post->getTranslation('slug', app()->getLocale(), false) ?? $post->slug)
+            : $post->slug;
+
+        // Build full slug with parent
+        $fullSlug = empty($parentSlug) ? $postSlug : $parentSlug . '/' . $postSlug;
+        return tallcms_localized_url($fullSlug);
     };
 
-    // Helper to generate category filter URL
+    // Helper to generate category filter URL (uses localized URL helper)
     $getCategoryFilterUrl = function($category) use ($parentSlug, $isPreview) {
         if ($isPreview) {
             return '#';
         }
+        // Get the localized category slug
+        $categorySlug = tallcms_i18n_enabled()
+            ? ($category->getTranslation('slug', app()->getLocale(), false) ?? $category->slug)
+            : $category->slug;
+
         if (empty($parentSlug)) {
-            return route('tallcms.cms.home') . '?category=' . $category->slug;
+            return tallcms_localized_url('/') . '?category=' . $categorySlug;
         }
-        return route('tallcms.cms.page', ['slug' => $parentSlug]) . '?category=' . $category->slug;
+        return tallcms_localized_url($parentSlug) . '?category=' . $categorySlug;
     };
 
-    // Helper to generate clear filter URL
+    // Helper to generate clear filter URL (uses localized URL helper)
     $getClearFilterUrl = function() use ($parentSlug, $isPreview) {
         if ($isPreview) {
             return '#';
         }
         if (empty($parentSlug)) {
-            return route('tallcms.cms.home');
+            return tallcms_localized_url('/');
         }
-        return route('tallcms.cms.page', ['slug' => $parentSlug]);
+        return tallcms_localized_url($parentSlug);
     };
 @endphp
 

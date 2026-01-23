@@ -38,6 +38,7 @@
     "require": {
         "php": "^8.2",
         "filament/filament": "^4.0",
+        "lara-zeus/spatie-translatable": "^1.0",
         "spatie/laravel-package-tools": "^1.16",
         "bezhansalleh/filament-shield": "^4.0",
         "spatie/laravel-permission": "^6.0",
@@ -47,7 +48,8 @@
     },
     "require-dev": {
         "orchestra/testbench": "^9.0 || ^10.0",
-        "phpunit/phpunit": "^10.5 || ^11.0"
+        "phpunit/phpunit": "^10.5 || ^11.0",
+        "spatie/laravel-translatable": "^6.12"
     },
     "autoload": {
         "psr-4": {
