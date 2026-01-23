@@ -125,6 +125,23 @@ class TallCmsPlugin implements Plugin
                 SpatieTranslatablePlugin::make()
                     ->defaultLocales($locales)
                     ->persist() // Remember user's selected language in session
+                    ->getLocaleLabelUsing(function (string $locale): ?string {
+                        // Use native labels from LocaleRegistry (e.g., "简体中文" instead of "Chinese (China)")
+                        if (! tallcms_i18n_enabled()) {
+                            return null; // Fall back to default behavior
+                        }
+
+                        $registry = app(LocaleRegistry::class);
+                        $locales = $registry->getLocales();
+
+                        if ($locales->has($locale)) {
+                            $config = $locales->get($locale);
+
+                            return $config['native'] ?? $config['label'] ?? null;
+                        }
+
+                        return null; // Fall back to default behavior
+                    })
             );
         } catch (\Throwable $e) {
             Log::warning('Failed to register Spatie Translatable Plugin', [
