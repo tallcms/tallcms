@@ -2,16 +2,18 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
-use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
-use TallCms\Cms\Models\CmsCategory;
-use TallCms\Cms\Models\CmsPost;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Illuminate\Support\Str;
+use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
+use TallCms\Cms\Models\CmsCategory;
+use TallCms\Cms\Models\CmsPost;
 
 class PostsBlock extends RichContentCustomBlock
 {
@@ -32,6 +34,10 @@ class PostsBlock extends RichContentCustomBlock
             ->modalWidth('2xl')
             ->modalDescription('Display a list of posts filtered by category')
             ->schema([
+                // Hidden block UUID for stable pagination parameters
+                Hidden::make('block_uuid')
+                    ->default(fn () => Str::uuid()->toString()),
+
                 // Filtering
                 Select::make('categories')
                     ->label('Filter by Categories')
@@ -83,7 +89,7 @@ class PostsBlock extends RichContentCustomBlock
                     ->numeric()
                     ->default(0)
                     ->minValue(0)
-                    ->helperText('Skip first N posts (useful for multi-section layouts)'),
+                    ->helperText('Skip first N posts (incompatible with pagination - use one or the other)'),
 
                 Select::make('sort_by')
                     ->label('Sort By')
@@ -133,6 +139,30 @@ class PostsBlock extends RichContentCustomBlock
                     ->label('Empty State Message')
                     ->placeholder('No posts found.')
                     ->helperText('Message shown when no posts match the filters'),
+
+                // Pagination
+                Section::make('Pagination')
+                    ->schema([
+                        Toggle::make('enable_pagination')
+                            ->label('Enable Pagination')
+                            ->helperText('Show pagination controls when there are more posts than displayed')
+                            ->default(false)
+                            ->live(),
+
+                        Select::make('per_page')
+                            ->label('Posts Per Page')
+                            ->options([
+                                '6' => '6 posts',
+                                '9' => '9 posts',
+                                '12' => '12 posts',
+                                '18' => '18 posts',
+                                '24' => '24 posts',
+                            ])
+                            ->default('12')
+                            ->visible(fn (Get $get) => $get('enable_pagination'))
+                            ->helperText('Number of posts to show per page'),
+                    ])
+                    ->columns(2),
 
                 Section::make('Appearance')
                     ->schema([

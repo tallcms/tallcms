@@ -147,6 +147,35 @@ jobs:
           touch storage/logs/.gitkeep
           touch bootstrap/cache/.gitkeep
 
+      - name: Wait for Packagist to sync
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          VERSION="${VERSION#v}"  # Remove 'v' prefix
+          echo "Waiting for tallcms/cms v${VERSION} to be available on Packagist..."
+
+          for i in {1..30}; do
+            if curl -s "https://packagist.org/packages/tallcms/cms.json" | grep -q "\"${VERSION}\""; then
+              echo "✓ Version ${VERSION} found on Packagist!"
+              exit 0
+            fi
+            echo "Attempt $i/30: Version not yet available, waiting 10 seconds..."
+            sleep 10
+          done
+
+          echo "::error::Timed out waiting for Packagist to sync version ${VERSION}"
+          exit 1
+
+      - name: Reinstall dependencies in release directory
+        run: |
+          cd release
+          # Remove old vendor (has references to local packages/)
+          rm -rf vendor
+          # Remove composer.lock so we can resolve fresh from Packagist
+          # (the lock file has the old local path version)
+          rm -f composer.lock
+          # Install fresh from Packagist
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
       - name: Setup Laravel environment
         run: |
           cd release

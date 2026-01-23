@@ -19,6 +19,9 @@ declare(strict_types=1);
 |
 | The default locale can be hidden (/ instead of /en/) via hide_default_locale config.
 |
+| NOTE: SEO routes (sitemap, robots.txt, RSS, archives) are in routes/seo.php
+| and loaded separately via seo_routes_enabled (default: true).
+|
 */
 
 use Illuminate\Support\Facades\Route;
