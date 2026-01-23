@@ -904,3 +904,27 @@ if (! function_exists('tallcms_current_slug')) {
         return $path;
     }
 }
+
+if (! function_exists('tallcms_locale_label')) {
+    /**
+     * Get the display label (native name) for a locale code.
+     *
+     * @param string $localeCode The locale code (internal or BCP-47 format)
+     * @param bool $native Whether to return native name (true) or English label (false)
+     * @return string The locale label, or the code itself if not found
+     */
+    function tallcms_locale_label(string $localeCode, bool $native = true): string
+    {
+        $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+        $normalized = \TallCms\Cms\Services\LocaleRegistry::normalizeLocaleCode($localeCode);
+        $locales = $registry->getLocales();
+
+        if (isset($locales[$normalized])) {
+            return $native
+                ? ($locales[$normalized]['native'] ?? $locales[$normalized]['label'])
+                : $locales[$normalized]['label'];
+        }
+
+        return $localeCode;
+    }
+}

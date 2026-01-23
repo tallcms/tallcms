@@ -93,13 +93,13 @@ All i18n settings are in `config/tallcms.php` under the `i18n` key:
     // Default/fallback locale (must exist in locales array)
     'default_locale' => env('TALLCMS_DEFAULT_LOCALE', 'en'),
 
-    // URL strategy: 'prefix' (/en/about) or 'none' (no locale in URL)
+    // URL strategy: 'prefix' (/en/about) or 'none' (no locale prefix, uses ?lang= query param)
     'url_strategy' => 'prefix',
 
     // Hide default locale from URL (/ instead of /en/)
     'hide_default_locale' => env('TALLCMS_HIDE_DEFAULT_LOCALE', true),
 
-    // Fallback when translation missing: 'default', 'empty', 'key'
+    // Fallback when translation missing: 'default', 'empty', 'key' (not yet implemented)
     'fallback_behavior' => 'default',
 
     // Remember locale preference in session
@@ -128,7 +128,7 @@ TallCMS uses two locale code formats:
 | **Internal** | `zh_cn` | Database storage, config keys, PHP code |
 | **BCP-47** | `zh-CN` | URLs, HTML lang attributes, hreflang tags |
 
-Conversion is automatic via `LocaleRegistry::toBcp47()` and `LocaleRegistry::toInternal()`.
+Conversion is automatic via `LocaleRegistry::toBcp47()` and `LocaleRegistry::normalizeLocaleCode()`.
 
 ### Adding a New Locale
 
@@ -172,7 +172,7 @@ $default = $registry->getDefaultLocale(); // 'en'
 
 // Convert formats
 $bcp47 = LocaleRegistry::toBcp47('zh_cn');    // 'zh-CN'
-$internal = LocaleRegistry::toInternal('zh-CN'); // 'zh_cn'
+$internal = LocaleRegistry::normalizeLocaleCode('zh-CN'); // 'zh_cn'
 ```
 
 ---
@@ -185,7 +185,7 @@ The following content types support translations:
 
 | Content Type | Translatable Fields |
 |--------------|---------------------|
-| **Pages** | `title`, `slug`, `content`, `excerpt`, `meta_title`, `meta_description` |
+| **Pages** | `title`, `slug`, `content`, `meta_title`, `meta_description` |
 | **Posts** | `title`, `slug`, `content`, `excerpt`, `meta_title`, `meta_description` |
 | **Categories** | `name`, `slug`, `description` |
 | **Menu Items** | `label` |
@@ -298,13 +298,13 @@ The Menu Items Manager includes full translation support:
 Add a language switcher to your theme:
 
 ```blade
-<x-language-switcher />
+<x-tallcms::language-switcher />
 ```
 
 Or with custom styling:
 
 ```blade
-<x-language-switcher class="my-custom-class" />
+<x-tallcms::language-switcher class="my-custom-class" />
 ```
 
 The component automatically:
@@ -318,7 +318,7 @@ Add hreflang tags for SEO:
 
 ```blade
 {{-- In your layout's <head> --}}
-<x-hreflang :model="$page" />
+<x-tallcms::hreflang :model="$page" />
 ```
 
 This generates:
@@ -356,8 +356,8 @@ tallcms_localized_url('about');           // /about (default) or /zh-CN/about
 tallcms_localized_url('about', 'zh_cn');  // /zh-CN/about
 
 // Resolve custom URL (handles already-prefixed URLs)
-tallcms_resolve_custom_url('/about');     // /about
-tallcms_resolve_custom_url('/en/about');  // /about (normalizes default locale)
+tallcms_resolve_custom_url('/about');       // /about or /en/about (depends on hide_default_locale)
+tallcms_resolve_custom_url('/en/about');    // /en/about (kept as-is, already has locale)
 tallcms_resolve_custom_url('/zh-CN/about'); // /zh-CN/about
 
 // Get alternate URLs for all translations
