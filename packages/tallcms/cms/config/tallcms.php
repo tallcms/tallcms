@@ -65,9 +65,10 @@ return [
         // Route exclusion pattern - paths matching this regex are excluded from CMS routing.
         // Default excludes common Laravel/Filament paths. Panel path is auto-excluded.
         //
-        // In NON-i18n mode: Full regex is used as-is (any valid regex format).
-        // In i18n mode: Only standard negative lookahead format (^(?!foo|bar).*$) is merged;
-        //               other formats are ignored. Use 'additional_exclusions' for i18n mode.
+        // In NON-i18n mode with standard format (^(?!foo|bar).*$): Merged with base exclusions.
+        // In NON-i18n mode with custom regex: Used as-is, replaces default pattern entirely.
+        //   NOTE: When using custom regex, 'additional_exclusions' is ignored.
+        // In i18n mode: Only standard negative lookahead format is merged; other formats ignored.
         'route_exclusions' => env('TALLCMS_PLUGIN_ROUTE_EXCLUSIONS',
             env('TALLCMS_ROUTE_EXCLUSIONS', // backward compat
                 '^(?!admin|app|api|livewire|sanctum|storage|build|vendor|health|_).*$'
@@ -75,8 +76,9 @@ return [
         ),
 
         // Additional route exclusions as pipe-separated list (e.g., 'dashboard|settings|profile').
-        // Works in both i18n and non-i18n modes. Merged with base exclusions.
-        // Use this instead of route_exclusions regex when i18n is enabled.
+        // Merged with base exclusions when using standard route_exclusions format.
+        // NOTE: Ignored when route_exclusions is set to a non-standard custom regex.
+        // Recommended for i18n mode where custom regex is not supported.
         'additional_exclusions' => env('TALLCMS_ADDITIONAL_EXCLUSIONS', ''),
 
         // Enable preview routes (/preview/page/{id}, /preview/post/{id})

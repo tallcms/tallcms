@@ -684,11 +684,13 @@ if (! function_exists('tallcms_resolve_custom_url')) {
      *
      * This function is designed for user-entered URLs in menus and buttons where:
      * - User may enter a clean slug (e.g., 'about', 'blog/post')
-     * - User may enter an absolute path with prefixes (e.g., '/cms/about', '/zh-CN/page')
+     * - User may enter an absolute path with prefixes (e.g., '/cms/zh-CN/page')
      *
-     * Absolute paths (starting with '/') are checked for existing prefixes and
-     * returned as-is if already prefixed. Relative paths (no leading '/') are
-     * treated as slugs and passed through tallcms_localized_url().
+     * A path is considered "fully qualified" only if it has ALL required prefixes:
+     * - routes_prefix (if configured in plugin mode)
+     * - locale prefix (if i18n enabled with prefix strategy and hide_default_locale=false)
+     *
+     * Paths missing required prefixes are normalized through tallcms_localized_url().
      *
      * @param  string  $url  The custom URL or slug
      * @return string Resolved URL
@@ -705,28 +707,75 @@ if (! function_exists('tallcms_resolve_custom_url')) {
         if (str_starts_with($url, '/')) {
             $routesPrefix = trim(config('tallcms.plugin_mode.routes_prefix', ''), '/');
             $pathWithoutSlash = ltrim($url, '/');
+            $i18nEnabled = tallcms_i18n_config('enabled', false);
+            $urlStrategy = config('tallcms.i18n.url_strategy', 'prefix');
+            $hideDefault = tallcms_i18n_config('hide_default_locale', true);
 
-            // Check if already has routes_prefix
-            if ($routesPrefix && (
-                str_starts_with($pathWithoutSlash, $routesPrefix . '/') ||
-                $pathWithoutSlash === $routesPrefix
-            )) {
-                return $url; // Already prefixed with routes_prefix
+            // Track what we find in the path
+            $hasRoutesPrefix = false;
+            $hasLocalePrefix = false;
+            $foundLocale = null;
+            $slugAfterPrefixes = $pathWithoutSlash;
+
+            // Step 1: Check for routes_prefix at the start
+            if ($routesPrefix) {
+                if (str_starts_with($pathWithoutSlash, $routesPrefix . '/')) {
+                    $hasRoutesPrefix = true;
+                    $slugAfterPrefixes = substr($pathWithoutSlash, strlen($routesPrefix) + 1);
+                } elseif ($pathWithoutSlash === $routesPrefix) {
+                    $hasRoutesPrefix = true;
+                    $slugAfterPrefixes = '';
+                }
             }
 
-            // Check if already has locale prefix (when i18n enabled with prefix strategy)
-            if (tallcms_i18n_config('enabled', false) && config('tallcms.i18n.url_strategy', 'prefix') === 'prefix') {
+            // Step 2: Check for locale prefix (after routes_prefix if present, or at start)
+            if ($i18nEnabled && $urlStrategy === 'prefix') {
                 $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+                $pathToCheck = $slugAfterPrefixes;
+
+                // Also check original path for locale-only URLs like /zh-CN/page
+                if (! $hasRoutesPrefix) {
+                    $pathToCheck = $pathWithoutSlash;
+                }
+
                 foreach ($registry->getLocaleCodes() as $localeCode) {
                     $bcp47 = \TallCms\Cms\Services\LocaleRegistry::toBcp47($localeCode);
-                    if (str_starts_with($pathWithoutSlash, $bcp47 . '/') || $pathWithoutSlash === $bcp47) {
-                        return $url; // Already prefixed with locale
+                    if (str_starts_with($pathToCheck, $bcp47 . '/')) {
+                        $hasLocalePrefix = true;
+                        $foundLocale = $localeCode;
+                        $slugAfterPrefixes = substr($pathToCheck, strlen($bcp47) + 1);
+                        break;
+                    } elseif ($pathToCheck === $bcp47) {
+                        $hasLocalePrefix = true;
+                        $foundLocale = $localeCode;
+                        $slugAfterPrefixes = '';
+                        break;
                     }
                 }
             }
 
-            // Absolute path without known prefix - strip leading slash and treat as slug
-            return tallcms_localized_url($pathWithoutSlash);
+            // Determine what's required
+            $needsRoutesPrefix = ! empty($routesPrefix);
+            $needsLocalePrefix = $i18nEnabled && $urlStrategy === 'prefix' && ! $hideDefault;
+
+            // Case 1: Fully qualified (has all required prefixes)
+            if (($hasRoutesPrefix || ! $needsRoutesPrefix) &&
+                ($hasLocalePrefix || ! $needsLocalePrefix)) {
+                return $url;
+            }
+
+            // Case 2: Has locale but missing routes_prefix
+            if ($hasLocalePrefix && $needsRoutesPrefix && ! $hasRoutesPrefix) {
+                return tallcms_localized_url($slugAfterPrefixes, $foundLocale);
+            }
+
+            // Case 3: Has routes_prefix but missing required locale
+            if ($hasRoutesPrefix && $needsLocalePrefix && ! $hasLocalePrefix) {
+                return tallcms_localized_url($slugAfterPrefixes);
+            }
+
+            // Case 4: Neither prefix found - treat remaining as slug
+            return tallcms_localized_url($slugAfterPrefixes);
         }
 
         // Relative path - treat as slug
