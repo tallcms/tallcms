@@ -35,14 +35,20 @@ $namePrefix = config('tallcms.plugin_mode.route_name_prefix', 'tallcms.');
 $panelPath = preg_quote(config('tallcms.filament.panel_path', 'admin'), '/');
 $baseExclusions = "{$panelPath}|app|api|livewire|sanctum|storage|build|vendor|health|_";
 
-// Merge with custom exclusions from config (plugin mode customization)
+// Custom route exclusions from config (plugin mode customization)
+// This can be either:
+// 1. A negative lookahead pattern like ^(?!foo|bar).*$ - will be merged with base exclusions
+// 2. Any other regex - will be used as-is (replaces the default pattern entirely)
 $customExclusions = config('tallcms.plugin_mode.route_exclusions');
+$customExclusionsIsStandard = false;
+
 if ($customExclusions && preg_match('/^\^\(\?!(.+)\)\.\*\$$/', $customExclusions, $matches)) {
-    // Extract the exclusion list from the regex pattern and merge
+    // Standard negative lookahead format - extract and merge with base exclusions
     $customList = $matches[1];
-    if (!str_contains($baseExclusions, $customList)) {
+    if (! str_contains($baseExclusions, $customList)) {
         $baseExclusions = "{$baseExclusions}|{$customList}";
     }
+    $customExclusionsIsStandard = true;
 }
 
 // Check i18n configuration
@@ -52,7 +58,7 @@ $i18nEnabled = config('tallcms.i18n.enabled', false);
 $urlStrategy = config('tallcms.i18n.url_strategy', 'prefix');
 $hideDefault = config('tallcms.i18n.hide_default_locale', true);
 
-Route::name($namePrefix)->middleware(['tallcms.maintenance', 'tallcms.set-locale'])->group(function () use ($i18nEnabled, $urlStrategy, $hideDefault, $baseExclusions) {
+Route::name($namePrefix)->middleware(['tallcms.maintenance', 'tallcms.set-locale'])->group(function () use ($i18nEnabled, $urlStrategy, $hideDefault, $baseExclusions, $customExclusions, $customExclusionsIsStandard) {
 
     if ($i18nEnabled && $urlStrategy === 'prefix') {
         // Multilingual routes with locale prefix
@@ -103,7 +109,11 @@ Route::name($namePrefix)->middleware(['tallcms.maintenance', 'tallcms.set-locale
         }
     } else {
         // Non-i18n routes (existing behavior) or url_strategy=none
-        $pattern = "^(?!{$baseExclusions}).*$";
+        // Use custom regex as-is if provided and not standard format, otherwise build from base exclusions
+        $pattern = ($customExclusions && ! $customExclusionsIsStandard)
+            ? $customExclusions
+            : "^(?!{$baseExclusions}).*$";
+
         Route::get('/', CmsPageRenderer::class)
             ->defaults('slug', '/')
             ->name('cms.home');
