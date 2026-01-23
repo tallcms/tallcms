@@ -16,7 +16,7 @@
     } else {
         // Fallback: use current page URL with locale prefix
         foreach ($locales as $code => $locale) {
-            $alternateUrls[$code] = tallcms_localized_url(request()->path(), $code);
+            $alternateUrls[$code] = tallcms_localized_url(tallcms_current_slug(), $code);
         }
     }
 @endphp
