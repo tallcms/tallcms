@@ -49,7 +49,8 @@ class MenuUrlResolver
     }
 
     /**
-     * Resolve custom URL, applying routes prefix and locale for relative paths
+     * Resolve custom URL, applying routes prefix and locale for relative paths.
+     * Already-prefixed absolute paths are returned as-is to avoid double-prefixing.
      */
     protected function resolveCustomUrl(TallcmsMenuItem $item): ?string
     {
@@ -59,14 +60,13 @@ class MenuUrlResolver
             return null;
         }
 
-        // Don't modify external URLs or anchors
+        // Don't modify external URLs, anchors, or special protocols
         if (str_starts_with($url, 'http') || str_starts_with($url, '#') || str_starts_with($url, 'mailto:') || str_starts_with($url, 'tel:')) {
             return $url;
         }
 
-        // For relative URLs, use localized URL helper which handles both
-        // routes prefix and locale prefix
-        return tallcms_localized_url($url);
+        // Use helper that handles both clean slugs and already-prefixed paths
+        return tallcms_resolve_custom_url($url);
     }
 
     public function shouldOpenInNewTab(TallcmsMenuItem $item): bool

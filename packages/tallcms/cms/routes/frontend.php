@@ -35,10 +35,19 @@ $namePrefix = config('tallcms.plugin_mode.route_name_prefix', 'tallcms.');
 $panelPath = preg_quote(config('tallcms.filament.panel_path', 'admin'), '/');
 $baseExclusions = "{$panelPath}|app|api|livewire|sanctum|storage|build|vendor|health|_";
 
-// Custom route exclusions from config (plugin mode customization)
-// This can be either:
-// 1. A negative lookahead pattern like ^(?!foo|bar).*$ - will be merged with base exclusions
-// 2. Any other regex - will be used as-is (replaces the default pattern entirely)
+// Additional exclusions as pipe-separated list (works in both i18n and non-i18n modes)
+$additionalExclusions = config('tallcms.plugin_mode.additional_exclusions', '');
+if ($additionalExclusions) {
+    $additionalExclusions = trim($additionalExclusions, '|');
+    if ($additionalExclusions && ! str_contains($baseExclusions, $additionalExclusions)) {
+        $baseExclusions = "{$baseExclusions}|{$additionalExclusions}";
+    }
+}
+
+// Custom route exclusions regex from config (plugin mode customization)
+// In non-i18n mode: Can be any regex format, used as-is
+// In i18n mode: Only standard negative lookahead format (^(?!foo|bar).*$) is merged;
+//               use additional_exclusions for arbitrary paths in i18n mode
 $customExclusions = config('tallcms.plugin_mode.route_exclusions');
 $customExclusionsIsStandard = false;
 

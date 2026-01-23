@@ -678,6 +678,62 @@ if (! function_exists('tallcms_localized_url')) {
     }
 }
 
+if (! function_exists('tallcms_resolve_custom_url')) {
+    /**
+     * Resolve a custom URL, handling both clean slugs and already-prefixed paths.
+     *
+     * This function is designed for user-entered URLs in menus and buttons where:
+     * - User may enter a clean slug (e.g., 'about', 'blog/post')
+     * - User may enter an absolute path with prefixes (e.g., '/cms/about', '/zh-CN/page')
+     *
+     * Absolute paths (starting with '/') are checked for existing prefixes and
+     * returned as-is if already prefixed. Relative paths (no leading '/') are
+     * treated as slugs and passed through tallcms_localized_url().
+     *
+     * @param  string  $url  The custom URL or slug
+     * @return string Resolved URL
+     */
+    function tallcms_resolve_custom_url(string $url): string
+    {
+        $url = trim($url);
+
+        if ($url === '' || $url === '/') {
+            return tallcms_localized_url('/');
+        }
+
+        // Absolute paths (starting with /) may already be prefixed
+        if (str_starts_with($url, '/')) {
+            $routesPrefix = trim(config('tallcms.plugin_mode.routes_prefix', ''), '/');
+            $pathWithoutSlash = ltrim($url, '/');
+
+            // Check if already has routes_prefix
+            if ($routesPrefix && (
+                str_starts_with($pathWithoutSlash, $routesPrefix . '/') ||
+                $pathWithoutSlash === $routesPrefix
+            )) {
+                return $url; // Already prefixed with routes_prefix
+            }
+
+            // Check if already has locale prefix (when i18n enabled with prefix strategy)
+            if (tallcms_i18n_config('enabled', false) && config('tallcms.i18n.url_strategy', 'prefix') === 'prefix') {
+                $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+                foreach ($registry->getLocaleCodes() as $localeCode) {
+                    $bcp47 = \TallCms\Cms\Services\LocaleRegistry::toBcp47($localeCode);
+                    if (str_starts_with($pathWithoutSlash, $bcp47 . '/') || $pathWithoutSlash === $bcp47) {
+                        return $url; // Already prefixed with locale
+                    }
+                }
+            }
+
+            // Absolute path without known prefix - strip leading slash and treat as slug
+            return tallcms_localized_url($pathWithoutSlash);
+        }
+
+        // Relative path - treat as slug
+        return tallcms_localized_url($url);
+    }
+}
+
 if (! function_exists('tallcms_alternate_urls')) {
     /**
      * Get alternate URLs for all translations of a model.

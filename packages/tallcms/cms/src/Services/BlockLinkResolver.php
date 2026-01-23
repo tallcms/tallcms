@@ -58,8 +58,8 @@ class BlockLinkResolver
                     return $url;
                 }
 
-                // Internal paths go through localized URL helper
-                return $url ? tallcms_localized_url($url) : '#';
+                // Internal paths - use helper that handles both clean slugs and already-prefixed paths
+                return $url ? tallcms_resolve_custom_url($url) : '#';
 
             default:
                 return '#';
