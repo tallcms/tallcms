@@ -53,6 +53,11 @@ class BlockLinkResolver
                     return $url;
                 }
 
+                // mailto: and tel: links are preserved as-is
+                if (str_starts_with(strtolower($url), 'mailto:') || str_starts_with(strtolower($url), 'tel:')) {
+                    return $url;
+                }
+
                 // Internal paths go through localized URL helper
                 return $url ? tallcms_localized_url($url) : '#';
 

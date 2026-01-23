@@ -201,7 +201,31 @@ class CmsPostForm
                                                     ),
                                                 TextInput::make('slug')
                                                     ->required()
-                                                    ->unique(CmsCategory::class, 'slug'),
+                                                    ->rules(function ($livewire) {
+                                                        $rules = ['alpha_dash'];
+
+                                                        if (tallcms_i18n_enabled()) {
+                                                            // Block locale codes as slugs
+                                                            $reserved = app(LocaleRegistry::class)->getReservedSlugs();
+                                                            $rules[] = 'not_in:'.implode(',', $reserved);
+
+                                                            // Unique per locale (use livewire's activeLocale or app locale)
+                                                            $activeLocale = $livewire->activeLocale ?? app()->getLocale();
+                                                            $rules[] = new UniqueTranslatableSlug(
+                                                                table: 'tallcms_categories',
+                                                                column: 'slug',
+                                                                locale: $activeLocale
+                                                            );
+                                                        } else {
+                                                            // Traditional unique constraint
+                                                            $rules[] = 'unique:tallcms_categories,slug';
+                                                        }
+
+                                                        return $rules;
+                                                    })
+                                                    ->validationMessages([
+                                                        'not_in' => 'This slug is reserved (matches a language code).',
+                                                    ]),
                                                 Textarea::make('description')
                                                     ->rows(2),
                                             ])

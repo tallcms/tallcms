@@ -621,6 +621,9 @@ if (! function_exists('tallcms_localized_url')) {
      * In plugin mode with routes_prefix set, URLs will be prefixed:
      * - /cms/es-MX/about (when routes_prefix='cms')
      *
+     * Double-prefix detection: If the slug already contains the routes_prefix
+     * or locale prefix, they will be stripped before rebuilding the URL.
+     *
      * @param  string  $slug  The page/post slug
      * @param  string|null  $locale  Internal locale code (es_mx). Uses current if null.
      * @return string Full URL with locale indicator
@@ -634,12 +637,33 @@ if (! function_exists('tallcms_localized_url')) {
         $urlStrategy = config('tallcms.i18n.url_strategy', 'prefix');
 
         // Get routes prefix for plugin mode
-        $routesPrefix = config('tallcms.plugin_mode.routes_prefix', '');
-        $routesPrefix = $routesPrefix ? '/' . ltrim($routesPrefix, '/') : '';
+        $routesPrefixRaw = config('tallcms.plugin_mode.routes_prefix', '');
+        $routesPrefix = $routesPrefixRaw ? '/' . trim($routesPrefixRaw, '/') : '';
 
-        // Normalize slug
-        $slug = ltrim($slug, '/');
-        $baseSlug = $slug === '' || $slug === '/' ? '' : '/' . $slug;
+        // Normalize slug - remove leading/trailing slashes
+        $slug = trim($slug, '/');
+
+        // Double-prefix detection: strip existing routes_prefix if present
+        if ($routesPrefixRaw && str_starts_with($slug, trim($routesPrefixRaw, '/') . '/')) {
+            $slug = substr($slug, strlen(trim($routesPrefixRaw, '/')) + 1);
+        } elseif ($routesPrefixRaw && $slug === trim($routesPrefixRaw, '/')) {
+            $slug = '';
+        }
+
+        // Double-prefix detection: strip existing locale prefix if present (BCP-47 format)
+        // Check all known locales in BCP-47 format
+        foreach ($registry->getLocaleCodes() as $localeCode) {
+            $bcp47Prefix = \TallCms\Cms\Services\LocaleRegistry::toBcp47($localeCode);
+            if (str_starts_with($slug, $bcp47Prefix . '/')) {
+                $slug = substr($slug, strlen($bcp47Prefix) + 1);
+                break;
+            } elseif ($slug === $bcp47Prefix) {
+                $slug = '';
+                break;
+            }
+        }
+
+        $baseSlug = $slug === '' ? '' : '/' . $slug;
 
         // If i18n disabled, return simple URL with routes prefix
         if (! tallcms_i18n_config('enabled', false)) {
