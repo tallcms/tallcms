@@ -6,6 +6,7 @@ namespace TallCms\Cms\Services;
 
 use TallCms\Cms\Models\SiteSetting;
 use TallCms\Cms\Models\TallcmsMenuItem;
+use TallCms\Cms\Services\LocaleRegistry;
 
 class MenuUrlResolver
 {
@@ -28,23 +29,27 @@ class MenuUrlResolver
 
         $siteType = SiteSetting::get('site_type', 'multi-page');
         $page = $item->page;
-        $prefix = $this->getRoutesPrefix();
 
         if ($siteType === 'single-page') {
             // In SPA mode, everything links to anchors on homepage
             return $page->is_homepage ? '#top' : '#'.tallcms_slug_to_anchor($page->slug, $page->id);
         }
 
-        // Multi-page mode - homepage goes to prefix root, others use prefix + slug
+        // Multi-page mode - use localized URL helper (includes routes prefix and locale)
+        // Get the localized slug for the current locale with fallback
+        $slug = tallcms_i18n_enabled()
+            ? ($page->getTranslation('slug', app()->getLocale(), false) ?? $page->getTranslation('slug', app(LocaleRegistry::class)->getDefaultLocale()))
+            : $page->slug;
+
         if ($page->is_homepage) {
-            return $prefix ? '/'.$prefix : '/';
+            return tallcms_localized_url('/');
         }
 
-        return $prefix ? '/'.$prefix.'/'.$page->slug : '/'.$page->slug;
+        return tallcms_localized_url($slug);
     }
 
     /**
-     * Resolve custom URL, applying routes prefix for relative paths
+     * Resolve custom URL, applying routes prefix and locale for relative paths
      */
     protected function resolveCustomUrl(TallcmsMenuItem $item): ?string
     {
@@ -59,29 +64,9 @@ class MenuUrlResolver
             return $url;
         }
 
-        // Apply routes prefix to relative URLs (both /about and about formats)
-        $prefix = $this->getRoutesPrefix();
-        if ($prefix) {
-            // Normalize URL to have leading slash
-            $normalizedUrl = '/'.ltrim($url, '/');
-
-            // Avoid double prefixing - check if already has prefix with trailing slash
-            if (! str_starts_with($normalizedUrl, '/'.$prefix.'/') && $normalizedUrl !== '/'.$prefix) {
-                return '/'.$prefix.$normalizedUrl;
-            }
-
-            return $normalizedUrl;
-        }
-
-        return $url;
-    }
-
-    /**
-     * Get the configured routes prefix for plugin mode
-     */
-    protected function getRoutesPrefix(): string
-    {
-        return trim(config('tallcms.plugin_mode.routes_prefix') ?? '', '/');
+        // For relative URLs, use localized URL helper which handles both
+        // routes prefix and locale prefix
+        return tallcms_localized_url($url);
     }
 
     public function shouldOpenInNewTab(TallcmsMenuItem $item): bool

@@ -18,6 +18,11 @@
         :profile="$seoProfile ?? null"
     />
 
+    {{-- Hreflang tags for multilingual SEO (only when i18n enabled) --}}
+    @if(tallcms_i18n_enabled())
+        <x-tallcms::hreflang :model="$seoPage ?? $seoPost ?? null" />
+    @endif
+
     {{-- Structured Data --}}
     <x-tallcms::seo.structured-data
         :page="$seoPage ?? null"
@@ -91,6 +96,11 @@
                     <!-- Desktop Menu -->
                     <div class="hidden md:flex items-center space-x-8">
                         <x-tallcms::menu location="header" style="horizontal" class="flex items-center space-x-8" />
+
+                        {{-- Language Switcher (only when i18n enabled) --}}
+                        @if(tallcms_i18n_enabled())
+                            <x-tallcms::language-switcher :model="$seoPage ?? $seoPost ?? null" />
+                        @endif
                     </div>
 
                     <!-- Mobile Menu Button -->
@@ -119,6 +129,13 @@
                  class="md:hidden bg-white/95 backdrop-blur-md shadow-lg border-t border-gray-100">
                 <div class="px-4 py-4 space-y-3">
                     <x-tallcms::menu location="header" style="vertical" />
+
+                    {{-- Language Switcher for Mobile (only when i18n enabled) --}}
+                    @if(tallcms_i18n_enabled())
+                        <div class="pt-3 border-t border-gray-100">
+                            <x-tallcms::language-switcher :model="$seoPage ?? $seoPost ?? null" style="mobile" />
+                        </div>
+                    @endif
                 </div>
             </div>
         </nav>

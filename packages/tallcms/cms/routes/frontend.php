@@ -33,15 +33,16 @@ $namePrefix = config('tallcms.plugin_mode.route_name_prefix', 'tallcms.');
 
 // Build exclusion pattern with auto-excluded panel path
 $panelPath = preg_quote(config('tallcms.filament.panel_path', 'admin'), '/');
-$defaultExclusions = "^(?!{$panelPath}|app|api|livewire|sanctum|storage|build|vendor|health|_).*$";
-$pattern = config('tallcms.plugin_mode.route_exclusions', $defaultExclusions);
+$baseExclusions = "{$panelPath}|app|api|livewire|sanctum|storage|build|vendor|health|_";
 
 // Check i18n configuration
-$i18nEnabled = tallcms_i18n_config('enabled', false);
+// For route registration, we use config directly (not database) to avoid timing issues.
+// The config value is authoritative for route structure; DB overrides are for runtime behavior.
+$i18nEnabled = config('tallcms.i18n.enabled', false);
 $urlStrategy = config('tallcms.i18n.url_strategy', 'prefix');
-$hideDefault = tallcms_i18n_config('hide_default_locale', true);
+$hideDefault = config('tallcms.i18n.hide_default_locale', true);
 
-Route::name($namePrefix)->middleware(['tallcms.maintenance', 'tallcms.set-locale'])->group(function () use ($i18nEnabled, $urlStrategy, $hideDefault, $pattern) {
+Route::name($namePrefix)->middleware(['tallcms.maintenance', 'tallcms.set-locale'])->group(function () use ($i18nEnabled, $urlStrategy, $hideDefault, $baseExclusions) {
 
     if ($i18nEnabled && $urlStrategy === 'prefix') {
         // Multilingual routes with locale prefix
@@ -49,33 +50,54 @@ Route::name($namePrefix)->middleware(['tallcms.maintenance', 'tallcms.set-locale
         $locales = $registry->getLocaleCodes();  // Internal format: es_mx
         $default = $registry->getDefaultLocale();
 
+        // Build locale exclusion pattern for non-prefixed routes
+        // This prevents the default locale's {slug} from matching /zh-CN/...
+        $localeExclusions = [];
         foreach ($locales as $locale) {
-            // Convert internal format to BCP-47 for public URLs
-            // es_mx → es-MX (user-friendly, SEO-friendly)
+            if ($locale !== $default || !$hideDefault) {
+                $bcp47 = LocaleRegistry::toBcp47($locale);
+                $localeExclusions[] = preg_quote($bcp47, '/');
+            }
+        }
+        $localePattern = $localeExclusions ? '|' . implode('|', $localeExclusions) : '';
+
+        // Register non-default locale routes FIRST (more specific)
+        foreach ($locales as $locale) {
+            if ($locale === $default && $hideDefault) {
+                continue; // Skip default locale, handle it last
+            }
+
             $publicPrefix = LocaleRegistry::toBcp47($locale);
+            $nameSuffix = ".{$locale}";
+            $pattern = "^(?!{$baseExclusions}).*$";
 
-            // Determine prefix: hide default locale if configured
-            $prefix = ($hideDefault && $locale === $default) ? '' : $publicPrefix;
-
-            // Generate route name suffix (skip for default locale when hidden)
-            $nameSuffix = ($locale !== $default || ! $hideDefault) ? ".{$locale}" : '';
-
-            Route::prefix($prefix)->group(function () use ($locale, $pattern, $nameSuffix) {
-                // Homepage
+            Route::prefix($publicPrefix)->group(function () use ($locale, $pattern, $nameSuffix) {
                 Route::get('/', CmsPageRenderer::class)
                     ->defaults('slug', '/')
-                    ->defaults('locale', $locale)  // Internal format passed to controller
+                    ->defaults('locale', $locale)
                     ->name('cms.home' . $nameSuffix);
 
-                // Pages (exclude locale codes from slug to prevent collision)
                 Route::get('/{slug}', CmsPageRenderer::class)
                     ->where('slug', $pattern)
-                    ->defaults('locale', $locale)  // Internal format passed to controller
+                    ->defaults('locale', $locale)
                     ->name('cms.page' . $nameSuffix);
             });
         }
+
+        // Register default locale routes LAST (catch-all, excludes other locale prefixes)
+        $defaultPattern = "^(?!{$baseExclusions}{$localePattern}).*$";
+        Route::get('/', CmsPageRenderer::class)
+            ->defaults('slug', '/')
+            ->defaults('locale', $default)
+            ->name('cms.home');
+
+        Route::get('/{slug}', CmsPageRenderer::class)
+            ->where('slug', $defaultPattern)
+            ->defaults('locale', $default)
+            ->name('cms.page');
     } else {
         // Non-i18n routes (existing behavior) or url_strategy=none
+        $pattern = config('tallcms.plugin_mode.route_exclusions', "^(?!{$baseExclusions}).*$");
         Route::get('/', CmsPageRenderer::class)
             ->defaults('slug', '/')
             ->name('cms.home');

@@ -6,7 +6,9 @@ use TallCms\Cms\Enums\ContentStatus;
 use TallCms\Cms\Livewire\RevisionHistory;
 use TallCms\Cms\Models\CmsCategory;
 use TallCms\Cms\Models\CmsPost;
+use TallCms\Cms\Rules\UniqueTranslatableSlug;
 use TallCms\Cms\Services\CustomBlockDiscoveryService;
+use TallCms\Cms\Services\LocaleRegistry;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
@@ -35,7 +37,16 @@ class CmsPostForm
                                     ->columns(2)
                                     ->schema([
                                         TextInput::make('title')
-                                            ->required(fn () => ! tallcms_i18n_enabled())
+                                            ->required(function ($livewire) {
+                                                if (! tallcms_i18n_enabled()) {
+                                                    return true;
+                                                }
+                                                // Require title for default locale when i18n enabled
+                                                $activeLocale = $livewire->activeLocale ?? app()->getLocale();
+                                                $defaultLocale = app(LocaleRegistry::class)->getDefaultLocale();
+
+                                                return $activeLocale === $defaultLocale;
+                                            })
                                             ->maxLength(255)
                                             ->live(onBlur: true)
                                             ->afterStateUpdated(fn (string $state, callable $set) => $set('slug', Str::slug($state))
@@ -43,10 +54,43 @@ class CmsPostForm
                                             ->columnSpan(1),
 
                                         TextInput::make('slug')
-                                            ->required(fn () => ! tallcms_i18n_enabled())
+                                            ->required(function ($livewire) {
+                                                if (! tallcms_i18n_enabled()) {
+                                                    return true;
+                                                }
+                                                // Require slug for default locale when i18n enabled
+                                                $activeLocale = $livewire->activeLocale ?? app()->getLocale();
+                                                $defaultLocale = app(LocaleRegistry::class)->getDefaultLocale();
+
+                                                return $activeLocale === $defaultLocale;
+                                            })
                                             ->maxLength(255)
-                                            ->when(! tallcms_i18n_enabled(), fn ($field) => $field->unique(CmsPost::class, 'slug', ignoreRecord: true))
-                                            ->rules(['alpha_dash'])
+                                            ->rules(function (?CmsPost $record, $livewire) {
+                                                $rules = ['alpha_dash'];
+
+                                                if (tallcms_i18n_enabled()) {
+                                                    // Block locale codes as slugs
+                                                    $reserved = app(LocaleRegistry::class)->getReservedSlugs();
+                                                    $rules[] = 'not_in:'.implode(',', $reserved);
+
+                                                    // Unique per locale
+                                                    $activeLocale = $livewire->activeLocale ?? app()->getLocale();
+                                                    $rules[] = new UniqueTranslatableSlug(
+                                                        table: 'tallcms_posts',
+                                                        column: 'slug',
+                                                        locale: $activeLocale,
+                                                        ignoreId: $record?->id
+                                                    );
+                                                } else {
+                                                    // Traditional unique constraint
+                                                    $rules[] = 'unique:tallcms_posts,slug'.($record ? ','.$record->id : '');
+                                                }
+
+                                                return $rules;
+                                            })
+                                            ->validationMessages([
+                                                'not_in' => 'This slug is reserved (matches a language code).',
+                                            ])
                                             ->helperText('Used in the URL')
                                             ->columnSpan(1),
                                     ]),

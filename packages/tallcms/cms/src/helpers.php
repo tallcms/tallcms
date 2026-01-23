@@ -525,15 +525,25 @@ if (! function_exists('cms_post_url')) {
     /**
      * Generate URL for a post within a parent page context
      *
+     * Automatically handles:
+     * - Localized slugs when i18n is enabled
+     * - Routes prefix in plugin mode
+     * - Locale prefix when url_strategy is 'prefix'
+     *
      * @param  \TallCms\Cms\Models\CmsPost  $post  The post to generate URL for
      * @param  string  $parentSlug  The parent page slug (e.g., 'blog')
      * @return string The full URL to the post
      */
     function cms_post_url(\TallCms\Cms\Models\CmsPost $post, string $parentSlug): string
     {
-        $slug = trim($parentSlug, '/') . '/' . $post->slug;
+        // Get the localized post slug
+        $postSlug = tallcms_i18n_enabled()
+            ? ($post->getTranslation('slug', app()->getLocale(), false) ?? $post->slug)
+            : $post->slug;
 
-        return route('tallcms.cms.page', ['slug' => $slug]);
+        $slug = trim($parentSlug, '/') . '/' . $postSlug;
+
+        return tallcms_localized_url($slug);
     }
 }
 
@@ -608,6 +618,9 @@ if (! function_exists('tallcms_localized_url')) {
      * - prefix strategy: /es-MX/about (BCP-47 format in path)
      * - none strategy: /about?lang=es-MX (BCP-47 format in query param)
      *
+     * In plugin mode with routes_prefix set, URLs will be prefixed:
+     * - /cms/es-MX/about (when routes_prefix='cms')
+     *
      * @param  string  $slug  The page/post slug
      * @param  string|null  $locale  Internal locale code (es_mx). Uses current if null.
      * @return string Full URL with locale indicator
@@ -620,17 +633,22 @@ if (! function_exists('tallcms_localized_url')) {
         $hideDefault = tallcms_i18n_config('hide_default_locale', true);
         $urlStrategy = config('tallcms.i18n.url_strategy', 'prefix');
 
+        // Get routes prefix for plugin mode
+        $routesPrefix = config('tallcms.plugin_mode.routes_prefix', '');
+        $routesPrefix = $routesPrefix ? '/' . ltrim($routesPrefix, '/') : '';
+
         // Normalize slug
         $slug = ltrim($slug, '/');
-        $baseUrl = $slug === '' || $slug === '/' ? '/' : '/' . $slug;
+        $baseSlug = $slug === '' || $slug === '/' ? '' : '/' . $slug;
 
-        // If i18n disabled, return simple URL
+        // If i18n disabled, return simple URL with routes prefix
         if (! tallcms_i18n_config('enabled', false)) {
-            return $baseUrl;
+            return $routesPrefix . ($baseSlug ?: '/');
         }
 
         // Strategy: 'none' - use query parameter ?lang=
         if ($urlStrategy === 'none') {
+            $baseUrl = $routesPrefix . ($baseSlug ?: '/');
             // Skip lang param for default locale if hideDefault enabled
             if ($hideDefault && $locale === $default) {
                 return $baseUrl;
@@ -642,18 +660,16 @@ if (! function_exists('tallcms_localized_url')) {
         }
 
         // Strategy: 'prefix' - use path prefix
-        $prefix = '';
+        $localePrefix = '';
         if (! $hideDefault || $locale !== $default) {
             // Convert internal format (es_mx) to BCP-47 (es-MX) for URL
-            $prefix = \TallCms\Cms\Services\LocaleRegistry::toBcp47($locale);
+            $localePrefix = '/' . \TallCms\Cms\Services\LocaleRegistry::toBcp47($locale);
         }
 
-        // Build URL
-        if ($baseUrl === '/') {
-            return $prefix ? '/' . $prefix : '/';
-        }
+        // Build URL: routes_prefix + locale_prefix + slug
+        $url = $routesPrefix . $localePrefix . $baseSlug;
 
-        return $prefix ? '/' . $prefix . $baseUrl : $baseUrl;
+        return $url ?: '/';
     }
 }
 

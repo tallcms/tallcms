@@ -3,6 +3,8 @@
 namespace TallCms\Cms\Filament\Resources\CmsCategories\Schemas;
 
 use TallCms\Cms\Models\CmsCategory;
+use TallCms\Cms\Rules\UniqueTranslatableSlug;
+use TallCms\Cms\Services\LocaleRegistry;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -18,17 +20,59 @@ class CmsCategoryForm
             ->columns(2)
             ->components([
                 TextInput::make('name')
-                    ->required(fn () => ! tallcms_i18n_enabled())
+                    ->required(function ($livewire) {
+                        if (! tallcms_i18n_enabled()) {
+                            return true;
+                        }
+                        // Require name for default locale when i18n enabled
+                        $activeLocale = $livewire->activeLocale ?? app()->getLocale();
+                        $defaultLocale = app(LocaleRegistry::class)->getDefaultLocale();
+
+                        return $activeLocale === $defaultLocale;
+                    })
                     ->maxLength(255)
                     ->live(onBlur: true)
                     ->afterStateUpdated(fn (string $state, ?string $old, callable $set) => $set('slug', Str::slug($state))
                     ),
 
                 TextInput::make('slug')
-                    ->required(fn () => ! tallcms_i18n_enabled())
+                    ->required(function ($livewire) {
+                        if (! tallcms_i18n_enabled()) {
+                            return true;
+                        }
+                        // Require slug for default locale when i18n enabled
+                        $activeLocale = $livewire->activeLocale ?? app()->getLocale();
+                        $defaultLocale = app(LocaleRegistry::class)->getDefaultLocale();
+
+                        return $activeLocale === $defaultLocale;
+                    })
                     ->maxLength(255)
-                    ->when(! tallcms_i18n_enabled(), fn ($field) => $field->unique(CmsCategory::class, 'slug', ignoreRecord: true))
-                    ->rules(['alpha_dash'])
+                    ->rules(function (?CmsCategory $record, $livewire) {
+                        $rules = ['alpha_dash'];
+
+                        if (tallcms_i18n_enabled()) {
+                            // Block locale codes as slugs
+                            $reserved = app(LocaleRegistry::class)->getReservedSlugs();
+                            $rules[] = 'not_in:'.implode(',', $reserved);
+
+                            // Unique per locale
+                            $activeLocale = $livewire->activeLocale ?? app()->getLocale();
+                            $rules[] = new UniqueTranslatableSlug(
+                                table: 'tallcms_categories',
+                                column: 'slug',
+                                locale: $activeLocale,
+                                ignoreId: $record?->id
+                            );
+                        } else {
+                            // Traditional unique constraint
+                            $rules[] = 'unique:tallcms_categories,slug'.($record ? ','.$record->id : '');
+                        }
+
+                        return $rules;
+                    })
+                    ->validationMessages([
+                        'not_in' => 'This slug is reserved (matches a language code).',
+                    ])
                     ->helperText('Used in the URL. Only letters, numbers, hyphens and underscores allowed.'),
 
                 Select::make('parent_id')

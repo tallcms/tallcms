@@ -6,6 +6,7 @@ namespace TallCms\Cms\Services;
 
 use TallCms\Cms\Models\CmsPage;
 use TallCms\Cms\Models\SiteSetting;
+use TallCms\Cms\Services\LocaleRegistry;
 
 class BlockLinkResolver
 {
@@ -27,7 +28,12 @@ class BlockLinkResolver
                             return $page->is_homepage ? '#top' : '#'.tallcms_slug_to_anchor($page->slug, $page->id);
                         }
 
-                        return $page->is_homepage ? '/' : '/'.$page->slug;
+                        // Use localized URL helper which handles routes prefix and locale
+                        $slug = tallcms_i18n_enabled()
+                            ? ($page->getTranslation('slug', app()->getLocale(), false) ?? $page->getTranslation('slug', app(LocaleRegistry::class)->getDefaultLocale()))
+                            : $page->slug;
+
+                        return $page->is_homepage ? tallcms_localized_url('/') : tallcms_localized_url($slug);
                     }
                 }
 
@@ -42,8 +48,13 @@ class BlockLinkResolver
                     return filter_var($url, FILTER_VALIDATE_URL) ? $url : '#';
                 }
 
-                // Internal paths and anchors are allowed as-is
-                return $url ?: '#';
+                // Anchors are allowed as-is
+                if (str_starts_with($url, '#')) {
+                    return $url;
+                }
+
+                // Internal paths go through localized URL helper
+                return $url ? tallcms_localized_url($url) : '#';
 
             default:
                 return '#';
