@@ -756,25 +756,47 @@ if (! function_exists('tallcms_resolve_custom_url')) {
 
             // Determine what's required
             $needsRoutesPrefix = ! empty($routesPrefix);
+            $registry = $i18nEnabled ? app(\TallCms\Cms\Services\LocaleRegistry::class) : null;
+            $defaultLocale = $registry?->getDefaultLocale();
+
+            // Special case: hide_default_locale=true and URL has default locale prefix
+            // These should be normalized to unprefixed URLs (e.g., /en/about → /about)
+            if ($hideDefault && $hasLocalePrefix && $foundLocale === $defaultLocale) {
+                // Strip the default locale prefix and rebuild
+                return tallcms_localized_url($slugAfterPrefixes, $defaultLocale);
+            }
+
+            // For non-default locales, locale prefix is always needed when i18n prefix strategy is active
             $needsLocalePrefix = $i18nEnabled && $urlStrategy === 'prefix' && ! $hideDefault;
 
             // Case 1: Fully qualified (has all required prefixes)
-            if (($hasRoutesPrefix || ! $needsRoutesPrefix) &&
-                ($hasLocalePrefix || ! $needsLocalePrefix)) {
+            // For non-default locales with hide_default_locale=true, having locale prefix is correct
+            if ($hasLocalePrefix && $foundLocale !== $defaultLocale) {
+                // Non-default locale with prefix - check routes_prefix requirement
+                if ($hasRoutesPrefix || ! $needsRoutesPrefix) {
+                    return $url;
+                }
+                // Missing routes_prefix, rebuild with correct prefix
+                return tallcms_localized_url($slugAfterPrefixes, $foundLocale);
+            }
+
+            // Case 2: No locale prefix and no routes prefix requirement issue
+            if ((! $hasLocalePrefix || ! $needsLocalePrefix) &&
+                ($hasRoutesPrefix || ! $needsRoutesPrefix)) {
                 return $url;
             }
 
-            // Case 2: Has locale but missing routes_prefix
+            // Case 3: Has locale but missing routes_prefix
             if ($hasLocalePrefix && $needsRoutesPrefix && ! $hasRoutesPrefix) {
                 return tallcms_localized_url($slugAfterPrefixes, $foundLocale);
             }
 
-            // Case 3: Has routes_prefix but missing required locale
+            // Case 4: Has routes_prefix but missing required locale
             if ($hasRoutesPrefix && $needsLocalePrefix && ! $hasLocalePrefix) {
                 return tallcms_localized_url($slugAfterPrefixes);
             }
 
-            // Case 4: Neither prefix found - treat remaining as slug
+            // Case 5: Neither prefix found - treat remaining as slug
             return tallcms_localized_url($slugAfterPrefixes);
         }
 
