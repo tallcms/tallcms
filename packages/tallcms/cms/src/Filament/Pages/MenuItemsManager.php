@@ -4,7 +4,6 @@ namespace TallCms\Cms\Filament\Pages;
 
 use Filament\Actions\CreateAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\SelectAction;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -12,7 +11,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Database\Eloquent\Model;
-use Livewire\Attributes\Url;
+use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
 use TallCms\Cms\Models\CmsPage;
 use TallCms\Cms\Models\TallcmsMenu;
 use TallCms\Cms\Models\TallcmsMenuItem;
@@ -32,40 +31,60 @@ class MenuItemsManager extends NestedsetPage
     protected static bool $shouldRegisterNavigation = false; // Hide from navigation
 
     /**
-     * Active locale for translations
+     * Active locale for translations (consistent with LaraZeus LocaleSwitcher)
      */
-    #[Url]
     public ?string $activeLocale = null;
 
     public function mount(): void
     {
         parent::mount();
 
-        // Validate and set active locale
-        $this->activeLocale = $this->validateLocale($this->activeLocale);
+        // Initialize locale from session (consistent with LaraZeus) or use default
+        $this->activeLocale = $this->getStoredActiveLocale() ?? $this->getDefaultTranslatableLocale();
     }
 
     /**
-     * Validate locale code, returning default if invalid
+     * Get stored locale from session (consistent with LaraZeus behavior)
      */
-    protected function validateLocale(?string $locale): string
+    protected function getStoredActiveLocale(): ?string
     {
-        $default = $this->getDefaultTranslatableLocale();
-
-        if ($locale === null) {
-            return $default;
+        if (! tallcms_i18n_enabled()) {
+            return null;
         }
 
-        // Check if locale is in the list of valid locales
-        if (in_array($locale, $this->getTranslatableLocales(), true)) {
+        // Use LaraZeus session key for consistency
+        $locale = session()->get('spatie_translatable_active_locale');
+
+        if ($locale && in_array($locale, $this->getTranslatableLocales(), true)) {
             return $locale;
         }
 
-        return $default;
+        return null;
+    }
+
+    /**
+     * Called when activeLocale property is updated (by LocaleSwitcher)
+     * This hook is consistent with LaraZeus Translatable trait behavior
+     */
+    public function updatedActiveLocale(): void
+    {
+        // Validate the locale
+        if (! in_array($this->activeLocale, $this->getTranslatableLocales(), true)) {
+            $this->activeLocale = $this->getDefaultTranslatableLocale();
+        }
+
+        // Persist to session (consistent with LaraZeus)
+        if (filament('spatie-translatable')->getPersistLocale()) {
+            session()->put('spatie_translatable_active_locale', $this->activeLocale);
+        }
+
+        // Refresh the tree view
+        $this->dispatch('filament-nestedset-updated');
     }
 
     /**
      * Get available locales for translation
+     * Required by LocaleSwitcher::make()
      */
     public function getTranslatableLocales(): array
     {
@@ -89,10 +108,20 @@ class MenuItemsManager extends NestedsetPage
     }
 
     /**
-     * Get locale label for display
+     * Get locale label for display (used in form field labels)
      */
     public function getLocaleLabel(string $locale): string
     {
+        // Try to get label from LaraZeus plugin first (for consistency)
+        try {
+            $label = filament('spatie-translatable')->getLocaleLabel($locale);
+            if ($label) {
+                return $label;
+            }
+        } catch (\Throwable) {
+            // Fall through to local registry
+        }
+
         if (! tallcms_i18n_enabled()) {
             return $locale;
         }
@@ -102,6 +131,7 @@ class MenuItemsManager extends NestedsetPage
 
         if ($locales->has($locale)) {
             $config = $locales->get($locale);
+
             return $config['native'] ?? $config['label'] ?? $locale;
         }
 
@@ -112,9 +142,9 @@ class MenuItemsManager extends NestedsetPage
     {
         $actions = [];
 
-        // Add locale switcher if i18n is enabled
+        // Add locale switcher if i18n is enabled (using LaraZeus LocaleSwitcher for consistency)
         if (tallcms_i18n_enabled()) {
-            $actions[] = $this->getLocaleSwitcherAction();
+            $actions[] = LocaleSwitcher::make();
         }
 
         // Add default actions from parent
@@ -122,31 +152,6 @@ class MenuItemsManager extends NestedsetPage
         $actions[] = $this->fixTreeAction();
 
         return $actions;
-    }
-
-    /**
-     * Custom locale switcher action for NestedsetPage
-     */
-    protected function getLocaleSwitcherAction(): SelectAction
-    {
-        $options = [];
-        foreach ($this->getTranslatableLocales() as $locale) {
-            $options[$locale] = $this->getLocaleLabel($locale);
-        }
-
-        return SelectAction::make('activeLocale')
-            ->label(__('Language'))
-            ->options($options)
-            ->action(fn (string $value) => $this->switchLocale($value));
-    }
-
-    /**
-     * Switch to a different locale (with validation)
-     */
-    public function switchLocale(string $locale): void
-    {
-        $this->activeLocale = $this->validateLocale($locale);
-        $this->dispatch('filament-nestedset-updated');
     }
 
     public function getTabs(): array
@@ -184,7 +189,7 @@ class MenuItemsManager extends NestedsetPage
                 $record = new $model($data);
 
                 if ($translatableLabel !== null && tallcms_i18n_enabled()) {
-                    $activeLocale = $this->validateLocale($this->activeLocale);
+                    $activeLocale = $this->activeLocale ?? $this->getDefaultTranslatableLocale();
                     $defaultLocale = $this->getDefaultTranslatableLocale();
 
                     // Always set the active locale translation
@@ -215,7 +220,7 @@ class MenuItemsManager extends NestedsetPage
 
                 // Get label for current locale (with fallback to default)
                 if (tallcms_i18n_enabled()) {
-                    $activeLocale = $this->validateLocale($this->activeLocale);
+                    $activeLocale = $this->activeLocale ?? $this->getDefaultTranslatableLocale();
                     $data['label'] = $record->getTranslation('label', $activeLocale, false)
                         ?? $record->getTranslation('label', $this->getDefaultTranslatableLocale(), false)
                         ?? '';
@@ -238,7 +243,7 @@ class MenuItemsManager extends NestedsetPage
                 $record->fill($data);
 
                 if ($translatableLabel !== null && tallcms_i18n_enabled()) {
-                    $activeLocale = $this->validateLocale($this->activeLocale);
+                    $activeLocale = $this->activeLocale ?? $this->getDefaultTranslatableLocale();
                     $record->setTranslation('label', $activeLocale, $translatableLabel);
                 } elseif ($translatableLabel !== null) {
                     $record->label = $translatableLabel;
