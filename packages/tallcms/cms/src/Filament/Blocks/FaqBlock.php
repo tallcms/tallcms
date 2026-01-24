@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
@@ -16,7 +17,33 @@ use Filament\Schemas\Components\Tabs\Tab;
 
 class FaqBlock extends RichContentCustomBlock
 {
+    use HasBlockMetadata;
     use HasDaisyUIOptions;
+
+    public static function getCategory(): string
+    {
+        return 'dynamic';
+    }
+
+    public static function getIcon(): string
+    {
+        return 'heroicon-o-question-mark-circle';
+    }
+
+    public static function getDescription(): string
+    {
+        return 'Frequently asked questions accordion';
+    }
+
+    public static function getKeywords(): array
+    {
+        return ['faq', 'questions', 'answers', 'help'];
+    }
+
+    public static function getSortPriority(): int
+    {
+        return 20;
+    }
     public static function getId(): string
     {
         return 'faq';

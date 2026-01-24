@@ -10,8 +10,8 @@ use TallCms\Cms\Services\CustomBlockDiscoveryService;
 use TallCms\Cms\Services\LocaleRegistry;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
+use TallCms\Cms\Filament\Forms\Components\CmsRichEditor;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -93,11 +93,11 @@ class CmsPageForm
                                             ->helperText('Used in the URL. Keep it simple and SEO-friendly.')
                                             ->columnSpan(1),
                                     ]),
-                                RichEditor::make('content')
+                                CmsRichEditor::make('content')
                                     ->columnSpanFull()
                                     ->fileAttachmentsDirectory('cms/attachments')
                                     ->toolbarButtons([
-                                        ['grid', 'gridDelete', 'table', 'attachFiles', 'customBlocks', 'mergeTags'], // The `customBlocks` and `mergeTags` tools are also added here if those features are used.
+                                        ['grid', 'gridDelete', 'table', 'attachFiles', 'customBlocks', 'mergeTags'],
                                     ])
                                     ->activePanel('customBlocks')
                                     ->mergeTags([

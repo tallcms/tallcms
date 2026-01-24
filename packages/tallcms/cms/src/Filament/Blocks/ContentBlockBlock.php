@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\RichEditor;
@@ -13,7 +14,33 @@ use Filament\Schemas\Components\Section;
 
 class ContentBlockBlock extends RichContentCustomBlock
 {
+    use HasBlockMetadata;
     use HasDaisyUIOptions;
+
+    public static function getCategory(): string
+    {
+        return 'content';
+    }
+
+    public static function getIcon(): string
+    {
+        return 'heroicon-o-document-text';
+    }
+
+    public static function getDescription(): string
+    {
+        return 'Rich text content section with title and body';
+    }
+
+    public static function getKeywords(): array
+    {
+        return ['article', 'text', 'prose', 'body'];
+    }
+
+    public static function getSortPriority(): int
+    {
+        return 10;
+    }
 
     public static function getId(): string
     {

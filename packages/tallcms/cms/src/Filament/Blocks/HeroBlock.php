@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use TallCms\Cms\Models\CmsPage;
 use TallCms\Cms\Services\BlockLinkResolver;
@@ -22,7 +23,33 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class HeroBlock extends RichContentCustomBlock
 {
+    use HasBlockMetadata;
     use HasDaisyUIOptions;
+
+    public static function getCategory(): string
+    {
+        return 'content';
+    }
+
+    public static function getIcon(): string
+    {
+        return 'heroicon-o-home';
+    }
+
+    public static function getDescription(): string
+    {
+        return 'Full-width hero section with background image';
+    }
+
+    public static function getKeywords(): array
+    {
+        return ['banner', 'header', 'landing', 'hero'];
+    }
+
+    public static function getSortPriority(): int
+    {
+        return 5;
+    }
 
     public static function getId(): string
     {

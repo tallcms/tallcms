@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
@@ -16,7 +17,33 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class ContactFormBlock extends RichContentCustomBlock
 {
+    use HasBlockMetadata;
     use HasDaisyUIOptions;
+
+    public static function getCategory(): string
+    {
+        return 'forms';
+    }
+
+    public static function getIcon(): string
+    {
+        return 'heroicon-o-envelope';
+    }
+
+    public static function getDescription(): string
+    {
+        return 'Contact form with customizable fields';
+    }
+
+    public static function getKeywords(): array
+    {
+        return ['contact', 'email', 'form', 'message'];
+    }
+
+    public static function getSortPriority(): int
+    {
+        return 10;
+    }
     public static function getId(): string
     {
         return 'contact_form';

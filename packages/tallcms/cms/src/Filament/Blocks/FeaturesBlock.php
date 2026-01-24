@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -18,7 +19,33 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class FeaturesBlock extends RichContentCustomBlock
 {
+    use HasBlockMetadata;
     use HasDaisyUIOptions;
+
+    public static function getCategory(): string
+    {
+        return 'content';
+    }
+
+    public static function getIcon(): string
+    {
+        return 'heroicon-o-sparkles';
+    }
+
+    public static function getDescription(): string
+    {
+        return 'Feature grid with icons and descriptions';
+    }
+
+    public static function getKeywords(): array
+    {
+        return ['features', 'benefits', 'list', 'grid'];
+    }
+
+    public static function getSortPriority(): int
+    {
+        return 25;
+    }
 
     public static function getId(): string
     {

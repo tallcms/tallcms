@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -13,7 +14,33 @@ use Filament\Schemas\Components\Section;
 
 class ImageGalleryBlock extends RichContentCustomBlock
 {
+    use HasBlockMetadata;
     use HasDaisyUIOptions;
+
+    public static function getCategory(): string
+    {
+        return 'media';
+    }
+
+    public static function getIcon(): string
+    {
+        return 'heroicon-o-photo';
+    }
+
+    public static function getDescription(): string
+    {
+        return 'Image gallery with lightbox support';
+    }
+
+    public static function getKeywords(): array
+    {
+        return ['images', 'photos', 'gallery', 'lightbox'];
+    }
+
+    public static function getSortPriority(): int
+    {
+        return 10;
+    }
     public static function getId(): string
     {
         return 'image_gallery';

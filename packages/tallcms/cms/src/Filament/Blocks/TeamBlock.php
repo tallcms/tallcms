@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -17,7 +18,33 @@ use Filament\Schemas\Components\Tabs\Tab;
 
 class TeamBlock extends RichContentCustomBlock
 {
+    use HasBlockMetadata;
     use HasDaisyUIOptions;
+
+    public static function getCategory(): string
+    {
+        return 'social-proof';
+    }
+
+    public static function getIcon(): string
+    {
+        return 'heroicon-o-user-group';
+    }
+
+    public static function getDescription(): string
+    {
+        return 'Team member profiles with photos';
+    }
+
+    public static function getKeywords(): array
+    {
+        return ['team', 'staff', 'members', 'people'];
+    }
+
+    public static function getSortPriority(): int
+    {
+        return 20;
+    }
 
     protected static function getTeamCardStyleOptions(): array
     {

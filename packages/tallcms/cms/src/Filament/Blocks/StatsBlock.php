@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
@@ -15,7 +16,33 @@ use Filament\Schemas\Components\Tabs\Tab;
 
 class StatsBlock extends RichContentCustomBlock
 {
+    use HasBlockMetadata;
     use HasDaisyUIOptions;
+
+    public static function getCategory(): string
+    {
+        return 'social-proof';
+    }
+
+    public static function getIcon(): string
+    {
+        return 'heroicon-o-chart-bar';
+    }
+
+    public static function getDescription(): string
+    {
+        return 'Key metrics and statistics display';
+    }
+
+    public static function getKeywords(): array
+    {
+        return ['numbers', 'metrics', 'statistics', 'stats'];
+    }
+
+    public static function getSortPriority(): int
+    {
+        return 40;
+    }
 
     public static function getId(): string
     {

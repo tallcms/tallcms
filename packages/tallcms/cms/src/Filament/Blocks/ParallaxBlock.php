@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ColorPicker;
@@ -16,7 +17,33 @@ use Filament\Schemas\Components\Tabs\Tab;
 
 class ParallaxBlock extends RichContentCustomBlock
 {
+    use HasBlockMetadata;
     use HasDaisyUIOptions;
+
+    public static function getCategory(): string
+    {
+        return 'media';
+    }
+
+    public static function getIcon(): string
+    {
+        return 'heroicon-o-arrows-up-down';
+    }
+
+    public static function getDescription(): string
+    {
+        return 'Full-width parallax scrolling section';
+    }
+
+    public static function getKeywords(): array
+    {
+        return ['scroll', 'background', 'parallax', 'effect'];
+    }
+
+    public static function getSortPriority(): int
+    {
+        return 20;
+    }
 
     public static function getId(): string
     {

@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use TallCms\Cms\Models\MediaCollection;
 use Filament\Actions\Action;
@@ -18,7 +19,33 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class LogosBlock extends RichContentCustomBlock
 {
+    use HasBlockMetadata;
     use HasDaisyUIOptions;
+
+    public static function getCategory(): string
+    {
+        return 'social-proof';
+    }
+
+    public static function getIcon(): string
+    {
+        return 'heroicon-o-building-office';
+    }
+
+    public static function getDescription(): string
+    {
+        return 'Client or partner logo showcase';
+    }
+
+    public static function getKeywords(): array
+    {
+        return ['clients', 'partners', 'brands', 'logos'];
+    }
+
+    public static function getSortPriority(): int
+    {
+        return 30;
+    }
 
     public static function getId(): string
     {

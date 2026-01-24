@@ -11,8 +11,8 @@ use TallCms\Cms\Services\CustomBlockDiscoveryService;
 use TallCms\Cms\Services\LocaleRegistry;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
+use TallCms\Cms\Filament\Forms\Components\CmsRichEditor;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -102,7 +102,7 @@ class CmsPostForm
                                     ->helperText('Brief description shown in post listings')
                                     ->columnSpanFull(),
 
-                                RichEditor::make('content')
+                                CmsRichEditor::make('content')
                                     ->columnSpanFull()
                                     ->fileAttachmentsDirectory('cms/posts/attachments')
                                     ->activePanel('customBlocks')
@@ -110,7 +110,7 @@ class CmsPostForm
                                     ->extraInputAttributes([
                                         'style' => 'min-height: 40rem;',
                                     ])
-                                     ->floatingToolbars([
+                                    ->floatingToolbars([
                                         'paragraph' => [
                                             'bold', 'italic', 'underline', 'strike', 'subscript', 'superscript',
                                         ],
