@@ -6,8 +6,21 @@
     - Blocks grouped by category
     - Icons displayed alongside block names
 
-    The enhanced panel is only shown when Filament v4.x is detected.
-    Otherwise, it falls back to the standard panel.
+    IMPORTANT - FILAMENT UPGRADE CHECKLIST:
+    ========================================
+    This view is copied from Filament v4.x rich-editor.blade.php with modifications
+    to the custom blocks panel section only. When upgrading Filament:
+
+    1. Compare vendor/filament/forms/resources/views/components/rich-editor.blade.php
+       with this file using diff
+    2. The ONLY modified section is inside: <div x-show="isPanelActive('customBlocks')">
+       Look for "Enhanced Block Panel with Search and Categories" comment
+    3. Apply any Filament changes to the unmodified sections of this view
+    4. Test block insertion, search, and category collapse functionality
+    5. Verify editorSelection variable still exists in richEditorFormComponent
+
+    Last synced with: Filament Forms v4.x (January 2025)
+    Modified section: Lines ~180-295 (customBlocks panel)
 --}}
 @php
     $customBlocks = $getCustomBlocks();
@@ -279,6 +292,10 @@
                                                             type="button"
                                                             x-data="{ isLoading: false }"
                                                             x-on:click="
+                                                                if (typeof editorSelection === 'undefined') {
+                                                                    console.warn('CmsRichEditor: editorSelection not found in parent scope');
+                                                                    return;
+                                                                }
                                                                 isLoading = true;
                                                                 insertBlock(block.id, editorSelection);
                                                             "
