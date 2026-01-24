@@ -10,7 +10,7 @@ return [
     | This is the single source of truth for version comparisons.
     |
     */
-    'version' => '2.4.1',
+    'version' => '2.4.2',
 
     /*
     |--------------------------------------------------------------------------
