@@ -169,6 +169,7 @@ class HeroBlock extends RichContentCustomBlock
                                                 'custom' => 'Custom URL',
                                             ])
                                             ->default('page')
+                                            ->live()
                                             ->visible(fn (Get $get): bool => filled($get('secondary_button_text')))
                                             ->columnSpan(1),
 

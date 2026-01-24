@@ -84,7 +84,7 @@ class CallToActionBlock extends RichContentCustomBlock
                                             ->label('Microcopy')
                                             ->placeholder('e.g., No credit card required')
                                             ->helperText('Short reassurance text below the button')
-                                            ->maxLength(100)
+                                            ->maxLength(50)
                                             ->columnSpanFull(),
                                     ])
                                     ->columns(2)
@@ -128,7 +128,7 @@ class CallToActionBlock extends RichContentCustomBlock
                                             ->label('Microcopy')
                                             ->placeholder('e.g., Free to try')
                                             ->helperText('Short reassurance text below the button')
-                                            ->maxLength(100)
+                                            ->maxLength(50)
                                             ->visible(fn (Get $get): bool => filled($get('secondary_button_text')))
                                             ->columnSpanFull(),
                                     ])

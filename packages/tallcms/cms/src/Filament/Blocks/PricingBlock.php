@@ -13,6 +13,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Get;
 
 class PricingBlock extends RichContentCustomBlock
 {
@@ -98,13 +99,14 @@ class PricingBlock extends RichContentCustomBlock
 
                                                 Toggle::make('is_popular')
                                                     ->label('Mark as Popular/Recommended')
-                                                    ->default(false),
+                                                    ->default(false)
+                                                    ->live(),
 
                                                 TextInput::make('popular_badge_text')
                                                     ->label('Popular Badge Text')
                                                     ->placeholder('Most Popular')
                                                     ->maxLength(50)
-                                                    ->visible(fn ($get) => $get('is_popular')),
+                                                    ->visible(fn (Get $get): bool => $get('is_popular')),
                                             ])->columns(2),
 
                                         Section::make('Pricing')

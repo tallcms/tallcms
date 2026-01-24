@@ -71,7 +71,7 @@
                                 {{ $member['name'] }}
                             </h3>
                             <p class="text-sm mt-1 text-base-content/70">
-                                {{ $member['role'] }}
+                                {{ $member['role'] ?? '' }}
                             </p>
 
                             {{-- Bio --}}
@@ -86,7 +86,7 @@
                                 <div class="flex items-center gap-3 mt-4 {{ ($text_alignment ?? 'text-center') === 'text-center' ? 'justify-center' : '' }}">
                                     @foreach($member['social_links'] as $social)
                                         <a
-                                            href="{{ $social['url'] }}"
+                                            href="{{ e($social['url']) }}"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             class="text-base-content/50 hover:text-primary transition-colors"

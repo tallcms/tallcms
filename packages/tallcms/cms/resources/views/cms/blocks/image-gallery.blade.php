@@ -59,7 +59,7 @@
                         <div class="break-inside-avoid mb-4">
                             <img
                                 src="{{ Storage::disk(cms_media_disk())->url($image) }}"
-                                alt="Gallery image"
+                                alt="Gallery image {{ $imageIndex + 1 }}"
                                 class="w-full rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
                                 @click="open({{ $imageIndex }})"
                             >
@@ -76,7 +76,7 @@
                         <div class="flex-none w-80 snap-start">
                             <img
                                 src="{{ Storage::disk(cms_media_disk())->url($image) }}"
-                                alt="Gallery image"
+                                alt="Gallery image {{ $imageIndex + 1 }}"
                                 class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
                                 @click="open({{ $imageIndex }})"
                             >
@@ -93,7 +93,7 @@
                         <div>
                             <img
                                 src="{{ Storage::disk(cms_media_disk())->url($image) }}"
-                                alt="Gallery image"
+                                alt="Gallery image {{ $imageIndex + 1 }}"
                                 class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
                                 @click="open({{ $imageIndex }})"
                             >
@@ -115,7 +115,7 @@
         <div class="relative max-w-4xl max-h-full p-4">
             <img
                 :src="images[currentIndex]"
-                alt="Enlarged image"
+                :alt="'Gallery image ' + (currentIndex + 1)"
                 class="max-w-full max-h-[90vh] rounded-lg"
             >
 
