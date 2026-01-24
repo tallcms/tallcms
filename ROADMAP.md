@@ -9,12 +9,13 @@ This roadmap outlines our vision for TallCMS development. We're committed to bui
 - [v1.0 - Foundation](#v10---foundation) ✅
 - [v1.1 - UI Polish](#v11---ui-polish) ✅
 - [v1.2 - Content & SEO](#v12---content--seo) ✅
-- [v1.3 - Multilingual](#v13---multilingual-support) 📋
-- [v1.4 - Developer Experience](#v14---developer-experience) 📋
-- [v1.5 - AI-Powered Content](#v15---ai-powered-content-creation) 📋
-- [v1.6 - Community & Users](#v16---community--users) 📋
-- [v1.7 - Marketplace](#v17---marketplace-integration) 📋
-- [v2.0 - Filament Plugin Architecture](#v20---filament-plugin-architecture) 🟢
+- [v2.0 - Filament Plugin Architecture](#v20---filament-plugin-architecture) ✅
+- [v2.4 - Multilingual](#v24---multilingual-support) ✅
+- [v2.5 - Content & Media](#v25---content--media) 📋
+- [v2.6 - Developer Experience](#v26---developer-experience) 📋
+- [v2.7 - AI-Powered Content](#v27---ai-powered-content-creation) 📋
+- [v2.8 - Community & Users](#v28---community--users) 📋
+- [v2.9 - Marketplace](#v29---marketplace-integration) 📋
 - [Future Considerations](#future-considerations)
 - [How to Contribute](#how-to-contribute)
 
@@ -141,17 +142,10 @@ Focus: Complete the blogging experience, SEO tools, and one-click system updates
 - [x] Structured data (JSON-LD) for articles
 
 ### Content Improvements
-- [ ] Full-text search across pages and posts
-- [ ] Content scheduling calendar view
-- [ ] Bulk actions (publish, unpublish, delete)
-- [ ] Content templates (save block layouts for reuse)
-- [ ] Import/Export content (JSON/Markdown)
+*Deferred to [v2.5](#v25---content--media)*
 
 ### Media Library
-- [ ] Image optimization (automatic resizing)
-- [ ] Lazy loading
-- [ ] Alt text management
-- [ ] Bulk upload improvements
+*Deferred to [v2.5](#v25---content--media)*
 
 ### System Updates
 - [x] Admin panel update checker with GitHub integration
@@ -169,27 +163,98 @@ Focus: Complete the blogging experience, SEO tools, and one-click system updates
 
 ---
 
-## v1.3 - Multilingual Support
+## v2.0 - Filament Plugin Architecture
+
+**Status: ✅ Released (v2.0.0 - v2.3.x)**
+
+Focus: Restructure TallCMS as a Filament plugin for broader reach and easier adoption.
+
+### Core Package Split
+- [x] Extract core CMS to `tallcms/cms` Composer package
+- [x] Filament plugin registration and configuration (`TallCmsPlugin`)
+- [x] `composer require tallcms/cms` support
+- [x] Publish views, migrations, and config
+- [x] Monorepo with automatic subtree split (GitHub Action)
+
+### Distribution Options
+- [x] **Standalone**: Full TallCMS skeleton (`tallcms/tallcms`)
+- [x] **Plugin**: Add to existing Filament apps (`tallcms/cms`)
+- [x] Web installer for standalone installations
+- [x] Migration path from v1.x (class aliases for backwards compatibility)
+
+### Installation Experience
+- [x] Auto-register pages, resources, and widgets via `TallCmsPlugin`
+- [x] Configurable URL prefixes (`plugin_mode.routes_prefix`)
+- [x] Separate SEO routes control (`seo_routes_enabled`, always at root)
+- [x] Opt-in archive routes with prefix (`archive_routes_enabled`, `archive_routes_prefix`)
+- [x] Selective component registration (`withoutPages()`, `withoutPosts()`, etc.)
+- [x] Multi-panel support with dynamic URL generation
+- [x] Asset publishing and customization
+
+### Backwards Compatibility
+- [x] All v1.x themes continue working (standalone mode)
+- [x] All v1.x plugins continue working (standalone mode)
+- [x] Existing content and data preserved
+- [x] Class aliases for `App\*` namespace compatibility
+
+---
+
+## v2.4 - Multilingual Support
+
+**Status: ✅ Released (v2.4.0 - v2.4.1)**
 
 Focus: Make TallCMS accessible to global audiences.
 
 ### Core Translation
-- [ ] Multi-language content fields
-- [ ] Language switcher in admin
-- [ ] Translated URL slugs (/en/about, /es/acerca-de)
-- [ ] hreflang tag generation
-- [ ] Default language fallback
+- [x] Multi-language content fields (Spatie Laravel Translatable)
+- [x] Language switcher in admin (LaraZeus SpatieTranslatable)
+- [x] Translated URL slugs (`/en/about`, `/zh-CN/about`)
+- [x] Locale prefix routing with middleware
+- [x] hreflang tag generation component
+- [x] Default language fallback
+- [x] Hide default locale from URL option
 
 ### Translation Workflow
+- [x] Auto-populate translations from default locale when empty
+- [x] "Copy from default" button for manual re-copying
+- [x] Confirmation dialog before overwriting existing translations
+- [x] LocaleRegistry service for managing available locales
+- [x] Config-based locale definitions with RTL support
+
+### Localized URLs
+- [x] `tallcms_localized_url()` helper function
+- [x] `tallcms_localized_route()` helper function
+- [x] Language switcher Blade component
+- [x] Automatic locale detection from URL
+
+### Remaining Items
 - [ ] Side-by-side translation editor
-- [ ] Translation status indicators
-- [ ] RTL (right-to-left) layout support
-- [ ] Admin interface translations
-- [ ] Machine translation hooks (optional)
+- [ ] Translation status indicators (% complete per locale)
+- [ ] Admin interface translations (i18n for admin UI)
+- [ ] Machine translation hooks (OpenAI, DeepL, Google Translate)
 
 ---
 
-## v1.4 - Developer Experience
+## v2.5 - Content & Media
+
+Focus: Complete content management features deferred from earlier releases.
+
+### Content Improvements
+- [ ] Full-text search across pages and posts
+- [ ] Content scheduling calendar view
+- [ ] Bulk actions (publish, unpublish, delete)
+- [ ] Content templates (save block layouts for reuse)
+- [ ] Import/Export content (JSON/Markdown)
+
+### Media Library
+- [ ] Image optimization (automatic resizing)
+- [ ] Lazy loading
+- [ ] Alt text management
+- [ ] Bulk upload improvements
+
+---
+
+## v2.6 - Developer Experience
 
 Focus: Make TallCMS the best platform for developers to build on.
 
@@ -208,10 +273,11 @@ Focus: Make TallCMS the best platform for developers to build on.
 - [x] Theme development guide
 - [ ] Local development improvements
 - [ ] Debug toolbar integration
+- [ ] List on Filament plugin directory
 
 ---
 
-## v1.5 - AI-Powered Content Creation
+## v2.7 - AI-Powered Content Creation
 
 Focus: Leverage AI to help creators produce better content faster.
 
@@ -238,7 +304,7 @@ Focus: Leverage AI to help creators produce better content faster.
 
 ---
 
-## v1.6 - Community & Users
+## v2.8 - Community & Users
 
 Focus: Enable community interaction with your content.
 
@@ -265,7 +331,7 @@ Focus: Enable community interaction with your content.
 
 ---
 
-## v1.7 - Marketplace Integration
+## v2.9 - Marketplace Integration
 
 Focus: Connect to the official TallCMS marketplace for plugins and themes.
 
@@ -280,41 +346,6 @@ Focus: Connect to the official TallCMS marketplace for plugins and themes.
 - [ ] Plugin/theme packaging standards
 - [ ] Marketplace submission guidelines
 - [ ] License validation improvements
-
----
-
-## v2.0 - Filament Plugin Architecture
-
-Focus: Restructure TallCMS as a Filament plugin for broader reach and easier adoption.
-
-### Core Package Split
-- [x] Extract core CMS to `tallcms/cms` Composer package
-- [x] Filament plugin registration and configuration (`TallCmsPlugin`)
-- [ ] List on Filament plugin directory
-- [x] `composer require tallcms/cms` support
-- [x] Publish views, migrations, and config
-
-### Distribution Options
-- [x] **Standalone**: Full TallCMS skeleton (`tallcms/tallcms`)
-- [x] **Plugin**: Add to existing Filament apps (`tallcms/cms`)
-- [x] Web installer for standalone installations
-- [ ] Setup wizard for plugin mode
-- [x] Migration path from v1.x (class aliases for backwards compatibility)
-
-### Installation Experience
-- [x] Auto-register pages, resources, and widgets via `TallCmsPlugin`
-- [x] Configurable URL prefixes (`plugin_mode.routes_prefix`)
-- [x] Separate SEO routes control (`seo_routes_enabled`, always at root)
-- [x] Opt-in archive routes with prefix (`archive_routes_enabled`, `archive_routes_prefix`)
-- [x] Selective component registration (`withoutPages()`, `withoutPosts()`, etc.)
-- [x] Multi-panel support with dynamic URL generation
-- [x] Asset publishing and customization
-
-### Backwards Compatibility
-- [x] All v1.x themes continue working (standalone mode)
-- [x] All v1.x plugins continue working (standalone mode)
-- [x] Existing content and data preserved
-- [x] Class aliases for `App\*` namespace compatibility
 
 ---
 
@@ -374,12 +405,13 @@ We welcome community input on our roadmap:
 | v1.0 | ✅ Released | Foundation | Core CMS, Themes, Plugins, Permissions |
 | v1.1 | ✅ Released | UI Polish | daisyUI 5, semantic CSS classes |
 | v1.2 | ✅ Released | Content & SEO | Blog frontend, SEO tools, System Updates |
-| v1.3 | 📋 Planned | Global | Multilingual support, RTL |
-| v1.4 | 📋 Planned | Developers | REST API, CLI tools, Webhooks |
-| v1.5 | 📋 Planned | AI | Content generation, Auto-optimization |
-| v1.6 | 📋 Planned | Community | Comments, User profiles, Analytics |
-| v1.7 | 📋 Planned | Ecosystem | Marketplace integration |
-| v2.0 | 🟢 In Progress | Platform | Filament plugin architecture, package split |
+| v2.0 | ✅ Released | Platform | Filament plugin architecture, package split |
+| v2.4 | ✅ Released | Global | Multilingual support, locale routing, translation workflow |
+| v2.5 | 📋 Planned | Content | Full-text search, bulk actions, content templates |
+| v2.6 | 📋 Planned | Developers | REST API, CLI tools, Webhooks |
+| v2.7 | 📋 Planned | AI | Content generation, Auto-optimization |
+| v2.8 | 📋 Planned | Community | Comments, User profiles, Analytics |
+| v2.9 | 📋 Planned | Ecosystem | Marketplace integration |
 
 ---
 
@@ -392,4 +424,4 @@ We welcome community input on our roadmap:
 
 ---
 
-*Last updated: January 22, 2026*
+*Last updated: January 24, 2026*
