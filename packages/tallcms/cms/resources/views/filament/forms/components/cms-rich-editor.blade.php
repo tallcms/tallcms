@@ -27,10 +27,9 @@
     $fileAttachmentsMaxSize = $getFileAttachmentsMaxSize();
     $fileAttachmentsAcceptedFileTypes = $getFileAttachmentsAcceptedFileTypes();
 
-    // Enhanced block panel data
-    $isEnhancedPanelEnabled = \TallCms\Cms\Filament\Forms\Components\CmsRichEditor::isFilamentCompatible();
-    $groupedBlocks = $isEnhancedPanelEnabled ? $getGroupedBlocks() : [];
-    $blockCategories = $isEnhancedPanelEnabled ? $getBlockCategories() : [];
+    // Enhanced block panel data (this view is only loaded when Filament v4.x is detected)
+    $groupedBlocks = $getGroupedBlocks();
+    $blockCategories = $getBlockCategories();
 @endphp
 
 <x-dynamic-component :component="$fieldWrapperView" :field="$field">
@@ -178,7 +177,7 @@
                             </div>
 
                             {{-- Enhanced Block Panel with Search and Categories --}}
-                            @if ($isEnhancedPanelEnabled && count($groupedBlocks) > 0)
+                            @if (count($groupedBlocks) > 0)
                                 <div
                                     class="fi-fo-rich-editor-custom-blocks-list flex flex-col h-full"
                                     x-data="{
@@ -222,10 +221,10 @@
                                             }
                                         },
 
-                                        insertBlock(blockId) {
+                                        insertBlock(blockId, selection) {
                                             $wire.mountAction(
                                                 'customBlock',
-                                                { editorSelection, id: blockId, mode: 'insert' },
+                                                { editorSelection: selection, id: blockId, mode: 'insert' },
                                                 { schemaComponent: this.componentKey },
                                             );
                                         }
@@ -265,7 +264,13 @@
                                                 {{-- Block Buttons --}}
                                                 <div
                                                     x-show="!hasMultipleCategories || isExpanded(category)"
-                                                    x-collapse
+                                                    x-cloak
+                                                    x-transition:enter="transition ease-out duration-100"
+                                                    x-transition:enter-start="opacity-0 -translate-y-1"
+                                                    x-transition:enter-end="opacity-100 translate-y-0"
+                                                    x-transition:leave="transition ease-in duration-75"
+                                                    x-transition:leave-start="opacity-100 translate-y-0"
+                                                    x-transition:leave-end="opacity-0 -translate-y-1"
                                                     class="fi-cms-block-category-items flex flex-col gap-0.5 px-2 py-1"
                                                 >
                                                     <template x-for="block in catBlocks" :key="block.id">
@@ -275,7 +280,7 @@
                                                             x-data="{ isLoading: false }"
                                                             x-on:click="
                                                                 isLoading = true;
-                                                                insertBlock(block.id);
+                                                                insertBlock(block.id, editorSelection);
                                                             "
                                                             x-on:dragstart="$event.dataTransfer.setData('customBlock', block.id)"
                                                             x-on:open-modal.window="isLoading = false"

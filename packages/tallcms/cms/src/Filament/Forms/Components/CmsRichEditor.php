@@ -18,10 +18,21 @@ use TallCms\Cms\Services\CustomBlockDiscoveryService;
  *
  * This component is scoped to CMS editors only - other RichEditors in the
  * admin are unaffected.
+ *
+ * Falls back to standard RichEditor when Filament version is incompatible.
  */
 class CmsRichEditor extends RichEditor
 {
-    protected string $view = 'tallcms::filament.forms.components.cms-rich-editor';
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Only use enhanced view if Filament v4.x is installed
+        // Otherwise, use parent's view for full compatibility
+        if (static::isFilamentCompatible()) {
+            $this->view = 'tallcms::filament.forms.components.cms-rich-editor';
+        }
+    }
 
     /**
      * Get blocks grouped by category for the enhanced block panel.
