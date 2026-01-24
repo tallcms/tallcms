@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.1] - 2026-01-24
+
+### Added
+
+- Auto-populate translations from default locale when switching to empty locale
+- "Copy from default" button for manual translation copying
+- Confirmation dialog before overwriting existing translations
+
+### Fixed
+
+- PHP 8.2 compatibility for spatie/laravel-translatable dependency
+
+## [2.4.0] - 2026-01-23
+
+### Added
+
+- **Multilingual Support** - Full i18n system for content translation
+- Multi-language content fields via Spatie Laravel Translatable
+- Language switcher in admin panel (LaraZeus SpatieTranslatable)
+- Locale-prefixed URL routing (`/en/about`, `/zh-CN/about`)
+- `SetLocaleMiddleware` for automatic locale detection
+- `LocaleRegistry` service for managing available locales
+- `hreflang` Blade component for SEO
+- Language switcher Blade component
+- `tallcms_localized_url()` and `tallcms_localized_route()` helpers
+- Config-based locale definitions with RTL support
+- Hide default locale from URL option
+
+### Changed
+
+- Content models (Page, Post, Category) now use `HasTranslatableContent` trait
+- Slug fields support per-locale values
+- Frontend routes support locale prefix
+
 ## [2.0.0] - 2026-01-16
 
 ### Added

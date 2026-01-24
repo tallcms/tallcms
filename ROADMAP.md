@@ -38,7 +38,7 @@ The initial release establishing TallCMS as a fully-featured content management 
 - [x] SEO fields (meta description, canonical URL)
 - [x] Featured images
 
-### Content Blocks (14 Built-in)
+### Content Blocks
 - [x] Hero sections with CTAs
 - [x] Call-to-Action blocks
 - [x] Content/Article blocks

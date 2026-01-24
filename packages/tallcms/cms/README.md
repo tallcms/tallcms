@@ -4,7 +4,7 @@ A modern, feature-rich CMS package for Laravel Filament. Works as a standalone a
 
 ## Features
 
-- **Rich Content Editor** - Block-based editor with 16 built-in content blocks
+- **Rich Content Editor** - Block-based editor with many built-in content blocks
 - **Pages & Posts** - Static pages and blog posts with categories
 - **Publishing Workflow** - Draft, Pending Review, Scheduled, and Published states
 - **Revision History** - Track changes with diff comparison and rollback
@@ -221,7 +221,7 @@ components on `alpine:init`.
 
 ## Content Blocks
 
-TallCMS includes 16 content blocks for building rich pages:
+TallCMS includes many content blocks for building rich pages:
 
 | Block | Description |
 |-------|-------------|
