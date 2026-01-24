@@ -8,11 +8,14 @@ use Filament\Actions\RestoreAction;
 use Filament\Resources\Pages\EditRecord;
 use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
 use LaraZeus\SpatieTranslatable\Resources\Pages\EditRecord\Concerns\Translatable;
+use TallCms\Cms\Filament\Concerns\HasTranslationCopying;
 use TallCms\Cms\Filament\Resources\CmsCategories\CmsCategoryResource;
 
 class EditCmsCategory extends EditRecord
 {
-    use Translatable;
+    use Translatable, HasTranslationCopying {
+        HasTranslationCopying::updatedActiveLocale insteadof Translatable;
+    }
 
     protected static string $resource = CmsCategoryResource::class;
 
@@ -20,6 +23,7 @@ class EditCmsCategory extends EditRecord
     {
         return [
             LocaleSwitcher::make(),
+            $this->getCopyFromDefaultAction(),
             DeleteAction::make(),
             ForceDeleteAction::make(),
             RestoreAction::make(),

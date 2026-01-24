@@ -14,12 +14,15 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
 use LaraZeus\SpatieTranslatable\Resources\Pages\EditRecord\Concerns\Translatable;
+use TallCms\Cms\Filament\Concerns\HasTranslationCopying;
 use TallCms\Cms\Filament\Resources\CmsPages\CmsPageResource;
 use TallCms\Cms\Services\PublishingWorkflowService;
 
 class EditCmsPage extends EditRecord
 {
-    use Translatable;
+    use Translatable, HasTranslationCopying {
+        HasTranslationCopying::updatedActiveLocale insteadof Translatable;
+    }
 
     protected static string $resource = CmsPageResource::class;
 
@@ -28,6 +31,9 @@ class EditCmsPage extends EditRecord
         return [
             // Locale Switcher for translations
             LocaleSwitcher::make(),
+
+            // Copy from default locale action (for translation workflow)
+            $this->getCopyFromDefaultAction(),
 
             // Workflow Actions Group
             ActionGroup::make([
