@@ -5,6 +5,7 @@ namespace TallCms\Cms\Filament\Concerns;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Arr;
+use Illuminate\Validation\ValidationException;
 use TallCms\Cms\Services\LocaleRegistry;
 
 /**
@@ -72,16 +73,21 @@ trait HasTranslationCopying
             }
         }
 
-        // Fill the form with the new locale data
-        $this->form->fill([
-            ...Arr::except(
-                $this->form->getState(),
-                $translatableAttributes
-            ),
-            ...$newLocaleData,
-        ]);
+        try {
+            // Fill the form with the new locale data
+            $this->form->fill([
+                ...Arr::except(
+                    $this->form->getState(),
+                    $translatableAttributes
+                ),
+                ...$newLocaleData,
+            ]);
 
-        unset($this->otherLocaleData[$this->activeLocale]);
+            unset($this->otherLocaleData[$this->activeLocale]);
+        } catch (ValidationException $exception) {
+            $this->activeLocale = $this->oldActiveLocale;
+            throw $exception;
+        }
 
         // Show notification if we copied content
         if ($this->justCopiedFromDefault) {
