@@ -13,9 +13,8 @@ This roadmap outlines our vision for TallCMS development. We're committed to bui
 - [v2.4 - Multilingual](#v24---multilingual-support) ✅
 - [v2.5 - Content & Media](#v25---content--media) 📋
 - [v2.6 - Developer Experience](#v26---developer-experience) 📋
-- [v2.7 - AI-Powered Content](#v27---ai-powered-content-creation) 📋
-- [v2.8 - Community & Users](#v28---community--users) 📋
-- [v2.9 - Marketplace](#v29---marketplace-integration) 📋
+- [v2.7 - Community & Users](#v27---community--users) 📋
+- [v2.8 - Marketplace](#v28---marketplace-integration) 📋
 - [Future Considerations](#future-considerations)
 - [How to Contribute](#how-to-contribute)
 
@@ -228,10 +227,15 @@ Focus: Make TallCMS accessible to global audiences.
 - [x] Automatic locale detection from URL
 
 ### Remaining Items
-- [ ] Side-by-side translation editor
 - [ ] Translation status indicators (% complete per locale)
 - [ ] Admin interface translations (i18n for admin UI)
+
+### TallCMS Pro: Advanced Translation
+The following features are planned for **TallCMS Pro**:
+- [ ] Side-by-side translation editor
 - [ ] Machine translation hooks (OpenAI, DeepL, Google Translate)
+- [ ] Translation memory and glossary support
+- [ ] Bulk translation workflows
 
 ---
 
@@ -277,34 +281,7 @@ Focus: Make TallCMS the best platform for developers to build on.
 
 ---
 
-## v2.7 - AI-Powered Content Creation
-
-Focus: Leverage AI to help creators produce better content faster.
-
-### AI Writing Assistant
-- [ ] AI content generation in editor
-- [ ] Tone and style adjustments
-- [ ] Content summarization
-- [ ] Headline/title suggestions
-- [ ] SEO optimization suggestions
-- [ ] Grammar and spelling checks
-
-### AI Workflow Automation
-- [ ] Auto-generate meta descriptions
-- [ ] Auto-suggest categories and tags
-- [ ] Image alt text generation
-- [ ] Content outline generator
-- [ ] Related content suggestions
-
-### AI Configuration
-- [ ] Bring your own API key (OpenAI, Anthropic, Google Gemini)
-- [ ] Custom AI prompts
-- [ ] Usage limits and monitoring
-- [ ] Privacy controls (opt-in/opt-out)
-
----
-
-## v2.8 - Community & Users
+## v2.7 - Community & Users
 
 Focus: Enable community interaction with your content.
 
@@ -331,7 +308,7 @@ Focus: Enable community interaction with your content.
 
 ---
 
-## v2.9 - Marketplace Integration
+## v2.8 - Marketplace Integration
 
 Focus: Connect to the official TallCMS marketplace for plugins and themes.
 
@@ -352,6 +329,18 @@ Focus: Connect to the official TallCMS marketplace for plugins and themes.
 ## Future Considerations
 
 Items we're exploring for future releases:
+
+### TallCMS Pro Roadmap
+Premium features planned for TallCMS Pro plugin:
+
+**Current (v1.2.0):**
+- 9 Advanced Blocks (Accordion, Tabs, Counter, Table, Comparison, Video, Before/After, Code Snippet, Map)
+- Google Analytics 4 dashboard integration
+- Email marketing settings (Mailchimp, ConvertKit, Sendinblue)
+
+**Planned:**
+- **Advanced Translation** — Side-by-side editor, machine translation (OpenAI, DeepL, Google), translation memory
+- **AI Content** — AI writing assistant, auto meta descriptions, SEO suggestions, content outlines, image alt text generation
 
 ### May Become Core
 - [ ] Custom post types
@@ -409,9 +398,9 @@ We welcome community input on our roadmap:
 | v2.4 | ✅ Released | Global | Multilingual support, locale routing, translation workflow |
 | v2.5 | 📋 Planned | Content | Full-text search, bulk actions, content templates |
 | v2.6 | 📋 Planned | Developers | REST API, CLI tools, Webhooks |
-| v2.7 | 📋 Planned | AI | Content generation, Auto-optimization |
-| v2.8 | 📋 Planned | Community | Comments, User profiles, Analytics |
-| v2.9 | 📋 Planned | Ecosystem | Marketplace integration |
+| v2.7 | 📋 Planned | Community | Comments, User profiles, Analytics |
+| v2.8 | 📋 Planned | Ecosystem | Marketplace integration |
+| Pro | 🔄 Ongoing | Premium | Advanced blocks, Analytics, AI Content, Translation |
 
 ---
 
@@ -424,4 +413,4 @@ We welcome community input on our roadmap:
 
 ---
 
-*Last updated: January 24, 2026*
+*Last updated: January 24, 2026 — AI & Translation moved to TallCMS Pro*
