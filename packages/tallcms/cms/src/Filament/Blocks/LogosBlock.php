@@ -14,6 +14,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Get;
 
 class LogosBlock extends RichContentCustomBlock
 {
@@ -60,12 +61,12 @@ class LogosBlock extends RichContentCustomBlock
                                     ->label('Media Collection')
                                     ->options(fn () => MediaCollection::pluck('name', 'id')->toArray())
                                     ->searchable()
-                                    ->visible(fn ($get) => $get('source') === 'collection')
+                                    ->visible(fn (Get $get): bool => $get('source') === 'collection')
                                     ->helperText('Select a collection containing logo images'),
 
                                 Repeater::make('logos')
                                     ->label('Logos')
-                                    ->visible(fn ($get) => $get('source') !== 'collection')
+                                    ->visible(fn (Get $get): bool => $get('source') !== 'collection')
                                     ->schema([
                                         FileUpload::make('image')
                                             ->label('Logo Image')
