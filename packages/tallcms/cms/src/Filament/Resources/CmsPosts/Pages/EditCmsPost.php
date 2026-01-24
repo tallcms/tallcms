@@ -7,19 +7,22 @@ use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
-use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
 use Filament\Actions\RestoreAction;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
 use LaraZeus\SpatieTranslatable\Resources\Pages\EditRecord\Concerns\Translatable;
+use TallCms\Cms\Filament\Concerns\HasTranslationCopying;
 use TallCms\Cms\Filament\Resources\CmsPosts\CmsPostResource;
 use TallCms\Cms\Services\PublishingWorkflowService;
 
 class EditCmsPost extends EditRecord
 {
-    use Translatable;
+    use Translatable, HasTranslationCopying {
+        HasTranslationCopying::updatedActiveLocale insteadof Translatable;
+    }
 
     protected static string $resource = CmsPostResource::class;
 
@@ -28,6 +31,9 @@ class EditCmsPost extends EditRecord
         return [
             // Locale Switcher for translations
             LocaleSwitcher::make(),
+
+            // Copy from default locale action (for translation workflow)
+            $this->getCopyFromDefaultAction(),
 
             // Workflow Actions Group
             ActionGroup::make([
