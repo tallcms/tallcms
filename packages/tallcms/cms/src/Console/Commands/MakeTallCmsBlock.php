@@ -120,9 +120,12 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 
 class {{CLASS_NAME}} extends RichContentCustomBlock
 {
+    use HasBlockMetadata;
+
     public static function getId(): string
     {
         return '{{BLOCK_ID}}';
@@ -131,6 +134,40 @@ class {{CLASS_NAME}} extends RichContentCustomBlock
     public static function getLabel(): string
     {
         return '{{CLASS_NAME}}';
+    }
+
+    /**
+     * Block category for the enhanced block panel.
+     * Options: content, media, social-proof, dynamic, forms, other
+     */
+    public static function getCategory(): string
+    {
+        return 'content';
+    }
+
+    /**
+     * Icon displayed in the block panel.
+     * Use any valid Heroicon name (e.g., heroicon-o-star, heroicon-o-photo)
+     */
+    public static function getIcon(): string
+    {
+        return 'heroicon-o-cube';
+    }
+
+    /**
+     * Brief description shown in search results.
+     */
+    public static function getDescription(): string
+    {
+        return 'A custom {{SNAKE_NAME}} block';
+    }
+
+    /**
+     * Additional keywords for search.
+     */
+    public static function getKeywords(): array
+    {
+        return ['custom', '{{SNAKE_NAME}}'];
     }
 
     public static function configureEditorAction(Action $action): Action
@@ -142,7 +179,7 @@ class {{CLASS_NAME}} extends RichContentCustomBlock
                     ->required()
                     ->maxLength(255)
                     ->placeholder('Enter block title'),
-                    
+
                 Textarea::make('description')
                     ->maxLength(500)
                     ->placeholder('Enter block description'),
