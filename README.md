@@ -64,16 +64,14 @@ This project demonstrates what's possible when human creativity meets AI capabil
 
 ## System Requirements
 
-- **PHP**: 8.2 or higher
+- **PHP**: 8.2+ with OpenSSL, PDO, Mbstring, GD extensions
 - **Laravel**: 11.0 or 12.0
 - **Filament**: 4.0
 - **Database**: MySQL 8.0+, MariaDB 10.3+, or SQLite
-- **Web Server**: Apache 2.4+ or Nginx 1.18+
-- **PHP Extensions**: OpenSSL, PDO, Mbstring, Tokenizer, XML, Ctype, JSON, BCMath, Fileinfo, GD
+
+See [Installation Guide](docs/INSTALLATION.md) for complete requirements.
 
 ## Standalone Installation
-
-### Via Composer (Recommended)
 
 ```bash
 composer create-project tallcms/tallcms my-site
@@ -84,153 +82,27 @@ php artisan serve
 
 Visit `http://localhost:8000/install` to complete the web installer.
 
-### Manual Download
-
-1. **Download** the latest release from [tallcms.com](https://tallcms.com)
-2. **Extract** to your web server directory
-3. **Visit** your domain in a browser
-4. **Follow** the setup wizard
-
-The web installer will guide you through:
-- Environment verification
-- Database configuration
-- Admin account creation
-- Initial site settings
-
-### For Contributors
-
-```bash
-git clone https://github.com/tallcms/tallcms.git
-cd tallcms
-composer install
-npm install && npm run build
-composer dev            # Start dev server with hot reload
-```
-
-Visit `http://localhost:8000/install` to complete setup.
+See [Installation Guide](docs/INSTALLATION.md) for manual download, contributor setup, and web server configuration.
 
 ## Plugin Installation
 
-Add CMS features to your Laravel application.
-
-> **Note:** TallCMS v2.x requires Filament 4.x (not Filament 5) because filament-shield doesn't yet have a Filament 5 compatible release.
-
-### 1. Install the Package
+Add CMS features to your existing Filament application:
 
 ```bash
+# 1. Install package
 composer require tallcms/cms
-```
 
-This will also install Filament 4.x as a dependency.
+# 2. Add HasRoles trait to User model
+# use Spatie\Permission\Traits\HasRoles;
 
-### 2. Configure Filament
+# 3. Register plugin in your panel provider
+# ->plugin(TallCmsPlugin::make())
 
-If you don't have a Filament panel yet, create one:
-
-```bash
-php artisan filament:install --panels
-```
-
-### 3. Add HasRoles Trait to User Model
-
-Your `User` model must use the `HasRoles` trait:
-
-```php
-use Spatie\Permission\Traits\HasRoles;
-
-class User extends Authenticatable
-{
-    use HasFactory, HasRoles, Notifiable;
-    // ...
-}
-```
-
-### 4. Register the Plugin
-
-Add `TallCmsPlugin` to your panel provider (e.g., `AdminPanelProvider.php`):
-
-```php
-use TallCms\Cms\TallCmsPlugin;
-
-public function panel(Panel $panel): Panel
-{
-    return $panel
-        ->plugin(TallCmsPlugin::make());
-}
-```
-
-### 5. Run the Installer
-
-```bash
+# 4. Run installer
 php artisan tallcms:install
 ```
 
-This single command will:
-- Check prerequisites (HasRoles trait, panel provider, etc.)
-- Publish and run migrations
-- Setup roles and permissions
-- Create your admin user
-
-### Frontend Routes (Plugin Mode)
-
-Frontend routes are **disabled by default** in plugin mode to avoid conflicts with your app's routes.
-
-#### 1. Enable CMS Routes
-
-Add to your `.env` file:
-
-```env
-TALLCMS_ROUTES_ENABLED=true
-```
-
-This registers both `/` (homepage) and `/{slug}` routes for CMS pages.
-Routes automatically exclude common paths like `/admin`, `/api`, `/livewire`, `/storage`, etc.
-
-> ⚠️ **Warning:** When `TALLCMS_ROUTES_ENABLED=true` without a prefix, TallCMS
-> registers the `/` route. However, Laravel loads your app's `routes/web.php` after
-> package routes, so **you must remove the default `/` route from `routes/web.php`**
-> for TallCMS to handle your homepage. Alternatively, set `TALLCMS_ROUTES_PREFIX=cms`
-> to avoid the conflict.
-
-#### 2. Configure the Homepage
-
-Mark a CMS page as "Homepage" in the admin panel. TallCMS will serve it at `/` (or `/{prefix}` if using a prefix).
-
-#### 3. Route Prefix (Optional)
-
-To prefix all CMS routes (e.g., `/cms/about` instead of `/about`):
-
-```env
-TALLCMS_ROUTES_PREFIX=cms
-```
-
-With a prefix, the routes become `/cms` (homepage) and `/cms/{slug}` (pages).
-
-#### 4. Publish Assets (Optional)
-
-For frontend styling:
-
-```bash
-php artisan vendor:publish --tag=tallcms-assets
-```
-
-#### Prerequisites for Frontend
-
-TallCMS frontend pages require **Alpine.js**. Most Laravel apps include it via Livewire.
-If loading Alpine separately, ensure it loads before tallcms.js (components use `alpine:init`).
-
-### Selective Features
-
-Disable components you don't need:
-
-```php
-->plugin(
-    TallCmsPlugin::make()
-        ->withoutPosts()
-        ->withoutCategories()
-        ->withoutContactSubmissions()
-)
-```
+See [Installation Guide](docs/INSTALLATION.md) for detailed steps, frontend routes, and selective features.
 
 ## Built-in Blocks
 
@@ -272,82 +144,28 @@ Learn more at [tallcms.com/pro](https://tallcms.com/pro)
 | **Editor** | Full content management |
 | **Author** | Create and edit own content |
 
-## Plugin Development
+## Documentation
 
-Create custom plugins to extend TallCMS:
-
-```
-plugins/your-vendor/your-plugin/
-├── plugin.json
-├── src/
-│   ├── Providers/
-│   └── Blocks/
-├── resources/views/
-└── database/migrations/
-```
-
-See [Plugin Development Guide](docs/PLUGIN_DEVELOPMENT.md) for details.
-
-## Theme Development
-
-Create custom themes with daisyUI and template overrides:
-
-```
-themes/your-theme/
-├── theme.json
-├── resources/css/app.css
-├── resources/views/
-├── public/
-└── vite.config.js
-```
-
-See [Theme Development Guide](docs/THEME_DEVELOPMENT.md) for details.
+| Guide | Description |
+|-------|-------------|
+| [Installation](docs/INSTALLATION.md) | System requirements, setup, configuration |
+| [Block Development](docs/BLOCK_DEVELOPMENT.md) | Create custom content blocks |
+| [CMS Rich Editor](docs/CMS_RICH_EDITOR.md) | Enhanced editor with search and categories |
+| [Theme Development](docs/THEME_DEVELOPMENT.md) | Create custom themes with daisyUI |
+| [Plugin Development](docs/PLUGIN_DEVELOPMENT.md) | Extend TallCMS with plugins |
+| [Site Settings](docs/SITE_SETTINGS.md) | Configuration and SPA mode |
+| [Publishing Workflow](docs/PUBLISHING_WORKFLOW.md) | Draft, review, scheduling |
+| [SEO](docs/SEO.md) | Search engine optimization |
 
 ## Troubleshooting
 
-### Web Installer
+Common issues and solutions are documented in the [Installation Guide](docs/INSTALLATION.md#troubleshooting).
 
-**"Installation already complete"**
-- Delete `installer.lock` from project root
-- Or set `INSTALLER_ENABLED=true` in `.env`
-
-**"Database connection failed"**
-- Verify database credentials
-- Ensure database server is running
-- Check database exists
-
-### Admin Panel
-
-**"Cannot access admin panel"**
-- Complete the web installer first
-- Verify your user has an active role
-
-**"Permission denied"**
-- Check `storage/` and `bootstrap/cache/` are writable
-- Run `chmod -R 775 storage bootstrap/cache`
-
-### Plugin Mode
-
-**"CMS resources not appearing"**
-- Ensure `TallCmsPlugin::make()` is registered in your panel provider
-- Run `php artisan migrate` to create the CMS tables
-- Run `php artisan tallcms:setup` to configure roles and permissions
-
-**"No such table: tallcms_menus"**
-- Migrations haven't run yet. Run `php artisan migrate`
-
-**"Nothing to migrate" but tables missing**
-- Clear config cache: `php artisan config:clear`
-- Re-run package discovery: `php artisan package:discover`
-- Then run migrations again: `php artisan migrate`
-
-**"Call to undefined method assignRole()"**
-- Your User model is missing the `HasRoles` trait
-- Add `use Spatie\Permission\Traits\HasRoles;` and include it in your model
-
-**"No such table: roles"**
-- Run `php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"`
-- Then run `php artisan migrate`
+**Quick fixes:**
+- **"Installation already complete"** - Delete `storage/installer.lock` or set `INSTALLER_ENABLED=true`
+- **"Permission denied"** - Run `chmod -R 775 storage bootstrap/cache`
+- **"CMS resources not appearing"** - Ensure plugin is registered and run `php artisan migrate`
+- **"Call to undefined method assignRole()"** - Add `HasRoles` trait to User model
 
 ## System Updates
 
