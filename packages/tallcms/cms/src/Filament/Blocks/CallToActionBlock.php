@@ -4,6 +4,7 @@ namespace TallCms\Cms\Filament\Blocks;
 
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
+use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use TallCms\Cms\Models\CmsPage;
 use TallCms\Cms\Services\BlockLinkResolver;
@@ -21,6 +22,7 @@ class CallToActionBlock extends RichContentCustomBlock
 {
     use HasBlockIdentifiers;
     use HasBlockMetadata;
+    use HasContentWidth;
     use HasDaisyUIOptions;
 
     public static function getCategory(): string
@@ -191,6 +193,8 @@ class CallToActionBlock extends RichContentCustomBlock
 
                                 Section::make('Section Appearance')
                                     ->schema([
+                                        static::getContentWidthField(),
+
                                         Select::make('background')
                                             ->label('Background')
                                             ->options(static::getBackgroundOptions())
@@ -206,7 +210,7 @@ class CallToActionBlock extends RichContentCustomBlock
                                             ->options(static::getPaddingOptions())
                                             ->default('py-16'),
                                     ])
-                                    ->columns(3),
+                                    ->columns(4),
                             ]),
                     ]),
 
@@ -228,6 +232,7 @@ class CallToActionBlock extends RichContentCustomBlock
     {
         $buttonUrl = BlockLinkResolver::resolveButtonUrl($config, 'button');
         $secondaryButtonUrl = BlockLinkResolver::resolveButtonUrl($config, 'secondary_button');
+        $widthConfig = static::resolveWidthClass($config);
 
         return view('tallcms::cms.blocks.call-to-action', [
             'id' => static::getId(),
@@ -241,6 +246,8 @@ class CallToActionBlock extends RichContentCustomBlock
             'secondary_button_url' => $secondaryButtonUrl,
             'secondary_button_classes' => static::buildButtonClasses($config, 'secondary_button'),
             'secondary_button_microcopy' => $config['secondary_button_microcopy'] ?? null,
+            'contentWidthClass' => $widthConfig['class'],
+            'contentPadding' => $widthConfig['padding'],
             'background' => $config['background'] ?? 'bg-base-200',
             'text_alignment' => $config['text_alignment'] ?? 'text-center',
             'padding' => $config['padding'] ?? 'py-16',

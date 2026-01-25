@@ -18,7 +18,7 @@
 @endphp
 
 <section @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="features-block {{ $sectionPadding }} bg-base-100 {{ $css_classes ?? '' }}">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="{{ $contentWidthClass ?? 'max-w-7xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
         {{-- Section Header --}}
         @if(!empty($heading) || !empty($subheading))
             <div class="{{ $text_alignment ?? 'text-center' }} mb-12 sm:mb-16">

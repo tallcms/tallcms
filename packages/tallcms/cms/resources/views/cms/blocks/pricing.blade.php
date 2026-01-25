@@ -27,7 +27,7 @@
 @endphp
 
 <section @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="pricing-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="{{ $contentWidthClass ?? 'max-w-7xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
 
         {{-- Header Section --}}
         @if($section_title || $section_subtitle)

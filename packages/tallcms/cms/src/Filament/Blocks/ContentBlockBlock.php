@@ -4,6 +4,7 @@ namespace TallCms\Cms\Filament\Blocks;
 
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
+use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\RichEditor;
@@ -17,6 +18,7 @@ class ContentBlockBlock extends RichContentCustomBlock
 {
     use HasBlockIdentifiers;
     use HasBlockMetadata;
+    use HasContentWidth;
     use HasDaisyUIOptions;
 
     public static function getCategory(): string
@@ -73,14 +75,7 @@ class ContentBlockBlock extends RichContentCustomBlock
                     ->label('Content')
                     ->placeholder('Write your content here...'),
 
-                Select::make('content_width')
-                    ->label('Content Width')
-                    ->options([
-                        'narrow' => 'Narrow (672px)',
-                        'normal' => 'Normal (1152px)',
-                        'wide' => 'Wide (1280px)',
-                    ])
-                    ->default('normal'),
+                static::getContentWidthField(),
 
                 Select::make('heading_level')
                     ->label('Heading Level')
@@ -131,12 +126,15 @@ class ContentBlockBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
+        $widthConfig = static::resolveWidthClass($config);
+
         return view('tallcms::cms.blocks.content-block', [
             'id' => static::getId(),
             'title' => $config['title'] ?? '',
             'subtitle' => $config['subtitle'] ?? '',
             'body' => $config['body'] ?? '',
-            'content_width' => $config['content_width'] ?? 'normal',
+            'contentWidthClass' => $widthConfig['class'],
+            'contentPadding' => $widthConfig['padding'],
             'heading_level' => $config['heading_level'] ?? 'h2',
             'background' => $config['background'] ?? 'bg-base-100',
             'padding' => $config['padding'] ?? 'py-16',

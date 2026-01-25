@@ -4,6 +4,7 @@ namespace TallCms\Cms\Filament\Blocks;
 
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
+use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
@@ -19,7 +20,13 @@ class StatsBlock extends RichContentCustomBlock
 {
     use HasBlockIdentifiers;
     use HasBlockMetadata;
+    use HasContentWidth;
     use HasDaisyUIOptions;
+
+    protected static function getDefaultWidth(): string
+    {
+        return 'wide';
+    }
 
     public static function getCategory(): string
     {
@@ -167,6 +174,8 @@ class StatsBlock extends RichContentCustomBlock
 
                                 Section::make('Appearance')
                                     ->schema([
+                                        static::getContentWidthField(),
+
                                         Select::make('background')
                                             ->label('Background')
                                             ->options(static::getBackgroundOptions())
@@ -177,7 +186,7 @@ class StatsBlock extends RichContentCustomBlock
                                             ->options(static::getPaddingOptions())
                                             ->default('py-16'),
                                     ])
-                                    ->columns(2),
+                                    ->columns(3),
 
                                 Section::make('Animation & Spacing')
                                     ->schema([
@@ -213,6 +222,8 @@ class StatsBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
+        $widthConfig = static::resolveWidthClass($config);
+
         return view('tallcms::cms.blocks.stats', [
             'id' => static::getId(),
             'heading' => $config['heading'] ?? '',
@@ -220,6 +231,8 @@ class StatsBlock extends RichContentCustomBlock
             'columns' => $config['columns'] ?? '4',
             'stat_style' => $config['stat_style'] ?? 'stat',
             'text_alignment' => $config['text_alignment'] ?? 'text-center',
+            'contentWidthClass' => $widthConfig['class'],
+            'contentPadding' => $widthConfig['padding'],
             'background' => $config['background'] ?? 'bg-base-100',
             'padding' => $config['padding'] ?? 'py-16',
             'animate' => $config['animate'] ?? false,

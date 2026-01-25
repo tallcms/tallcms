@@ -198,7 +198,18 @@ class CmsPageForm
 
                                         TextInput::make('template')
                                             ->helperText('Optional: Custom blade template')
-                                            ->columnSpanFull(),
+                                            ->columnSpan(1),
+
+                                        Select::make('content_width')
+                                            ->label('Content Width')
+                                            ->options([
+                                                'narrow' => 'Narrow (672px)',
+                                                'standard' => 'Standard (1152px)',
+                                                'wide' => 'Wide (1280px)',
+                                            ])
+                                            ->default('standard')
+                                            ->helperText('Default width for inline content. Blocks can override.')
+                                            ->columnSpan(1),
                                     ]),
                             ]),
 

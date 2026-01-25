@@ -4,6 +4,7 @@ namespace TallCms\Cms\Filament\Blocks;
 
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
+use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -17,7 +18,13 @@ class ImageGalleryBlock extends RichContentCustomBlock
 {
     use HasBlockIdentifiers;
     use HasBlockMetadata;
+    use HasContentWidth;
     use HasDaisyUIOptions;
+
+    protected static function getDefaultWidth(): string
+    {
+        return 'wide';
+    }
 
     public static function getCategory(): string
     {
@@ -105,6 +112,8 @@ class ImageGalleryBlock extends RichContentCustomBlock
 
                 Section::make('Appearance')
                     ->schema([
+                        static::getContentWidthField(),
+
                         Select::make('background')
                             ->label('Background')
                             ->options(static::getBackgroundOptions())
@@ -120,7 +129,7 @@ class ImageGalleryBlock extends RichContentCustomBlock
                             ->helperText('Overrides padding setting above')
                             ->default(false),
                     ])
-                    ->columns(3),
+                    ->columns(4),
 
                 static::getIdentifiersSection(),
             ])->slideOver();
@@ -138,12 +147,16 @@ class ImageGalleryBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
+        $widthConfig = static::resolveWidthClass($config);
+
         return view('tallcms::cms.blocks.image-gallery', [
             'id' => static::getId(),
             'title' => $config['title'] ?? '',
             'images' => $config['images'] ?? [],
             'layout' => $config['layout'] ?? 'grid-3',
             'image_size' => $config['image_size'] ?? 'medium',
+            'contentWidthClass' => $widthConfig['class'],
+            'contentPadding' => $widthConfig['padding'],
             'background' => $config['background'] ?? 'bg-base-100',
             'padding' => $config['padding'] ?? 'py-16',
             'first_section' => $config['first_section'] ?? false,

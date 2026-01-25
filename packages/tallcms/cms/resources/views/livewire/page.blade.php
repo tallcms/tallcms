@@ -66,13 +66,13 @@
     {{-- Block Canvas --}}
     <div class="cms-content w-full">
         {{-- Homepage content --}}
-        <section id="top">
+        <section id="top" data-content-width="{{ $page->content_width ?? 'standard' }}">
             {!! $renderedContent !!}
         </section>
 
         {{-- SPA Mode: Other pages as sections --}}
         @foreach($allPages as $pageData)
-            <section id="{{ $pageData['anchor'] }}">
+            <section id="{{ $pageData['anchor'] }}" data-content-width="{{ $pageData['content_width'] ?? 'standard' }}">
                 {!! $pageData['content'] !!}
             </section>
         @endforeach

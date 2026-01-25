@@ -4,6 +4,7 @@ namespace TallCms\Cms\Filament\Blocks;
 
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
+use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -22,7 +23,13 @@ class FeaturesBlock extends RichContentCustomBlock
 {
     use HasBlockIdentifiers;
     use HasBlockMetadata;
+    use HasContentWidth;
     use HasDaisyUIOptions;
+
+    protected static function getDefaultWidth(): string
+    {
+        return 'wide';
+    }
 
     public static function getCategory(): string
     {
@@ -191,6 +198,8 @@ class FeaturesBlock extends RichContentCustomBlock
 
                                 Section::make('Appearance')
                                     ->schema([
+                                        static::getContentWidthField(),
+
                                         Select::make('icon_size')
                                             ->label('Icon Size')
                                             ->options([
@@ -209,7 +218,7 @@ class FeaturesBlock extends RichContentCustomBlock
                                             ->label('First Section (Remove Top Spacing)')
                                             ->default(false),
                                     ])
-                                    ->columns(3),
+                                    ->columns(4),
                             ]),
                     ]),
 
@@ -231,6 +240,8 @@ class FeaturesBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
+        $widthConfig = static::resolveWidthClass($config);
+
         return view('tallcms::cms.blocks.features', [
             'id' => static::getId(),
             'heading' => $config['heading'] ?? '',
@@ -241,6 +252,8 @@ class FeaturesBlock extends RichContentCustomBlock
             'icon_position' => $config['icon_position'] ?? 'top',
             'text_alignment' => $config['text_alignment'] ?? 'text-center',
             'icon_size' => $config['icon_size'] ?? 'w-10 h-10',
+            'contentWidthClass' => $widthConfig['class'],
+            'contentPadding' => $widthConfig['padding'],
             'padding' => $config['padding'] ?? 'py-16',
             'first_section' => $config['first_section'] ?? false,
             'anchor_id' => static::getAnchorId($config, $config['heading'] ?? null),

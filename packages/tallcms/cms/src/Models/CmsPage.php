@@ -53,6 +53,7 @@ class CmsPage extends Model
         'parent_id',
         'sort_order',
         'template',
+        'content_width',
         'author_id',
         // Publishing workflow fields
         'approved_by',
@@ -210,5 +211,18 @@ class CmsPage extends Model
         }
 
         return $query->exists();
+    }
+
+    /**
+     * Get the CSS class for the page's content width setting.
+     */
+    public function getContentWidthClass(): string
+    {
+        return match ($this->content_width ?? 'standard') {
+            'narrow' => 'max-w-2xl',
+            'standard' => 'max-w-6xl',
+            'wide' => 'max-w-7xl',
+            default => 'max-w-6xl',
+        };
     }
 }

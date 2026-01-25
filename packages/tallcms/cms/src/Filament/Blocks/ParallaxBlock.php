@@ -4,6 +4,7 @@ namespace TallCms\Cms\Filament\Blocks;
 
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
+use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ColorPicker;
@@ -20,7 +21,13 @@ class ParallaxBlock extends RichContentCustomBlock
 {
     use HasBlockIdentifiers;
     use HasBlockMetadata;
+    use HasContentWidth;
     use HasDaisyUIOptions;
+
+    protected static function getDefaultWidth(): string
+    {
+        return 'full';
+    }
 
     public static function getCategory(): string
     {
@@ -107,6 +114,8 @@ class ParallaxBlock extends RichContentCustomBlock
                             ->schema([
                                 Section::make('Layout')
                                     ->schema([
+                                        static::getContentWidthField(),
+
                                         Select::make('height')
                                             ->label('Section Height')
                                             ->options([
@@ -122,7 +131,7 @@ class ParallaxBlock extends RichContentCustomBlock
                                             ->options(static::getTextAlignmentOptions())
                                             ->default('text-center'),
                                     ])
-                                    ->columns(2),
+                                    ->columns(3),
 
                                 Section::make('Overlay')
                                     ->schema([
@@ -173,6 +182,8 @@ class ParallaxBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
+        $widthConfig = static::resolveWidthClass($config);
+
         return view('tallcms::cms.blocks.parallax', [
             'id' => static::getId(),
             'image' => $config['image'] ?? null,
@@ -181,6 +192,8 @@ class ParallaxBlock extends RichContentCustomBlock
             'cta_text' => $config['cta_text'] ?? '',
             'cta_url' => $config['cta_url'] ?? '',
             'height' => $config['height'] ?? 'medium',
+            'contentWidthClass' => $widthConfig['class'],
+            'contentPadding' => $widthConfig['padding'],
             'text_alignment' => $config['text_alignment'] ?? 'text-center',
             'overlay_color' => $config['overlay_color'] ?? '#000000',
             'overlay_opacity' => $config['overlay_opacity'] ?? '50',

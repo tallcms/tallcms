@@ -22,7 +22,7 @@
 @endphp
 
 <section @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="contact-form-block {{ $sectionPadding }} {{ $config['background'] ?? 'bg-base-100' }} {{ $css_classes ?? '' }}">
-    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="{{ $contentWidthClass ?? 'max-w-2xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
         @if($config['title'] ?? false)
             <h2 class="text-3xl font-bold mb-4 text-base-content">
                 {{ $config['title'] }}

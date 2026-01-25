@@ -4,6 +4,7 @@ namespace TallCms\Cms\Filament\Blocks;
 
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
+use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
@@ -20,6 +21,7 @@ class FaqBlock extends RichContentCustomBlock
 {
     use HasBlockIdentifiers;
     use HasBlockMetadata;
+    use HasContentWidth;
     use HasDaisyUIOptions;
 
     public static function getCategory(): string
@@ -134,6 +136,8 @@ class FaqBlock extends RichContentCustomBlock
 
                                 Section::make('Appearance')
                                     ->schema([
+                                        static::getContentWidthField(),
+
                                         Select::make('background')
                                             ->label('Background')
                                             ->options(static::getBackgroundOptions())
@@ -144,7 +148,7 @@ class FaqBlock extends RichContentCustomBlock
                                             ->options(static::getPaddingOptions())
                                             ->default('py-16'),
                                     ])
-                                    ->columns(2),
+                                    ->columns(3),
 
                                 Section::make('SEO')
                                     ->schema([
@@ -186,6 +190,8 @@ class FaqBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
+        $widthConfig = static::resolveWidthClass($config);
+
         return view('tallcms::cms.blocks.faq', [
             'id' => static::getId(),
             'heading' => $config['heading'] ?? '',
@@ -195,6 +201,8 @@ class FaqBlock extends RichContentCustomBlock
             'first_open' => $config['first_open'] ?? false,
             'allow_multiple' => $config['allow_multiple'] ?? false,
             'text_alignment' => $config['text_alignment'] ?? 'text-center',
+            'contentWidthClass' => $widthConfig['class'],
+            'contentPadding' => $widthConfig['padding'],
             'background' => $config['background'] ?? 'bg-base-100',
             'padding' => $config['padding'] ?? 'py-16',
             'show_schema' => $config['show_schema'] ?? true,

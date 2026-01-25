@@ -1,25 +1,17 @@
 @php
     use TallCms\Cms\Services\HtmlSanitizerService;
 
-    // Content width classes
-    $contentWidthClasses = match($content_width ?? 'normal') {
-        'narrow' => 'max-w-2xl mx-auto',
-        'normal' => 'max-w-6xl mx-auto',
-        'wide' => 'max-w-7xl mx-auto',
-        default => 'max-w-6xl mx-auto'
-    };
-
     $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
 
-    // Build base classes
-    $baseClasses = "w-full px-4 sm:px-6 lg:px-8 {$sectionPadding} " . ($background ?? 'bg-base-100');
+    // Build base classes (padding now handled by $contentPadding variable from block)
+    $baseClasses = "w-full {$sectionPadding} " . ($background ?? 'bg-base-100');
 
     // Add custom classes if provided
     $allClasses = trim($baseClasses . ' ' . ($css_classes ?? ''));
 @endphp
 
 <article @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="{{ $allClasses }}">
-    <div class="{{ $contentWidthClasses }}">
+    <div class="{{ $contentWidthClass ?? 'max-w-6xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
 
         @if(($title ?? null) || ($subtitle ?? null))
             <header class="mb-8 sm:mb-10">

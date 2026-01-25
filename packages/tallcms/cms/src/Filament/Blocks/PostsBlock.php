@@ -13,6 +13,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Support\Str;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
+use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use TallCms\Cms\Models\CmsCategory;
 use TallCms\Cms\Models\CmsPost;
@@ -21,6 +22,7 @@ class PostsBlock extends RichContentCustomBlock
 {
     use HasBlockIdentifiers;
     use HasBlockMetadata;
+    use HasContentWidth;
     use HasDaisyUIOptions;
 
     public static function getCategory(): string
@@ -195,6 +197,8 @@ class PostsBlock extends RichContentCustomBlock
 
                 Section::make('Appearance')
                     ->schema([
+                        static::getContentWidthField(),
+
                         Select::make('background')
                             ->label('Background')
                             ->options(static::getBackgroundOptions())
@@ -210,7 +214,7 @@ class PostsBlock extends RichContentCustomBlock
                             ->helperText('Overrides padding setting above')
                             ->default(false),
                     ])
-                    ->columns(3),
+                    ->columns(4),
 
                 static::getIdentifiersSection(),
             ])->slideOver();
@@ -230,9 +234,13 @@ class PostsBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config, bool $isPreview, ?string $parentSlug = null): string
     {
+        $widthConfig = static::resolveWidthClass($config);
+
         $params = [
             ...$config,
             'isPreview' => $isPreview,
+            'contentWidthClass' => $widthConfig['class'],
+            'contentPadding' => $widthConfig['padding'],
             'background' => $config['background'] ?? 'bg-base-100',
             'padding' => $config['padding'] ?? 'py-16',
             'first_section' => $config['first_section'] ?? false,
