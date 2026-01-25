@@ -45,9 +45,10 @@ class MakeTallCmsBlock extends Command
         $className = Str::studly($name).'Block';
         $kebabName = Str::kebab($name);
         $snakeName = Str::snake($name);
+        $titleName = Str::headline($name);
 
         // Create the block class
-        $this->createBlockClass($className, $kebabName, $snakeName);
+        $this->createBlockClass($className, $kebabName, $snakeName, $titleName);
 
         // Create the template
         $this->createBlockTemplate($kebabName, $className);
@@ -69,7 +70,7 @@ class MakeTallCmsBlock extends Command
     /**
      * Create the block class file.
      */
-    protected function createBlockClass(string $className, string $kebabName, string $snakeName): void
+    protected function createBlockClass(string $className, string $kebabName, string $snakeName, string $titleName): void
     {
         $classPath = app_path("Filament/Forms/Components/RichEditor/RichContentCustomBlocks/{$className}.php");
 
@@ -78,8 +79,8 @@ class MakeTallCmsBlock extends Command
 
         $stub = $this->getBlockClassStub();
         $content = str_replace(
-            ['{{CLASS_NAME}}', '{{KEBAB_NAME}}', '{{SNAKE_NAME}}', '{{BLOCK_ID}}'],
-            [$className, $kebabName, $snakeName, $snakeName],
+            ['{{CLASS_NAME}}', '{{KEBAB_NAME}}', '{{SNAKE_NAME}}', '{{BLOCK_ID}}', '{{TITLE_NAME}}'],
+            [$className, $kebabName, $snakeName, $snakeName, $titleName],
             $stub
         );
 
@@ -133,7 +134,7 @@ class {{CLASS_NAME}} extends RichContentCustomBlock
 
     public static function getLabel(): string
     {
-        return '{{CLASS_NAME}}';
+        return '{{TITLE_NAME}}';
     }
 
     /**
@@ -159,7 +160,7 @@ class {{CLASS_NAME}} extends RichContentCustomBlock
      */
     public static function getDescription(): string
     {
-        return 'A custom {{SNAKE_NAME}} block';
+        return 'A custom {{TITLE_NAME}} block';
     }
 
     /**
@@ -173,7 +174,7 @@ class {{CLASS_NAME}} extends RichContentCustomBlock
     public static function configureEditorAction(Action $action): Action
     {
         return $action
-            ->modalDescription('Configure the {{SNAKE_NAME}} block')
+            ->modalDescription('Configure the {{TITLE_NAME}} block')
             ->schema([
                 TextInput::make('title')
                     ->required()
