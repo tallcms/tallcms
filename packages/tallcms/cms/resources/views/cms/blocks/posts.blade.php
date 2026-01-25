@@ -195,7 +195,7 @@
 @endphp
 
 <section @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="posts-block {{ $sectionPadding }} {{ $sectionBackground }} {{ $css_classes ?? '' }}">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {{-- Active filter indicator --}}
         @if($filterCategory)
             <div class="mb-6 flex items-center gap-2">

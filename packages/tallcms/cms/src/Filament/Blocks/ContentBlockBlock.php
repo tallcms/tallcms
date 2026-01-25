@@ -76,9 +76,9 @@ class ContentBlockBlock extends RichContentCustomBlock
                 Select::make('content_width')
                     ->label('Content Width')
                     ->options([
-                        'narrow' => 'Narrow (prose-focused)',
-                        'normal' => 'Normal (default)',
-                        'wide' => 'Wide (more space)',
+                        'narrow' => 'Narrow (672px)',
+                        'normal' => 'Normal (1152px)',
+                        'wide' => 'Wide (1280px)',
                     ])
                     ->default('normal'),
 
