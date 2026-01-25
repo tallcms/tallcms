@@ -96,9 +96,6 @@ class CmsPageForm
                                 CmsRichEditor::make('content')
                                     ->columnSpanFull()
                                     ->fileAttachmentsDirectory('cms/attachments')
-                                    ->toolbarButtons([
-                                        ['grid', 'gridDelete', 'table', 'attachFiles', 'customBlocks', 'mergeTags'],
-                                    ])
                                     ->activePanel('customBlocks')
                                     ->mergeTags([
                                         'site_name',
@@ -106,10 +103,25 @@ class CmsPageForm
                                         'page_title',
                                     ])
                                     ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
+                                    ->floatingToolbars([
+                                        'paragraph' => [
+                                            'bold', 'italic', 'underline', 'strike', 'subscript', 'superscript',
+                                        ],
+                                        'heading' => [
+                                            'h1', 'h2', 'h3',
+                                        ],
+                                        'table' => [
+                                            'tableAddColumnBefore', 'tableAddColumnAfter', 'tableDeleteColumn',
+                                            'tableAddRowBefore', 'tableAddRowAfter', 'tableDeleteRow',
+                                            'tableMergeCells', 'tableSplitCell',
+                                            'tableToggleHeaderRow', 'tableToggleHeaderCell',
+                                            'tableDelete',
+                                        ],
+                                    ])
                                     ->extraInputAttributes([
                                         'style' => 'min-height: 40rem;',
                                     ])
-                                    ->helperText('Create rich page content with custom blocks, merge tags, and advanced formatting. Use merge tags to insert dynamic content like {{site_name}} or {{current_year}}.'),
+                                    ->helperText('Create rich page content with custom blocks, merge tags, and text formatting. Use merge tags like {{site_name}} or {{current_year}}.'),
                             ]),
 
                         Tabs\Tab::make('Settings')
