@@ -28,7 +28,7 @@ class DocumentationSeeder extends Seeder
         'content-management' => [
             'name' => 'Content Management',
             'description' => 'Managing pages, posts, menus, and media',
-            'files' => ['MENUS.md', 'SEO.md', 'PUBLISHING_WORKFLOW.md'],
+            'files' => ['PAGE_SETTINGS.md', 'MENUS.md', 'SEO.md', 'PUBLISHING_WORKFLOW.md'],
         ],
         'customization' => [
             'name' => 'Customization',
@@ -49,6 +49,7 @@ class DocumentationSeeder extends Seeder
         'INSTALLATION.md' => 'installation',
         'BLOCK_DEVELOPMENT.md' => 'block-development',
         'CMS_RICH_EDITOR.md' => 'rich-editor',
+        'PAGE_SETTINGS.md' => 'page-settings',
         'MENUS.md' => 'menus',
         'THEME_DEVELOPMENT.md' => 'theme-development',
         'PLUGIN_DEVELOPMENT.md' => 'plugin-development',
