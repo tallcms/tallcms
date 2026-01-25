@@ -19,7 +19,7 @@
     4. Test block insertion, search, and category collapse functionality
     5. Verify editorSelection variable still exists in richEditorFormComponent
 
-    Last synced with: Filament Forms v4.x (January 2025)
+    Last synced with: Filament Forms v4.x (January 2026)
     Modified section: Lines ~180-295 (customBlocks panel)
 --}}
 @php
@@ -199,6 +199,7 @@
                                         categories: @js($blockCategories),
                                         componentKey: @js($key),
                                         expandedCategories: Object.keys(@js($groupedBlocks)),
+                                        editorSelectionWarned: false,
 
                                         get filteredBlocks() {
                                             const query = this.searchQuery.toLowerCase().trim().replace(/\s+/g, ' ');
@@ -293,7 +294,10 @@
                                                             x-data="{ isLoading: false }"
                                                             x-on:click="
                                                                 if (typeof editorSelection === 'undefined') {
-                                                                    console.warn('CmsRichEditor: editorSelection not found in parent scope');
+                                                                    if (!editorSelectionWarned) {
+                                                                        console.warn('CmsRichEditor: editorSelection not found in parent scope');
+                                                                        editorSelectionWarned = true;
+                                                                    }
                                                                     return;
                                                                 }
                                                                 isLoading = true;
