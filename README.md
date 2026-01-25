@@ -151,6 +151,7 @@ Learn more at [tallcms.com/pro](https://tallcms.com/pro)
 | [Installation](docs/INSTALLATION.md) | System requirements, setup, configuration |
 | [Block Development](docs/BLOCK_DEVELOPMENT.md) | Create custom content blocks |
 | [CMS Rich Editor](docs/CMS_RICH_EDITOR.md) | Enhanced editor with search and categories |
+| [Menu Management](docs/MENUS.md) | Navigation menus and locations |
 | [Theme Development](docs/THEME_DEVELOPMENT.md) | Create custom themes with daisyUI |
 | [Plugin Development](docs/PLUGIN_DEVELOPMENT.md) | Extend TallCMS with plugins |
 | [Site Settings](docs/SITE_SETTINGS.md) | Configuration and SPA mode |
