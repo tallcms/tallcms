@@ -102,10 +102,10 @@ Complete these tests in **both** standalone and plugin mode.
 
 ### Standalone Mode Only
 
-Test project: `/Users/kaplan/Projects/tall-filament-v4`
+Test using the main TallCMS repository (standalone installation).
 
 ```bash
-cd /Users/kaplan/Projects/tall-filament-v4
+cd /path/to/tallcms
 php artisan serve
 ```
 
@@ -127,10 +127,10 @@ php artisan serve
 
 ### Plugin Mode Only
 
-Test project: `/Users/kaplan/Projects/tallcms`
+Test using a separate Laravel project with TallCMS installed as a plugin.
 
 ```bash
-cd /Users/kaplan/Projects/tallcms
+cd /path/to/your-laravel-app
 php artisan serve
 ```
 
