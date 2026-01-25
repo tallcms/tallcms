@@ -1,7 +1,9 @@
-@props(['items' => []])
+@props(['items' => [], 'overHero' => false])
 
 @if(count($items) > 1)
-<div {{ $attributes->merge(['class' => 'breadcrumbs text-sm px-4 sm:px-6 lg:px-8 py-2']) }}>
+<div {{ $attributes->merge([
+    'class' => 'breadcrumbs text-sm px-4 sm:px-6 lg:px-8 py-2 relative z-40 ' . ($overHero ? 'text-white [&_a]:text-white/80 [&_a:hover]:text-white' : '')
+]) }}>
     <ul>
         @foreach($items as $index => $item)
             <li>
