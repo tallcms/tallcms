@@ -141,6 +141,11 @@
                 </div>
             </div>
 
+            {{-- Breadcrumbs --}}
+            @if($showBreadcrumbs ?? false)
+                <x-tallcms::breadcrumbs :items="$breadcrumbItems ?? []" />
+            @endif
+
             <!-- Main Content -->
             <main>
                 {{ $slot ?? '' }}

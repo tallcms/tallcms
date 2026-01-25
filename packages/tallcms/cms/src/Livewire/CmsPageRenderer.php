@@ -357,26 +357,30 @@ class CmsPageRenderer extends Component
             $seoPage = null;
             $seoIncludeWebsite = false;
 
-            // Build breadcrumbs for post
-            $prefix = config('tallcms.plugin_mode.routes_prefix', '');
-            $prefix = $prefix ? "/{$prefix}" : '';
+            // Build breadcrumbs for post (with absolute localized URLs for JSON-LD)
             $seoBreadcrumbs = [
-                ['name' => 'Home', 'url' => url($prefix ?: '/')],
+                ['name' => __('Home'), 'url' => url(tallcms_localized_url('/'))],
             ];
 
             // Add parent page breadcrumb if post is under a page
             if ($this->parentSlug) {
                 $seoBreadcrumbs[] = [
                     'name' => $this->page->title,
-                    'url' => url($prefix.'/'.$this->parentSlug),
+                    'url' => url(tallcms_localized_url($this->parentSlug)),
                 ];
             }
 
-            // Add post title as final breadcrumb
+            // Add post title as final breadcrumb (canonical URL)
+            $postUrl = $this->parentSlug
+                ? $this->parentSlug.'/'.$this->post->slug
+                : $this->post->slug;
             $seoBreadcrumbs[] = [
                 'name' => $this->post->title,
-                'url' => request()->url(),
+                'url' => url(tallcms_localized_url($postUrl)),
             ];
+
+            $showBreadcrumbs = true; // Posts always show breadcrumbs
+            $breadcrumbItems = $seoBreadcrumbs;
         } else {
             // Page SEO
             $metaTags = SeoService::getMetaTags($this->page);
@@ -391,17 +395,20 @@ class CmsPageRenderer extends Component
             $seoIncludeWebsite = $this->page->is_homepage;
 
             // Build breadcrumbs for page
-            $prefix = config('tallcms.plugin_mode.routes_prefix', '');
-            $prefix = $prefix ? "/{$prefix}" : '';
-
             if ($this->page->is_homepage) {
-                // Homepage doesn't need breadcrumbs
                 $seoBreadcrumbs = null;
+                $showBreadcrumbs = false;
+                $breadcrumbItems = [];
             } else {
-                $seoBreadcrumbs = [
-                    ['name' => 'Home', 'url' => url($prefix ?: '/')],
-                    ['name' => $this->page->title, 'url' => request()->url()],
-                ];
+                $showBreadcrumbs = $this->page->shouldShowBreadcrumbs();
+                if ($showBreadcrumbs) {
+                    $breadcrumbItems = $this->page->getBreadcrumbTrail();
+                    $seoBreadcrumbs = $breadcrumbItems; // Also used for JSON-LD
+                } else {
+                    // Toggle OFF suppresses both visual AND JSON-LD breadcrumbs
+                    $seoBreadcrumbs = null;
+                    $breadcrumbItems = [];
+                }
             }
         }
 
@@ -417,6 +424,8 @@ class CmsPageRenderer extends Component
                 'seoPage' => $seoPage,
                 'seoBreadcrumbs' => $seoBreadcrumbs,
                 'seoIncludeWebsite' => $seoIncludeWebsite,
+                'showBreadcrumbs' => $showBreadcrumbs,
+                'breadcrumbItems' => $breadcrumbItems,
             ]);
     }
 }
