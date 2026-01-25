@@ -196,6 +196,12 @@ class CmsPageForm
                                             ->default(0)
                                             ->columnSpan(1),
 
+                                        Toggle::make('show_breadcrumbs')
+                                            ->label('Show Breadcrumbs')
+                                            ->default(true)
+                                            ->helperText('Display navigation breadcrumbs on this page. Homepage never shows breadcrumbs.')
+                                            ->columnSpan(2),
+
                                         TextInput::make('template')
                                             ->helperText('Optional: Custom blade template')
                                             ->columnSpan(1),

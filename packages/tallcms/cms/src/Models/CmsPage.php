@@ -52,6 +52,7 @@ class CmsPage extends Model
         'published_at',
         'parent_id',
         'sort_order',
+        'show_breadcrumbs',
         'template',
         'content_width',
         'author_id',
@@ -67,6 +68,7 @@ class CmsPage extends Model
         'content' => TranslatableArray::class,
         'published_at' => 'datetime',
         'is_homepage' => 'boolean',
+        'show_breadcrumbs' => 'boolean',
         'approved_at' => 'datetime',
         'submitted_at' => 'datetime',
     ];
@@ -106,6 +108,55 @@ class CmsPage extends Model
     public function children(): HasMany
     {
         return $this->hasMany(CmsPage::class, 'parent_id')->orderBy('sort_order');
+    }
+
+    /**
+     * Determine if breadcrumbs should be displayed for this page.
+     */
+    public function shouldShowBreadcrumbs(): bool
+    {
+        if ($this->is_homepage) {
+            return false;
+        }
+
+        return $this->show_breadcrumbs ?? true;
+    }
+
+    /**
+     * Get the breadcrumb trail for this page.
+     * Walks up the full ancestor chain for deep hierarchies.
+     */
+    public function getBreadcrumbTrail(): array
+    {
+        $breadcrumbs = [
+            ['name' => __('Home'), 'url' => url(tallcms_localized_url('/'))],
+        ];
+
+        // Collect ancestors by walking up the parent chain (with loop guard)
+        $ancestors = [];
+        $current = $this->parent;
+        $visited = [];
+        while ($current && ! in_array($current->id, $visited) && count($visited) < 10) {
+            $visited[] = $current->id;
+            $ancestors[] = $current;
+            $current = $current->parent;
+        }
+
+        // Add ancestors in reverse order (root → leaf)
+        foreach (array_reverse($ancestors) as $ancestor) {
+            $breadcrumbs[] = [
+                'name' => $ancestor->title,
+                'url' => url(tallcms_localized_url($ancestor->slug)),
+            ];
+        }
+
+        // Add current page (last item, canonical URL without query params)
+        $breadcrumbs[] = [
+            'name' => $this->title,
+            'url' => url(tallcms_localized_url($this->slug)),
+        ];
+
+        return $breadcrumbs;
     }
 
     public function author(): BelongsTo
