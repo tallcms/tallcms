@@ -238,6 +238,38 @@ class CmsPageRenderer extends Component
         return false;
     }
 
+    /**
+     * Check if the page content starts with a hero block.
+     * Used to apply smart contrast for breadcrumbs.
+     */
+    protected function pageStartsWithHero(CmsPage $page): bool
+    {
+        if (empty($page->content)) {
+            return false;
+        }
+
+        $content = $page->content;
+
+        if (is_string($content)) {
+            $decoded = json_decode($content, true);
+            if (! is_array($decoded)) {
+                return false;
+            }
+            $content = $decoded;
+        }
+
+        // Tiptap structure: { type: 'doc', content: [ ... ] }
+        if (isset($content['type']) && $content['type'] === 'doc' && isset($content['content'])) {
+            foreach ($content['content'] as $block) {
+                if (isset($block['type']) && $block['type'] === 'customBlock') {
+                    return isset($block['attrs']['id']) && $block['attrs']['id'] === 'hero';
+                }
+            }
+        }
+
+        return false;
+    }
+
     protected function showWelcomePage(): void
     {
         $this->page = new CmsPage([
@@ -412,6 +444,9 @@ class CmsPageRenderer extends Component
             }
         }
 
+        // Detect if breadcrumbs will appear over a hero block
+        $breadcrumbsOverHero = $showBreadcrumbs && $this->pageStartsWithHero($this->page);
+
         return view('tallcms::livewire.page')
             ->layout('tallcms::layouts.app', [
                 'title' => $title,
@@ -426,6 +461,7 @@ class CmsPageRenderer extends Component
                 'seoIncludeWebsite' => $seoIncludeWebsite,
                 'showBreadcrumbs' => $showBreadcrumbs,
                 'breadcrumbItems' => $breadcrumbItems,
+                'breadcrumbsOverHero' => $breadcrumbsOverHero,
             ]);
     }
 }

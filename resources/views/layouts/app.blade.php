@@ -89,7 +89,7 @@
 
         {{-- Breadcrumbs --}}
         @if($showBreadcrumbs ?? false)
-            <x-tallcms::breadcrumbs :items="$breadcrumbItems ?? []" />
+            <x-tallcms::breadcrumbs :items="$breadcrumbItems ?? []" :over-hero="$breadcrumbsOverHero ?? false" />
         @endif
 
         <!-- Main Content -->
