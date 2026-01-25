@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -17,7 +18,33 @@ use Filament\Schemas\Components\Tabs\Tab;
 
 class TimelineBlock extends RichContentCustomBlock
 {
+    use HasBlockMetadata;
     use HasDaisyUIOptions;
+
+    public static function getCategory(): string
+    {
+        return 'dynamic';
+    }
+
+    public static function getIcon(): string
+    {
+        return 'heroicon-o-clock';
+    }
+
+    public static function getDescription(): string
+    {
+        return 'Chronological events or milestones';
+    }
+
+    public static function getKeywords(): array
+    {
+        return ['history', 'events', 'timeline', 'chronology'];
+    }
+
+    public static function getSortPriority(): int
+    {
+        return 30;
+    }
 
     public static function getId(): string
     {

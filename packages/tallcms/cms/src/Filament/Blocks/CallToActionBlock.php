@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use TallCms\Cms\Models\CmsPage;
 use TallCms\Cms\Services\BlockLinkResolver;
@@ -17,7 +18,33 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class CallToActionBlock extends RichContentCustomBlock
 {
+    use HasBlockMetadata;
     use HasDaisyUIOptions;
+
+    public static function getCategory(): string
+    {
+        return 'content';
+    }
+
+    public static function getIcon(): string
+    {
+        return 'heroicon-o-cursor-arrow-ripple';
+    }
+
+    public static function getDescription(): string
+    {
+        return 'Promotional section with action buttons';
+    }
+
+    public static function getKeywords(): array
+    {
+        return ['cta', 'button', 'action', 'call to action'];
+    }
+
+    public static function getSortPriority(): int
+    {
+        return 20;
+    }
 
     public static function getId(): string
     {

@@ -11,13 +11,40 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Support\Str;
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use TallCms\Cms\Models\CmsCategory;
 use TallCms\Cms\Models\CmsPost;
 
 class PostsBlock extends RichContentCustomBlock
 {
+    use HasBlockMetadata;
     use HasDaisyUIOptions;
+
+    public static function getCategory(): string
+    {
+        return 'dynamic';
+    }
+
+    public static function getIcon(): string
+    {
+        return 'heroicon-o-newspaper';
+    }
+
+    public static function getDescription(): string
+    {
+        return 'Display blog posts and articles';
+    }
+
+    public static function getKeywords(): array
+    {
+        return ['blog', 'articles', 'posts', 'recent'];
+    }
+
+    public static function getSortPriority(): int
+    {
+        return 10;
+    }
     public static function getId(): string
     {
         return 'posts';

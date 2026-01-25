@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ColorPicker;
@@ -12,7 +13,33 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class DividerBlock extends RichContentCustomBlock
 {
+    use HasBlockMetadata;
     use HasDaisyUIOptions;
+
+    public static function getCategory(): string
+    {
+        return 'content';
+    }
+
+    public static function getIcon(): string
+    {
+        return 'heroicon-o-minus';
+    }
+
+    public static function getDescription(): string
+    {
+        return 'Decorative spacing or line separator';
+    }
+
+    public static function getKeywords(): array
+    {
+        return ['separator', 'spacing', 'line', 'divider'];
+    }
+
+    public static function getSortPriority(): int
+    {
+        return 90;
+    }
 
     public static function getId(): string
     {

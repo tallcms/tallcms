@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -17,7 +18,33 @@ use Filament\Schemas\Components\Tabs\Tab;
 
 class TestimonialsBlock extends RichContentCustomBlock
 {
+    use HasBlockMetadata;
     use HasDaisyUIOptions;
+
+    public static function getCategory(): string
+    {
+        return 'social-proof';
+    }
+
+    public static function getIcon(): string
+    {
+        return 'heroicon-o-chat-bubble-left-right';
+    }
+
+    public static function getDescription(): string
+    {
+        return 'Customer testimonials and reviews';
+    }
+
+    public static function getKeywords(): array
+    {
+        return ['reviews', 'quotes', 'testimonials', 'customers'];
+    }
+
+    public static function getSortPriority(): int
+    {
+        return 10;
+    }
 
     protected static function getTestimonialCardStyleOptions(): array
     {
