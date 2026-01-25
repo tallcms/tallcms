@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
@@ -18,6 +19,7 @@ use Filament\Schemas\Components\Tabs\Tab;
 
 class TeamBlock extends RichContentCustomBlock
 {
+    use HasBlockIdentifiers;
     use HasBlockMetadata;
     use HasDaisyUIOptions;
 
@@ -234,6 +236,8 @@ class TeamBlock extends RichContentCustomBlock
                                     ->columns(3),
                             ]),
                     ]),
+
+                static::getIdentifiersSection(),
             ])->slideOver();
     }
 
@@ -269,6 +273,8 @@ class TeamBlock extends RichContentCustomBlock
             'show_bio' => $config['show_bio'] ?? true,
             'show_social' => $config['show_social'] ?? true,
             'first_section' => $config['first_section'] ?? false,
+            'anchor_id' => static::getAnchorId($config, $config['heading'] ?? null),
+            'css_classes' => static::getCssClasses($config),
         ])->render();
     }
 

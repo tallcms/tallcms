@@ -16,7 +16,7 @@
     };
 @endphp
 
-<section class="{{ $padding ?? 'py-16' }} px-4 sm:px-6 lg:px-8 {{ $background ?? 'bg-base-200' }}">
+<section @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="{{ $padding ?? 'py-16' }} px-4 sm:px-6 lg:px-8 {{ $background ?? 'bg-base-200' }} {{ $css_classes ?? '' }}">
     <div class="mx-auto max-w-4xl flex flex-col {{ $alignmentClasses }}">
         @if($title ?? null)
             <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-base-content mb-6">

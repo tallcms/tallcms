@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
@@ -16,6 +17,7 @@ use Filament\Schemas\Components\Tabs\Tab;
 
 class StatsBlock extends RichContentCustomBlock
 {
+    use HasBlockIdentifiers;
     use HasBlockMetadata;
     use HasDaisyUIOptions;
 
@@ -192,6 +194,8 @@ class StatsBlock extends RichContentCustomBlock
                                     ->columns(2),
                             ]),
                     ]),
+
+                static::getIdentifiersSection(),
             ])->slideOver();
     }
 
@@ -220,6 +224,8 @@ class StatsBlock extends RichContentCustomBlock
             'padding' => $config['padding'] ?? 'py-16',
             'animate' => $config['animate'] ?? false,
             'first_section' => $config['first_section'] ?? false,
+            'anchor_id' => static::getAnchorId($config, $config['heading'] ?? null),
+            'css_classes' => static::getCssClasses($config),
         ])->render();
     }
 

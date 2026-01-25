@@ -11,7 +11,8 @@
 @endphp
 
 <section
-    class="stats-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }}"
+    @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif
+    class="stats-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}"
     @if($shouldAnimate)
         x-data="{
             prefersReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,

@@ -38,7 +38,7 @@
     $imageUrl = !empty($image) ? Storage::disk(cms_media_disk())->url($image) : null;
 @endphp
 
-<section class="parallax-block relative overflow-hidden {{ $heightClass }}">
+<section @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="parallax-block relative overflow-hidden {{ $heightClass }} {{ $css_classes ?? '' }}">
     {{-- Background with CSS-only parallax --}}
     @if($imageUrl)
         <div

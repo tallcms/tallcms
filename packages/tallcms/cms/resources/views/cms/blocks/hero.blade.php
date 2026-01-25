@@ -21,9 +21,12 @@
         'class="$1"',
         $subheading ?? ''
     );
+
+    // Build section classes
+    $sectionClasses = "hero " . ($height ?? 'min-h-[70vh]') . " " . ($isPreview ? '' : '-mt-20') . " relative overflow-hidden " . ($css_classes ?? '');
 @endphp
 
-<section class="hero {{ $height ?? 'min-h-[70vh]' }} {{ $isPreview ? '' : '-mt-20' }} relative overflow-hidden">
+<section @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="{{ trim($sectionClasses) }}">
     {{-- Background Image or Gradient --}}
     @if(($background_image ?? null) && Storage::disk(cms_media_disk())->exists($background_image))
         <div class="absolute inset-0 z-0"

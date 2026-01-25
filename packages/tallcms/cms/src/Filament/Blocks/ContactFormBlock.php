@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
@@ -17,6 +18,7 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class ContactFormBlock extends RichContentCustomBlock
 {
+    use HasBlockIdentifiers;
     use HasBlockMetadata;
     use HasDaisyUIOptions;
 
@@ -184,6 +186,8 @@ class ContactFormBlock extends RichContentCustomBlock
                     ])
                     ->columns(2)
                     ->collapsible(),
+
+                static::getIdentifiersSection(),
             ])
             ->slideOver();
     }
@@ -219,8 +223,12 @@ class ContactFormBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config, string $view): string
     {
+        $normalizedConfig = self::normalizeConfig($config);
+
         return view($view, [
-            'config' => self::normalizeConfig($config),
+            'config' => $normalizedConfig,
+            'anchor_id' => static::getAnchorId($config, $config['title'] ?? null),
+            'css_classes' => static::getCssClasses($config),
         ])->render();
     }
 }

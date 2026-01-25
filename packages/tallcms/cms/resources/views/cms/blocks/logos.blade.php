@@ -21,7 +21,7 @@
     $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
 @endphp
 
-<section class="logos-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }}">
+<section @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="logos-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {{-- Section Header --}}
         @if(!empty($heading))

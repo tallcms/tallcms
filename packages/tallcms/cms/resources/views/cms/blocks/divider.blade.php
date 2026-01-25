@@ -36,7 +36,7 @@
     };
 @endphp
 
-<div class="divider-block {{ $heightClass }} bg-base-100">
+<div @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="divider-block {{ $heightClass }} bg-base-100 {{ $css_classes ?? '' }}">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         @if($dividerStyle === 'space')
             {{-- Space only - no visible element --}}

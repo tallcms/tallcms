@@ -21,7 +21,8 @@
 @endphp
 
 <section
-    class="image-gallery-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }}"
+    @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif
+    class="image-gallery-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}"
     x-data="{
         images: @js(collect($images)->filter(fn($img) => Storage::disk(cms_media_disk())->exists($img))->map(fn($img) => Storage::disk(cms_media_disk())->url($img))->values()->all()),
         currentIndex: 0,

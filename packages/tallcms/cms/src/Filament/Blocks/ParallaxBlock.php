@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
@@ -17,6 +18,7 @@ use Filament\Schemas\Components\Tabs\Tab;
 
 class ParallaxBlock extends RichContentCustomBlock
 {
+    use HasBlockIdentifiers;
     use HasBlockMetadata;
     use HasDaisyUIOptions;
 
@@ -146,6 +148,8 @@ class ParallaxBlock extends RichContentCustomBlock
                                     ->columns(2),
                             ]),
                     ]),
+
+                static::getIdentifiersSection(),
             ])->slideOver();
     }
 
@@ -180,6 +184,8 @@ class ParallaxBlock extends RichContentCustomBlock
             'text_alignment' => $config['text_alignment'] ?? 'text-center',
             'overlay_color' => $config['overlay_color'] ?? '#000000',
             'overlay_opacity' => $config['overlay_opacity'] ?? '50',
+            'anchor_id' => static::getAnchorId($config, $config['heading'] ?? null),
+            'css_classes' => static::getCssClasses($config),
         ])->render();
     }
 }

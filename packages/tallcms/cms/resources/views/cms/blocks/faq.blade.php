@@ -5,7 +5,8 @@
 @endphp
 
 <section
-    class="faq-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }}"
+    @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif
+    class="faq-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}"
     @if($isAccordion)
         x-data="{
             activeItem: {{ ($first_open ?? false) ? '0' : 'null' }},

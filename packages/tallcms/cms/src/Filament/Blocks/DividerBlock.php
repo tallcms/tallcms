@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
@@ -13,6 +14,7 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class DividerBlock extends RichContentCustomBlock
 {
+    use HasBlockIdentifiers;
     use HasBlockMetadata;
     use HasDaisyUIOptions;
 
@@ -127,6 +129,8 @@ class DividerBlock extends RichContentCustomBlock
                     ])
                     ->columns(2)
                     ->visible(fn (Get $get): bool => $get('style') !== 'space'),
+
+                static::getIdentifiersSection(),
             ])->slideOver();
     }
 
@@ -150,6 +154,8 @@ class DividerBlock extends RichContentCustomBlock
             'width' => $config['width'] ?? 'medium',
             'color' => $config['color'] ?? null,
             'icon' => $config['icon'] ?? 'heroicon-o-star',
+            'anchor_id' => static::getAnchorId($config, null),
+            'css_classes' => static::getCssClasses($config),
         ])->render();
     }
 }

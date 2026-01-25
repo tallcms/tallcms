@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use TallCms\Cms\Models\CmsPage;
@@ -23,6 +24,7 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class HeroBlock extends RichContentCustomBlock
 {
+    use HasBlockIdentifiers;
     use HasBlockMetadata;
     use HasDaisyUIOptions;
 
@@ -297,6 +299,8 @@ class HeroBlock extends RichContentCustomBlock
                                     ]),
                             ]),
                     ]),
+
+                static::getIdentifiersSection(),
             ])->slideOver();
     }
 
@@ -341,6 +345,8 @@ class HeroBlock extends RichContentCustomBlock
             'overlay_opacity' => ($config['overlay_opacity'] ?? 40) / 100,
             'text_alignment' => $config['text_alignment'] ?? 'text-center',
             'height' => $config['height'] ?? 'min-h-[70vh]',
+            'anchor_id' => static::getAnchorId($config, $config['heading'] ?? null),
+            'css_classes' => static::getCssClasses($config),
         ])->render();
     }
 }

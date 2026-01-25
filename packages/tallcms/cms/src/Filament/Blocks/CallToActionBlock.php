@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use TallCms\Cms\Models\CmsPage;
@@ -18,6 +19,7 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class CallToActionBlock extends RichContentCustomBlock
 {
+    use HasBlockIdentifiers;
     use HasBlockMetadata;
     use HasDaisyUIOptions;
 
@@ -207,6 +209,8 @@ class CallToActionBlock extends RichContentCustomBlock
                                     ->columns(3),
                             ]),
                     ]),
+
+                static::getIdentifiersSection(),
             ])->slideOver();
     }
 
@@ -240,6 +244,8 @@ class CallToActionBlock extends RichContentCustomBlock
             'background' => $config['background'] ?? 'bg-base-200',
             'text_alignment' => $config['text_alignment'] ?? 'text-center',
             'padding' => $config['padding'] ?? 'py-16',
+            'anchor_id' => static::getAnchorId($config, $config['title'] ?? null),
+            'css_classes' => static::getCssClasses($config),
         ])->render();
     }
 }

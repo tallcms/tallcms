@@ -182,12 +182,25 @@ class MenuItemsManager extends NestedsetPage
 
                 return $data;
             })
-            ->using(function (array $data, string $model): Model {
+            ->using(function (array $data, array $arguments): Model {
                 $translatableLabel = $data['_translatable_label'] ?? null;
                 unset($data['_translatable_label']);
 
-                $record = new $model($data);
+                // Get parent from form data or arguments (same as parent class)
+                $parentId = $data['parent_id'] ?? ($arguments['parentId'] ?? 0);
+                $parent = $parentId ? $this->getQuery()->find($parentId) : null;
+                unset($data['parent_id']);
 
+                // Add menu_id from active tab (this is the key fix)
+                $data['menu_id'] = $this->activeTab;
+
+                // Create the record with parent relationship
+                $record = TallcmsMenuItem::create(
+                    attributes: $data,
+                    parent: $parent,
+                );
+
+                // Handle translatable label
                 if ($translatableLabel !== null && tallcms_i18n_enabled()) {
                     $activeLocale = $this->activeLocale ?? $this->getDefaultTranslatableLocale();
                     $defaultLocale = $this->getDefaultTranslatableLocale();
@@ -199,11 +212,12 @@ class MenuItemsManager extends NestedsetPage
                     if ($activeLocale !== $defaultLocale) {
                         $record->setTranslation('label', $defaultLocale, $translatableLabel);
                     }
-                } else {
-                    $record->label = $translatableLabel ?? $data['label'] ?? '';
-                }
 
-                $record->save();
+                    $record->save();
+                } elseif ($translatableLabel !== null) {
+                    $record->label = $translatableLabel;
+                    $record->save();
+                }
 
                 return $record;
             });

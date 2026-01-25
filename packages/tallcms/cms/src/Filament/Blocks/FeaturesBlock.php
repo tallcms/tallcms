@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
@@ -19,6 +20,7 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class FeaturesBlock extends RichContentCustomBlock
 {
+    use HasBlockIdentifiers;
     use HasBlockMetadata;
     use HasDaisyUIOptions;
 
@@ -210,6 +212,8 @@ class FeaturesBlock extends RichContentCustomBlock
                                     ->columns(3),
                             ]),
                     ]),
+
+                static::getIdentifiersSection(),
             ])->slideOver();
     }
 
@@ -239,6 +243,8 @@ class FeaturesBlock extends RichContentCustomBlock
             'icon_size' => $config['icon_size'] ?? 'w-10 h-10',
             'padding' => $config['padding'] ?? 'py-16',
             'first_section' => $config['first_section'] ?? false,
+            'anchor_id' => static::getAnchorId($config, $config['heading'] ?? null),
+            'css_classes' => static::getCssClasses($config),
         ])->render();
     }
 

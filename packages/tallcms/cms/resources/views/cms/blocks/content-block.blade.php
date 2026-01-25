@@ -10,9 +10,15 @@
     };
 
     $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
+
+    // Build base classes
+    $baseClasses = "w-full px-4 sm:px-6 lg:px-8 {$sectionPadding} " . ($background ?? 'bg-base-100');
+
+    // Add custom classes if provided
+    $allClasses = trim($baseClasses . ' ' . ($css_classes ?? ''));
 @endphp
 
-<article class="w-full px-4 sm:px-6 lg:px-8 {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }}">
+<article @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="{{ $allClasses }}">
     <div class="{{ $contentWidthClasses }}">
 
         @if(($title ?? null) || ($subtitle ?? null))

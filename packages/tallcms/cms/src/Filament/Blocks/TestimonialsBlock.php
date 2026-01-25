@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
@@ -18,6 +19,7 @@ use Filament\Schemas\Components\Tabs\Tab;
 
 class TestimonialsBlock extends RichContentCustomBlock
 {
+    use HasBlockIdentifiers;
     use HasBlockMetadata;
     use HasDaisyUIOptions;
 
@@ -211,6 +213,8 @@ class TestimonialsBlock extends RichContentCustomBlock
                                     ->columns(3),
                             ]),
                     ]),
+
+                static::getIdentifiersSection(),
             ])->slideOver();
     }
 
@@ -246,6 +250,8 @@ class TestimonialsBlock extends RichContentCustomBlock
             'show_rating' => $config['show_rating'] ?? true,
             'show_company_logo' => $config['show_company_logo'] ?? false,
             'first_section' => $config['first_section'] ?? false,
+            'anchor_id' => static::getAnchorId($config, $config['heading'] ?? null),
+            'css_classes' => static::getCssClasses($config),
         ])->render();
     }
 
