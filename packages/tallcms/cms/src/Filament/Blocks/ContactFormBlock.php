@@ -4,6 +4,7 @@ namespace TallCms\Cms\Filament\Blocks;
 
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
+use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
@@ -20,7 +21,13 @@ class ContactFormBlock extends RichContentCustomBlock
 {
     use HasBlockIdentifiers;
     use HasBlockMetadata;
+    use HasContentWidth;
     use HasDaisyUIOptions;
+
+    protected static function getDefaultWidth(): string
+    {
+        return 'narrow';
+    }
 
     public static function getCategory(): string
     {
@@ -164,6 +171,8 @@ class ContactFormBlock extends RichContentCustomBlock
 
                 Section::make('Appearance')
                     ->schema([
+                        static::getContentWidthField(),
+
                         Select::make('button_style')
                             ->label('Submit Button Style')
                             ->options(static::getButtonVariantOptions())
@@ -184,7 +193,7 @@ class ContactFormBlock extends RichContentCustomBlock
                             ->helperText('Overrides padding setting above')
                             ->default(false),
                     ])
-                    ->columns(2)
+                    ->columns(3)
                     ->collapsible(),
 
                 static::getIdentifiersSection(),
@@ -224,9 +233,12 @@ class ContactFormBlock extends RichContentCustomBlock
     protected static function renderBlock(array $config, string $view): string
     {
         $normalizedConfig = self::normalizeConfig($config);
+        $widthConfig = static::resolveWidthClass($config);
 
         return view($view, [
             'config' => $normalizedConfig,
+            'contentWidthClass' => $widthConfig['class'],
+            'contentPadding' => $widthConfig['padding'],
             'anchor_id' => static::getAnchorId($config, $config['title'] ?? null),
             'css_classes' => static::getCssClasses($config),
         ])->render();

@@ -7,7 +7,7 @@
 @endphp
 
 <section class="contact-form-preview-block {{ $sectionPadding }} {{ $config['background'] ?? 'bg-base-100' }}">
-    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="{{ $contentWidthClass ?? 'max-w-2xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
         @if($config['title'] ?? false)
             <h2 class="text-3xl font-bold text-base-content mb-4">
                 {{ $config['title'] }}

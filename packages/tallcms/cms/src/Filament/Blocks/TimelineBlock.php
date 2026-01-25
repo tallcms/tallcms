@@ -4,6 +4,7 @@ namespace TallCms\Cms\Filament\Blocks;
 
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
+use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -21,7 +22,13 @@ class TimelineBlock extends RichContentCustomBlock
 {
     use HasBlockIdentifiers;
     use HasBlockMetadata;
+    use HasContentWidth;
     use HasDaisyUIOptions;
+
+    protected static function getDefaultWidth(): string
+    {
+        return 'wide';
+    }
 
     public static function getCategory(): string
     {
@@ -174,6 +181,8 @@ class TimelineBlock extends RichContentCustomBlock
 
                                 Section::make('Appearance')
                                     ->schema([
+                                        static::getContentWidthField(),
+
                                         Select::make('text_alignment')
                                             ->label('Header Alignment')
                                             ->options(static::getTextAlignmentOptions())
@@ -194,7 +203,7 @@ class TimelineBlock extends RichContentCustomBlock
                                             ->helperText('Overrides padding setting above')
                                             ->default(false),
                                     ])
-                                    ->columns(2),
+                                    ->columns(3),
                             ]),
                     ]),
 
@@ -220,6 +229,8 @@ class TimelineBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
+        $widthConfig = static::resolveWidthClass($config);
+
         return view('tallcms::cms.blocks.timeline', [
             'id' => static::getId(),
             'heading' => $config['heading'] ?? '',
@@ -230,6 +241,8 @@ class TimelineBlock extends RichContentCustomBlock
             'show_connector' => $config['show_connector'] ?? true,
             'numbered' => $config['numbered'] ?? false,
             'text_alignment' => $config['text_alignment'] ?? 'text-center',
+            'contentWidthClass' => $widthConfig['class'],
+            'contentPadding' => $widthConfig['padding'],
             'background' => $config['background'] ?? 'bg-base-100',
             'padding' => $config['padding'] ?? 'py-16',
             'first_section' => $config['first_section'] ?? false,

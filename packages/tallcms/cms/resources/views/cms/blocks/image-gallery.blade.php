@@ -45,7 +45,7 @@
     @keydown.left.window="isOpen && prev()"
     @keydown.right.window="isOpen && next()"
 >
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="{{ $contentWidthClass ?? 'max-w-7xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
         @if($title ?? false)
             <h3 class="text-2xl font-bold text-base-content text-center mb-8">
                 {{ $title }}

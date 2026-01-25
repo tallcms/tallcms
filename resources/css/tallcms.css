@@ -11,81 +11,90 @@
    Uses same container structure as blocks for alignment.
    ============================================ */
 .cms-content {
-    /* Wrapper for inline content - matches block container width */
-    & > p, & > h1, & > h2, & > h3, & > h4, & > ul, & > ol, & > blockquote, & > hr,
-    & > section > p, & > section > h1, & > section > h2, & > section > h3, & > section > h4,
-    & > section > ul, & > section > ol, & > section > blockquote, & > section > hr {
-        @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8;
+    /* Width classes based on section data-content-width attribute */
+    /* Standard width (default) */
+    & > section,
+    & > section[data-content-width="standard"] {
+        & > p, & > h1, & > h2, & > h3, & > h4, & > ul, & > ol, & > blockquote, & > hr {
+            @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8;
+        }
+    }
+
+    /* Narrow width */
+    & > section[data-content-width="narrow"] {
+        & > p, & > h1, & > h2, & > h3, & > h4, & > ul, & > ol, & > blockquote, & > hr {
+            @apply max-w-2xl mx-auto px-4 sm:px-6 lg:px-8;
+        }
+    }
+
+    /* Wide width */
+    & > section[data-content-width="wide"] {
+        & > p, & > h1, & > h2, & > h3, & > h4, & > ul, & > ol, & > blockquote, & > hr {
+            @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+        }
     }
 
     /* Paragraphs */
-    & > p,
     & > section > p {
         @apply py-3 text-base leading-relaxed text-base-content;
     }
 
     /* Headings */
-    & > h1,
     & > section > h1 {
         @apply pt-8 pb-4 text-4xl font-bold text-base-content;
     }
 
-    & > h2,
     & > section > h2 {
         @apply pt-8 pb-4 text-3xl font-bold text-base-content;
     }
 
-    & > h3,
     & > section > h3 {
         @apply pt-6 pb-3 text-2xl font-semibold text-base-content;
     }
 
-    & > h4,
     & > section > h4 {
         @apply pt-4 pb-2 text-xl font-semibold text-base-content;
     }
 
     /* Lists */
-    & > ul, & > ol,
-    & > section > ul, & > section > ol {
+    & > section > ul,
+    & > section > ol {
         @apply py-3 text-base leading-relaxed text-base-content;
     }
 
-    & > ul,
     & > section > ul {
         @apply list-disc pl-6;
     }
 
-    & > ol,
     & > section > ol {
         @apply list-decimal pl-6;
     }
 
-    & > ul li, & > ol li,
-    & > section > ul li, & > section > ol li {
+    & > section > ul li,
+    & > section > ol li {
         @apply mb-2;
     }
 
     /* Blockquotes */
-    & > blockquote,
     & > section > blockquote {
         @apply py-4 my-4 border-l-4 border-primary pl-6 italic text-base-content/80;
     }
 
     /* Links in inline content */
-    & > p a, & > ul a, & > ol a, & > blockquote a,
-    & > section > p a, & > section > ul a, & > section > ol a, & > section > blockquote a {
+    & > section > p a,
+    & > section > ul a,
+    & > section > ol a,
+    & > section > blockquote a {
         @apply text-primary hover:text-primary/80 underline;
     }
 
     /* Inline code */
-    & > p code, & > li code,
-    & > section > p code, & > section > li code {
+    & > section > p code,
+    & > section > li code {
         @apply bg-base-200 px-1.5 py-0.5 rounded text-sm font-mono;
     }
 
     /* Horizontal rules */
-    & > hr,
     & > section > hr {
         @apply my-8 border-base-300;
     }

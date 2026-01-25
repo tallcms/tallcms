@@ -259,6 +259,9 @@ class CmsPageRenderer extends Component
         $pageSlug = $this->page->slug === '/' ? '' : $this->page->slug;
         View::share('cmsPageSlug', $pageSlug);
 
+        // Share page content width with blocks so they can inherit it
+        View::share('cmsPageContentWidth', $this->page->content_width ?? 'standard');
+
         $renderedContent = RichContentRenderer::make($this->page->content)
             ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
             ->toUnsafeHtml();
@@ -275,14 +278,19 @@ class CmsPageRenderer extends Component
         $previousSlug = View::shared('cmsPageSlug');
         View::share('cmsPageSlug', $page->slug);
 
+        // Temporarily set content width for this page's blocks
+        $previousWidth = View::shared('cmsPageContentWidth');
+        View::share('cmsPageContentWidth', $page->content_width ?? 'standard');
+
         $rendered = RichContentRenderer::make($page->content)
             ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
             ->toUnsafeHtml();
 
         $result = MergeTagService::replaceTags($rendered, $page);
 
-        // Restore previous slug to avoid bleeding into subsequent views
+        // Restore previous context to avoid bleeding into subsequent views
         View::share('cmsPageSlug', $previousSlug);
+        View::share('cmsPageContentWidth', $previousWidth);
 
         return $result;
     }
@@ -327,6 +335,7 @@ class CmsPageRenderer extends Component
                 'slug' => $page->slug,
                 'anchor' => tallcms_slug_to_anchor($page->slug, $page->id),
                 'title' => $page->title,
+                'content_width' => $page->content_width ?? 'standard',
                 'content' => $this->renderSinglePageContent($page),
             ];
         })->toArray();

@@ -4,6 +4,7 @@ namespace TallCms\Cms\Filament\Blocks;
 
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
+use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ColorPicker;
@@ -16,6 +17,7 @@ class DividerBlock extends RichContentCustomBlock
 {
     use HasBlockIdentifiers;
     use HasBlockMetadata;
+    use HasContentWidth;
     use HasDaisyUIOptions;
 
     public static function getCategory(): string
@@ -81,8 +83,10 @@ class DividerBlock extends RichContentCustomBlock
                                 'xl' => 'Extra Large',
                             ])
                             ->default('medium'),
+
+                        static::getContentWidthField(),
                     ])
-                    ->columns(2),
+                    ->columns(3),
 
                 Section::make('Line Options')
                     ->schema([
@@ -146,6 +150,8 @@ class DividerBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
+        $widthConfig = static::resolveWidthClass($config);
+
         return view('tallcms::cms.blocks.divider', [
             'id' => static::getId(),
             'style' => $config['style'] ?? 'line',
@@ -154,6 +160,8 @@ class DividerBlock extends RichContentCustomBlock
             'width' => $config['width'] ?? 'medium',
             'color' => $config['color'] ?? null,
             'icon' => $config['icon'] ?? 'heroicon-o-star',
+            'contentWidthClass' => $widthConfig['class'],
+            'contentPadding' => $widthConfig['padding'],
             'anchor_id' => static::getAnchorId($config, null),
             'css_classes' => static::getCssClasses($config),
         ])->render();

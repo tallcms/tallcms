@@ -4,6 +4,7 @@ namespace TallCms\Cms\Filament\Blocks;
 
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
+use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use TallCms\Cms\Models\MediaCollection;
 use Filament\Actions\Action;
@@ -22,7 +23,13 @@ class LogosBlock extends RichContentCustomBlock
 {
     use HasBlockIdentifiers;
     use HasBlockMetadata;
+    use HasContentWidth;
     use HasDaisyUIOptions;
+
+    protected static function getDefaultWidth(): string
+    {
+        return 'wide';
+    }
 
     public static function getCategory(): string
     {
@@ -174,6 +181,8 @@ class LogosBlock extends RichContentCustomBlock
 
                                 Section::make('Appearance')
                                     ->schema([
+                                        static::getContentWidthField(),
+
                                         Select::make('background')
                                             ->label('Background')
                                             ->options(static::getBackgroundOptions())
@@ -189,7 +198,7 @@ class LogosBlock extends RichContentCustomBlock
                                             ->helperText('Overrides padding setting above')
                                             ->default(false),
                                     ])
-                                    ->columns(3),
+                                    ->columns(4),
                             ]),
                     ]),
 
@@ -221,6 +230,8 @@ class LogosBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
+        $widthConfig = static::resolveWidthClass($config);
+
         return view('tallcms::cms.blocks.logos', [
             'id' => static::getId(),
             'heading' => $config['heading'] ?? '',
@@ -230,6 +241,8 @@ class LogosBlock extends RichContentCustomBlock
             'size' => $config['size'] ?? 'medium',
             'grayscale' => $config['grayscale'] ?? true,
             'hover_color' => $config['hover_color'] ?? true,
+            'contentWidthClass' => $widthConfig['class'],
+            'contentPadding' => $widthConfig['padding'],
             'background' => $config['background'] ?? 'bg-base-100',
             'padding' => $config['padding'] ?? 'py-16',
             'first_section' => $config['first_section'] ?? false,

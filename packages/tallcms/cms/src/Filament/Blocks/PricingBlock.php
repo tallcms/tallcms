@@ -4,6 +4,7 @@ namespace TallCms\Cms\Filament\Blocks;
 
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
+use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
@@ -21,7 +22,13 @@ class PricingBlock extends RichContentCustomBlock
 {
     use HasBlockIdentifiers;
     use HasBlockMetadata;
+    use HasContentWidth;
     use HasDaisyUIOptions;
+
+    protected static function getDefaultWidth(): string
+    {
+        return 'wide';
+    }
 
     public static function getCategory(): string
     {
@@ -259,6 +266,8 @@ class PricingBlock extends RichContentCustomBlock
 
                                 Section::make('Appearance')
                                     ->schema([
+                                        static::getContentWidthField(),
+
                                         Select::make('background')
                                             ->label('Background')
                                             ->options(static::getBackgroundOptions())
@@ -274,7 +283,7 @@ class PricingBlock extends RichContentCustomBlock
                                             ->helperText('Overrides padding setting above')
                                             ->default(false),
                                     ])
-                                    ->columns(3),
+                                    ->columns(4),
                             ]),
                     ]),
 
@@ -301,6 +310,8 @@ class PricingBlock extends RichContentCustomBlock
 
     protected static function renderBlock(array $config): string
     {
+        $widthConfig = static::resolveWidthClass($config);
+
         return view('tallcms::cms.blocks.pricing', [
             'id' => static::getId(),
             'section_title' => $config['section_title'] ?? '',
@@ -310,6 +321,8 @@ class PricingBlock extends RichContentCustomBlock
             'columns' => $config['columns'] ?? '3',
             'card_style' => $config['card_style'] ?? 'shadow',
             'spacing' => $config['spacing'] ?? 'normal',
+            'contentWidthClass' => $widthConfig['class'],
+            'contentPadding' => $widthConfig['padding'],
             'background' => $config['background'] ?? 'bg-base-100',
             'padding' => $config['padding'] ?? 'py-16',
             'first_section' => $config['first_section'] ?? false,

@@ -42,7 +42,7 @@
         x-intersect:enter.once="$el.querySelectorAll('[data-stat-value]').forEach(el => animateValue(el, el.dataset.statValue))"
     @endif
 >
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="{{ $contentWidthClass ?? 'max-w-7xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
         {{-- Section Header --}}
         @if(!empty($heading))
             <div class="{{ $text_alignment ?? 'text-center' }} mb-12">

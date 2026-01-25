@@ -4,6 +4,7 @@ namespace TallCms\Cms\Filament\Blocks;
 
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
+use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use TallCms\Cms\Models\CmsPage;
 use TallCms\Cms\Services\BlockLinkResolver;
@@ -26,7 +27,13 @@ class HeroBlock extends RichContentCustomBlock
 {
     use HasBlockIdentifiers;
     use HasBlockMetadata;
+    use HasContentWidth;
     use HasDaisyUIOptions;
+
+    protected static function getDefaultWidth(): string
+    {
+        return 'full';
+    }
 
     public static function getCategory(): string
     {
@@ -290,13 +297,16 @@ class HeroBlock extends RichContentCustomBlock
                                     ])
                                     ->columns(3),
 
-                                Section::make('Text Alignment')
+                                Section::make('Layout')
                                     ->schema([
+                                        static::getContentWidthField(),
+
                                         Select::make('text_alignment')
-                                            ->label('Alignment')
+                                            ->label('Text Alignment')
                                             ->options(static::getTextAlignmentOptions())
                                             ->default('text-center'),
-                                    ]),
+                                    ])
+                                    ->columns(2),
                             ]),
                     ]),
 
@@ -318,6 +328,7 @@ class HeroBlock extends RichContentCustomBlock
     {
         $buttonUrl = BlockLinkResolver::resolveButtonUrl($config, 'button');
         $secondaryButtonUrl = BlockLinkResolver::resolveButtonUrl($config, 'secondary_button');
+        $widthConfig = static::resolveWidthClass($config);
 
         // Build button classes
         $buttonVariant = $config['button_variant'] ?? 'btn-primary';
@@ -343,6 +354,8 @@ class HeroBlock extends RichContentCustomBlock
             'background_image' => $config['background_image'] ?? null,
             'parallax_effect' => $config['parallax_effect'] ?? true,
             'overlay_opacity' => ($config['overlay_opacity'] ?? 40) / 100,
+            'contentWidthClass' => $widthConfig['class'],
+            'contentPadding' => $widthConfig['padding'],
             'text_alignment' => $config['text_alignment'] ?? 'text-center',
             'height' => $config['height'] ?? 'min-h-[70vh]',
             'anchor_id' => static::getAnchorId($config, $config['heading'] ?? null),
