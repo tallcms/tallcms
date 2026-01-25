@@ -43,11 +43,19 @@
                 </div>
             @endif
 
-            <div class="prose max-w-none">
+            <div class="prose prose-lg max-w-none">
                 @php
-                    $postContent = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($post->content)
-                        ->customBlocks(\TallCms\Cms\Services\CustomBlockDiscoveryService::getBlocksArray())
-                        ->toUnsafeHtml();
+                    $content = $post->content;
+                    // Check if content is raw HTML (string) or Tiptap JSON (array)
+                    if (is_string($content)) {
+                        $postContent = $content;
+                    } elseif (is_array($content)) {
+                        $postContent = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($content)
+                            ->customBlocks(\TallCms\Cms\Services\CustomBlockDiscoveryService::getBlocksArray())
+                            ->toUnsafeHtml();
+                    } else {
+                        $postContent = '';
+                    }
                     $postContent = \TallCms\Cms\Services\MergeTagService::replaceTags($postContent, $post);
                 @endphp
                 {!! $postContent !!}
