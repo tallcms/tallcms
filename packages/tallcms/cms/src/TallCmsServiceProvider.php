@@ -601,6 +601,10 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
             // Multilingual support
             '2026_01_23_000001_add_multilingual_support',
+
+            // Page settings
+            '2026_01_25_000001_add_content_width_to_tallcms_pages_table',
+            '2026_01_26_000001_add_show_breadcrumbs_to_tallcms_pages_table',
         ];
     }
 
