@@ -4,9 +4,9 @@
     // Content width classes
     $contentWidthClasses = match($content_width ?? 'normal') {
         'narrow' => 'max-w-2xl mx-auto',
-        'normal' => 'max-w-4xl mx-auto',
-        'wide' => 'max-w-6xl mx-auto',
-        default => 'max-w-4xl mx-auto'
+        'normal' => 'max-w-6xl mx-auto',
+        'wide' => 'max-w-7xl mx-auto',
+        default => 'max-w-6xl mx-auto'
     };
 
     $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
