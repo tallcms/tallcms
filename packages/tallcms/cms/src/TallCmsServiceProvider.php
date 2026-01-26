@@ -386,6 +386,9 @@ class TallCmsServiceProvider extends PackageServiceProvider
         $i18nEnabled = config('tallcms.i18n.enabled', false);
         $urlStrategy = config('tallcms.i18n.url_strategy', 'prefix');
 
+        // Use configurable route name prefix (defaults to 'tallcms.')
+        $namePrefix = config('tallcms.plugin_mode.route_name_prefix', 'tallcms.');
+
         // Determine base prefix (plugin mode routes prefix)
         $basePrefix = '';
         if (! $this->isStandaloneMode()) {
@@ -413,19 +416,34 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
                 Route::middleware($middleware)
                     ->prefix($fullPrefix)
-                    ->group(function () use ($locale, $nameSuffix) {
+                    ->group(function () use ($locale, $nameSuffix, $namePrefix) {
                         Route::get('/search', Livewire\SearchResults::class)
                             ->defaults('locale', $locale)
-                            ->name('tallcms.search'.$nameSuffix);
+                            ->name($namePrefix.'search'.$nameSuffix);
+                    });
+            }
+
+            // When hide_default_locale=false, also register an unsuffixed route
+            // that aliases to the default locale, so route('prefix.search') still works
+            if (! $hideDefault) {
+                $defaultPublicPrefix = Services\LocaleRegistry::toBcp47($default);
+                $fullPrefix = trim($basePrefix.'/'.$defaultPublicPrefix, '/');
+
+                Route::middleware($middleware)
+                    ->prefix($fullPrefix)
+                    ->group(function () use ($default, $namePrefix) {
+                        Route::get('/search', Livewire\SearchResults::class)
+                            ->defaults('locale', $default)
+                            ->name($namePrefix.'search');
                     });
             }
         } else {
             // Non-i18n: single search route with base prefix only
             Route::middleware($middleware)
                 ->prefix($basePrefix)
-                ->group(function () {
+                ->group(function () use ($namePrefix) {
                     Route::get('/search', Livewire\SearchResults::class)
-                        ->name('tallcms.search');
+                        ->name($namePrefix.'search');
                 });
         }
     }
