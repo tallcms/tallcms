@@ -29,7 +29,7 @@
     ],
     "require": {
         "php": "^8.2",
-        "tallcms/cms": "@dev",
+        "tallcms/cms": "^2.5",
         "aws/aws-sdk-php": "^3.369",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
@@ -110,8 +110,7 @@
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,
-            "php-http/discovery": true,
-            "hexadog/laravel-theme-installer": true
+            "php-http/discovery": true
         }
     },
     "minimum-stability": "stable",
