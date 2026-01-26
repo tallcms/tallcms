@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "716e94ee6a3e9aac22e2cee650d7a45c",
+    "content-hash": "e5eae460666691eee284e07396abae09",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -8939,11 +8939,11 @@
         },
         {
             "name": "tallcms/cms",
-            "version": "2.2.0",
+            "version": "2.5.0",
             "dist": {
                 "type": "path",
                 "url": "./packages/tallcms/cms",
-                "reference": "108013ddb80ab0f02685acbde03378dc2af2e026"
+                "reference": "ac68949843d7f2e513610044cf729c3efe25c2f5"
             },
             "require": {
                 "bezhansalleh/filament-shield": "^4.0",
@@ -8954,12 +8954,12 @@
                 "php": "^8.2",
                 "spatie/laravel-package-tools": "^1.16",
                 "spatie/laravel-permission": "^6.0",
-                "spatie/laravel-translatable": "^6.0",
                 "wsmallnews/filament-nestedset": "^2.0"
             },
             "require-dev": {
                 "orchestra/testbench": "^9.0 || ^10.0",
-                "phpunit/phpunit": "^10.5 || ^11.0"
+                "phpunit/phpunit": "^10.5 || ^11.0",
+                "spatie/laravel-translatable": "^6.0"
             },
             "type": "library",
             "extra": {
@@ -11755,9 +11755,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "tallcms/cms": 20
-    },
+    "stability-flags": [],
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
