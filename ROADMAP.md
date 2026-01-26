@@ -11,10 +11,12 @@ This roadmap outlines our vision for TallCMS development. We're committed to bui
 - [v1.2 - Content & SEO](#v12---content--seo) ✅
 - [v2.0 - Filament Plugin Architecture](#v20---filament-plugin-architecture) ✅
 - [v2.4 - Multilingual](#v24---multilingual-support) ✅
-- [v2.5 - Content & Media](#v25---content--media) 📋
-- [v2.6 - Developer Experience](#v26---developer-experience) 📋
-- [v2.7 - Community & Users](#v27---community--users) 📋
-- [v2.8 - Marketplace](#v28---marketplace-integration) 📋
+- [v2.5 - Page Settings & Breadcrumbs](#v25---page-settings--breadcrumbs) ✅
+- [v2.6 - Full-Text Search](#v26---full-text-search) ✅
+- [v2.7 - Content & Media](#v27---content--media) 📋
+- [v2.8 - Developer Experience](#v28---developer-experience) 📋
+- [v2.9 - Community & Users](#v29---community--users) 📋
+- [v2.10 - Marketplace](#v210---marketplace-integration) 📋
 - [Future Considerations](#future-considerations)
 - [How to Contribute](#how-to-contribute)
 
@@ -141,10 +143,10 @@ Focus: Complete the blogging experience, SEO tools, and one-click system updates
 - [x] Structured data (JSON-LD) for articles
 
 ### Content Improvements
-*Deferred to [v2.5](#v25---content--media)*
+*Deferred to [v2.7](#v27---content--media)*
 
 ### Media Library
-*Deferred to [v2.5](#v25---content--media)*
+*Deferred to [v2.7](#v27---content--media)*
 
 ### System Updates
 - [x] Admin panel update checker with GitHub integration
@@ -239,12 +241,64 @@ The following features are planned for **TallCMS Pro**:
 
 ---
 
-## v2.5 - Content & Media
+## v2.5 - Page Settings & Breadcrumbs
+
+**Status: ✅ Released (v2.5.0)**
+
+Focus: Enhanced page configuration and navigation aids.
+
+### Page Settings
+- [x] Per-page layout selection
+- [x] Show/hide header option
+- [x] Show/hide footer option
+- [x] Custom CSS class support
+
+### Breadcrumbs
+- [x] Automatic breadcrumb generation
+- [x] Page hierarchy support
+- [x] Configurable breadcrumb display
+- [x] Theme-aware breadcrumb styling
+
+---
+
+## v2.6 - Full-Text Search
+
+**Status: ✅ Released (v2.6.0)**
+
+Focus: Enable content discovery across Pages and Posts.
+
+### Search Features
+- [x] Laravel Scout integration (database driver)
+- [x] Frontend search page at `/search` with live results
+- [x] Filament global search in admin header
+- [x] Denormalized `search_content` column for cross-database compatibility
+- [x] Multilingual search across all locales
+- [x] XSS-safe highlighted excerpts
+- [x] Type filtering (All, Pages, Posts)
+- [x] Pagination
+
+### Configuration
+- [x] Configurable via `tallcms.search` config
+- [x] Respects plugin mode route prefixes
+- [x] Respects i18n URL strategies (prefix and query param)
+- [x] Configurable route name prefix
+
+### Commands
+- [x] `php artisan tallcms:search-index` - Rebuild search index
+- [x] Model-specific indexing (`--model=page` or `--model=post`)
+
+### Theme Integration
+- [x] `<x-tallcms::search-input />` Blade component
+- [x] `tallcms_search_url()` helper function
+- [x] TallDaisy theme header search (desktop inline, mobile modal)
+
+---
+
+## v2.7 - Content & Media
 
 Focus: Complete content management features deferred from earlier releases.
 
 ### Content Improvements
-- [ ] Full-text search across pages and posts
 - [ ] Content scheduling calendar view
 - [ ] Bulk actions (publish, unpublish, delete)
 - [ ] Content templates (save block layouts for reuse)
@@ -258,7 +312,7 @@ Focus: Complete content management features deferred from earlier releases.
 
 ---
 
-## v2.6 - Developer Experience
+## v2.8 - Developer Experience
 
 Focus: Make TallCMS the best platform for developers to build on.
 
@@ -281,7 +335,7 @@ Focus: Make TallCMS the best platform for developers to build on.
 
 ---
 
-## v2.7 - Community & Users
+## v2.9 - Community & Users
 
 Focus: Enable community interaction with your content.
 
@@ -308,7 +362,7 @@ Focus: Enable community interaction with your content.
 
 ---
 
-## v2.8 - Marketplace Integration
+## v2.10 - Marketplace Integration
 
 Focus: Connect to the official TallCMS marketplace for plugins and themes.
 
@@ -396,10 +450,12 @@ We welcome community input on our roadmap:
 | v1.2 | ✅ Released | Content & SEO | Blog frontend, SEO tools, System Updates |
 | v2.0 | ✅ Released | Platform | Filament plugin architecture, package split |
 | v2.4 | ✅ Released | Global | Multilingual support, locale routing, translation workflow |
-| v2.5 | 📋 Planned | Content | Full-text search, bulk actions, content templates |
-| v2.6 | 📋 Planned | Developers | REST API, CLI tools, Webhooks |
-| v2.7 | 📋 Planned | Community | Comments, User profiles, Analytics |
-| v2.8 | 📋 Planned | Ecosystem | Marketplace integration |
+| v2.5 | ✅ Released | Navigation | Page settings, breadcrumbs |
+| v2.6 | ✅ Released | Discovery | Full-text search for Pages and Posts |
+| v2.7 | 📋 Planned | Content | Bulk actions, content templates, media improvements |
+| v2.8 | 📋 Planned | Developers | REST API, CLI tools, Webhooks |
+| v2.9 | 📋 Planned | Community | Comments, User profiles, Analytics |
+| v2.10 | 📋 Planned | Ecosystem | Marketplace integration |
 | Pro | 🔄 Ongoing | Premium | Advanced blocks, Analytics, AI Content, Translation |
 
 ---
