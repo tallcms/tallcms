@@ -96,10 +96,14 @@ class CmsPageResource extends Resource
     /**
      * Get the columns that should be searched globally.
      * Filament searches these columns using LIKE queries.
+     *
+     * Only search_content is used because title/slug are JSON columns
+     * (Spatie Translatable), and LIKE on JSON fails on PostgreSQL and
+     * causes false positives by matching locale keys like "en", "es".
      */
     public static function getGloballySearchableAttributes(): array
     {
-        return ['title', 'slug', 'search_content'];
+        return ['search_content'];
     }
 
     public static function getGlobalSearchResultTitle(Model $record): string

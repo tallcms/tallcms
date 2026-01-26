@@ -15,18 +15,19 @@ trait HasSearchableContent
      * Get the indexable data array for the model.
      *
      * Scout's database driver uses the KEYS of this array to determine
-     * which columns to search with LIKE queries. The VALUES are used
-     * by other drivers (Algolia, Meilisearch) for indexing.
+     * which columns to search with LIKE queries.
      *
-     * Note: search_content is plain text (not JSON/translatable) containing
-     * concatenated content from all locales.
+     * IMPORTANT: Only include plain text columns here, NOT JSON/translatable
+     * columns like title, slug, excerpt. LIKE queries on JSON columns will:
+     * - Fail on PostgreSQL (JSONB doesn't support LIKE without casting)
+     * - Match JSON keys like "en", "es" causing false positives
+     *
+     * The search_content column contains pre-extracted text from all locales
+     * and all translatable fields (title, excerpt, meta fields, content blocks).
      */
     public function toSearchableArray(): array
     {
-        // Keys determine which columns Scout DB driver searches
         return [
-            'title' => $this->title ?? '',
-            'slug' => $this->slug ?? '',
             'search_content' => $this->search_content ?? '',
         ];
     }
