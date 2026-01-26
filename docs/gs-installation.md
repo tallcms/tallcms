@@ -1,3 +1,12 @@
+---
+title: "Installation Guide"
+slug: "installation"
+audience: "all"
+category: "getting-started"
+order: 10
+time: 10
+---
+
 # Installation Guide
 
 TallCMS can be installed in two ways: as a **standalone application** (full CMS) or as a **Filament plugin** (add to existing app).
@@ -479,133 +488,30 @@ php artisan view:clear
 
 ---
 
-## Troubleshooting
-
-### Web Installer Issues
+## Common Pitfalls
 
 **"Installation already complete"**
-- Delete `storage/installer.lock` from project root
-- Or set `INSTALLER_ENABLED=true` in `.env`
+Delete `storage/installer.lock` from project root, or set `INSTALLER_ENABLED=true` in `.env`.
 
 **"Database connection failed"**
-- Verify database credentials in installer form
-- Ensure database server is running
-- Check that the database exists
+Verify database credentials in installer form. Ensure database server is running and the database exists.
 
 **"Permission denied" during installation**
-- Ensure `storage/` and `bootstrap/cache/` are writable
-- Run `chmod -R 775 storage bootstrap/cache`
-
-### Admin Panel Issues
+Ensure `storage/` and `bootstrap/cache/` are writable. Run `chmod -R 775 storage bootstrap/cache`.
 
 **"Cannot access admin panel"**
-- Complete the web installer first
-- Verify your user has an active role
-- Check `/admin` URL is correct
+Complete the web installer first. Verify your user has an active role. Check `/admin` URL is correct.
 
 **"403 Forbidden"**
-- Clear permission cache: `php artisan permission:cache-reset`
-- Verify user has appropriate role
-
-### Plugin Mode Issues
+Clear permission cache: `php artisan permission:cache-reset`. Verify user has appropriate role.
 
 **"CMS resources not appearing"**
-- Ensure `TallCmsPlugin::make()` is registered in your panel provider
-- Run `php artisan migrate` to create the CMS tables
-- Clear config cache: `php artisan config:clear`
-
-**"No such table: tallcms_menus"**
-- Migrations haven't run. Execute: `php artisan migrate`
-
-**"Nothing to migrate" but tables missing**
-- Clear config cache: `php artisan config:clear`
-- Re-run package discovery: `php artisan package:discover`
-- Run migrations again: `php artisan migrate`
-
-**"Call to undefined method assignRole()"**
-- Your User model is missing the `HasRoles` trait
-- Add `use Spatie\Permission\Traits\HasRoles;` to your User model
-
-**"No such table: roles"**
-- Publish Spatie Permission migrations:
-  ```bash
-  php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
-  php artisan migrate
-  ```
-
-### Update Issues
-
-**"Update in progress"**
-- An update lock exists. Wait for completion or clear via admin panel.
-
-**"Signature verification failed"**
-- The release may have been tampered with. Do not proceed.
-- Check GitHub releases for official artifacts.
-
----
-
-## Environment Variables Reference
-
-### Core Settings
-
-```env
-APP_NAME="My Site"
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://yourdomain.com
-```
-
-### Database
-
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=tallcms
-DB_USERNAME=tallcms_user
-DB_PASSWORD=secure_password
-```
-
-### TallCMS Specific
-
-```env
-# Frontend routes (plugin mode)
-TALLCMS_ROUTES_ENABLED=true
-TALLCMS_ROUTES_PREFIX=
-
-# Contact information
-TALLCMS_CONTACT_EMAIL=hello@example.com
-TALLCMS_COMPANY_NAME="My Company"
-TALLCMS_COMPANY_ADDRESS="123 Main St"
-TALLCMS_COMPANY_PHONE="+1 555-0100"
-
-# Social links
-TALLCMS_SOCIAL_FACEBOOK=https://facebook.com/mypage
-TALLCMS_SOCIAL_TWITTER=https://twitter.com/myhandle
-TALLCMS_SOCIAL_INSTAGRAM=https://instagram.com/myhandle
-TALLCMS_SOCIAL_LINKEDIN=https://linkedin.com/company/mycompany
-TALLCMS_SOCIAL_YOUTUBE=https://youtube.com/mychannel
-
-# Update system (standalone only)
-TALLCMS_GITHUB_TOKEN=ghp_xxx  # Optional, for private repos
-```
+Ensure `TallCmsPlugin::make()` is registered in your panel provider. Run `php artisan migrate` to create the CMS tables. Clear config cache: `php artisan config:clear`.
 
 ---
 
 ## Next Steps
 
-After installation:
-
-1. **Create Content** - Add pages and blog posts
-2. **Configure Settings** - Set up site name, contact info, social links
-3. **Customize Theme** - Choose a theme or create your own
-4. **Add Blocks** - Use built-in blocks or create custom ones
-5. **Set Up Menus** - Create navigation menus for header/footer
-
-### Related Documentation
-
-- [Block Development](BLOCK_DEVELOPMENT.md) - Create custom content blocks
-- [CMS Rich Editor](CMS_RICH_EDITOR.md) - Enhanced editor features
-- [Theme Development](THEME_DEVELOPMENT.md) - Create custom themes
-- [Plugin Development](PLUGIN_DEVELOPMENT.md) - Extend with plugins
-- [Site Settings](SITE_SETTINGS.md) - Configuration options
+- [Create your first page](first-page)
+- [Publish your first post](first-post)
+- [Set up navigation menus](quick-menus)

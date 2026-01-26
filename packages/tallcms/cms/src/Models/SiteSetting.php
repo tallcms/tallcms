@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TallCms\Cms\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 
 class SiteSetting extends Model
@@ -25,24 +26,31 @@ class SiteSetting extends Model
 
     /**
      * Get a setting value by key
+     *
+     * Gracefully handles missing database table (e.g., during migrations or tests).
      */
     public static function get(string $key, mixed $default = null): mixed
     {
         $cacheKey = "site_setting_{$key}";
 
         return Cache::remember($cacheKey, 3600, function () use ($key, $default) {
-            $setting = static::where('key', $key)->first();
+            try {
+                $setting = static::where('key', $key)->first();
 
-            if (! $setting) {
+                if (! $setting) {
+                    return $default;
+                }
+
+                return match ($setting->type) {
+                    'boolean' => filter_var($setting->value, FILTER_VALIDATE_BOOLEAN),
+                    'json' => json_decode($setting->value, true),
+                    'file' => $setting->value,
+                    default => $setting->value,
+                };
+            } catch (QueryException) {
+                // Table doesn't exist yet (migrations not run, testing, etc.)
                 return $default;
             }
-
-            return match ($setting->type) {
-                'boolean' => filter_var($setting->value, FILTER_VALIDATE_BOOLEAN),
-                'json' => json_decode($setting->value, true),
-                'file' => $setting->value,
-                default => $setting->value,
-            };
         });
     }
 
@@ -73,27 +81,39 @@ class SiteSetting extends Model
 
     /**
      * Get all settings for a group
+     *
+     * Gracefully handles missing database table.
      */
     public static function group(string $group): array
     {
-        $settings = static::where('group', $group)->get();
+        try {
+            $settings = static::where('group', $group)->get();
 
-        $result = [];
-        foreach ($settings as $setting) {
-            $result[$setting->key] = static::get($setting->key);
+            $result = [];
+            foreach ($settings as $setting) {
+                $result[$setting->key] = static::get($setting->key);
+            }
+
+            return $result;
+        } catch (QueryException) {
+            return [];
         }
-
-        return $result;
     }
 
     /**
      * Clear all settings cache
+     *
+     * Gracefully handles missing database table.
      */
     public static function clearCache(): void
     {
-        $settings = static::all();
-        foreach ($settings as $setting) {
-            Cache::forget("site_setting_{$setting->key}");
+        try {
+            $settings = static::all();
+            foreach ($settings as $setting) {
+                Cache::forget("site_setting_{$setting->key}");
+            }
+        } catch (QueryException) {
+            // Table doesn't exist yet
         }
     }
 }

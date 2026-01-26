@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\ContentStatus;
 use App\Models\User;
+use App\Services\FrontmatterParser;
 use App\Services\MarkdownToHtml;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
@@ -14,51 +15,39 @@ class DocumentationSeeder extends Seeder
 {
     protected MarkdownToHtml $converter;
 
+    protected FrontmatterParser $parser;
+
     protected int $authorId;
 
     /**
-     * Category mapping for documentation files
+     * Files to exclude from seeding (by filename).
+     */
+    protected array $excludedFiles = ['README.md', 'STYLE_GUIDE.md'];
+
+    /**
+     * Category definitions with metadata.
      */
     protected array $categoryMap = [
         'getting-started' => [
             'name' => 'Getting Started',
-            'description' => 'Installation and basic setup guides',
-            'files' => ['INSTALLATION.md', 'CMS_RICH_EDITOR.md'],
+            'description' => 'Quick guides to get you up and running',
+            'order' => 1,
         ],
-        'content-management' => [
-            'name' => 'Content Management',
-            'description' => 'Managing pages, posts, menus, and media',
-            'files' => ['PAGE_SETTINGS.md', 'MENUS.md', 'SEO.md', 'PUBLISHING_WORKFLOW.md'],
+        'site-management' => [
+            'name' => 'Site Management',
+            'description' => 'Managing content, media, and settings',
+            'order' => 2,
         ],
-        'customization' => [
-            'name' => 'Customization',
-            'description' => 'Themes, blocks, and styling',
-            'files' => ['BLOCK_DEVELOPMENT.md', 'CUSTOM_BLOCK_STYLING.md', 'THEME_DEVELOPMENT.md'],
+        'developers' => [
+            'name' => 'For Developers',
+            'description' => 'Themes, plugins, and extending TallCMS',
+            'order' => 3,
         ],
-        'advanced' => [
-            'name' => 'Advanced',
-            'description' => 'Architecture, plugins, and internationalization',
-            'files' => ['PLUGIN_DEVELOPMENT.md', 'SITE_SETTINGS.md', 'INTERNATIONALIZATION.md', 'DEVELOPER_ARCHITECTURE.md'],
+        'reference' => [
+            'name' => 'Reference',
+            'description' => 'Detailed specifications and technical reference',
+            'order' => 4,
         ],
-    ];
-
-    /**
-     * Markdown file → URL slug mapping
-     */
-    protected array $slugMap = [
-        'INSTALLATION.md' => 'installation',
-        'BLOCK_DEVELOPMENT.md' => 'block-development',
-        'CMS_RICH_EDITOR.md' => 'rich-editor',
-        'PAGE_SETTINGS.md' => 'page-settings',
-        'MENUS.md' => 'menus',
-        'THEME_DEVELOPMENT.md' => 'theme-development',
-        'PLUGIN_DEVELOPMENT.md' => 'plugin-development',
-        'SITE_SETTINGS.md' => 'site-settings',
-        'SEO.md' => 'seo',
-        'PUBLISHING_WORKFLOW.md' => 'publishing-workflow',
-        'INTERNATIONALIZATION.md' => 'internationalization',
-        'CUSTOM_BLOCK_STYLING.md' => 'block-styling',
-        'DEVELOPER_ARCHITECTURE.md' => 'architecture',
     ];
 
     public function run(): void
@@ -71,35 +60,71 @@ class DocumentationSeeder extends Seeder
         }
         $this->authorId = $author->id;
 
-        $this->converter = new MarkdownToHtml($this->slugMap);
+        $this->parser = new FrontmatterParser;
+
+        // Build slug map from all docs with frontmatter
+        $slugMap = $this->buildSlugMap();
+        $this->converter = new MarkdownToHtml($slugMap);
 
         // Clean up existing documentation
         $this->cleanupExistingDocs();
 
-        // Create categories and posts
-        foreach ($this->categoryMap as $categorySlug => $categoryData) {
-            $category = $this->createCategory($categorySlug, $categoryData);
+        // Create categories first
+        $categories = $this->createCategories();
 
-            foreach ($categoryData['files'] as $filename) {
-                $this->createDocPost($filename, $category);
-            }
-        }
+        // Process all documentation files
+        $this->processDocFiles($categories);
 
         $this->command->info('Documentation seeded successfully!');
     }
 
     /**
-     * Remove existing documentation posts and categories
+     * Build a slug map from all docs with frontmatter.
+     *
+     * @return array<string, string>
+     */
+    protected function buildSlugMap(): array
+    {
+        $slugMap = [];
+        $files = File::glob(base_path('docs/*.md'));
+
+        foreach ($files as $path) {
+            $filename = basename($path);
+            if (in_array($filename, $this->excludedFiles)) {
+                continue;
+            }
+
+            $raw = File::get($path);
+            $parsed = $this->parser->parse($raw);
+
+            if ($parsed['error'] || empty($parsed['frontmatter']['slug'])) {
+                continue;
+            }
+
+            // Map both the filename and any legacy filenames to the canonical slug
+            $slug = $parsed['frontmatter']['slug'];
+            $slugMap[$filename] = $slug;
+
+            // Also map uppercase version for backwards compatibility during transition
+            $uppercaseFilename = strtoupper(pathinfo($filename, PATHINFO_FILENAME)).'.md';
+            if ($uppercaseFilename !== $filename) {
+                $slugMap[$uppercaseFilename] = $slug;
+            }
+        }
+
+        return $slugMap;
+    }
+
+    /**
+     * Remove existing documentation posts and categories.
      */
     protected function cleanupExistingDocs(): void
     {
-        // Delete posts in documentation categories
         $categorySlugs = array_keys($this->categoryMap);
 
         foreach ($categorySlugs as $slug) {
             $category = CmsCategory::withSlug($slug)->first();
             if ($category) {
-                // Detach and delete posts
                 $postIds = $category->posts()->pluck('tallcms_posts.id');
                 if ($postIds->isNotEmpty()) {
                     CmsPost::whereIn('id', $postIds)->forceDelete();
@@ -111,43 +136,120 @@ class DocumentationSeeder extends Seeder
     }
 
     /**
-     * Create a documentation category
+     * Create all documentation categories.
+     *
+     * @return array<string, CmsCategory>
      */
-    protected function createCategory(string $slug, array $data): CmsCategory
+    protected function createCategories(): array
     {
-        $category = CmsCategory::create([
-            'name' => $data['name'],
-            'slug' => $slug,
-            'description' => $data['description'],
-        ]);
+        $categories = [];
 
-        $this->command->info("Created category: {$data['name']}");
+        foreach ($this->categoryMap as $slug => $data) {
+            $category = CmsCategory::create([
+                'name' => $data['name'],
+                'slug' => $slug,
+                'description' => $data['description'],
+            ]);
 
-        return $category;
+            $categories[$slug] = $category;
+            $this->command->info("Created category: {$data['name']}");
+        }
+
+        return $categories;
     }
 
     /**
-     * Create a documentation post from a markdown file
+     * Process all documentation files with frontmatter.
+     *
+     * @param  array<string, CmsCategory>  $categories
      */
-    protected function createDocPost(string $filename, CmsCategory $category): void
+    protected function processDocFiles(array $categories): void
     {
-        $path = base_path("docs/{$filename}");
+        $files = File::glob(base_path('docs/*.md'));
+        $docsByCategory = [];
 
-        if (! File::exists($path)) {
-            $this->command->warn("Skipping missing file: {$filename}");
+        foreach ($files as $path) {
+            $filename = basename($path);
 
-            return;
+            // Skip excluded files by name
+            if (in_array($filename, $this->excludedFiles)) {
+                $this->command->info("Skipping excluded file: {$filename}");
+
+                continue;
+            }
+
+            $raw = File::get($path);
+            $parsed = $this->parser->parse($raw);
+
+            // Handle YAML parse errors
+            if ($parsed['error']) {
+                $this->command->warn("Skipping {$filename}: {$parsed['error']}");
+
+                continue;
+            }
+
+            $frontmatter = $parsed['frontmatter'];
+            $content = $parsed['content'];
+
+            // Skip hidden docs
+            if ($frontmatter['hidden'] ?? false) {
+                $this->command->info("Skipping hidden doc: {$filename}");
+
+                continue;
+            }
+
+            // Require frontmatter for all other docs
+            if (empty($frontmatter['slug']) || empty($frontmatter['category'])) {
+                $this->command->warn("Skipping {$filename}: missing required frontmatter (slug, category)");
+
+                continue;
+            }
+
+            // Validate category exists
+            $categorySlug = $frontmatter['category'];
+            if (! isset($categories[$categorySlug])) {
+                $this->command->warn("Skipping {$filename}: unknown category '{$categorySlug}'");
+
+                continue;
+            }
+
+            // Group by category for ordered creation
+            $docsByCategory[$categorySlug][] = [
+                'filename' => $filename,
+                'frontmatter' => $frontmatter,
+                'content' => $content,
+            ];
         }
 
-        $markdown = File::get($path);
-        $slug = $this->slugMap[$filename] ?? $this->filenameToSlug($filename);
+        // Sort and create posts by category
+        foreach ($docsByCategory as $categorySlug => $docs) {
+            // Sort by order field
+            usort($docs, fn ($a, $b) => ($a['frontmatter']['order'] ?? 99) <=> ($b['frontmatter']['order'] ?? 99));
 
-        // Extract title and generate HTML
-        $title = $this->converter->extractTitle($markdown, $filename);
-        $html = $this->converter->convert($markdown);
-        $excerpt = $this->converter->generateMetaDescription($markdown);
+            foreach ($docs as $doc) {
+                $this->createDocPost($doc, $categories[$categorySlug]);
+            }
+        }
+    }
 
-        // Create post with raw HTML content
+    /**
+     * Create a documentation post from parsed frontmatter and content.
+     *
+     * @param  array{filename: string, frontmatter: array<string, mixed>, content: string}  $doc
+     */
+    protected function createDocPost(array $doc, CmsCategory $category): void
+    {
+        $frontmatter = $doc['frontmatter'];
+        $content = $doc['content'];
+
+        $slug = $frontmatter['slug'];
+        $title = $frontmatter['title'] ?? $this->converter->extractTitle($content, $doc['filename']);
+
+        // Convert markdown to HTML
+        $html = $this->converter->convert($content);
+        $excerpt = $this->converter->generateMetaDescription($content);
+
+        // Create post
         $post = CmsPost::create([
             'title' => $title,
             'slug' => $slug,
@@ -166,16 +268,6 @@ class DocumentationSeeder extends Seeder
         // Attach category
         $post->categories()->attach($category->id);
 
-        $this->command->info("Created post: {$title}");
-    }
-
-    /**
-     * Convert filename to slug
-     */
-    protected function filenameToSlug(string $filename): string
-    {
-        $name = pathinfo($filename, PATHINFO_FILENAME);
-
-        return strtolower(str_replace('_', '-', $name));
+        $this->command->info("Created post: {$title} (slug: {$slug})");
     }
 }
