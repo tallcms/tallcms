@@ -13,7 +13,7 @@ This roadmap outlines our vision for TallCMS development. We're committed to bui
 - [v2.4 - Multilingual](#v24---multilingual-support) ✅
 - [v2.5 - Page Settings & Breadcrumbs](#v25---page-settings--breadcrumbs) ✅
 - [v2.6 - Full-Text Search](#v26---full-text-search) ✅
-- [v2.7 - Content & Media](#v27---content--media) 📋
+- [v2.7 - Media Library](#v27---media-library) ✅
 - [v2.8 - Developer Experience](#v28---developer-experience) 📋
 - [v2.9 - Community & Users](#v29---community--users) 📋
 - [v2.10 - Marketplace](#v210---marketplace-integration) 📋
@@ -294,21 +294,64 @@ Focus: Enable content discovery across Pages and Posts.
 
 ---
 
-## v2.7 - Content & Media
+## v2.7 - Media Library
 
-Focus: Complete content management features deferred from earlier releases.
+**Status: ✅ Released (v2.7.0)**
 
-### Content Improvements
+Focus: Complete Media Library overhaul with image optimization and block integration.
+
+### Image Optimization
+- [x] Intervention Image 3.0 integration
+- [x] Automatic WebP variant generation (thumbnail, medium, large)
+- [x] S3/remote disk support (download → process → upload)
+- [x] Queued optimization jobs
+- [x] Variant cleanup on media deletion
+
+### Lazy Loading
+- [x] Native lazy loading (`loading="lazy"`) on all block images
+- [x] `<picture>` element with WebP source and fallback
+- [x] `<x-tallcms::responsive-image />` Blade component
+
+### Alt Text Management
+- [x] Enhanced alt text UI with character counter
+- [x] "Generate from filename" action button
+- [x] Bulk alt text editor for multiple images
+- [x] Missing alt text filter for accessibility audits
+
+### Bulk Upload Improvements
+- [x] Collection assignment during upload
+- [x] Auto-generate alt text from original filename
+- [x] Preserve original filenames (not hashed)
+- [x] Optimization job dispatch after upload
+
+### Block Integration
+- [x] MediaResolver service for collection queries
+- [x] Media Gallery block (renamed from Image Gallery)
+- [x] Dual source mode: manual upload or media collections
+- [x] Video support with lightbox playback
+- [x] Document List block for downloadable files
+
+### Collections Management
+- [x] Dedicated Collections resource page
+- [x] Color-coded collection badges
+- [x] Media count per collection
+- [x] Click-through to filtered media view
+
+### Security
+- [x] Signed URL media downloads (24h expiry)
+- [x] Prevents ID guessing attacks on private files
+
+### Configuration
+- [x] `tallcms.media.optimization.enabled` toggle
+- [x] `tallcms.media.optimization.queue` setting
+- [x] Configurable variant sizes
+
+### Content Improvements (Deferred)
+*The following items are deferred to a future release:*
 - [ ] Content scheduling calendar view
 - [ ] Bulk actions (publish, unpublish, delete)
 - [ ] Content templates (save block layouts for reuse)
 - [ ] Import/Export content (JSON/Markdown)
-
-### Media Library
-- [ ] Image optimization (automatic resizing)
-- [ ] Lazy loading
-- [ ] Alt text management
-- [ ] Bulk upload improvements
 
 ---
 
@@ -452,7 +495,7 @@ We welcome community input on our roadmap:
 | v2.4 | ✅ Released | Global | Multilingual support, locale routing, translation workflow |
 | v2.5 | ✅ Released | Navigation | Page settings, breadcrumbs |
 | v2.6 | ✅ Released | Discovery | Full-text search for Pages and Posts |
-| v2.7 | 📋 Planned | Content | Bulk actions, content templates, media improvements |
+| v2.7 | ✅ Released | Media | Image optimization, WebP variants, collections, video support |
 | v2.8 | 📋 Planned | Developers | REST API, CLI tools, Webhooks |
 | v2.9 | 📋 Planned | Community | Comments, User profiles, Analytics |
 | v2.10 | 📋 Planned | Ecosystem | Marketplace integration |
@@ -469,4 +512,4 @@ We welcome community input on our roadmap:
 
 ---
 
-*Last updated: January 24, 2026 — AI & Translation moved to TallCMS Pro*
+*Last updated: January 26, 2026 — v2.7 Media Library released*
