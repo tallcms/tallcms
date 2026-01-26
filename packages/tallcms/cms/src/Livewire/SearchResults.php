@@ -12,6 +12,7 @@ use Livewire\WithPagination;
 use TallCms\Cms\Models\CmsPage;
 use TallCms\Cms\Models\CmsPost;
 use TallCms\Cms\Services\SearchHighlighter;
+use TallCms\Cms\Services\SeoService;
 
 #[Layout('tallcms::layouts.app')]
 class SearchResults extends Component
@@ -108,11 +109,10 @@ class SearchResults extends Component
         return [
             'model' => $model,
             'type' => $type,
-            // search_excerpt extracts the current locale's text from JSON
             'excerpt' => $model->search_excerpt ?? $model->excerpt ?? $model->meta_description ?? '',
             'url' => $type === 'page'
                 ? url(tallcms_localized_url($model->slug))
-                : url(tallcms_localized_url('blog/'.$model->slug)),
+                : SeoService::getPostUrl($model),
         ];
     }
 }
