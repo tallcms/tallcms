@@ -33,7 +33,7 @@ $namePrefix = config('tallcms.plugin_mode.route_name_prefix', 'tallcms.');
 
 // Build exclusion pattern with auto-excluded panel path
 $panelPath = preg_quote(config('tallcms.filament.panel_path', 'admin'), '/');
-$baseExclusions = "{$panelPath}|app|api|livewire|sanctum|storage|build|vendor|health|_";
+$baseExclusions = "{$panelPath}|app|api|livewire|sanctum|storage|build|vendor|health|search|_";
 
 // Additional exclusions as pipe-separated list (works in both i18n and non-i18n modes)
 $additionalExclusions = config('tallcms.plugin_mode.additional_exclusions', '');
@@ -68,6 +68,9 @@ $urlStrategy = config('tallcms.i18n.url_strategy', 'prefix');
 $hideDefault = config('tallcms.i18n.hide_default_locale', true);
 
 Route::name($namePrefix)->middleware(['tallcms.maintenance', 'tallcms.set-locale'])->group(function () use ($i18nEnabled, $urlStrategy, $hideDefault, $baseExclusions, $customExclusions, $customExclusionsIsStandard) {
+
+    // Note: Search route is registered separately in TallCmsServiceProvider::bootSearchFeatures()
+    // to ensure it works in both standalone and plugin modes.
 
     if ($i18nEnabled && $urlStrategy === 'prefix') {
         // Multilingual routes with locale prefix

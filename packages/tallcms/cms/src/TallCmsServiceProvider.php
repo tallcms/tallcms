@@ -244,6 +244,12 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
         // Jobs
         'App\\Jobs\\TallCmsUpdateJob' => Jobs\TallCmsUpdateJob::class,
+
+        // Search
+        'App\\Services\\ContentIndexer' => Services\ContentIndexer::class,
+        'App\\Services\\SearchHighlighter' => Services\SearchHighlighter::class,
+        'App\\Observers\\SearchContentObserver' => Observers\SearchContentObserver::class,
+        'App\\Livewire\\SearchResults' => Livewire\SearchResults::class,
     ];
 
     public function configurePackage(Package $package): void
@@ -272,6 +278,10 @@ class TallCmsServiceProvider extends PackageServiceProvider
         // Register LocaleRegistry singleton (needed for i18n features)
         $this->app->singleton(Services\LocaleRegistry::class);
         $this->app->alias(Services\LocaleRegistry::class, 'tallcms.locales');
+
+        // Register search services
+        $this->app->singleton(Services\ContentIndexer::class);
+        $this->app->singleton(Services\SearchHighlighter::class);
 
         // Register the PluginServiceProvider and ThemeServiceProvider
         $this->app->register(PluginServiceProvider::class);
@@ -339,6 +349,39 @@ class TallCmsServiceProvider extends PackageServiceProvider
         } else {
             $this->bootPluginFeatures();
         }
+
+        // Register search observer and warn if Scout not configured
+        $this->bootSearchFeatures();
+    }
+
+    /**
+     * Boot search-related features.
+     */
+    protected function bootSearchFeatures(): void
+    {
+        if (! config('tallcms.search.enabled', true)) {
+            return;
+        }
+
+        // Register search content observer
+        Models\CmsPage::observe(Observers\SearchContentObserver::class);
+        Models\CmsPost::observe(Observers\SearchContentObserver::class);
+
+        // Register search route (works in both standalone and plugin modes)
+        // In standalone mode, the main frontend routes are in the app's routes/web.php,
+        // but we still need to register the search route from the package.
+        Route::middleware(['web', 'tallcms.maintenance', 'tallcms.set-locale'])
+            ->group(function () {
+                Route::get('/search', Livewire\SearchResults::class)
+                    ->name('tallcms.search');
+            });
+
+        // Warn if Scout is not properly configured
+        if (config('scout.driver') !== 'database') {
+            \Illuminate\Support\Facades\Log::warning(
+                'TallCMS search requires SCOUT_DRIVER=database. Current: '.(config('scout.driver') ?? 'not set')
+            );
+        }
     }
 
     /**
@@ -354,6 +397,11 @@ class TallCmsServiceProvider extends PackageServiceProvider
             // Register with the exact names Livewire generates from class names
             \Livewire\Livewire::component('tall-cms.cms.livewire.revision-history', Livewire\RevisionHistory::class);
             \Livewire\Livewire::component('tall-cms.cms.livewire.cms-page-renderer', Livewire\CmsPageRenderer::class);
+
+            // Register search results component
+            if (config('tallcms.search.enabled', true)) {
+                \Livewire\Livewire::component('tall-cms.cms.livewire.search-results', Livewire\SearchResults::class);
+            }
         }
     }
 
@@ -453,14 +501,14 @@ class TallCmsServiceProvider extends PackageServiceProvider
             // Log warning if assets aren't published (frontend styling may be incomplete)
             if (! file_exists(public_path('vendor/tallcms/tallcms.css'))) {
                 \Illuminate\Support\Facades\Log::warning(
-                    'TallCMS: Package assets not published. Frontend styling may be incomplete. ' .
+                    'TallCMS: Package assets not published. Frontend styling may be incomplete. '.
                     'Run: php artisan vendor:publish --tag=tallcms-assets'
                 );
             }
 
             Route::prefix($prefix)
                 ->middleware(['web'])
-                ->group(__DIR__ . '/../routes/frontend.php');
+                ->group(__DIR__.'/../routes/frontend.php');
         }
     }
 
@@ -501,14 +549,14 @@ class TallCmsServiceProvider extends PackageServiceProvider
         // Core SEO routes (sitemap.xml, robots.txt)
         // Always at root level - no prefix - search engines expect standard locations
         if (config('tallcms.plugin_mode.seo_routes_enabled', true)) {
-            Route::middleware(['web'])->group(__DIR__ . '/../routes/seo.php');
+            Route::middleware(['web'])->group(__DIR__.'/../routes/seo.php');
         }
 
         // Archive routes (RSS feed, category/author archives)
         // Optional prefix to avoid conflicts with host app routes
         if (config('tallcms.plugin_mode.archive_routes_enabled', false)) {
             $archivePrefix = config('tallcms.plugin_mode.archive_routes_prefix', '');
-            Route::middleware(['web'])->prefix($archivePrefix)->group(__DIR__ . '/../routes/archives.php');
+            Route::middleware(['web'])->prefix($archivePrefix)->group(__DIR__.'/../routes/archives.php');
         }
     }
 
@@ -541,8 +589,8 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
             if (! $pluginRegistered) {
                 \Illuminate\Support\Facades\Log::warning(
-                    'TallCMS: Plugin not registered with any Filament panel. ' .
-                    'Add TallCmsPlugin::make() to your panel provider. ' .
+                    'TallCMS: Plugin not registered with any Filament panel. '.
+                    'Add TallCmsPlugin::make() to your panel provider. '.
                     'Example: $panel->plugin(TallCmsPlugin::make())'
                 );
             }
@@ -605,6 +653,9 @@ class TallCmsServiceProvider extends PackageServiceProvider
             // Page settings
             '2026_01_25_000001_add_content_width_to_tallcms_pages_table',
             '2026_01_26_000001_add_show_breadcrumbs_to_tallcms_pages_table',
+
+            // Full-text search
+            '2026_01_27_000001_add_search_content_to_cms_tables',
         ];
     }
 
@@ -618,6 +669,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
             Console\Commands\BackfillAuthorSlugs::class,
             Console\Commands\CleanExpiredPreviewTokens::class,
             Console\Commands\MakeTallCmsBlock::class,
+            Console\Commands\SearchIndex::class,
             Console\Commands\TallCmsInstall::class,
             Console\Commands\TallCmsSetup::class,
 
