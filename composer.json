@@ -29,11 +29,12 @@
     ],
     "require": {
         "php": "^8.2",
-        "tallcms/cms": "^2.5",
         "aws/aws-sdk-php": "^3.369",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
-        "league/flysystem-aws-s3-v3": "^3.30"
+        "league/flysystem-aws-s3-v3": "^3.30",
+        "symfony/yaml": "^7.4",
+        "tallcms/cms": "^2.5"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
