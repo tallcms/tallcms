@@ -367,20 +367,66 @@ class TallCmsServiceProvider extends PackageServiceProvider
         Models\CmsPage::observe(Observers\SearchContentObserver::class);
         Models\CmsPost::observe(Observers\SearchContentObserver::class);
 
-        // Register search route (works in both standalone and plugin modes)
-        // In standalone mode, the main frontend routes are in the app's routes/web.php,
-        // but we still need to register the search route from the package.
-        Route::middleware(['web', 'tallcms.maintenance', 'tallcms.set-locale'])
-            ->group(function () {
-                Route::get('/search', Livewire\SearchResults::class)
-                    ->name('tallcms.search');
-            });
+        // Register search route respecting mode and i18n settings
+        $this->registerSearchRoute();
 
         // Warn if Scout is not properly configured
         if (config('scout.driver') !== 'database') {
             \Illuminate\Support\Facades\Log::warning(
                 'TallCMS search requires SCOUT_DRIVER=database. Current: '.(config('scout.driver') ?? 'not set')
             );
+        }
+    }
+
+    /**
+     * Register search route respecting plugin mode prefix and i18n locale prefixes.
+     */
+    protected function registerSearchRoute(): void
+    {
+        $i18nEnabled = config('tallcms.i18n.enabled', false);
+        $urlStrategy = config('tallcms.i18n.url_strategy', 'prefix');
+
+        // Determine base prefix (plugin mode routes prefix)
+        $basePrefix = '';
+        if (! $this->isStandaloneMode()) {
+            $basePrefix = config('tallcms.plugin_mode.routes_prefix', '');
+        }
+
+        $middleware = ['web', 'tallcms.maintenance', 'tallcms.set-locale'];
+
+        if ($i18nEnabled && $urlStrategy === 'prefix') {
+            // Register search route for each locale
+            $registry = app(Services\LocaleRegistry::class);
+            $locales = $registry->getLocaleCodes();
+            $default = $registry->getDefaultLocale();
+            $hideDefault = config('tallcms.i18n.hide_default_locale', true);
+
+            foreach ($locales as $locale) {
+                $publicPrefix = Services\LocaleRegistry::toBcp47($locale);
+                $isDefault = ($locale === $default);
+
+                // Build full prefix: base + locale (if not hidden default)
+                $localePrefix = ($hideDefault && $isDefault) ? '' : $publicPrefix;
+                $fullPrefix = trim($basePrefix.'/'.$localePrefix, '/');
+
+                $nameSuffix = ($hideDefault && $isDefault) ? '' : ".{$locale}";
+
+                Route::middleware($middleware)
+                    ->prefix($fullPrefix)
+                    ->group(function () use ($locale, $nameSuffix) {
+                        Route::get('/search', Livewire\SearchResults::class)
+                            ->defaults('locale', $locale)
+                            ->name('tallcms.search'.$nameSuffix);
+                    });
+            }
+        } else {
+            // Non-i18n: single search route with base prefix only
+            Route::middleware($middleware)
+                ->prefix($basePrefix)
+                ->group(function () {
+                    Route::get('/search', Livewire\SearchResults::class)
+                        ->name('tallcms.search');
+                });
         }
     }
 

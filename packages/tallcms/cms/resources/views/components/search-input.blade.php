@@ -1,7 +1,7 @@
 @props(['placeholder' => null])
 
-@if(config('tallcms.search.enabled', true) && Route::has('tallcms.search'))
-<form action="{{ route('tallcms.search') }}" method="GET" {{ $attributes }}>
+@if(config('tallcms.search.enabled', true))
+<form action="{{ tallcms_search_url() }}" method="GET" {{ $attributes }}>
     <input
         type="search"
         name="q"

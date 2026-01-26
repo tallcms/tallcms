@@ -1,7 +1,7 @@
-@if(config('tallcms.search.enabled', true) && Route::has('tallcms.search'))
+@if(config('tallcms.search.enabled', true))
 <div x-data="{ open: false }">
     {{-- Desktop: Inline search input --}}
-    <form action="{{ route('tallcms.search') }}" method="GET" class="hidden lg:block">
+    <form action="{{ tallcms_search_url() }}" method="GET" class="hidden lg:block">
         <div class="form-control">
             <div class="join">
                 <input
@@ -55,7 +55,7 @@
             x-transition:leave-end="opacity-0 scale-95"
             class="w-full max-w-md bg-base-100 rounded-box shadow-2xl p-4 relative"
         >
-            <form action="{{ route('tallcms.search') }}" method="GET">
+            <form action="{{ tallcms_search_url() }}" method="GET">
                 <div class="form-control">
                     <div class="join w-full">
                         <input
