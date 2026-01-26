@@ -6,6 +6,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use LaraZeus\SpatieTranslatable\Resources\Concerns\Translatable;
 use TallCms\Cms\Filament\Resources\CmsPosts\Pages\CreateCmsPost;
@@ -18,9 +19,16 @@ use TallCms\Cms\Models\CmsPost;
 class CmsPostResource extends Resource
 {
     use Translatable;
+
     protected static ?string $model = CmsPost::class;
 
     protected static ?string $pluralModelLabel = 'Posts';
+
+    // Title attribute enables global search automatically
+    protected static ?string $recordTitleAttribute = 'title';
+
+    // Limit results to prevent performance issues
+    protected static int $globalSearchResultsLimit = 20;
 
     public static function form(Schema $schema): Schema
     {
@@ -83,5 +91,46 @@ class CmsPostResource extends Resource
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * Get the columns that should be searched globally.
+     * Filament searches these columns using LIKE queries.
+     *
+     * Only search_content is used because title/slug/excerpt are JSON columns
+     * (Spatie Translatable), and LIKE on JSON fails on PostgreSQL and
+     * causes false positives by matching locale keys like "en", "es".
+     */
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['search_content'];
+    }
+
+    public static function getGlobalSearchResultTitle(Model $record): string
+    {
+        return $record->title ?? __('Untitled');
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return [
+            __('Type') => __('Post'),
+            __('Status') => __(ucfirst($record->status ?? 'draft')),
+            __('Author') => $record->author?->name ?? __('Unknown'),
+        ];
+    }
+
+    public static function getGlobalSearchResultUrl(Model $record): ?string
+    {
+        return static::getUrl('edit', ['record' => $record]);
+    }
+
+    /**
+     * Customize the base query for global search.
+     * Eager load author to avoid N+1 queries in result details.
+     */
+    public static function getGlobalSearchEloquentQuery(): Builder
+    {
+        return parent::getGlobalSearchEloquentQuery()->with('author');
     }
 }

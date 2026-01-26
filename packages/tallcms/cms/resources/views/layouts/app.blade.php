@@ -97,6 +97,19 @@
                     <div class="hidden md:flex items-center space-x-8">
                         <x-tallcms::menu location="header" style="horizontal" class="flex items-center space-x-8" />
 
+                        {{-- Search --}}
+                        @if(config('tallcms.search.enabled', true) && Route::has('tallcms.search'))
+                            <form action="{{ route('tallcms.search') }}" method="GET" class="relative">
+                                <input
+                                    type="search"
+                                    name="q"
+                                    placeholder="{{ __('Search...') }}"
+                                    class="w-40 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 focus:w-56"
+                                    minlength="{{ config('tallcms.search.min_query_length', 2) }}"
+                                />
+                            </form>
+                        @endif
+
                         {{-- Language Switcher (only when i18n enabled) --}}
                         @if(tallcms_i18n_enabled())
                             <x-tallcms::language-switcher :model="$seoPage ?? $seoPost ?? null" />
@@ -128,6 +141,19 @@
                  x-cloak
                  class="md:hidden bg-white/95 backdrop-blur-md shadow-lg border-t border-gray-100">
                 <div class="px-4 py-4 space-y-3">
+                    {{-- Mobile Search --}}
+                    @if(config('tallcms.search.enabled', true) && Route::has('tallcms.search'))
+                        <form action="{{ route('tallcms.search') }}" method="GET" class="mb-3">
+                            <input
+                                type="search"
+                                name="q"
+                                placeholder="{{ __('Search...') }}"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                minlength="{{ config('tallcms.search.min_query_length', 2) }}"
+                            />
+                        </form>
+                    @endif
+
                     <x-tallcms::menu location="header" style="vertical" />
 
                     {{-- Language Switcher for Mobile (only when i18n enabled) --}}

@@ -855,6 +855,66 @@ if (! function_exists('tallcms_i18n_enabled')) {
     }
 }
 
+if (! function_exists('tallcms_search_url')) {
+    /**
+     * Get the search page URL respecting i18n and plugin mode prefixes.
+     *
+     * Returns the correct search URL based on current locale and route configuration.
+     * Supports both url_strategy modes:
+     * - 'prefix': /es/search or /cms/es/search
+     * - 'none': /search?lang=es or /cms/search?lang=es
+     *
+     * @return string The search page URL
+     */
+    function tallcms_search_url(): string
+    {
+        // Build search path with proper prefixes
+        $segments = [];
+
+        // Add plugin mode routes prefix if applicable
+        $routesPrefix = config('tallcms.plugin_mode.routes_prefix', '');
+        if ($routesPrefix) {
+            $segments[] = $routesPrefix;
+        }
+
+        $urlStrategy = config('tallcms.i18n.url_strategy', 'prefix');
+
+        // Add locale prefix if i18n is enabled with prefix strategy
+        if (tallcms_i18n_enabled() && $urlStrategy === 'prefix') {
+            $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+            $currentLocale = tallcms_current_locale();
+            $defaultLocale = $registry->getDefaultLocale();
+            $hideDefault = config('tallcms.i18n.hide_default_locale', true);
+
+            // Add locale prefix unless it's hidden default
+            if (! ($hideDefault && $currentLocale === $defaultLocale)) {
+                $segments[] = \TallCms\Cms\Services\LocaleRegistry::toBcp47($currentLocale);
+            }
+        }
+
+        $segments[] = 'search';
+
+        $baseUrl = url(implode('/', $segments));
+
+        // For 'none' strategy, append ?lang= query parameter
+        if (tallcms_i18n_enabled() && $urlStrategy === 'none') {
+            $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+            $currentLocale = tallcms_current_locale();
+            $defaultLocale = $registry->getDefaultLocale();
+            $hideDefault = config('tallcms.i18n.hide_default_locale', true);
+
+            // Append ?lang= unless it's hidden default
+            if (! ($hideDefault && $currentLocale === $defaultLocale)) {
+                $bcp47 = \TallCms\Cms\Services\LocaleRegistry::toBcp47($currentLocale);
+
+                return $baseUrl . '?lang=' . $bcp47;
+            }
+        }
+
+        return $baseUrl;
+    }
+}
+
 if (! function_exists('tallcms_current_slug')) {
     /**
      * Extract the clean content slug from the current request path.

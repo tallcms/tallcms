@@ -14,6 +14,7 @@ use TallCms\Cms\Casts\TranslatableArray;
 use TallCms\Cms\Models\Concerns\HasPreviewTokens;
 use TallCms\Cms\Models\Concerns\HasPublishingWorkflow;
 use TallCms\Cms\Models\Concerns\HasRevisions;
+use TallCms\Cms\Models\Concerns\HasSearchableContent;
 use TallCms\Cms\Models\Concerns\HasTranslatableContent;
 
 class CmsPage extends Model
@@ -22,6 +23,7 @@ class CmsPage extends Model
     use HasPreviewTokens;
     use HasPublishingWorkflow;
     use HasRevisions;
+    use HasSearchableContent;
     use HasTranslatableContent;
     use SoftDeletes;
 
@@ -44,6 +46,7 @@ class CmsPage extends Model
         'title',
         'slug',
         'content',
+        'search_content',
         'meta_title',
         'meta_description',
         'featured_image',
@@ -175,8 +178,8 @@ class CmsPage extends Model
 
         return match ($driver) {
             'sqlite' => $query->whereRaw("JSON_EXTRACT(slug, '$.{$locale}') = ?", [$slug]),
-            'pgsql' => $query->whereRaw("slug::jsonb ->> ? = ?", [$locale, $slug]),
-            default => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(slug, '$.\"" . $locale . "\"')) = ?", [$slug]),
+            'pgsql' => $query->whereRaw('slug::jsonb ->> ? = ?', [$locale, $slug]),
+            default => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(slug, '$.\"".$locale."\"')) = ?", [$slug]),
         };
     }
 
@@ -217,11 +220,11 @@ class CmsPage extends Model
             // Check reserved slugs (locale codes)
             $reserved = app(\TallCms\Cms\Services\LocaleRegistry::class)->getReservedSlugs();
             if (in_array($slug, $reserved)) {
-                $slug = $baseSlug . '-page';
+                $slug = $baseSlug.'-page';
             }
 
             while ($this->localizedSlugExists($slug, $locale)) {
-                $slug = $baseSlug . '-' . $counter;
+                $slug = $baseSlug.'-'.$counter;
                 $counter++;
             }
 
@@ -234,7 +237,7 @@ class CmsPage extends Model
         $counter = 1;
 
         while ($this->slugExists($slug)) {
-            $slug = $baseSlug . '-' . $counter;
+            $slug = $baseSlug.'-'.$counter;
             $counter++;
         }
 
@@ -253,8 +256,8 @@ class CmsPage extends Model
 
         match ($driver) {
             'sqlite' => $query->whereRaw("JSON_EXTRACT(slug, '$.{$locale}') = ?", [$slug]),
-            'pgsql' => $query->whereRaw("slug::jsonb ->> ? = ?", [$locale, $slug]),
-            default => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(slug, '$.\"" . $locale . "\"')) = ?", [$slug]),
+            'pgsql' => $query->whereRaw('slug::jsonb ->> ? = ?', [$locale, $slug]),
+            default => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(slug, '$.\"".$locale."\"')) = ?", [$slug]),
         };
 
         if ($this->exists) {

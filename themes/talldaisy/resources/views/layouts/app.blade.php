@@ -131,6 +131,9 @@
                 </div>
 
                 <div class="navbar-end gap-2">
+                    <!-- Search -->
+                    @include('theme.talldaisy::components.header-search')
+
                     <!-- Language Switcher -->
                     @include('theme.talldaisy::components.language-switcher')
 

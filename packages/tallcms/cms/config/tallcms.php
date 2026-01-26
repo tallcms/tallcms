@@ -10,7 +10,7 @@ return [
     | This is the single source of truth for version comparisons.
     |
     */
-    'version' => '2.5.0',
+    'version' => '2.6.0',
 
     /*
     |--------------------------------------------------------------------------
@@ -346,6 +346,32 @@ return [
 
         // Remember locale preference in session
         'remember_locale' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Full-Text Search
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for the full-text search functionality using Laravel Scout.
+    | Requires SCOUT_DRIVER=database in your .env file.
+    |
+    */
+    'search' => [
+        // Enable or disable search functionality
+        'enabled' => env('TALLCMS_SEARCH_ENABLED', true),
+
+        // Minimum query length required before searching
+        'min_query_length' => 2,
+
+        // Number of results per page on the search results page
+        'results_per_page' => 10,
+
+        // Maximum results per model type to avoid memory issues
+        'max_results_per_type' => 50,
+
+        // Which content types to include in search
+        'searchable_types' => ['pages', 'posts'],
     ],
 
     /*

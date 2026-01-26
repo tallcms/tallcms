@@ -14,6 +14,7 @@ use TallCms\Cms\Casts\TranslatableArray;
 use TallCms\Cms\Models\Concerns\HasPreviewTokens;
 use TallCms\Cms\Models\Concerns\HasPublishingWorkflow;
 use TallCms\Cms\Models\Concerns\HasRevisions;
+use TallCms\Cms\Models\Concerns\HasSearchableContent;
 use TallCms\Cms\Models\Concerns\HasTranslatableContent;
 
 class CmsPost extends Model
@@ -22,6 +23,7 @@ class CmsPost extends Model
     use HasPreviewTokens;
     use HasPublishingWorkflow;
     use HasRevisions;
+    use HasSearchableContent;
     use HasTranslatableContent;
     use SoftDeletes;
 
@@ -46,6 +48,7 @@ class CmsPost extends Model
         'slug',
         'excerpt',
         'content',
+        'search_content',
         'meta_title',
         'meta_description',
         'featured_image',
@@ -116,8 +119,8 @@ class CmsPost extends Model
 
         return match ($driver) {
             'sqlite' => $query->whereRaw("JSON_EXTRACT(slug, '$.{$locale}') = ?", [$slug]),
-            'pgsql' => $query->whereRaw("slug::jsonb ->> ? = ?", [$locale, $slug]),
-            default => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(slug, '$.\"" . $locale . "\"')) = ?", [$slug]),
+            'pgsql' => $query->whereRaw('slug::jsonb ->> ? = ?', [$locale, $slug]),
+            default => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(slug, '$.\"".$locale."\"')) = ?", [$slug]),
         };
     }
 
@@ -130,8 +133,8 @@ class CmsPost extends Model
 
             match ($driver) {
                 'sqlite' => $q->whereRaw("JSON_EXTRACT(slug, '$.{$locale}') = ?", [$categorySlug]),
-                'pgsql' => $q->whereRaw("slug::jsonb ->> ? = ?", [$locale, $categorySlug]),
-                default => $q->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(slug, '$.\"" . $locale . "\"')) = ?", [$categorySlug]),
+                'pgsql' => $q->whereRaw('slug::jsonb ->> ? = ?', [$locale, $categorySlug]),
+                default => $q->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(slug, '$.\"".$locale."\"')) = ?", [$categorySlug]),
             };
         });
     }
@@ -140,7 +143,6 @@ class CmsPost extends Model
      * Scope posts to a specific author by their slug.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  string  $authorSlug
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByAuthor($query, string $authorSlug)
@@ -198,11 +200,11 @@ class CmsPost extends Model
             // Check reserved slugs (locale codes)
             $reserved = app(\TallCms\Cms\Services\LocaleRegistry::class)->getReservedSlugs();
             if (in_array($slug, $reserved)) {
-                $slug = $baseSlug . '-post';
+                $slug = $baseSlug.'-post';
             }
 
             while ($this->localizedSlugExists($slug, $locale)) {
-                $slug = $baseSlug . '-' . $counter;
+                $slug = $baseSlug.'-'.$counter;
                 $counter++;
             }
 
@@ -215,7 +217,7 @@ class CmsPost extends Model
         $counter = 1;
 
         while ($this->slugExists($slug)) {
-            $slug = $baseSlug . '-' . $counter;
+            $slug = $baseSlug.'-'.$counter;
             $counter++;
         }
 
@@ -234,8 +236,8 @@ class CmsPost extends Model
 
         match ($driver) {
             'sqlite' => $query->whereRaw("JSON_EXTRACT(slug, '$.{$locale}') = ?", [$slug]),
-            'pgsql' => $query->whereRaw("slug::jsonb ->> ? = ?", [$locale, $slug]),
-            default => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(slug, '$.\"" . $locale . "\"')) = ?", [$slug]),
+            'pgsql' => $query->whereRaw('slug::jsonb ->> ? = ?', [$locale, $slug]),
+            default => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(slug, '$.\"".$locale."\"')) = ?", [$slug]),
         };
 
         if ($this->exists) {

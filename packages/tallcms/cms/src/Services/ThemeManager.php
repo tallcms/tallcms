@@ -723,19 +723,21 @@ class ThemeManager
         $themePublicPath = $theme->getPublicPath();
         $publicThemePath = public_path("themes/{$theme->slug}");
 
-        // Remove existing symlink/directory
-        if (File::exists($publicThemePath)) {
-            if (is_link($publicThemePath)) {
-                unlink($publicThemePath);
-            } else {
-                File::deleteDirectory($publicThemePath);
-            }
+        // Remove existing symlink/directory (including broken symlinks)
+        // is_link() detects symlinks even if broken, File::exists() does not
+        if (is_link($publicThemePath)) {
+            @unlink($publicThemePath);
+        } elseif (File::exists($publicThemePath)) {
+            File::deleteDirectory($publicThemePath);
         }
 
         // Create new symlink or copy
         if (File::exists($themePublicPath)) {
             // Ensure parent directory exists
-            File::makeDirectory(dirname($publicThemePath), 0755, true, true);
+            $parentDir = dirname($publicThemePath);
+            if (! File::isDirectory($parentDir)) {
+                File::makeDirectory($parentDir, 0755, true, true);
+            }
 
             // Try symlink first, fallback to copy
             try {
