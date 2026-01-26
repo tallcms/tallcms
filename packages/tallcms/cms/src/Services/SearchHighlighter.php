@@ -18,9 +18,13 @@ class SearchHighlighter
             return '';
         }
 
+        // Strip HTML tags and decode entities to prevent XSS
+        $text = strip_tags($text);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
         $words = $this->sanitizeQuery($query);
         if (empty($words)) {
-            return Str::limit($text, $contextLength);
+            return e(Str::limit($text, $contextLength));
         }
 
         $escapedWords = array_map(fn ($w) => preg_quote($w, '/'), $words);
@@ -38,14 +42,21 @@ class SearchHighlighter
                 $excerpt = rtrim($excerpt).'...';
             }
 
+            // Escape the excerpt first, then add highlight marks
+            $excerpt = e($excerpt);
+
+            // Escape the pattern for use after HTML escaping
+            $escapedWordsForHtml = array_map(fn ($w) => preg_quote(e($w), '/'), $words);
+            $patternForHtml = '/('.implode('|', $escapedWordsForHtml).')/iu';
+
             return preg_replace(
-                $pattern,
+                $patternForHtml,
                 '<mark class="bg-warning text-warning-content px-0.5 rounded">$1</mark>',
                 $excerpt
             );
         }
 
-        return Str::limit($text, $contextLength).'...';
+        return e(Str::limit($text, $contextLength)).'...';
     }
 
     protected function sanitizeQuery(string $query): array
