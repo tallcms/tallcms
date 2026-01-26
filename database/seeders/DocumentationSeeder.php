@@ -221,13 +221,30 @@ class DocumentationSeeder extends Seeder
             ];
         }
 
-        // Sort and create posts by category
-        foreach ($docsByCategory as $categorySlug => $docs) {
-            // Sort by order field
+        // Base timestamp for sequential ordering (1 day ago as starting point)
+        $baseTimestamp = now()->subDay();
+        $postIndex = 0;
+
+        // Process categories in their defined order
+        $sortedCategories = collect($this->categoryMap)
+            ->sortBy('order')
+            ->keys();
+
+        foreach ($sortedCategories as $categorySlug) {
+            if (! isset($docsByCategory[$categorySlug])) {
+                continue;
+            }
+
+            $docs = $docsByCategory[$categorySlug];
+
+            // Sort by order field within category
             usort($docs, fn ($a, $b) => ($a['frontmatter']['order'] ?? 99) <=> ($b['frontmatter']['order'] ?? 99));
 
             foreach ($docs as $doc) {
-                $this->createDocPost($doc, $categories[$categorySlug]);
+                // Each post gets a timestamp 1 minute after the previous
+                $publishedAt = $baseTimestamp->copy()->addMinutes($postIndex);
+                $this->createDocPost($doc, $categories[$categorySlug], $publishedAt);
+                $postIndex++;
             }
         }
     }
@@ -236,8 +253,9 @@ class DocumentationSeeder extends Seeder
      * Create a documentation post from parsed frontmatter and content.
      *
      * @param  array{filename: string, frontmatter: array<string, mixed>, content: string}  $doc
+     * @param  \Carbon\Carbon  $publishedAt  Timestamp for ordering docs chronologically
      */
-    protected function createDocPost(array $doc, CmsCategory $category): void
+    protected function createDocPost(array $doc, CmsCategory $category, $publishedAt): void
     {
         $frontmatter = $doc['frontmatter'];
         $content = $doc['content'];
@@ -249,7 +267,7 @@ class DocumentationSeeder extends Seeder
         $html = $this->converter->convert($content);
         $excerpt = $this->converter->generateMetaDescription($content);
 
-        // Create post
+        // Create post with sequential timestamp for proper ordering
         $post = CmsPost::create([
             'title' => $title,
             'slug' => $slug,
@@ -257,7 +275,9 @@ class DocumentationSeeder extends Seeder
             'meta_title' => "{$title} - TallCMS Documentation",
             'meta_description' => $excerpt,
             'status' => ContentStatus::Published->value,
-            'published_at' => now(),
+            'published_at' => $publishedAt,
+            'created_at' => $publishedAt,
+            'updated_at' => $publishedAt,
             'author_id' => $this->authorId,
         ]);
 
