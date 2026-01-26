@@ -22,6 +22,7 @@ use TallCms\Cms\Filament\Resources\CmsCategories\CmsCategoryResource;
 use TallCms\Cms\Filament\Resources\CmsPages\CmsPageResource;
 use TallCms\Cms\Filament\Resources\CmsPosts\CmsPostResource;
 use TallCms\Cms\Filament\Resources\TallcmsContactSubmissions\TallcmsContactSubmissionResource;
+use TallCms\Cms\Filament\Resources\MediaCollection\MediaCollectionResource;
 use TallCms\Cms\Filament\Resources\TallcmsMedia\TallcmsMediaResource;
 use TallCms\Cms\Filament\Resources\TallcmsMenus\TallcmsMenuResource;
 use TallCms\Cms\Filament\Resources\Users\UserResource;
@@ -301,6 +302,7 @@ class TallCmsPlugin implements Plugin
 
         if ($this->hasMedia) {
             $resources[] = TallcmsMediaResource::class;
+            $resources[] = MediaCollectionResource::class;
         }
 
         if ($this->hasMenus) {

@@ -2,10 +2,12 @@
 
 namespace TallCms\Cms\Filament\Resources\TallcmsMedia\Pages;
 
-use TallCms\Cms\Filament\Resources\TallcmsMedia\TallcmsMediaResource;
-use TallCms\Cms\Models\TallcmsMedia;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use TallCms\Cms\Filament\Resources\TallcmsMedia\TallcmsMediaResource;
+use TallCms\Cms\Jobs\OptimizeMediaJob;
+use TallCms\Cms\Models\TallcmsMedia;
 
 class CreateTallcmsMedia extends CreateRecord
 {
@@ -16,6 +18,14 @@ class CreateTallcmsMedia extends CreateRecord
         // Handle multiple file uploads
         $uploadedFiles = $data['upload'] ?? [];
         unset($data['upload']);
+
+        // Get original filenames stored by FileUpload
+        $originalNames = $data['original_names'] ?? [];
+        unset($data['original_names']);
+
+        // Extract collection IDs if set (using collection_ids field for bulk upload)
+        $collectionIds = $data['collection_ids'] ?? [];
+        unset($data['collection_ids']);
 
         if (empty($uploadedFiles)) {
             return TallcmsMedia::create($data);
@@ -28,19 +38,42 @@ class CreateTallcmsMedia extends CreateRecord
         $disk = \cms_media_disk();
 
         foreach ($files as $filePath) {
-            $originalName = pathinfo($filePath, PATHINFO_BASENAME);
+            // Get original filename from stored names, fallback to path basename
+            $originalName = $originalNames[$filePath] ?? pathinfo($filePath, PATHINFO_BASENAME);
             $mimeType = Storage::disk($disk)->mimeType($filePath);
             $size = Storage::disk($disk)->size($filePath);
+            $isImage = str_starts_with($mimeType, 'image/');
 
             // Get image dimensions if it's an image
-            // Note: For S3, we can't use getimagesize directly, so we skip dimensions for remote storage
             $meta = [];
-            if (str_starts_with($mimeType, 'image/') && $disk === 'public') {
-                $fullPath = Storage::disk($disk)->path($filePath);
-                if (file_exists($fullPath)) {
-                    [$width, $height] = getimagesize($fullPath);
-                    $meta = ['width' => $width, 'height' => $height];
+            if ($isImage) {
+                if ($disk === 'public') {
+                    $fullPath = Storage::disk($disk)->path($filePath);
+                    if (file_exists($fullPath)) {
+                        [$width, $height] = @getimagesize($fullPath);
+                        if ($width && $height) {
+                            $meta = ['width' => $width, 'height' => $height];
+                        }
+                    }
+                } else {
+                    // For remote disks, download to temp to get dimensions
+                    $tempPath = sys_get_temp_dir().'/'.uniqid('media_dim_').'.'.pathinfo($filePath, PATHINFO_EXTENSION);
+                    try {
+                        file_put_contents($tempPath, Storage::disk($disk)->get($filePath));
+                        [$width, $height] = @getimagesize($tempPath);
+                        if ($width && $height) {
+                            $meta = ['width' => $width, 'height' => $height];
+                        }
+                    } finally {
+                        @unlink($tempPath);
+                    }
                 }
+            }
+
+            // Auto-generate alt text from filename if not provided and is an image
+            $altText = $data['alt_text'] ?? null;
+            if (empty($altText) && $isImage) {
+                $altText = Str::headline(pathinfo($originalName, PATHINFO_FILENAME));
             }
 
             $record = TallcmsMedia::create(array_merge($data, [
@@ -51,7 +84,19 @@ class CreateTallcmsMedia extends CreateRecord
                 'disk' => $disk,
                 'size' => $size,
                 'meta' => $meta,
+                'alt_text' => $altText,
             ]));
+
+            // Attach to collections if specified
+            if (! empty($collectionIds)) {
+                $record->collections()->attach($collectionIds);
+            }
+
+            // Dispatch optimization job for images
+            if (config('tallcms.media.optimization.enabled', true) && $isImage) {
+                OptimizeMediaJob::dispatch($record)
+                    ->onQueue(config('tallcms.media.optimization.queue', 'default'));
+            }
 
             $createdRecords[] = $record;
         }

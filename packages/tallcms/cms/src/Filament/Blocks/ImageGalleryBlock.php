@@ -2,17 +2,19 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
-use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
-use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
-use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
-use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Section;
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
+use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
+use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
+use TallCms\Cms\Models\MediaCollection;
 
 class ImageGalleryBlock extends RichContentCustomBlock
 {
@@ -38,12 +40,12 @@ class ImageGalleryBlock extends RichContentCustomBlock
 
     public static function getDescription(): string
     {
-        return 'Image gallery with lightbox support';
+        return 'Media gallery with lightbox for images and videos';
     }
 
     public static function getKeywords(): array
     {
-        return ['images', 'photos', 'gallery', 'lightbox'];
+        return ['images', 'photos', 'gallery', 'lightbox', 'video', 'media'];
     }
 
     public static function getSortPriority(): int
@@ -57,18 +59,64 @@ class ImageGalleryBlock extends RichContentCustomBlock
 
     public static function getLabel(): string
     {
-        return 'Image Gallery';
+        return 'Media Gallery';
     }
 
     public static function configureEditorAction(Action $action): Action
     {
         return $action
             ->modalWidth('2xl')
-            ->modalDescription('Create a beautiful image gallery with multiple layout options')
+            ->modalDescription('Create a media gallery with images and videos')
             ->schema([
                 TextInput::make('title')
                     ->maxLength(255)
                     ->placeholder('Gallery title (optional)'),
+
+                Select::make('source')
+                    ->label('Image Source')
+                    ->options([
+                        'manual' => 'Manual Upload',
+                        'collection' => 'Media Collection(s)',
+                    ])
+                    ->default('manual')
+                    ->live()
+                    ->helperText('Use collections to reuse images from Media Library'),
+
+                Select::make('collection_ids')
+                    ->label('Collections')
+                    ->multiple()
+                    ->options(fn () => MediaCollection::pluck('name', 'id')->toArray())
+                    ->searchable()
+                    ->visible(fn (Get $get): bool => $get('source') === 'collection')
+                    ->helperText('Select one or more collections'),
+
+                Select::make('media_type')
+                    ->label('Media Type')
+                    ->options([
+                        'images' => 'Images Only',
+                        'videos' => 'Videos Only',
+                        'all' => 'Images & Videos',
+                    ])
+                    ->default('images')
+                    ->visible(fn (Get $get): bool => $get('source') === 'collection'),
+
+                Select::make('collection_order')
+                    ->label('Order')
+                    ->options([
+                        'newest' => 'Newest First',
+                        'oldest' => 'Oldest First',
+                        'random' => 'Random',
+                    ])
+                    ->default('newest')
+                    ->visible(fn (Get $get): bool => $get('source') === 'collection'),
+
+                TextInput::make('max_items')
+                    ->label('Maximum Items')
+                    ->numeric()
+                    ->minValue(1)
+                    ->maxValue(50)
+                    ->placeholder('No limit')
+                    ->visible(fn (Get $get): bool => $get('source') === 'collection'),
 
                 FileUpload::make('images')
                     ->image()
@@ -87,7 +135,8 @@ class ImageGalleryBlock extends RichContentCustomBlock
                         '4:3',
                         '1:1',
                     ])
-                    ->required()
+                    ->requiredIf('source', 'manual')
+                    ->visible(fn (Get $get): bool => $get('source') !== 'collection')
                     ->helperText('Recommended: 1200×800px or larger. Up to 12 images, max 5MB each. Formats: JPEG, PNG, WebP. Drag to reorder.'),
 
                 Select::make('layout')
@@ -152,7 +201,12 @@ class ImageGalleryBlock extends RichContentCustomBlock
         return view('tallcms::cms.blocks.image-gallery', [
             'id' => static::getId(),
             'title' => $config['title'] ?? '',
+            'source' => $config['source'] ?? 'manual',
             'images' => $config['images'] ?? [],
+            'collection_ids' => $config['collection_ids'] ?? [],
+            'collection_order' => $config['collection_order'] ?? 'newest',
+            'media_type' => $config['media_type'] ?? 'images',
+            'max_items' => isset($config['max_items']) ? (int) $config['max_items'] : (isset($config['max_images']) ? (int) $config['max_images'] : null),
             'layout' => $config['layout'] ?? 'grid-3',
             'image_size' => $config['image_size'] ?? 'medium',
             'contentWidthClass' => $widthConfig['class'],

@@ -69,6 +69,7 @@
                                             src="{{ Storage::disk(cms_media_disk())->url($feature['icon_image']) }}"
                                             alt="{{ $feature['title'] ?? '' }}"
                                             class="{{ $icon_size ?? 'w-10 h-10' }} object-contain"
+                                            loading="lazy"
                                         >
                                     @elseif($iconType === 'emoji' && !empty($feature['emoji']))
                                         <span class="text-3xl">{{ $feature['emoji'] }}</span>

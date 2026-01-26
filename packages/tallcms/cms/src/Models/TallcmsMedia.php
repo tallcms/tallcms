@@ -22,11 +22,15 @@ class TallcmsMedia extends Model
         'meta',
         'alt_text',
         'caption',
+        'optimized_at',
+        'has_variants',
     ];
 
     protected $casts = [
         'meta' => 'array',
         'size' => 'integer',
+        'has_variants' => 'boolean',
+        'optimized_at' => 'datetime',
     ];
 
     /**
@@ -91,14 +95,14 @@ class TallcmsMedia extends Model
     public function scopeInCollection($query, $collection)
     {
         if (is_string($collection)) {
-            return $query->whereHas('collections', fn ($q) => $q->where('slug', $collection));
+            return $query->whereHas('collections', fn ($q) => $q->where('tallcms_media_collections.slug', $collection));
         }
 
         if (is_array($collection)) {
-            return $query->whereHas('collections', fn ($q) => $q->whereIn('id', $collection));
+            return $query->whereHas('collections', fn ($q) => $q->whereIn('tallcms_media_collections.id', $collection));
         }
 
-        return $query->whereHas('collections', fn ($q) => $q->where('id', $collection));
+        return $query->whereHas('collections', fn ($q) => $q->where('tallcms_media_collections.id', $collection));
     }
 
     /**
@@ -110,11 +114,71 @@ class TallcmsMedia extends Model
     }
 
     /**
-     * Delete the physical file when model is deleted
+     * Check if a variant exists for the given size
+     */
+    public function hasVariant(string $size): bool
+    {
+        $variants = $this->meta['variants'] ?? [];
+
+        return isset($variants[$size]);
+    }
+
+    /**
+     * Get the URL for a specific variant, with fallback to original
+     */
+    public function getVariantUrl(string $size = 'medium'): string
+    {
+        $variants = $this->meta['variants'] ?? [];
+
+        if (isset($variants[$size])) {
+            return Storage::disk($this->disk)->url($variants[$size]);
+        }
+
+        // Fallback to original
+        return $this->url;
+    }
+
+    /**
+     * Get image width from meta
+     */
+    public function getWidthAttribute(): ?int
+    {
+        return $this->meta['width'] ?? null;
+    }
+
+    /**
+     * Get image height from meta
+     */
+    public function getHeightAttribute(): ?int
+    {
+        return $this->meta['height'] ?? null;
+    }
+
+    /**
+     * Get the download URL (forces browser download instead of display)
+     * Uses signed URL to prevent ID guessing attacks.
+     */
+    public function getDownloadUrlAttribute(): string
+    {
+        return \Illuminate\Support\Facades\URL::signedRoute(
+            'tallcms.media.download',
+            ['media' => $this->id],
+            now()->addHours(24)
+        );
+    }
+
+    /**
+     * Delete the physical file and variants when model is deleted
      */
     protected static function booted()
     {
         static::deleting(function (TallcmsMedia $media) {
+            // Delete variant files first
+            if ($media->has_variants) {
+                app(\TallCms\Cms\Services\ImageOptimizer::class)->deleteVariants($media);
+            }
+
+            // Delete original file
             if (Storage::disk($media->disk)->exists($media->path)) {
                 Storage::disk($media->disk)->delete($media->path);
             }

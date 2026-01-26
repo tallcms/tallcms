@@ -27,7 +27,7 @@ TallCMS includes 16 custom blocks in 5 categories:
 | Category | Blocks | Icon |
 |----------|--------|------|
 | **Content** | Hero, Content, CTA, Features, Pricing, Divider | `heroicon-o-document-text` |
-| **Media** | Image Gallery, Parallax | `heroicon-o-photo` |
+| **Media** | Media Gallery, Document List, Parallax | `heroicon-o-photo` |
 | **Social Proof** | Testimonials, Team, Logos, Stats | `heroicon-o-star` |
 | **Dynamic** | Posts, FAQ, Timeline | `heroicon-o-newspaper` |
 | **Forms** | Contact Form | `heroicon-o-envelope` |

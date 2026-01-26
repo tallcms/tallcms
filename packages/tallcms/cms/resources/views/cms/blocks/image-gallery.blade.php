@@ -1,4 +1,7 @@
 @php
+    use TallCms\Cms\Services\MediaResolver;
+    use Illuminate\Support\Facades\Storage;
+
     $layoutClasses = [
         'grid-2' => 'grid-cols-1 md:grid-cols-2',
         'grid-3' => 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
@@ -18,13 +21,53 @@
     $sizeClass = $sizeClasses[$image_size ?? 'medium'] ?? $sizeClasses['medium'];
     $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
     $galleryId = 'gallery-' . uniqid();
+
+    // Resolve media from source
+    $source = $source ?? 'manual';
+    $mediaType = $media_type ?? 'images';
+
+    if ($source === 'collection' && !empty($collection_ids)) {
+        // Determine mime type filter based on media_type selection
+        $mimeTypeFilter = match($mediaType) {
+            'videos' => 'video/',
+            'all' => null,
+            default => 'image/',
+        };
+
+        $mediaItems = MediaResolver::fromCollections(
+            $collection_ids,
+            $collection_order ?? 'newest',
+            $max_items ?? null,
+            $mimeTypeFilter
+        );
+        $galleryItems = MediaResolver::toTemplateArray($mediaItems);
+    } else {
+        // Legacy manual mode - array of paths (images only)
+        $galleryItems = collect($images ?? [])->filter(fn($path) =>
+            Storage::disk(cms_media_disk())->exists($path)
+        )->map(fn($path) => [
+            'url' => Storage::disk(cms_media_disk())->url($path),
+            'webp' => null,
+            'alt' => '',
+            'type' => 'image',
+            'mime_type' => 'image/jpeg',
+        ])->values()->all();
+    }
+
+    // Get data for lightbox
+    $lightboxData = collect($galleryItems)->map(fn($item) => [
+        'url' => $item['url'],
+        'alt' => $item['alt'] ?? '',
+        'caption' => $item['caption'] ?? null,
+        'type' => $item['type'] ?? 'image',
+    ])->values()->all();
 @endphp
 
 <section
     @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif
     class="image-gallery-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}"
     x-data="{
-        images: @js(collect($images)->filter(fn($img) => Storage::disk(cms_media_disk())->exists($img))->map(fn($img) => Storage::disk(cms_media_disk())->url($img))->values()->all()),
+        items: @js($lightboxData),
         currentIndex: 0,
         isOpen: false,
         open(index) {
@@ -33,12 +76,19 @@
         },
         close() {
             this.isOpen = false;
+            // Pause any playing videos
+            this.$refs.lightboxVideo?.pause();
         },
         next() {
-            this.currentIndex = (this.currentIndex + 1) % this.images.length;
+            this.$refs.lightboxVideo?.pause();
+            this.currentIndex = (this.currentIndex + 1) % this.items.length;
         },
         prev() {
-            this.currentIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
+            this.$refs.lightboxVideo?.pause();
+            this.currentIndex = (this.currentIndex - 1 + this.items.length) % this.items.length;
+        },
+        get current() {
+            return this.items[this.currentIndex] || {};
         }
     }"
     @keydown.escape.window="close()"
@@ -54,53 +104,116 @@
 
         @if(($layout ?? 'grid-3') === 'masonry')
             <div class="{{ $gridClass }} gap-4">
-                @php $imageIndex = 0; @endphp
-                @foreach($images as $image)
-                    @if(Storage::disk(cms_media_disk())->exists($image))
-                        <div class="break-inside-avoid mb-4">
-                            <img
-                                src="{{ Storage::disk(cms_media_disk())->url($image) }}"
-                                alt="Gallery image {{ $imageIndex + 1 }}"
-                                class="w-full rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                                @click="open({{ $imageIndex }})"
-                            >
-                        </div>
-                        @php $imageIndex++; @endphp
-                    @endif
+                @foreach($galleryItems as $index => $item)
+                    <figure class="break-inside-avoid mb-4">
+                        @if(($item['type'] ?? 'image') === 'video')
+                            <div class="relative cursor-pointer group" @click="open({{ $index }})">
+                                <video
+                                    src="{{ $item['url'] }}"
+                                    class="w-full rounded-lg shadow-md group-hover:shadow-lg transition-shadow"
+                                    muted
+                                    preload="metadata"
+                                ></video>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <div class="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center group-hover:bg-black/70 transition-colors">
+                                        <x-heroicon-s-play class="w-8 h-8 text-white ml-1" />
+                                    </div>
+                                </div>
+                            </div>
+                        @else
+                            <picture>
+                                @if(!empty($item['webp']))
+                                    <source srcset="{{ $item['webp'] }}" type="image/webp">
+                                @endif
+                                <img
+                                    src="{{ $item['url'] }}"
+                                    alt="{{ $item['alt'] ?: 'Gallery image ' . ($index + 1) }}"
+                                    class="w-full rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                                    loading="lazy"
+                                    @click="open({{ $index }})"
+                                >
+                            </picture>
+                        @endif
+                        @if(!empty($item['caption']))
+                            <figcaption class="mt-2 text-sm text-base-content/70 text-center">{{ $item['caption'] }}</figcaption>
+                        @endif
+                    </figure>
                 @endforeach
             </div>
         @elseif(($layout ?? 'grid-3') === 'carousel')
             <div class="{{ $gridClass }} pb-4">
-                @php $imageIndex = 0; @endphp
-                @foreach($images as $image)
-                    @if(Storage::disk(cms_media_disk())->exists($image))
-                        <div class="flex-none w-80 snap-start">
-                            <img
-                                src="{{ Storage::disk(cms_media_disk())->url($image) }}"
-                                alt="Gallery image {{ $imageIndex + 1 }}"
-                                class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                                @click="open({{ $imageIndex }})"
-                            >
-                        </div>
-                        @php $imageIndex++; @endphp
-                    @endif
+                @foreach($galleryItems as $index => $item)
+                    <figure class="flex-none w-80 snap-start">
+                        @if(($item['type'] ?? 'image') === 'video')
+                            <div class="relative cursor-pointer group" @click="open({{ $index }})">
+                                <video
+                                    src="{{ $item['url'] }}"
+                                    class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md group-hover:shadow-lg transition-shadow"
+                                    muted
+                                    preload="metadata"
+                                ></video>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <div class="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center group-hover:bg-black/70 transition-colors">
+                                        <x-heroicon-s-play class="w-8 h-8 text-white ml-1" />
+                                    </div>
+                                </div>
+                            </div>
+                        @else
+                            <picture>
+                                @if(!empty($item['webp']))
+                                    <source srcset="{{ $item['webp'] }}" type="image/webp">
+                                @endif
+                                <img
+                                    src="{{ $item['url'] }}"
+                                    alt="{{ $item['alt'] ?: 'Gallery image ' . ($index + 1) }}"
+                                    class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                                    loading="lazy"
+                                    @click="open({{ $index }})"
+                                >
+                            </picture>
+                        @endif
+                        @if(!empty($item['caption']))
+                            <figcaption class="mt-2 text-sm text-base-content/70 text-center">{{ $item['caption'] }}</figcaption>
+                        @endif
+                    </figure>
                 @endforeach
             </div>
         @else
             <div class="grid {{ $gridClass }} gap-6">
-                @php $imageIndex = 0; @endphp
-                @foreach($images as $image)
-                    @if(Storage::disk(cms_media_disk())->exists($image))
-                        <div>
-                            <img
-                                src="{{ Storage::disk(cms_media_disk())->url($image) }}"
-                                alt="Gallery image {{ $imageIndex + 1 }}"
-                                class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                                @click="open({{ $imageIndex }})"
-                            >
-                        </div>
-                        @php $imageIndex++; @endphp
-                    @endif
+                @foreach($galleryItems as $index => $item)
+                    <figure>
+                        @if(($item['type'] ?? 'image') === 'video')
+                            <div class="relative cursor-pointer group" @click="open({{ $index }})">
+                                <video
+                                    src="{{ $item['url'] }}"
+                                    class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md group-hover:shadow-lg transition-shadow"
+                                    muted
+                                    preload="metadata"
+                                ></video>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <div class="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center group-hover:bg-black/70 transition-colors">
+                                        <x-heroicon-s-play class="w-8 h-8 text-white ml-1" />
+                                    </div>
+                                </div>
+                            </div>
+                        @else
+                            <picture>
+                                @if(!empty($item['webp']))
+                                    <source srcset="{{ $item['webp'] }}" type="image/webp">
+                                @endif
+                                <img
+                                    src="{{ $item['url'] }}"
+                                    alt="{{ $item['alt'] ?: 'Gallery image ' . ($index + 1) }}"
+                                    class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                                    loading="lazy"
+                                    @click="open({{ $index }})"
+                                >
+                            </picture>
+                        @endif
+                        @if(!empty($item['caption']))
+                            <figcaption class="mt-2 text-sm text-base-content/70 text-center">{{ $item['caption'] }}</figcaption>
+                        @endif
+                    </figure>
                 @endforeach
             </div>
         @endif
@@ -113,12 +226,30 @@
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
         @click.self="close()"
     >
-        <div class="relative max-w-4xl max-h-full p-4">
-            <img
-                :src="images[currentIndex]"
-                :alt="'Gallery image ' + (currentIndex + 1)"
-                class="max-w-full max-h-[90vh] rounded-lg"
-            >
+        <div class="relative max-w-4xl max-h-full p-4 w-full">
+            <figure class="text-center">
+                <template x-if="current.type === 'video'">
+                    <video
+                        x-ref="lightboxVideo"
+                        :src="current.url"
+                        class="max-w-full max-h-[85vh] rounded-lg mx-auto"
+                        controls
+                        autoplay
+                    ></video>
+                </template>
+                <template x-if="current.type !== 'video'">
+                    <img
+                        :src="current.url"
+                        :alt="current.alt || 'Gallery image ' + (currentIndex + 1)"
+                        class="max-w-full max-h-[85vh] rounded-lg mx-auto"
+                    >
+                </template>
+                <figcaption
+                    x-show="current.caption"
+                    x-text="current.caption"
+                    class="mt-4 text-white/90 text-sm"
+                ></figcaption>
+            </figure>
 
             {{-- Close Button --}}
             <button

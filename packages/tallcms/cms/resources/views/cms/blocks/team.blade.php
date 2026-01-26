@@ -52,6 +52,7 @@
                                             <img
                                                 src="{{ Storage::disk(cms_media_disk())->url($member['photo']) }}"
                                                 alt="{{ $member['name'] ?? '' }}"
+                                                loading="lazy"
                                             >
                                         </div>
                                     </div>

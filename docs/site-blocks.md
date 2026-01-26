@@ -33,7 +33,7 @@ TallCMS includes 16 built-in blocks organized into categories.
 
 The block picker organizes blocks by category:
 - **Content**: Hero, Content, CTA, Features, Pricing, Divider
-- **Media**: Image Gallery, Parallax
+- **Media**: Media Gallery, Document List, Parallax
 - **Social Proof**: Testimonials, Team, Logos, Stats
 - **Dynamic**: Posts, FAQ, Timeline
 - **Forms**: Contact Form
@@ -114,17 +114,42 @@ Visual separator between content sections.
 
 ## Media Blocks
 
-### Image Gallery Block
+### Media Gallery Block
 
-Responsive image gallery with lightbox.
+Responsive media gallery with lightbox supporting images and videos.
 
 **Fields:**
-- Images (upload multiple)
-- Columns per row
-- Caption display option
-- Lightbox enable/disable
+- **Media Source**: Manual upload or Media Collection(s)
+- **Media Type** (collection mode): Images only, Videos only, or both
+- Layout: Grid (2-4 columns), Masonry, or Carousel
+- Size options
+- Lightbox with keyboard navigation and video playback
 
-**Best for:** Portfolio showcases, photo galleries, product images
+**Collection Mode:**
+Select one or more media collections and the gallery automatically displays their media. Choose ordering (newest, oldest, random) and optionally limit the count. The gallery updates when you add media to the collection.
+
+**Video Support:**
+Videos display with a play button overlay. Click to open in lightbox with full playback controls.
+
+**Best for:** Portfolio showcases, photo galleries, product images, video showcases, mixed media displays
+
+### Document List Block
+
+List of downloadable documents from media collections.
+
+**Fields:**
+- **Collections**: Select collections containing documents
+- **File Types**: Filter by PDF, Word, Excel, ZIP (or show all)
+- **Layout**: List, Cards, or Compact
+- **Order**: Newest, Oldest, or Alphabetical
+- Show/hide file size and type badges
+
+**Features:**
+- Automatic file type icons (PDF, DOC, XLS, ZIP)
+- Download on click
+- Pulls from same collections as Media Gallery
+
+**Best for:** Resource downloads, document libraries, attachments, file archives
 
 ### Parallax Block
 

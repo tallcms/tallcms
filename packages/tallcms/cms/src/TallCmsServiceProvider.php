@@ -7,6 +7,7 @@ namespace TallCms\Cms;
 use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -323,6 +324,9 @@ class TallCmsServiceProvider extends PackageServiceProvider
         // Register Blade component aliases for theme compatibility
         $this->registerBladeComponentAliases();
 
+        // Register Blade component namespace for <x-tallcms::*> syntax
+        Blade::componentNamespace('TallCms\\Cms\\View\\Components', 'tallcms');
+
         // Register admin CSS for block previews (DaisyUI components)
         // This is loaded from the package directly, no publishing required
         $adminCssPath = __DIR__.'/../resources/dist/tallcms-admin.css';
@@ -537,11 +541,10 @@ class TallCmsServiceProvider extends PackageServiceProvider
      */
     protected function bootStandaloneFeatures(): void
     {
-        // Standalone mode: routes are defined in the app's routes/web.php
+        // Standalone mode: frontend routes are defined in the app's routes/web.php
         // using App wrapper classes for full customization.
-        // Package routes are NOT loaded to avoid duplication.
-        // The app routes use App\Livewire\CmsPageRenderer which extends
-        // the package class and can override render() for custom views.
+        // But essential routes (media download, preview) are still loaded from package.
+        $this->loadEssentialRoutes();
     }
 
     /**
@@ -609,6 +612,12 @@ class TallCmsServiceProvider extends PackageServiceProvider
                     ->name('tallcms.contact.submit');
             });
         }
+
+        // Media download route (forces download instead of browser display)
+        Route::middleware(['web'])->prefix($prefix)->group(function () {
+            Route::get('/media/download/{media}', Http\Controllers\MediaDownloadController::class)
+                ->name('tallcms.media.download');
+        });
 
         // Core SEO routes (sitemap.xml, robots.txt)
         // Always at root level - no prefix - search engines expect standard locations
@@ -720,6 +729,9 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
             // Full-text search
             '2026_01_27_000001_add_search_content_to_cms_tables',
+
+            // Media optimization
+            '2026_01_27_100000_add_variants_to_tallcms_media',
         ];
     }
 

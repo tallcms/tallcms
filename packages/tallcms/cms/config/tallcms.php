@@ -10,7 +10,7 @@ return [
     | This is the single source of truth for version comparisons.
     |
     */
-    'version' => '2.6.0',
+    'version' => '2.7.0',
 
     /*
     |--------------------------------------------------------------------------
@@ -346,6 +346,35 @@ return [
 
         // Remember locale preference in session
         'remember_locale' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Media Library
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for media library features including image optimization,
+    | variant generation, and responsive image handling.
+    |
+    */
+    'media' => [
+        'optimization' => [
+            // Enable or disable automatic image optimization
+            'enabled' => env('TALLCMS_MEDIA_OPTIMIZATION', true),
+
+            // Queue name for optimization jobs
+            'queue' => env('TALLCMS_MEDIA_QUEUE', 'default'),
+
+            // WebP quality (0-100)
+            'quality' => env('TALLCMS_MEDIA_QUALITY', 80),
+
+            // Variant presets - customize sizes as needed
+            'variants' => [
+                'thumbnail' => ['width' => 300, 'height' => 300, 'fit' => 'crop'],
+                'medium' => ['width' => 800, 'height' => 600, 'fit' => 'contain'],
+                'large' => ['width' => 1200, 'height' => 800, 'fit' => 'contain'],
+            ],
+        ],
     ],
 
     /*

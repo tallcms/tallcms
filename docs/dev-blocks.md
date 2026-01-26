@@ -303,7 +303,8 @@ TallCMS includes 16 built-in blocks:
 | Features | `features` | Content |
 | Pricing | `pricing` | Content |
 | Divider | `divider` | Content |
-| Image Gallery | `image_gallery` | Media |
+| Media Gallery | `image_gallery` | Media |
+| Document List | `document_list` | Media |
 | Parallax | `parallax` | Media |
 | Testimonials | `testimonials` | Social Proof |
 | Team | `team` | Social Proof |

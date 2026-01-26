@@ -70,6 +70,7 @@
                                                 <img
                                                     src="{{ Storage::disk(cms_media_disk())->url($testimonial['author_image']) }}"
                                                     alt="{{ $testimonial['author_name'] ?? '' }}"
+                                                    loading="lazy"
                                                 >
                                             </div>
                                         </div>
@@ -97,6 +98,7 @@
                                             src="{{ Storage::disk(cms_media_disk())->url($testimonial['company_logo']) }}"
                                             alt="Company logo"
                                             class="h-8 ml-auto object-contain opacity-60"
+                                            loading="lazy"
                                         >
                                     @endif
                                 </div>
@@ -141,6 +143,7 @@
                                                 <img
                                                     src="{{ Storage::disk(cms_media_disk())->url($testimonial['author_image']) }}"
                                                     alt="{{ $testimonial['author_name'] ?? '' }}"
+                                                    loading="lazy"
                                                 >
                                             </div>
                                         </div>
@@ -172,6 +175,7 @@
                                             src="{{ Storage::disk(cms_media_disk())->url($testimonial['company_logo']) }}"
                                             alt="Company logo"
                                             class="h-6 object-contain opacity-50"
+                                            loading="lazy"
                                         >
                                     </div>
                                 @endif
