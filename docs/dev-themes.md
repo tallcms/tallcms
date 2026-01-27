@@ -152,7 +152,32 @@ Use daisyUI component classes and semantic colors:
 <img src="@themeAsset('images/logo.png')" alt="Logo">
 ```
 
-## Custom daisyUI Theme
+## Theme CSS Configuration
+
+### Required Source Directives
+
+Your theme's `resources/css/app.css` must include source directives for Tailwind CSS to discover all classes used by TallCMS blocks:
+
+```css
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Scan paths for class discovery (paths relative to theme CSS file) */
+@source "../views/**/*.blade.php";
+@source "../../../../resources/views/**/*.blade.php";
+@source "../../../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php";
+@source "../../../../packages/tallcms/cms/resources/views/**/*.blade.php";
+/* TallCMS Block PHP files - REQUIRED for DaisyUI dynamic classes */
+@source "../../../../packages/tallcms/cms/src/Filament/Blocks/**/*.php";
+
+@plugin "daisyui" {
+    themes: light --default, dark --prefersdark;
+}
+```
+
+> **Important:** The PHP block source directive is essential. Block PHP files define DaisyUI class options (button variants, colors, etc.) that must be scanned for the CSS build to include them. Without this directive, dynamic styles like divider colors or button variants won't render on the frontend.
+
+### Custom daisyUI Theme
 
 Define custom colors in `resources/css/app.css`:
 
@@ -221,6 +246,14 @@ php artisan theme:activate my-theme # Activate theme
 - Check Vite manifest exists
 - Use `@themeVite` directive
 - Clear view cache: `php artisan view:clear`
+
+**DaisyUI classes not working on frontend (but work in admin preview):**
+- Ensure your theme CSS includes the PHP block source directive:
+  ```css
+  @source "../../../../packages/tallcms/cms/src/Filament/Blocks/**/*.php";
+  ```
+- Rebuild theme: `cd themes/my-theme && npm run build`
+- Clear caches: `php artisan optimize:clear`
 
 **Template overrides not working:**
 - Verify file path matches exactly

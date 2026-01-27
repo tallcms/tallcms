@@ -9,6 +9,9 @@
 @source '../../../../resources/views/**/*.blade.php';
 /* Pro plugin - Tailwind v4 silently ignores missing paths */
 @source '../../../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php';
+@source '../../../../packages/tallcms/cms/resources/views/**/*.blade.php';
+/* TallCMS Block PHP files (contains DaisyUI class definitions) */
+@source '../../../../packages/tallcms/cms/src/Filament/Blocks/**/*.php';
 
 /* TallCMS Core Styles */
 @import "../../../../resources/css/tallcms.css";

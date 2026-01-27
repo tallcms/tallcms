@@ -6,6 +6,9 @@
 @source "../../../../resources/views/**/*.blade.php";
 @source "../../../../resources/views/cms/blocks/**/*.blade.php";
 @source "../../../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php";
+@source "../../../../packages/tallcms/cms/resources/views/**/*.blade.php";
+/* TallCMS Block PHP files (contains DaisyUI class definitions) */
+@source "../../../../packages/tallcms/cms/src/Filament/Blocks/**/*.php";
 
 @plugin "daisyui" {
   themes: light --default, dark --prefersdark, cupcake, bumblebee, emerald,
