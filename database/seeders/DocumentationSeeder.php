@@ -38,15 +38,20 @@ class DocumentationSeeder extends Seeder
             'description' => 'Managing content, media, and settings',
             'order' => 2,
         ],
+        'blocks' => [
+            'name' => 'Blocks',
+            'description' => 'Page builder blocks and their configuration',
+            'order' => 3,
+        ],
         'developers' => [
             'name' => 'For Developers',
             'description' => 'Themes, plugins, and extending TallCMS',
-            'order' => 3,
+            'order' => 4,
         ],
         'reference' => [
             'name' => 'Reference',
             'description' => 'Detailed specifications and technical reference',
-            'order' => 4,
+            'order' => 5,
         ],
     ];
 
@@ -66,13 +71,10 @@ class DocumentationSeeder extends Seeder
         $slugMap = $this->buildSlugMap();
         $this->converter = new MarkdownToHtml($slugMap);
 
-        // Clean up existing documentation
-        $this->cleanupExistingDocs();
-
-        // Create categories first
+        // Create or get categories (idempotent)
         $categories = $this->createCategories();
 
-        // Process all documentation files
+        // Process all documentation files (only creates new posts)
         $this->processDocFiles($categories);
 
         $this->command->info('Documentation seeded successfully!');
@@ -116,27 +118,7 @@ class DocumentationSeeder extends Seeder
     }
 
     /**
-     * Remove existing documentation posts and categories.
-     */
-    protected function cleanupExistingDocs(): void
-    {
-        $categorySlugs = array_keys($this->categoryMap);
-
-        foreach ($categorySlugs as $slug) {
-            $category = CmsCategory::withSlug($slug)->first();
-            if ($category) {
-                $postIds = $category->posts()->pluck('tallcms_posts.id');
-                if ($postIds->isNotEmpty()) {
-                    CmsPost::whereIn('id', $postIds)->forceDelete();
-                    $this->command->info("Deleted {$postIds->count()} posts from category: {$slug}");
-                }
-                $category->forceDelete();
-            }
-        }
-    }
-
-    /**
-     * Create all documentation categories.
+     * Create or retrieve documentation categories (idempotent).
      *
      * @return array<string, CmsCategory>
      */
@@ -145,14 +127,19 @@ class DocumentationSeeder extends Seeder
         $categories = [];
 
         foreach ($this->categoryMap as $slug => $data) {
-            $category = CmsCategory::create([
-                'name' => $data['name'],
-                'slug' => $slug,
-                'description' => $data['description'],
-            ]);
+            $category = CmsCategory::firstOrCreate(
+                ['slug' => $slug],
+                [
+                    'name' => $data['name'],
+                    'description' => $data['description'],
+                ]
+            );
 
             $categories[$slug] = $category;
-            $this->command->info("Created category: {$data['name']}");
+
+            if ($category->wasRecentlyCreated) {
+                $this->command->info("Created category: {$data['name']}");
+            }
         }
 
         return $categories;
@@ -251,6 +238,7 @@ class DocumentationSeeder extends Seeder
 
     /**
      * Create a documentation post from parsed frontmatter and content.
+     * Skips posts that already exist (idempotent).
      *
      * @param  array{filename: string, frontmatter: array<string, mixed>, content: string}  $doc
      * @param  \Carbon\Carbon  $publishedAt  Timestamp for ordering docs chronologically
@@ -261,6 +249,14 @@ class DocumentationSeeder extends Seeder
         $content = $doc['content'];
 
         $slug = $frontmatter['slug'];
+
+        // Skip if post already exists (preserve manual edits)
+        if (CmsPost::withSlug($slug)->exists()) {
+            $this->command->info("Skipping existing post: {$slug}");
+
+            return;
+        }
+
         $title = $frontmatter['title'] ?? $this->converter->extractTitle($content, $doc['filename']);
 
         // Convert markdown to HTML
