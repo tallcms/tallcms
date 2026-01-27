@@ -225,6 +225,7 @@ class MediaController extends Controller
 
         $media = TallcmsMedia::create([
             'name' => $request->input('name', $file->getClientOriginalName()),
+            'file_name' => $file->getClientOriginalName(),
             'path' => $path,
             'disk' => $disk,
             'mime_type' => $file->getMimeType(),

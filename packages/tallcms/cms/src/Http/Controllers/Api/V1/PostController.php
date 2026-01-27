@@ -136,13 +136,8 @@ class PostController extends Controller
      */
     public function show(Request $request, int $post): JsonResponse
     {
-        $query = CmsPost::query();
-
-        if ($request->user()?->can('restore', CmsPost::class)) {
-            $query->withTrashed();
-        }
-
-        $postModel = $query->findOrFail($post);
+        // Include trashed posts - authorization will determine if user can view
+        $postModel = CmsPost::withTrashed()->findOrFail($post);
 
         $this->authorize('view', $postModel);
 
@@ -413,7 +408,7 @@ class PostController extends Controller
             'reason' => ['required', 'string', 'max:1000'],
         ]);
 
-        $postModel->reject($request->user(), $request->input('reason'));
+        $postModel->reject($request->input('reason'));
 
         return $this->respondWithData(new PostResource($postModel->fresh()));
     }

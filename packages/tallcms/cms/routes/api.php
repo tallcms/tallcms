@@ -131,6 +131,26 @@ Route::middleware(['auth:sanctum', 'tallcms.token-expiry'])->group(function () {
             ->name('categories.destroy');
     });
 
+    // Media Collections (must be defined BEFORE /media/{media} to avoid route collision)
+    Route::middleware('tallcms.abilities:media:read')->group(function () {
+        Route::get('/media/collections', [MediaCollectionController::class, 'index'])
+            ->name('media-collections.index');
+        Route::get('/media/collections/{collection}', [MediaCollectionController::class, 'show'])
+            ->name('media-collections.show');
+    });
+
+    Route::middleware('tallcms.abilities:media:write')->group(function () {
+        Route::post('/media/collections', [MediaCollectionController::class, 'store'])
+            ->name('media-collections.store');
+        Route::put('/media/collections/{collection}', [MediaCollectionController::class, 'update'])
+            ->name('media-collections.update');
+    });
+
+    Route::middleware('tallcms.abilities:media:delete')->group(function () {
+        Route::delete('/media/collections/{collection}', [MediaCollectionController::class, 'destroy'])
+            ->name('media-collections.destroy');
+    });
+
     // Media (no soft-delete)
     Route::middleware('tallcms.abilities:media:read')->group(function () {
         Route::get('/media', [MediaController::class, 'index'])
@@ -149,26 +169,6 @@ Route::middleware(['auth:sanctum', 'tallcms.token-expiry'])->group(function () {
     Route::middleware('tallcms.abilities:media:delete')->group(function () {
         Route::delete('/media/{media}', [MediaController::class, 'destroy'])
             ->name('media.destroy');
-    });
-
-    // Media Collections
-    Route::middleware('tallcms.abilities:media:read')->group(function () {
-        Route::get('/media/collections', [MediaCollectionController::class, 'index'])
-            ->name('media-collections.index');
-        Route::get('/media/collections/{collection}', [MediaCollectionController::class, 'show'])
-            ->name('media-collections.show');
-    });
-
-    Route::middleware('tallcms.abilities:media:write')->group(function () {
-        Route::post('/media/collections', [MediaCollectionController::class, 'store'])
-            ->name('media-collections.store');
-        Route::put('/media/collections/{collection}', [MediaCollectionController::class, 'update'])
-            ->name('media-collections.update');
-    });
-
-    Route::middleware('tallcms.abilities:media:delete')->group(function () {
-        Route::delete('/media/collections/{collection}', [MediaCollectionController::class, 'destroy'])
-            ->name('media-collections.destroy');
     });
 
     // Webhooks

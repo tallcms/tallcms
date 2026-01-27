@@ -125,14 +125,8 @@ class PageController extends Controller
      */
     public function show(Request $request, int $page): JsonResponse
     {
-        // Support fetching trashed pages if user has permission
-        $query = CmsPage::query();
-
-        if ($request->user()?->can('restore', CmsPage::class)) {
-            $query->withTrashed();
-        }
-
-        $pageModel = $query->findOrFail($page);
+        // Include trashed pages - authorization will determine if user can view
+        $pageModel = CmsPage::withTrashed()->findOrFail($page);
 
         $this->authorize('view', $pageModel);
 
@@ -398,7 +392,7 @@ class PageController extends Controller
             'reason' => ['required', 'string', 'max:1000'],
         ]);
 
-        $pageModel->reject($request->user(), $request->input('reason'));
+        $pageModel->reject($request->input('reason'));
 
         return $this->respondWithData(new PageResource($pageModel->fresh()));
     }

@@ -100,7 +100,8 @@ class MediaCollectionController extends Controller
     {
         $collectionModel = MediaCollection::findOrFail($collection);
 
-        $this->authorize('view', TallcmsMedia::class);
+        // Use viewAny since collections don't have their own policy
+        $this->authorize('viewAny', TallcmsMedia::class);
 
         // Apply includes
         $includes = $request->input('include');
@@ -170,7 +171,8 @@ class MediaCollectionController extends Controller
     {
         $collectionModel = MediaCollection::findOrFail($collection);
 
-        $this->authorize('update', TallcmsMedia::class);
+        // Use create since collections don't have their own policy
+        $this->authorize('create', TallcmsMedia::class);
 
         $data = $this->prepareTranslatableData($request);
 
@@ -190,7 +192,8 @@ class MediaCollectionController extends Controller
     {
         $collectionModel = MediaCollection::findOrFail($collection);
 
-        $this->authorize('delete', TallcmsMedia::class);
+        // Use create since collections don't have their own policy
+        $this->authorize('create', TallcmsMedia::class);
 
         $collectionModel->delete();
 
