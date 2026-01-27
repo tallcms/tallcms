@@ -29,8 +29,8 @@ class CreateTokenRequest extends FormRequest
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
             'device_name' => ['required', 'string', 'max:255'],
-            'abilities' => ['sometimes', 'array'],
-            'abilities.*' => ['string', 'in:'.implode(',', TokenAbilityValidator::VALID_ABILITIES)],
+            'abilities' => ['required', 'array', 'min:1'],
+            'abilities.*' => ['required', 'string', 'in:'.implode(',', TokenAbilityValidator::VALID_ABILITIES)],
             'expires_in_days' => ['sometimes', 'integer', 'min:1', 'max:365'],
         ];
     }

@@ -9,13 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use TallCms\Cms\Http\Requests\Api\V1\CreateTokenRequest;
-use TallCms\Cms\Validation\TokenAbilityValidator;
 
 class AuthController extends Controller
 {
-    public function __construct(
-        protected TokenAbilityValidator $abilityValidator
-    ) {}
 
     /**
      * Create a new API token.
@@ -88,19 +84,8 @@ class AuthController extends Controller
         // Clear rate limit on successful auth
         RateLimiter::clear($key);
 
-        // Validate abilities
-        $abilities = $request->validated('abilities', ['*']);
-
-        if ($abilities !== ['*']) {
-            $validation = $this->abilityValidator->validate($abilities);
-
-            if (! $validation['valid']) {
-                return $this->respondValidationError(
-                    ['abilities' => ['Invalid abilities: '.implode(', ', $validation['invalid'])]],
-                    'Invalid token abilities provided'
-                );
-            }
-        }
+        // Get validated abilities (required field, already validated by FormRequest)
+        $abilities = $request->validated('abilities');
 
         // Calculate expiry
         $expiresInDays = $request->validated('expires_in_days', config('tallcms.api.token_expiry_days', 365));
@@ -133,10 +118,17 @@ class AuthController extends Controller
      * @group Authentication
      *
      * @response 200 {"message": "Token revoked successfully"}
+     * @response 400 {"error": {"message": "No token to revoke", "code": "no_token"}}
      */
     public function destroy(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $token = $request->user()->currentAccessToken();
+
+        if (! $token) {
+            return $this->respondWithError('No token to revoke', 'no_token', 400);
+        }
+
+        $token->delete();
 
         return $this->respondWithMessage('Token revoked successfully');
     }
@@ -148,23 +140,29 @@ class AuthController extends Controller
      *
      * @group Authentication
      *
-     * @response 200 {"data": {"id": 1, "name": "John Doe", "email": "john@example.com"}}
+     * @response 200 {"data": {"id": 1, "name": "John Doe", "email": "john@example.com", "token": {...}}}
      */
     public function user(Request $request): JsonResponse
     {
         $user = $request->user();
         $token = $user->currentAccessToken();
 
-        return $this->respondWithData([
+        $data = [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'token' => [
+        ];
+
+        // Only include token info when authenticated via token (not session)
+        if ($token) {
+            $data['token'] = [
                 'name' => $token->name,
                 'abilities' => $token->abilities,
                 'expires_at' => $token->expires_at?->toIso8601String(),
                 'last_used_at' => $token->last_used_at?->toIso8601String(),
-            ],
-        ]);
+            ];
+        }
+
+        return $this->respondWithData($data);
     }
 }

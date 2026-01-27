@@ -53,8 +53,11 @@ class WebhookUrlValidator
             return ['valid' => false, 'error' => 'URL must have a host'];
         }
 
+        // Strip brackets from IPv6 literals for validation
+        $hostForValidation = trim($host, '[]');
+
         // Block IP literals in hostname (force DNS resolution)
-        if (filter_var($host, FILTER_VALIDATE_IP)) {
+        if (filter_var($hostForValidation, FILTER_VALIDATE_IP)) {
             return ['valid' => false, 'error' => 'IP addresses are not allowed. Use a hostname.'];
         }
 

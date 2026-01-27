@@ -144,7 +144,7 @@ class WebhookController extends Controller
         \TallCms\Cms\Jobs\DispatchWebhook::dispatchSync(
             $webhookModel,
             $testPayload,
-            'wh_test_'.now()->timestamp
+            'wh_test_'.\Illuminate\Support\Str::uuid()->toString()
         );
 
         return $this->respondWithMessage('Test webhook sent successfully');
