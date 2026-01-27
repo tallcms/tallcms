@@ -1,6 +1,6 @@
 ---
 title: "Media Gallery Block"
-slug: "blocks/media-gallery"
+slug: "block-media-gallery"
 audience: "site-owner"
 category: "blocks"
 order: 13

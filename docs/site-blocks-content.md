@@ -1,6 +1,6 @@
 ---
 title: "Content Block"
-slug: "blocks/content"
+slug: "block-content"
 audience: "site-owner"
 category: "blocks"
 order: 3

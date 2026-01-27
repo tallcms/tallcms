@@ -1,6 +1,6 @@
 ---
 title: "Hero Block"
-slug: "blocks/hero"
+slug: "block-hero"
 audience: "site-owner"
 category: "blocks"
 order: 1

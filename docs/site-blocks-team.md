@@ -1,6 +1,6 @@
 ---
 title: "Team Block"
-slug: "blocks/team"
+slug: "block-team"
 audience: "site-owner"
 category: "blocks"
 order: 7

@@ -1,6 +1,6 @@
 ---
 title: "Testimonials Block"
-slug: "blocks/testimonials"
+slug: "block-testimonials"
 audience: "site-owner"
 category: "blocks"
 order: 6

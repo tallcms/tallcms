@@ -1,6 +1,6 @@
 ---
 title: "Timeline Block"
-slug: "blocks/timeline"
+slug: "block-timeline"
 audience: "site-owner"
 category: "blocks"
 order: 11

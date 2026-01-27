@@ -1,6 +1,6 @@
 ---
 title: "FAQ Block"
-slug: "blocks/faq"
+slug: "block-faq"
 audience: "site-owner"
 category: "blocks"
 order: 8

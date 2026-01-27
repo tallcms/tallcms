@@ -50,43 +50,43 @@ Click any block for detailed documentation and live examples.
 
 | Block | Description |
 |-------|-------------|
-| [Hero](blocks/hero) | Full-width section for page headers and landing pages |
-| [Content](blocks/content) | Rich text section with title and body |
-| [Call to Action](blocks/cta) | Promotional section to drive conversions |
-| [Features](blocks/features) | Grid layout for product or service features |
-| [Pricing](blocks/pricing) | Pricing table with plan comparison |
-| [Divider](blocks/divider) | Visual separator between sections |
+| [Hero](block-hero) | Full-width section for page headers and landing pages |
+| [Content](block-content) | Rich text section with title and body |
+| [Call to Action](block-cta) | Promotional section to drive conversions |
+| [Features](block-features) | Grid layout for product or service features |
+| [Pricing](block-pricing) | Pricing table with plan comparison |
+| [Divider](block-divider) | Visual separator between sections |
 
 ### Media Blocks
 
 | Block | Description |
 |-------|-------------|
-| [Media Gallery](blocks/media-gallery) | Image and video gallery with lightbox |
-| [Document List](blocks/document-list) | Downloadable documents from collections |
-| [Parallax](blocks/parallax) | Full-width section with parallax effect |
+| [Media Gallery](block-media-gallery) | Image and video gallery with lightbox |
+| [Document List](block-document-list) | Downloadable documents from collections |
+| [Parallax](block-parallax) | Full-width section with parallax effect |
 
 ### Social Proof Blocks
 
 | Block | Description |
 |-------|-------------|
-| [Testimonials](blocks/testimonials) | Customer testimonials and reviews |
-| [Team](blocks/team) | Team member profiles |
-| [Logos](blocks/logos) | Client or partner logo showcase |
-| [Stats](blocks/stats) | Key metrics and statistics |
+| [Testimonials](block-testimonials) | Customer testimonials and reviews |
+| [Team](block-team) | Team member profiles |
+| [Logos](block-logos) | Client or partner logo showcase |
+| [Stats](block-stats) | Key metrics and statistics |
 
 ### Dynamic Blocks
 
 | Block | Description |
 |-------|-------------|
-| [Posts](blocks/posts) | Display blog posts from your site |
-| [FAQ](blocks/faq) | Frequently asked questions accordion |
-| [Timeline](blocks/timeline) | Chronological events or milestones |
+| [Posts](block-posts) | Display blog posts from your site |
+| [FAQ](block-faq) | Frequently asked questions accordion |
+| [Timeline](block-timeline) | Chronological events or milestones |
 
 ### Form Blocks
 
 | Block | Description |
 |-------|-------------|
-| [Contact Form](blocks/contact-form) | Customizable contact form |
+| [Contact Form](block-contact-form) | Customizable contact form |
 
 ---
 

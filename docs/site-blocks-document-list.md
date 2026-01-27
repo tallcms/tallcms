@@ -1,6 +1,6 @@
 ---
 title: "Document List Block"
-slug: "blocks/document-list"
+slug: "block-document-list"
 audience: "site-owner"
 category: "blocks"
 order: 14

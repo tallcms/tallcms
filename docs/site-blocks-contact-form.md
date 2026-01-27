@@ -1,6 +1,6 @@
 ---
 title: "Contact Form Block"
-slug: "blocks/contact-form"
+slug: "block-contact-form"
 audience: "site-owner"
 category: "blocks"
 order: 16

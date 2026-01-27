@@ -1,6 +1,6 @@
 ---
 title: "Pricing Block"
-slug: "blocks/pricing"
+slug: "block-pricing"
 audience: "site-owner"
 category: "blocks"
 order: 5

@@ -1,6 +1,6 @@
 ---
 title: "Stats Block"
-slug: "blocks/stats"
+slug: "block-stats"
 audience: "site-owner"
 category: "blocks"
 order: 9

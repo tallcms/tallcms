@@ -1,6 +1,6 @@
 ---
 title: "Features Block"
-slug: "blocks/features"
+slug: "block-features"
 audience: "site-owner"
 category: "blocks"
 order: 4

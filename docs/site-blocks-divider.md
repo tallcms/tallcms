@@ -1,6 +1,6 @@
 ---
 title: "Divider Block"
-slug: "blocks/divider"
+slug: "block-divider"
 audience: "site-owner"
 category: "blocks"
 order: 17

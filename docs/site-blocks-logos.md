@@ -1,6 +1,6 @@
 ---
 title: "Logos Block"
-slug: "blocks/logos"
+slug: "block-logos"
 audience: "site-owner"
 category: "blocks"
 order: 10

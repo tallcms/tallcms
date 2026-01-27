@@ -1,6 +1,6 @@
 ---
 title: "Parallax Block"
-slug: "blocks/parallax"
+slug: "block-parallax"
 audience: "site-owner"
 category: "blocks"
 order: 15

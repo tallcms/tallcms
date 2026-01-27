@@ -1,6 +1,6 @@
 ---
 title: "Call to Action Block"
-slug: "blocks/cta"
+slug: "block-cta"
 audience: "site-owner"
 category: "blocks"
 order: 2

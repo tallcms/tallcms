@@ -1,6 +1,6 @@
 ---
 title: "Posts Block"
-slug: "blocks/posts"
+slug: "block-posts"
 audience: "site-owner"
 category: "blocks"
 order: 12
