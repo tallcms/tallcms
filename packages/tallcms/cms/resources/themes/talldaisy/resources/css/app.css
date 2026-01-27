@@ -22,3 +22,13 @@
 
 /* TallCMS Core Styles */
 @import "../../../../resources/css/tallcms.css";
+
+/* Smooth scrolling for anchor links */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Offset scroll target for fixed/sticky headers */
+[id] {
+    scroll-margin-top: 5rem;
+}
