@@ -85,6 +85,20 @@
                         $postContent
                     );
 
+                    // Fix internal anchor links - RichEditor adds target="_blank" and rel attributes
+                    // to all links, but internal anchors (#...) should not have these
+                    $postContent = preg_replace_callback(
+                        '/<a([^>]*href="#[^"]*"[^>]*)>/i',
+                        function ($matches) {
+                            $attrs = $matches[1];
+                            // Remove target="_blank" and rel="..." from internal anchor links
+                            $attrs = preg_replace('/\s*target="_blank"/i', '', $attrs);
+                            $attrs = preg_replace('/\s*rel="[^"]*"/i', '', $attrs);
+                            return "<a{$attrs}>";
+                        },
+                        $postContent
+                    );
+
                     $postContent = \TallCms\Cms\Services\MergeTagService::replaceTags($postContent, $post);
                 @endphp
                 {!! $postContent !!}
