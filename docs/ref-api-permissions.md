@@ -259,5 +259,5 @@ Shield's `super_admin` role doesn't automatically have all permissions. You may 
 ## Next Steps
 
 - [REST API Development](api) - API architecture overview
+- [Roles & Authorization](roles-authorization) - Shield roles, permissions, and artisan commands
 - [OpenAPI Documentation](/api/docs) - Endpoint reference
-- [Shield Documentation](https://filamentphp.com/plugins/bezhansalleh-shield) - Role management

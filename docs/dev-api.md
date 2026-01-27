@@ -430,4 +430,5 @@ Check that `TALLCMS_WEBHOOKS_ENABLED=true` and the webhook is active.
 
 - [OpenAPI Documentation](/api/docs) - Full endpoint reference
 - [API Permissions Reference](api-permissions) - Token abilities and Shield permissions mapping
+- [Roles & Authorization](roles-authorization) - Shield setup and artisan commands
 - [Webhook management](webhooks) - Admin panel setup
