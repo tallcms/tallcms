@@ -12,7 +12,7 @@ prerequisites:
 
 > **What you'll learn:** How the TallCMS REST API is architected, how to authenticate, and how to extend it.
 
-For detailed endpoint documentation, see the [OpenAPI docs](/api/docs).
+For detailed endpoint documentation, see the [OpenAPI docs](/api/docs). To generate the docs, see [Generate API Documentation](installation#generate-api-documentation).
 
 ---
 
@@ -430,7 +430,6 @@ Check that `TALLCMS_WEBHOOKS_ENABLED=true` and the webhook is active.
 
 ## Next Steps
 
-- [OpenAPI Documentation](/api/docs) - Full endpoint reference
+- [Generate API Documentation](installation#generate-api-documentation) - Set up Scribe for OpenAPI docs
 - [API Permissions Reference](api-permissions) - Token abilities and Shield permissions mapping
 - [Roles & Authorization](roles-authorization) - Shield setup and artisan commands
-- [Webhook management](webhooks) - Admin panel setup
