@@ -319,7 +319,7 @@ This registers all API endpoints at `/api/v1/tallcms/*`.
 
 ### Generate API Documentation
 
-Install Scribe, publish the config, and generate docs:
+Scribe generates interactive API documentation. It's a **dev dependency** — the `/api/docs` route only works when Scribe is installed.
 
 ```bash
 composer require --dev knuckleswtf/scribe
@@ -330,6 +330,11 @@ php artisan scribe:generate
 The published config sets the docs URL to `/api/docs` and filters to TallCMS API routes only. Regenerate after modifying API endpoints.
 
 > **Note:** If you already use Scribe for other APIs, the publish command will overwrite your existing `config/scribe.php`. Merge the TallCMS route prefix into your existing config's `routes` array instead.
+
+**Production:** The API endpoints work without Scribe, but `/api/docs` won't be available. Options:
+- Import `storage/app/private/scribe/openapi.yaml` into Swagger UI or Postman
+- Deploy generated docs (`resources/views/scribe/`) to a separate static host
+- Run a staging environment with Scribe installed for documentation
 
 ### Next Steps
 
