@@ -30,7 +30,7 @@ class PostResource extends JsonResource
             'content' => $this->getLocalizedOrAll('content', $locale, $withTranslations),
             'meta_title' => $this->getLocalizedOrAll('meta_title', $locale, $withTranslations),
             'meta_description' => $this->getLocalizedOrAll('meta_description', $locale, $withTranslations),
-            'status' => $this->status->value,
+            'status' => $this->status instanceof \BackedEnum ? $this->status->value : $this->status,
             'is_featured' => $this->is_featured,
             'featured_image' => $this->featured_image,
             'views' => $this->views,

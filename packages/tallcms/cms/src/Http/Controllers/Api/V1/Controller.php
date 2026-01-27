@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace TallCms\Cms\Http\Controllers\Api\V1;
 
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller as BaseController;
 
 abstract class Controller extends BaseController
 {
+    use AuthorizesRequests;
     /**
      * Return a successful response with data.
      *
