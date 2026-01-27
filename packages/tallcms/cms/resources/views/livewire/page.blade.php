@@ -45,41 +45,23 @@
 
             <div class="prose prose-lg max-w-none">
                 @php
-                    $content = $post->content;
+                    // Render post content the same way pages do - RichContentRenderer handles
+                    // both Tiptap JSON and HTML with embedded customBlock divs
+                    $postContent = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($post->content)
+                        ->customBlocks(\TallCms\Cms\Services\CustomBlockDiscoveryService::getBlocksArray())
+                        ->toUnsafeHtml();
 
-                    // Determine if content is Tiptap JSON or raw HTML
-                    $isTiptapJson = false;
-                    if (is_array($content)) {
-                        $isTiptapJson = true;
-                    } elseif (is_string($content)) {
-                        $decoded = json_decode($content, true);
-                        if (is_array($decoded) && isset($decoded['type']) && $decoded['type'] === 'doc') {
-                            $isTiptapJson = true;
-                            $content = $decoded;
-                        }
-                    }
-
-                    if ($isTiptapJson) {
-                        // Tiptap JSON - use RichContentRenderer for block support
-                        $postContent = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($content)
-                            ->customBlocks(\TallCms\Cms\Services\CustomBlockDiscoveryService::getBlocksArray())
-                            ->toUnsafeHtml();
-
-                        // Re-add IDs to headings (RichContentRenderer strips them)
-                        $postContent = preg_replace_callback(
-                            '/<(h[2-4])>([^<]+)<\/h[2-4]>/i',
-                            function ($matches) {
-                                $tag = $matches[1];
-                                $text = $matches[2];
-                                $id = \Illuminate\Support\Str::slug($text);
-                                return "<{$tag} id=\"{$id}\">{$text}</{$tag}>";
-                            },
-                            $postContent
-                        );
-                    } else {
-                        // Raw HTML (from seeder) - output directly to preserve IDs
-                        $postContent = is_string($content) ? $content : '';
-                    }
+                    // Re-add IDs to headings for TOC anchor links (RichContentRenderer strips them)
+                    $postContent = preg_replace_callback(
+                        '/<(h[2-4])>([^<]+)<\/h[2-4]>/i',
+                        function ($matches) {
+                            $tag = $matches[1];
+                            $text = $matches[2];
+                            $id = \Illuminate\Support\Str::slug($text);
+                            return "<{$tag} id=\"{$id}\">{$text}</{$tag}>";
+                        },
+                        $postContent
+                    );
 
                     $postContent = \TallCms\Cms\Services\MergeTagService::replaceTags($postContent, $post);
                 @endphp
