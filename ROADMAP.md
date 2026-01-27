@@ -14,7 +14,7 @@ This roadmap outlines our vision for TallCMS development. We're committed to bui
 - [v2.5 - Page Settings & Breadcrumbs](#v25---page-settings--breadcrumbs) ✅
 - [v2.6 - Full-Text Search](#v26---full-text-search) ✅
 - [v2.7 - Media Library](#v27---media-library) ✅
-- [v2.8 - Developer Experience](#v28---developer-experience) 📋
+- [v2.8 - REST API](#v28---rest-api) ✅
 - [v2.9 - Community & Users](#v29---community--users) 📋
 - [v2.10 - Marketplace](#v210---marketplace-integration) 📋
 - [Future Considerations](#future-considerations)
@@ -355,19 +355,38 @@ Focus: Complete Media Library overhaul with image optimization and block integra
 
 ---
 
-## v2.8 - Developer Experience
+## v2.8 - REST API
 
-Focus: Make TallCMS the best platform for developers to build on.
+**Status: ✅ Released (v2.8.0)**
+
+Focus: Full REST API for headless CMS usage and third-party integrations.
 
 ### REST API
-- [ ] Full CRUD API for pages, posts, categories
-- [ ] Media upload API
-- [ ] Authentication (API tokens, OAuth)
-- [ ] API documentation (OpenAPI/Swagger)
-- [ ] Rate limiting
-- [ ] Webhooks for content events
+- [x] Full CRUD API for Pages, Posts, Categories, Media
+- [x] Media upload API with collection support
+- [x] Laravel Sanctum token authentication with abilities
+- [x] Filament Shield authorization integration
+- [x] OpenAPI documentation via Scribe
+- [x] Rate limiting (60/min standard, auth lockout after 5 failures)
+- [x] Webhooks for content events (SSRF-protected, retry logic)
 
-### Developer Tools
+### API Features
+- [x] Query parameters: filtering, sorting, pagination, includes
+- [x] i18n support (single-locale and multi-locale modes)
+- [x] Soft-delete operations (trash, restore, force-delete)
+- [x] Publishing workflow (publish, unpublish, submit, approve, reject)
+- [x] Revision history and restore
+
+### Admin Panel
+- [x] API Tokens management page
+- [x] Webhook management with delivery logs
+
+### Documentation
+- [x] REST API Development guide
+- [x] API Permissions Reference
+- [x] Roles & Authorization guide
+
+### Developer Tools (Remaining)
 - [x] CLI tool for scaffolding themes (php artisan make:theme)
 - [ ] CLI tool for scaffolding plugins
 - [x] Plugin development documentation
@@ -496,7 +515,7 @@ We welcome community input on our roadmap:
 | v2.5 | ✅ Released | Navigation | Page settings, breadcrumbs |
 | v2.6 | ✅ Released | Discovery | Full-text search for Pages and Posts |
 | v2.7 | ✅ Released | Media | Image optimization, WebP variants, collections, video support |
-| v2.8 | 📋 Planned | Developers | REST API, CLI tools, Webhooks |
+| v2.8 | ✅ Released | API | REST API, Sanctum auth, Webhooks, OpenAPI docs |
 | v2.9 | 📋 Planned | Community | Comments, User profiles, Analytics |
 | v2.10 | 📋 Planned | Ecosystem | Marketplace integration |
 | Pro | 🔄 Ongoing | Premium | Advanced blocks, Analytics, AI Content, Translation |
@@ -512,4 +531,4 @@ We welcome community input on our roadmap:
 
 ---
 
-*Last updated: January 26, 2026 — v2.7 Media Library released*
+*Last updated: January 27, 2026 — v2.8 REST API released*
