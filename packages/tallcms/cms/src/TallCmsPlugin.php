@@ -9,10 +9,12 @@ use Filament\Contracts\Plugin;
 use Filament\Panel;
 use Illuminate\Support\Facades\Log;
 use LaraZeus\SpatieTranslatable\SpatieTranslatablePlugin;
+use TallCms\Cms\Filament\Pages\ApiTokens;
 use TallCms\Cms\Filament\Pages\MenuItemsManager;
 use TallCms\Cms\Services\LocaleRegistry;
 use TallCms\Cms\Filament\Pages\PluginLicenses;
 use TallCms\Cms\Filament\Pages\PluginManager;
+use TallCms\Cms\Filament\Pages\WebhookManager;
 use TallCms\Cms\Filament\Pages\SiteSettings;
 use TallCms\Cms\Filament\Pages\SystemUpdates;
 use TallCms\Cms\Filament\Pages\ThemeManager;
@@ -217,6 +219,16 @@ class TallCmsPlugin implements Plugin
             $pages[] = SystemUpdates::class;
             $pages[] = UpdateManual::class;
             $pages[] = UpdateProgress::class;
+        }
+
+        // API Token management: only when API is enabled
+        if (config('tallcms.api.enabled', false)) {
+            $pages[] = ApiTokens::class;
+        }
+
+        // Webhook management: only when webhooks are enabled
+        if (config('tallcms.webhooks.enabled', false)) {
+            $pages[] = WebhookManager::class;
         }
 
         return $pages;
