@@ -1,14 +1,14 @@
 ---
-title: "Using Content Blocks"
+title: "Content Blocks"
 slug: "blocks"
 audience: "site-owner"
 category: "site-management"
 order: 20
 ---
 
-# Using Content Blocks
+# Content Blocks
 
-> **What you'll learn:** How to use TallCMS's content blocks to build rich, engaging pages.
+> Reusable components for building rich, engaging pages.
 
 ---
 
