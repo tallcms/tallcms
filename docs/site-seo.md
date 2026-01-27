@@ -10,17 +10,6 @@ order: 40
 
 TallCMS includes comprehensive SEO features out of the box: XML sitemaps, robots.txt management, RSS feeds, Open Graph meta tags, Twitter Cards, and JSON-LD structured data.
 
-## Table of Contents
-
-- [XML Sitemap](#xml-sitemap)
-- [robots.txt](#robotstxt)
-- [RSS Feeds](#rss-feeds)
-- [Archive Pages](#archive-pages)
-- [Meta Tags](#meta-tags)
-- [Structured Data (JSON-LD)](#structured-data-json-ld)
-- [Plugin Mode Configuration](#plugin-mode-configuration)
-
----
 
 ## XML Sitemap
 
