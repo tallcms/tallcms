@@ -1,5 +1,13 @@
 <?php
 
+// Scribe config for TallCMS API documentation
+// This config is only used when Scribe is installed (dev dependency)
+
+// Return empty array if Scribe is not installed to prevent class not found errors
+if (! class_exists(\Knuckles\Scribe\Config\AuthIn::class)) {
+    return [];
+}
+
 use Knuckles\Scribe\Extracting\Strategies;
 use Knuckles\Scribe\Config\Defaults;
 use Knuckles\Scribe\Config\AuthIn;
