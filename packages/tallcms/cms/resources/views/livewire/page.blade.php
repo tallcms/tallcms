@@ -60,22 +60,30 @@
                         $postContent = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($content)
                             ->customBlocks(\TallCms\Cms\Services\CustomBlockDiscoveryService::getBlocksArray())
                             ->toUnsafeHtml();
-
-                        // Re-add IDs to headings for TOC anchor links (RichContentRenderer strips them)
-                        $postContent = preg_replace_callback(
-                            '/<(h[2-4])>([^<]+)<\/h[2-4]>/i',
-                            function ($matches) {
-                                $tag = $matches[1];
-                                $text = $matches[2];
-                                $id = \Illuminate\Support\Str::slug($text);
-                                return "<{$tag} id=\"{$id}\">{$text}</{$tag}>";
-                            },
-                            $postContent
-                        );
                     } else {
-                        // Raw HTML (e.g., from seeder) - output directly to preserve IDs
+                        // Raw HTML - output directly
                         $postContent = is_string($content) ? $content : '';
                     }
+
+                    // Always add IDs to headings that don't have them (for TOC anchor links)
+                    // This handles both: RichContentRenderer stripping IDs, and admin edits removing IDs
+                    $postContent = preg_replace_callback(
+                        '/<(h[2-4])([^>]*)>([^<]+)<\/h[2-4]>/i',
+                        function ($matches) {
+                            $tag = $matches[1];
+                            $attrs = $matches[2];
+                            $text = $matches[3];
+
+                            // Skip if already has an id attribute
+                            if (preg_match('/\bid\s*=/i', $attrs)) {
+                                return $matches[0];
+                            }
+
+                            $id = \Illuminate\Support\Str::slug($text);
+                            return "<{$tag} id=\"{$id}\"{$attrs}>{$text}</{$tag}>";
+                        },
+                        $postContent
+                    );
 
                     $postContent = \TallCms\Cms\Services\MergeTagService::replaceTags($postContent, $post);
                 @endphp
