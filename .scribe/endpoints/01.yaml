@@ -542,7 +542,7 @@ endpoints:
         name: status
         description: ''
         required: false
-        example: pending
+        example: published
         type: string
         enumValues:
           - draft
@@ -623,7 +623,7 @@ endpoints:
           - 'y'
         meta_description:
           - v
-      status: pending
+      status: published
       parent_id: 16
       is_homepage: true
       content_width: wide
@@ -830,7 +830,7 @@ endpoints:
         name: is_homepage
         description: ''
         required: false
-        example: false
+        example: true
         type: boolean
         enumValues: []
         exampleWasSpecified: false
@@ -841,7 +841,7 @@ endpoints:
         name: content_width
         description: ''
         required: false
-        example: wide
+        example: standard
         type: string
         enumValues:
           - narrow
@@ -888,8 +888,8 @@ endpoints:
           - v
       status: pending
       parent_id: 16
-      is_homepage: false
-      content_width: wide
+      is_homepage: true
+      content_width: standard
       show_breadcrumbs: false
       sort_order: 39
     fileParameters: []

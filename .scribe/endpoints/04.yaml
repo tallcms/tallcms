@@ -260,7 +260,7 @@ endpoints:
         name: disk
         description: ''
         required: false
-        example: s3
+        example: public
         type: string
         enumValues:
           - public
@@ -305,7 +305,7 @@ endpoints:
         deprecated: false
     cleanBodyParameters:
       name: b
-      disk: s3
+      disk: public
       alt_text: 'n'
       caption: g
       collection_ids:

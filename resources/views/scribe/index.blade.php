@@ -1610,7 +1610,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             \"v\"
         ]
     },
-    \"status\": \"pending\",
+    \"status\": \"published\",
     \"parent_id\": 16,
     \"is_homepage\": true,
     \"content_width\": \"wide\",
@@ -1650,7 +1650,7 @@ let body = {
             "v"
         ]
     },
-    "status": "pending",
+    "status": "published",
     "parent_id": 16,
     "is_homepage": true,
     "content_width": "wide",
@@ -1901,10 +1901,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="status"                data-endpoint="POSTapi-v1-tallcms-pages"
-               value="pending"
+               value="published"
                data-component="body">
     <br>
-<p>Example: <code>pending</code></p>
+<p>Example: <code>published</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>draft</code></li> <li><code>pending</code></li> <li><code>published</code></li></ul>
         </div>
@@ -2031,8 +2031,8 @@ Must be one of:
     },
     \"status\": \"pending\",
     \"parent_id\": 16,
-    \"is_homepage\": false,
-    \"content_width\": \"wide\",
+    \"is_homepage\": true,
+    \"content_width\": \"standard\",
     \"show_breadcrumbs\": false,
     \"sort_order\": 39
 }"
@@ -2071,8 +2071,8 @@ let body = {
     },
     "status": "pending",
     "parent_id": 16,
-    "is_homepage": false,
-    "content_width": "wide",
+    "is_homepage": true,
+    "content_width": "standard",
     "show_breadcrumbs": false,
     "sort_order": 39
 };
@@ -2372,7 +2372,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>false</code></p>
+<p>Example: <code>true</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>content_width</code></b>&nbsp;&nbsp;
@@ -2381,10 +2381,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="content_width"                data-endpoint="PUTapi-v1-tallcms-pages--id-"
-               value="wide"
+               value="standard"
                data-component="body">
     <br>
-<p>Example: <code>wide</code></p>
+<p>Example: <code>standard</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>narrow</code></li> <li><code>standard</code></li> <li><code>wide</code></li></ul>
         </div>
@@ -4380,7 +4380,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             \"l\"
         ]
     },
-    \"status\": \"draft\",
+    \"status\": \"published\",
     \"is_featured\": true,
     \"featured_image\": \"j\",
     \"category_ids\": [
@@ -4424,7 +4424,7 @@ let body = {
             "l"
         ]
     },
-    "status": "draft",
+    "status": "published",
     "is_featured": true,
     "featured_image": "j",
     "category_ids": [
@@ -4701,10 +4701,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="status"                data-endpoint="POSTapi-v1-tallcms-posts"
-               value="draft"
+               value="published"
                data-component="body">
     <br>
-<p>Example: <code>draft</code></p>
+<p>Example: <code>published</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>draft</code></li> <li><code>pending</code></li> <li><code>published</code></li></ul>
         </div>
@@ -4799,8 +4799,8 @@ Must be one of:
             \"l\"
         ]
     },
-    \"status\": \"draft\",
-    \"is_featured\": false,
+    \"status\": \"published\",
+    \"is_featured\": true,
     \"featured_image\": \"j\",
     \"category_ids\": [
         16
@@ -4843,8 +4843,8 @@ let body = {
             "l"
         ]
     },
-    "status": "draft",
-    "is_featured": false,
+    "status": "published",
+    "is_featured": true,
     "featured_image": "j",
     "category_ids": [
         16
@@ -5133,10 +5133,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="status"                data-endpoint="PUTapi-v1-tallcms-posts--id-"
-               value="draft"
+               value="published"
                data-component="body">
     <br>
-<p>Example: <code>draft</code></p>
+<p>Example: <code>published</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>draft</code></li> <li><code>pending</code></li> <li><code>published</code></li></ul>
         </div>
@@ -5160,7 +5160,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>false</code></p>
+<p>Example: <code>true</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>featured_image</code></b>&nbsp;&nbsp;
@@ -8222,11 +8222,11 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Content-Type: multipart/form-data" \
     --header "Accept: application/json" \
     --form "name=b"\
-    --form "disk=s3"\
+    --form "disk=public"\
     --form "alt_text=n"\
     --form "caption=g"\
     --form "collection_ids[]=16"\
-    --form "file=@/private/var/folders/dy/pzqk4d_d3j1cs7p7_lwbdbnh0000gn/T/phpwYrWIs" </code></pre></div>
+    --form "file=@/private/var/folders/dy/pzqk4d_d3j1cs7p7_lwbdbnh0000gn/T/phpRnxXK1" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -8242,7 +8242,7 @@ const headers = {
 
 const body = new FormData();
 body.append('name', 'b');
-body.append('disk', 's3');
+body.append('disk', 'public');
 body.append('alt_text', 'n');
 body.append('caption', 'g');
 body.append('collection_ids[]', '16');
@@ -8352,7 +8352,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>Must be a file. Must not be greater than 102400 kilobytes. Example: <code>/private/var/folders/dy/pzqk4d_d3j1cs7p7_lwbdbnh0000gn/T/phpwYrWIs</code></p>
+<p>Must be a file. Must not be greater than 102400 kilobytes. Example: <code>/private/var/folders/dy/pzqk4d_d3j1cs7p7_lwbdbnh0000gn/T/phpRnxXK1</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>name</code></b>&nbsp;&nbsp;
@@ -8373,10 +8373,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="disk"                data-endpoint="POSTapi-v1-tallcms-media"
-               value="s3"
+               value="public"
                data-component="body">
     <br>
-<p>Example: <code>s3</code></p>
+<p>Example: <code>public</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>public</code></li> <li><code>s3</code></li> <li><code>local</code></li></ul>
         </div>
@@ -9979,7 +9979,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"name\": \"b\",
     \"url\": \"http:\\/\\/bailey.com\\/\",
     \"events\": [
-        \"post.created\"
+        \"page.unpublished\"
     ],
     \"is_active\": true,
     \"timeout\": 17
@@ -10002,7 +10002,7 @@ let body = {
     "name": "b",
     "url": "http:\/\/bailey.com\/",
     "events": [
-        "post.created"
+        "page.unpublished"
     ],
     "is_active": true,
     "timeout": 17
@@ -10354,9 +10354,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"name\": \"b\",
     \"url\": \"http:\\/\\/bailey.com\\/\",
     \"events\": [
-        \"media.updated\"
+        \"post.published\"
     ],
-    \"is_active\": false,
+    \"is_active\": true,
     \"timeout\": 17
 }"
 </code></pre></div>
@@ -10377,9 +10377,9 @@ let body = {
     "name": "b",
     "url": "http:\/\/bailey.com\/",
     "events": [
-        "media.updated"
+        "post.published"
     ],
-    "is_active": false,
+    "is_active": true,
     "timeout": 17
 };
 
@@ -10550,7 +10550,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>false</code></p>
+<p>Example: <code>true</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>timeout</code></b>&nbsp;&nbsp;

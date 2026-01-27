@@ -493,7 +493,7 @@ endpoints:
         name: status
         description: ''
         required: false
-        example: draft
+        example: published
         type: string
         enumValues:
           - draft
@@ -553,7 +553,7 @@ endpoints:
           - d
         meta_description:
           - l
-      status: draft
+      status: published
       is_featured: true
       featured_image: j
       category_ids:
@@ -757,7 +757,7 @@ endpoints:
         name: status
         description: ''
         required: false
-        example: draft
+        example: published
         type: string
         enumValues:
           - draft
@@ -771,7 +771,7 @@ endpoints:
         name: is_featured
         description: ''
         required: false
-        example: false
+        example: true
         type: boolean
         enumValues: []
         exampleWasSpecified: false
@@ -817,8 +817,8 @@ endpoints:
           - d
         meta_description:
           - l
-      status: draft
-      is_featured: false
+      status: published
+      is_featured: true
       featured_image: j
       category_ids:
         - 16

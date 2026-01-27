@@ -120,7 +120,7 @@ endpoints:
         description: ''
         required: false
         example:
-          - post.created
+          - page.unpublished
         type: 'string[]'
         enumValues:
           - '*'
@@ -171,7 +171,7 @@ endpoints:
       name: b
       url: 'http://bailey.com/'
       events:
-        - post.created
+        - page.unpublished
       is_active: true
       timeout: 17
     fileParameters: []
@@ -307,7 +307,7 @@ endpoints:
         description: ''
         required: false
         example:
-          - media.updated
+          - post.published
         type: 'string[]'
         enumValues:
           - '*'
@@ -337,7 +337,7 @@ endpoints:
         name: is_active
         description: ''
         required: false
-        example: false
+        example: true
         type: boolean
         enumValues: []
         exampleWasSpecified: false
@@ -358,8 +358,8 @@ endpoints:
       name: b
       url: 'http://bailey.com/'
       events:
-        - media.updated
-      is_active: false
+        - post.published
+      is_active: true
       timeout: 17
     fileParameters: []
     responses: []
