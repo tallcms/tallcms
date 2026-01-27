@@ -284,6 +284,59 @@ TallCMS frontend pages require Alpine.js. Most Laravel apps include it via Livew
 
 ---
 
+## REST API (Plugin Mode)
+
+TallCMS includes a full REST API for headless CMS usage. The API is **disabled by default**.
+
+### Enable the API
+
+Add to your `.env` file:
+
+```env
+TALLCMS_API_ENABLED=true
+```
+
+This registers all API endpoints at `/api/v1/tallcms/*`.
+
+### API Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TALLCMS_API_ENABLED` | `false` | Enable/disable the REST API |
+| `TALLCMS_API_PREFIX` | `api/v1/tallcms` | API route prefix |
+| `TALLCMS_API_RATE_LIMIT` | `60` | Requests per minute |
+| `TALLCMS_API_AUTH_RATE_LIMIT` | `5` | Max failed auth attempts before lockout |
+| `TALLCMS_API_AUTH_LOCKOUT` | `15` | Lockout duration in minutes |
+| `TALLCMS_API_TOKEN_EXPIRY` | `365` | Token expiry in days |
+
+### Webhooks Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TALLCMS_WEBHOOKS_ENABLED` | `false` | Enable webhook dispatching |
+| `TALLCMS_WEBHOOK_TIMEOUT` | `30` | HTTP timeout in seconds |
+| `TALLCMS_WEBHOOK_MAX_RETRIES` | `3` | Retry attempts on failure |
+
+### Generate API Documentation
+
+Install Scribe, publish the config, and generate docs:
+
+```bash
+composer require --dev knuckleswtf/scribe
+php artisan vendor:publish --tag=tallcms-scribe-config
+php artisan scribe:generate
+```
+
+The published config sets the docs URL to `/api/docs` and filters to TallCMS API routes only. Regenerate after modifying API endpoints.
+
+> **Note:** If you already use Scribe for other APIs, the publish command will overwrite your existing `config/scribe.php`. Merge the TallCMS route prefix into your existing config's `routes` array instead.
+
+### Next Steps
+
+See [REST API Development](api) for authentication, endpoints, and usage details.
+
+---
+
 ## Cloud Storage Setup
 
 TallCMS supports S3-compatible cloud storage for media uploads.

@@ -292,6 +292,11 @@ class TallCmsServiceProvider extends PackageServiceProvider
         if ($this->isStandaloneMode()) {
             $this->app->singleton(Services\TallCmsUpdater::class);
         }
+
+        // Register API/Webhook services
+        $this->app->singleton(Services\WebhookDispatcher::class);
+        $this->app->singleton(Services\WebhookUrlValidator::class);
+        $this->app->singleton(Validation\TokenAbilityValidator::class);
     }
 
     /**
@@ -314,6 +319,11 @@ class TallCmsServiceProvider extends PackageServiceProvider
     public function packageBooted(): void
     {
         parent::packageBooted();
+
+        // Publish Scribe config for API documentation
+        $this->publishes([
+            __DIR__.'/../config/scribe.php' => config_path('scribe.php'),
+        ], 'tallcms-scribe-config');
 
         // Register Livewire components
         $this->registerLivewireComponents();
@@ -356,6 +366,9 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
         // Register search observer and warn if Scout not configured
         $this->bootSearchFeatures();
+
+        // Register webhook observers for model events
+        $this->bootWebhookFeatures();
     }
 
     /**
@@ -380,6 +393,25 @@ class TallCmsServiceProvider extends PackageServiceProvider
                 'TallCMS search requires SCOUT_DRIVER=database. Current: '.(config('scout.driver') ?? 'not set')
             );
         }
+    }
+
+    /**
+     * Boot webhook-related features.
+     */
+    protected function bootWebhookFeatures(): void
+    {
+        if (! config('tallcms.webhooks.enabled', false)) {
+            return;
+        }
+
+        // Register webhook observer for content models
+        $observer = Observers\WebhookObserver::class;
+
+        Models\CmsPage::observe($observer);
+        Models\CmsPost::observe($observer);
+        Models\CmsCategory::observe($observer);
+        Models\TallcmsMedia::observe($observer);
+        Models\MediaCollection::observe($observer);
     }
 
     /**
@@ -484,6 +516,11 @@ class TallCmsServiceProvider extends PackageServiceProvider
         $router->aliasMiddleware('tallcms.theme-preview', Http\Middleware\ThemePreviewMiddleware::class);
         $router->aliasMiddleware('tallcms.preview-auth', Http\Middleware\PreviewAuthMiddleware::class);
         $router->aliasMiddleware('tallcms.set-locale', Http\Middleware\SetLocaleMiddleware::class);
+
+        // API middleware
+        $router->aliasMiddleware('tallcms.api-enabled', Http\Middleware\EnsureApiEnabled::class);
+        $router->aliasMiddleware('tallcms.token-expiry', Http\Middleware\CheckTokenExpiry::class);
+        $router->aliasMiddleware('tallcms.abilities', Http\Middleware\CheckTokenAbilities::class);
     }
 
     /**
@@ -631,6 +668,31 @@ class TallCmsServiceProvider extends PackageServiceProvider
             $archivePrefix = config('tallcms.plugin_mode.archive_routes_prefix', '');
             Route::middleware(['web'])->prefix($archivePrefix)->group(__DIR__.'/../routes/archives.php');
         }
+
+        // REST API routes
+        $this->loadApiRoutes();
+    }
+
+    /**
+     * Load REST API routes when enabled.
+     */
+    protected function loadApiRoutes(): void
+    {
+        if (! config('tallcms.api.enabled', false)) {
+            return;
+        }
+
+        $prefix = config('tallcms.api.prefix', 'api/v1/tallcms');
+        $rateLimit = config('tallcms.api.rate_limit', 60);
+
+        Route::prefix($prefix)
+            ->middleware(['throttle:'.$rateLimit.',1'])
+            ->name('tallcms.api.')
+            ->group(__DIR__.'/../routes/api.php');
+
+        // API documentation is handled by Scribe (laravel type)
+        // Run: php artisan scribe:generate
+        // Access at: /api/docs
     }
 
     /**
@@ -732,6 +794,12 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
             // Media optimization
             '2026_01_27_100000_add_variants_to_tallcms_media',
+
+            // REST API & Webhooks
+            '2026_01_27_200001_add_expires_at_to_personal_access_tokens',
+            '2026_01_27_200002_create_tallcms_webhooks_table',
+            '2026_01_27_200003_create_tallcms_webhook_deliveries_table',
+            '2026_01_27_200004_change_webhook_deliveries_unique_key',
         ];
     }
 

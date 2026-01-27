@@ -10,7 +10,7 @@ return [
     | This is the single source of truth for version comparisons.
     |
     */
-    'version' => '2.7.0',
+    'version' => '2.8.0',
 
     /*
     |--------------------------------------------------------------------------
@@ -301,6 +301,74 @@ return [
 
         // Rollback availability window (hours)
         'rollback_duration' => 24,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | REST API
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for the TallCMS REST API. The API provides full CRUD
+    | operations for Pages, Posts, Categories, and Media with authentication
+    | via Laravel Sanctum tokens.
+    |
+    */
+    'api' => [
+        // Enable or disable the REST API
+        'enabled' => env('TALLCMS_API_ENABLED', false),
+
+        // API route prefix (e.g., 'api/v1/tallcms' results in /api/v1/tallcms/pages)
+        'prefix' => env('TALLCMS_API_PREFIX', 'api/v1/tallcms'),
+
+        // Standard rate limit (requests per minute)
+        'rate_limit' => env('TALLCMS_API_RATE_LIMIT', 60),
+
+        // Authentication rate limit (failed attempts before lockout)
+        'auth_rate_limit' => env('TALLCMS_API_AUTH_RATE_LIMIT', 5),
+
+        // Authentication lockout duration (minutes)
+        'auth_lockout_minutes' => env('TALLCMS_API_AUTH_LOCKOUT', 15),
+
+        // Default token expiry (days)
+        'token_expiry_days' => env('TALLCMS_API_TOKEN_EXPIRY', 365),
+
+        // Maximum items per page for pagination
+        'max_per_page' => 100,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Webhooks
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for webhook delivery to external services. Webhooks notify
+    | external systems when content is created, updated, published, or deleted.
+    |
+    */
+    'webhooks' => [
+        // Enable or disable webhooks
+        'enabled' => env('TALLCMS_WEBHOOKS_ENABLED', false),
+
+        // Request timeout (seconds)
+        'timeout' => env('TALLCMS_WEBHOOK_TIMEOUT', 30),
+
+        // Maximum retry attempts
+        'max_retries' => env('TALLCMS_WEBHOOK_MAX_RETRIES', 3),
+
+        // Delay before retry attempts (seconds) - retry 1, 2, 3
+        'retry_backoff' => [60, 300, 900],
+
+        // Maximum response body size to store (bytes)
+        'response_max_size' => 10000,
+
+        // Allowed hosts (empty = allow all public IPs)
+        'allowed_hosts' => [],
+
+        // Explicitly blocked hosts
+        'blocked_hosts' => [],
+
+        // Queue name for webhook jobs
+        'queue' => env('TALLCMS_WEBHOOK_QUEUE', 'default'),
     ],
 
     /*

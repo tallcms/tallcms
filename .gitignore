@@ -52,3 +52,8 @@ tallcms-*.zip
 # Internal documentation
 CLAUDE.md
 daisyui.md
+
+# Scribe API documentation (generated)
+.scribe/
+resources/views/scribe/
+storage/app/private/scribe/
