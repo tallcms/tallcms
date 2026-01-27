@@ -7,57 +7,47 @@
         default => 'py-8',
     };
 
-    $widthClass = match($width ?? 'medium') {
-        'full' => 'w-full',
-        'wide' => 'w-3/4',
-        'medium' => 'w-1/2',
-        'narrow' => 'w-1/4',
-        default => 'w-1/2',
-    };
-
-    $lineStyleClass = match($line_style ?? 'solid') {
-        'solid' => 'border-solid',
-        'dashed' => 'border-dashed',
-        'dotted' => 'border-dotted',
-        default => 'border-solid',
-    };
-
     $dividerStyle = $style ?? 'line';
-    $iconName = $icon ?? 'heroicon-o-star';
+    $iconName = $icon ?? null;
     $isValidIcon = !empty($iconName) && preg_match('/^heroicon-[oms]-[\w-]+$/', $iconName);
 
-    // Color class - daisyUI semantic or custom
-    $colorClass = match($color ?? 'base') {
-        'primary' => 'border-primary text-primary',
-        'secondary' => 'border-secondary text-secondary',
-        'accent' => 'border-accent text-accent',
-        'neutral' => 'border-neutral text-neutral',
-        default => 'border-base-300 text-base-content/50',
+    // DaisyUI divider color classes
+    $colorClass = match($color ?? 'default') {
+        'primary' => 'divider-primary',
+        'secondary' => 'divider-secondary',
+        'accent' => 'divider-accent',
+        'neutral' => 'divider-neutral',
+        'success' => 'divider-success',
+        'warning' => 'divider-warning',
+        'info' => 'divider-info',
+        'error' => 'divider-error',
+        default => '',
+    };
+
+    // Text/icon position
+    $positionClass = match($position ?? 'center') {
+        'start' => 'divider-start',
+        'end' => 'divider-end',
+        default => '',
     };
 @endphp
 
-<div @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="divider-block {{ $heightClass }} bg-base-100 {{ $css_classes ?? '' }}">
-    <div class="{{ $contentWidthClass ?? 'max-w-6xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
+<div @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="divider-block {{ $heightClass }} {{ $css_classes ?? '' }}">
+    <div class="flex w-full flex-col {{ $contentWidthClass ?? 'max-w-6xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
         @if($dividerStyle === 'space')
             {{-- Space only - no visible element --}}
         @elseif($dividerStyle === 'line')
-            {{-- Simple horizontal line using daisyUI divider --}}
-            <div class="divider {{ $widthClass }} mx-auto {{ $colorClass }}"></div>
+            {{-- Simple horizontal line --}}
+            <div class="divider {{ $colorClass }}"></div>
+        @elseif($dividerStyle === 'line-text')
+            {{-- Line with centered text --}}
+            <div class="divider {{ $colorClass }} {{ $positionClass }}">{{ $text ?? 'OR' }}</div>
         @elseif($dividerStyle === 'line-icon')
             {{-- Line with centered icon --}}
-            <div class="flex items-center justify-center {{ $widthClass }} mx-auto">
-                <hr class="flex-1 {{ $lineStyleClass }} border-t-2 {{ $colorClass }}">
-                <div class="mx-4">
-                    @if($isValidIcon)
-                        <x-dynamic-component
-                            :component="$iconName"
-                            class="w-6 h-6 {{ $colorClass }}"
-                        />
-                    @else
-                        <x-heroicon-o-star class="w-6 h-6 {{ $colorClass }}" />
-                    @endif
-                </div>
-                <hr class="flex-1 {{ $lineStyleClass }} border-t-2 {{ $colorClass }}">
+            <div class="divider {{ $colorClass }} {{ $positionClass }}">
+                @if($isValidIcon)
+                    <x-dynamic-component :component="$iconName" class="w-5 h-5" />
+                @endif
             </div>
         @endif
     </div>

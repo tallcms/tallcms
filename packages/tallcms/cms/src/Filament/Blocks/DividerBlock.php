@@ -7,9 +7,9 @@ use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
-use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 
@@ -69,6 +69,7 @@ class DividerBlock extends RichContentCustomBlock
                             ->options([
                                 'space' => 'Space Only',
                                 'line' => 'Horizontal Line',
+                                'line-text' => 'Line with Text',
                                 'line-icon' => 'Line with Icon',
                             ])
                             ->default('line')
@@ -90,31 +91,39 @@ class DividerBlock extends RichContentCustomBlock
 
                 Section::make('Line Options')
                     ->schema([
-                        Select::make('line_style')
-                            ->label('Line Style')
+                        Select::make('color')
+                            ->label('Color')
                             ->options([
-                                'solid' => 'Solid',
-                                'dashed' => 'Dashed',
-                                'dotted' => 'Dotted',
+                                'default' => 'Default',
+                                'primary' => 'Primary',
+                                'secondary' => 'Secondary',
+                                'accent' => 'Accent',
+                                'neutral' => 'Neutral',
+                                'success' => 'Success',
+                                'warning' => 'Warning',
+                                'info' => 'Info',
+                                'error' => 'Error',
                             ])
-                            ->default('solid'),
+                            ->default('default'),
 
-                        Select::make('width')
-                            ->label('Line Width')
+                        Select::make('position')
+                            ->label('Content Position')
                             ->options([
-                                'full' => 'Full Width',
-                                'wide' => 'Wide (75%)',
-                                'medium' => 'Medium (50%)',
-                                'narrow' => 'Narrow (25%)',
+                                'center' => 'Center',
+                                'start' => 'Start',
+                                'end' => 'End',
                             ])
-                            ->default('medium'),
+                            ->default('center')
+                            ->visible(fn (Get $get): bool => in_array($get('style'), ['line-text', 'line-icon'])),
 
-                        ColorPicker::make('color')
-                            ->label('Line Color')
-                            ->helperText('Leave empty to use theme default'),
+                        TextInput::make('text')
+                            ->label('Divider Text')
+                            ->placeholder('OR')
+                            ->maxLength(50)
+                            ->visible(fn (Get $get): bool => $get('style') === 'line-text'),
 
                         Select::make('icon')
-                            ->label('Center Icon')
+                            ->label('Icon')
                             ->searchable()
                             ->visible(fn (Get $get): bool => $get('style') === 'line-icon')
                             ->options([
@@ -128,6 +137,9 @@ class DividerBlock extends RichContentCustomBlock
                                 'heroicon-o-arrow-down' => 'Arrow Down',
                                 'heroicon-o-chevron-down' => 'Chevron Down',
                                 'heroicon-o-ellipsis-horizontal' => 'Dots',
+                                'heroicon-o-plus' => 'Plus',
+                                'heroicon-o-minus' => 'Minus',
+                                'heroicon-o-x-mark' => 'X Mark',
                             ])
                             ->default('heroicon-o-star'),
                     ])
@@ -156,10 +168,10 @@ class DividerBlock extends RichContentCustomBlock
             'id' => static::getId(),
             'style' => $config['style'] ?? 'line',
             'height' => $config['height'] ?? 'medium',
-            'line_style' => $config['line_style'] ?? 'solid',
-            'width' => $config['width'] ?? 'medium',
-            'color' => $config['color'] ?? null,
-            'icon' => $config['icon'] ?? 'heroicon-o-star',
+            'color' => $config['color'] ?? 'default',
+            'position' => $config['position'] ?? 'center',
+            'text' => $config['text'] ?? null,
+            'icon' => $config['icon'] ?? null,
             'contentWidthClass' => $widthConfig['class'],
             'contentPadding' => $widthConfig['padding'],
             'anchor_id' => static::getAnchorId($config, null),
