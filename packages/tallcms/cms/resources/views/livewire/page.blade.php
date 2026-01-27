@@ -45,23 +45,37 @@
 
             <div class="prose prose-lg max-w-none">
                 @php
-                    // Render post content the same way pages do - RichContentRenderer handles
-                    // both Tiptap JSON and HTML with embedded customBlock divs
-                    $postContent = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($post->content)
-                        ->customBlocks(\TallCms\Cms\Services\CustomBlockDiscoveryService::getBlocksArray())
-                        ->toUnsafeHtml();
+                    $content = $post->content;
+                    $contentStr = is_string($content) ? $content : json_encode($content);
 
-                    // Re-add IDs to headings for TOC anchor links (RichContentRenderer strips them)
-                    $postContent = preg_replace_callback(
-                        '/<(h[2-4])>([^<]+)<\/h[2-4]>/i',
-                        function ($matches) {
-                            $tag = $matches[1];
-                            $text = $matches[2];
-                            $id = \Illuminate\Support\Str::slug($text);
-                            return "<{$tag} id=\"{$id}\">{$text}</{$tag}>";
-                        },
-                        $postContent
-                    );
+                    // Check if content needs block rendering:
+                    // - Tiptap JSON (has "type":"doc")
+                    // - HTML with embedded customBlock divs (from admin editor)
+                    $needsBlockRendering = str_contains($contentStr, '"type":"doc"')
+                        || str_contains($contentStr, 'data-type="customBlock"')
+                        || str_contains($contentStr, "data-type='customBlock'");
+
+                    if ($needsBlockRendering) {
+                        // Use RichContentRenderer for Tiptap JSON or HTML with blocks
+                        $postContent = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($content)
+                            ->customBlocks(\TallCms\Cms\Services\CustomBlockDiscoveryService::getBlocksArray())
+                            ->toUnsafeHtml();
+
+                        // Re-add IDs to headings for TOC anchor links (RichContentRenderer strips them)
+                        $postContent = preg_replace_callback(
+                            '/<(h[2-4])>([^<]+)<\/h[2-4]>/i',
+                            function ($matches) {
+                                $tag = $matches[1];
+                                $text = $matches[2];
+                                $id = \Illuminate\Support\Str::slug($text);
+                                return "<{$tag} id=\"{$id}\">{$text}</{$tag}>";
+                            },
+                            $postContent
+                        );
+                    } else {
+                        // Raw HTML (e.g., from seeder) - output directly to preserve IDs
+                        $postContent = is_string($content) ? $content : '';
+                    }
 
                     $postContent = \TallCms\Cms\Services\MergeTagService::replaceTags($postContent, $post);
                 @endphp
