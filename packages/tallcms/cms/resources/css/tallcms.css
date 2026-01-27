@@ -4,6 +4,16 @@
    all themes. Themes should import this file.
    ============================================ */
 
+/* Smooth scrolling for anchor links */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Offset scroll target for fixed/sticky headers */
+[id] {
+    scroll-margin-top: 5rem;
+}
+
 /* ============================================
    CMS Content - Inline Text Styling
    Applies prose-like typography to content typed
