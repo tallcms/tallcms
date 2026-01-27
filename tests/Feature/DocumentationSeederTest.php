@@ -38,6 +38,7 @@ class DocumentationSeederTest extends TestCase
         // Check categories were created (use withSlug scope for translatable slug)
         $this->assertTrue(CmsCategory::withSlug('getting-started')->exists());
         $this->assertTrue(CmsCategory::withSlug('site-management')->exists());
+        $this->assertTrue(CmsCategory::withSlug('blocks')->exists());
         $this->assertTrue(CmsCategory::withSlug('developers')->exists());
         $this->assertTrue(CmsCategory::withSlug('reference')->exists());
     }
@@ -103,7 +104,7 @@ class DocumentationSeederTest extends TestCase
         }
     }
 
-    public function test_cleans_up_existing_docs_before_seeding(): void
+    public function test_is_idempotent_and_skips_existing_posts(): void
     {
         if (! File::isDirectory($this->docsPath)) {
             $this->markTestSkipped('docs directory does not exist');
@@ -115,7 +116,12 @@ class DocumentationSeederTest extends TestCase
 
         $firstCount = CmsPost::count();
 
-        // Seed again - should clean up and recreate
+        // Modify a post to simulate manual edits
+        $post = CmsPost::first();
+        $originalContent = $post?->content;
+        $post?->update(['excerpt' => 'MANUALLY_MODIFIED_EXCERPT']);
+
+        // Seed again - should skip existing posts (idempotent)
         $this->artisan('db:seed', ['--class' => 'DocumentationSeeder'])
             ->assertSuccessful();
 
@@ -123,6 +129,12 @@ class DocumentationSeederTest extends TestCase
 
         // Should have same count (not doubled)
         $this->assertEquals($firstCount, $secondCount);
+
+        // Manual modification should be preserved
+        if ($post) {
+            $post->refresh();
+            $this->assertEquals('MANUALLY_MODIFIED_EXCERPT', $post->excerpt);
+        }
     }
 
     public function test_attaches_posts_to_correct_categories(): void
