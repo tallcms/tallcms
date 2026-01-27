@@ -429,5 +429,5 @@ Check that `TALLCMS_WEBHOOKS_ENABLED=true` and the webhook is active.
 ## Next Steps
 
 - [OpenAPI Documentation](/api/docs) - Full endpoint reference
+- [API Permissions Reference](api-permissions) - Token abilities and Shield permissions mapping
 - [Webhook management](webhooks) - Admin panel setup
-- [Shield permissions](https://filamentphp.com/plugins/bezhansalleh-shield) - Role configuration
