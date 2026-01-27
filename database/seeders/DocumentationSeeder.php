@@ -127,19 +127,19 @@ class DocumentationSeeder extends Seeder
         $categories = [];
 
         foreach ($this->categoryMap as $slug => $data) {
-            $category = CmsCategory::firstOrCreate(
-                ['slug' => $slug],
-                [
+            // Use withSlug scope for translatable slug field
+            $category = CmsCategory::withSlug($slug)->first();
+
+            if (! $category) {
+                $category = CmsCategory::create([
                     'name' => $data['name'],
+                    'slug' => $slug,
                     'description' => $data['description'],
-                ]
-            );
-
-            $categories[$slug] = $category;
-
-            if ($category->wasRecentlyCreated) {
+                ]);
                 $this->command->info("Created category: {$data['name']}");
             }
+
+            $categories[$slug] = $category;
         }
 
         return $categories;
