@@ -24,7 +24,7 @@ class ApiTokens extends Page implements HasForms
 
     protected static ?string $title = 'API Tokens';
 
-    protected static string $view = 'tallcms::filament.pages.api-tokens';
+    protected string $view = 'tallcms::filament.pages.api-tokens';
 
     public ?string $newToken = null;
 

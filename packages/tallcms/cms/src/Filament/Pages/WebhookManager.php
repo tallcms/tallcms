@@ -27,7 +27,7 @@ class WebhookManager extends Page implements HasForms
 
     protected static ?string $title = 'Webhooks';
 
-    protected static string $view = 'tallcms::filament.pages.webhook-manager';
+    protected string $view = 'tallcms::filament.pages.webhook-manager';
 
     public ?int $selectedWebhookId = null;
 
