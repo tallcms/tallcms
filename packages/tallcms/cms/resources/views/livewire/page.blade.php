@@ -64,6 +64,18 @@
                         $postContent = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($content)
                             ->customBlocks(\TallCms\Cms\Services\CustomBlockDiscoveryService::getBlocksArray())
                             ->toUnsafeHtml();
+
+                        // Re-add IDs to headings (RichContentRenderer strips them)
+                        $postContent = preg_replace_callback(
+                            '/<(h[2-4])>([^<]+)<\/h[2-4]>/i',
+                            function ($matches) {
+                                $tag = $matches[1];
+                                $text = $matches[2];
+                                $id = \Illuminate\Support\Str::slug($text);
+                                return "<{$tag} id=\"{$id}\">{$text}</{$tag}>";
+                            },
+                            $postContent
+                        );
                     } else {
                         // Raw HTML (from seeder) - output directly to preserve IDs
                         $postContent = is_string($content) ? $content : '';
