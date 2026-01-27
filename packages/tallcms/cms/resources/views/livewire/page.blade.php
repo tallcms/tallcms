@@ -45,10 +45,30 @@
 
             <div class="prose prose-lg max-w-none">
                 @php
-                    // Render post content the same way as pages - let RichContentRenderer handle it
-                    $postContent = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($post->content)
-                        ->customBlocks(\TallCms\Cms\Services\CustomBlockDiscoveryService::getBlocksArray())
-                        ->toUnsafeHtml();
+                    $content = $post->content;
+
+                    // Determine if content is Tiptap JSON or raw HTML
+                    $isTiptapJson = false;
+                    if (is_array($content)) {
+                        $isTiptapJson = true;
+                    } elseif (is_string($content)) {
+                        $decoded = json_decode($content, true);
+                        if (is_array($decoded) && isset($decoded['type']) && $decoded['type'] === 'doc') {
+                            $isTiptapJson = true;
+                            $content = $decoded;
+                        }
+                    }
+
+                    if ($isTiptapJson) {
+                        // Tiptap JSON - use RichContentRenderer for block support
+                        $postContent = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($content)
+                            ->customBlocks(\TallCms\Cms\Services\CustomBlockDiscoveryService::getBlocksArray())
+                            ->toUnsafeHtml();
+                    } else {
+                        // Raw HTML (from seeder) - output directly to preserve IDs
+                        $postContent = is_string($content) ? $content : '';
+                    }
+
                     $postContent = \TallCms\Cms\Services\MergeTagService::replaceTags($postContent, $post);
                 @endphp
                 {!! $postContent !!}
