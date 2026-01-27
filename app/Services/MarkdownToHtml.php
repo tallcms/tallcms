@@ -8,7 +8,6 @@ use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
 use League\CommonMark\Extension\GithubFlavoredMarkdownExtension;
 use League\CommonMark\Extension\HeadingPermalink\HeadingPermalinkExtension;
-use League\CommonMark\Extension\TableOfContents\TableOfContentsExtension;
 use League\CommonMark\MarkdownConverter;
 
 class MarkdownToHtml
@@ -24,34 +23,26 @@ class MarkdownToHtml
         $environment = new Environment([
             'html_input' => 'strip',
             'allow_unsafe_links' => false,
+            // Add IDs to headings for anchor links, but no permalink symbols
             'heading_permalink' => [
                 'html_class' => 'heading-permalink',
                 'id_prefix' => '',
                 'apply_id_to_heading' => true,
                 'heading_class' => '',
                 'fragment_prefix' => '',
-                'insert' => 'after',
+                'insert' => 'none',  // Don't insert permalink symbols
                 'min_heading_level' => 2,
                 'max_heading_level' => 4,
                 'title' => 'Permalink',
-                'symbol' => '#',
+                'symbol' => '',
                 'aria_hidden' => true,
             ],
-            'table_of_contents' => [
-                'html_class' => 'table-of-contents',
-                'position' => 'top',
-                'style' => 'bullet',
-                'min_heading_level' => 2,
-                'max_heading_level' => 3,
-                'normalize' => 'relative',
-                'placeholder' => null,
-            ],
+            // TOC removed - was causing issues with RichEditor (double anchor links)
         ]);
 
         $environment->addExtension(new CommonMarkCoreExtension);
         $environment->addExtension(new GithubFlavoredMarkdownExtension);
-        $environment->addExtension(new HeadingPermalinkExtension);
-        $environment->addExtension(new TableOfContentsExtension);
+        $environment->addExtension(new HeadingPermalinkExtension);  // Keeps heading IDs
 
         $this->converter = new MarkdownConverter($environment);
     }
