@@ -122,13 +122,9 @@ class DispatchWebhook implements ShouldQueue
             $nextRetryAt = now()->addSeconds($delay);
         }
 
-        // Log the delivery (use unique ID per attempt to avoid constraint violations)
-        $recordId = $this->attempt > 1
-            ? "{$this->deliveryId}_attempt_{$this->attempt}"
-            : $this->deliveryId;
-
+        // Log the delivery (unique on delivery_id + attempt composite key)
         $delivery = WebhookDelivery::create([
-            'delivery_id' => $recordId,
+            'delivery_id' => $this->deliveryId,
             'webhook_id' => $this->webhook->id,
             'event' => $this->payload['event'],
             'payload' => $this->payload,

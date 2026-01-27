@@ -789,6 +789,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
             '2026_01_27_200001_add_expires_at_to_personal_access_tokens',
             '2026_01_27_200002_create_tallcms_webhooks_table',
             '2026_01_27_200003_create_tallcms_webhook_deliveries_table',
+            '2026_01_27_200004_change_webhook_deliveries_unique_key',
         ];
     }
 
