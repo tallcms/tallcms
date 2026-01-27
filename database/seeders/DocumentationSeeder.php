@@ -259,9 +259,14 @@ class DocumentationSeeder extends Seeder
 
         $title = $frontmatter['title'] ?? $this->converter->extractTitle($content, $doc['filename']);
 
-        // Convert markdown to HTML
-        $html = $this->converter->convert($content);
+        // Extract excerpt from first paragraph (before conversion)
         $excerpt = $this->converter->generateMetaDescription($content);
+
+        // Remove the first paragraph from content to avoid duplication with excerpt
+        $contentWithoutExcerpt = $this->stripFirstParagraph($content);
+
+        // Convert markdown to HTML
+        $html = $this->converter->convert($contentWithoutExcerpt);
 
         // Create post with sequential timestamp for proper ordering
         $post = CmsPost::create([
@@ -285,5 +290,20 @@ class DocumentationSeeder extends Seeder
         $post->categories()->attach($category->id);
 
         $this->command->info("Created post: {$title} (slug: {$slug})");
+    }
+
+    /**
+     * Strip the first paragraph after the H1 heading from markdown content.
+     * This paragraph is used as the excerpt and shouldn't be duplicated in content.
+     */
+    protected function stripFirstParagraph(string $markdown): string
+    {
+        // Match: H1 line, optional blank lines, then first paragraph (non-heading, non-empty line)
+        return preg_replace(
+            '/^(#[^\n]+\n+)([^\n#][^\n]+\n*)/m',
+            '$1',
+            $markdown,
+            1  // Only replace first occurrence
+        );
     }
 }
