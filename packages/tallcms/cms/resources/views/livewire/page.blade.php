@@ -46,16 +46,29 @@
             <div class="prose prose-lg max-w-none">
                 @php
                     $content = $post->content;
-                    // Check if content is raw HTML (string) or Tiptap JSON (array)
+
+                    // Handle content which may be: array, JSON string, or raw HTML
                     if (is_string($content)) {
-                        $postContent = $content;
-                    } elseif (is_array($content)) {
+                        // Try to decode JSON (Tiptap format)
+                        $decoded = json_decode($content, true);
+                        if (is_array($decoded) && json_last_error() === JSON_ERROR_NONE) {
+                            $content = $decoded;
+                        }
+                    }
+
+                    // Now render based on type
+                    if (is_array($content)) {
+                        // Tiptap JSON - render with custom blocks
                         $postContent = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($content)
                             ->customBlocks(\TallCms\Cms\Services\CustomBlockDiscoveryService::getBlocksArray())
                             ->toUnsafeHtml();
+                    } elseif (is_string($content)) {
+                        // Raw HTML (legacy or from seeder)
+                        $postContent = $content;
                     } else {
                         $postContent = '';
                     }
+
                     $postContent = \TallCms\Cms\Services\MergeTagService::replaceTags($postContent, $post);
                 @endphp
                 {!! $postContent !!}
