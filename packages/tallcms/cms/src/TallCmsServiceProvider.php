@@ -320,6 +320,11 @@ class TallCmsServiceProvider extends PackageServiceProvider
     {
         parent::packageBooted();
 
+        // Publish Scribe config for API documentation
+        $this->publishes([
+            __DIR__.'/../config/scribe.php' => config_path('scribe.php'),
+        ], 'tallcms-scribe-config');
+
         // Register Livewire components
         $this->registerLivewireComponents();
 
@@ -513,6 +518,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
         $router->aliasMiddleware('tallcms.set-locale', Http\Middleware\SetLocaleMiddleware::class);
 
         // API middleware
+        $router->aliasMiddleware('tallcms.api-enabled', Http\Middleware\EnsureApiEnabled::class);
         $router->aliasMiddleware('tallcms.token-expiry', Http\Middleware\CheckTokenExpiry::class);
         $router->aliasMiddleware('tallcms.abilities', Http\Middleware\CheckTokenAbilities::class);
     }
@@ -683,6 +689,10 @@ class TallCmsServiceProvider extends PackageServiceProvider
             ->middleware(['throttle:'.$rateLimit.',1'])
             ->name('tallcms.api.')
             ->group(__DIR__.'/../routes/api.php');
+
+        // API documentation is handled by Scribe (laravel type)
+        // Run: php artisan scribe:generate
+        // Access at: /api/docs
     }
 
     /**

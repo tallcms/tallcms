@@ -321,6 +321,8 @@ Webhook URLs are validated for security:
 
 ## Configuration
 
+> **Note:** For initial API setup and environment variables, see [Installation](installation#rest-api-plugin-mode).
+
 ```php
 // config/tallcms.php
 

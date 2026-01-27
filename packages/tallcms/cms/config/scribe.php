@@ -46,8 +46,8 @@ return [
     'routes' => [
         [
             'match' => [
-                // Only include TallCMS API routes
-                'prefixes' => ['api/v1/tallcms/*'],
+                // Only include TallCMS API routes (respects TALLCMS_API_PREFIX)
+                'prefixes' => [trim(config('tallcms.api.prefix', 'api/v1/tallcms'), '/') . '/*'],
 
                 // Match only routes whose domains match this pattern (use * as a wildcard to match any characters). Example: 'api.*'.
                 'domains' => ['*'],
