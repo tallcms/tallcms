@@ -8,6 +8,7 @@ use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
 use League\CommonMark\Extension\GithubFlavoredMarkdownExtension;
 use League\CommonMark\Extension\HeadingPermalink\HeadingPermalinkExtension;
+use League\CommonMark\Extension\TableOfContents\TableOfContentsExtension;
 use League\CommonMark\MarkdownConverter;
 
 class MarkdownToHtml
@@ -36,14 +37,21 @@ class MarkdownToHtml
                 'symbol' => '#',
                 'aria_hidden' => true,
             ],
-            // Note: TableOfContentsExtension disabled because some markdown files
-            // (e.g., DEVELOPER_ARCHITECTURE.md, INTERNATIONALIZATION.md) already
-            // contain their own TOC sections
+            'table_of_contents' => [
+                'html_class' => 'table-of-contents',
+                'position' => 'top',
+                'style' => 'bullet',
+                'min_heading_level' => 2,
+                'max_heading_level' => 3,
+                'normalize' => 'relative',
+                'placeholder' => null,
+            ],
         ]);
 
         $environment->addExtension(new CommonMarkCoreExtension);
         $environment->addExtension(new GithubFlavoredMarkdownExtension);
         $environment->addExtension(new HeadingPermalinkExtension);
+        $environment->addExtension(new TableOfContentsExtension);
 
         $this->converter = new MarkdownConverter($environment);
     }
