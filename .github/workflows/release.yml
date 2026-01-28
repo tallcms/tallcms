@@ -59,6 +59,12 @@ jobs:
           npm install
           npm run build
 
+      - name: Build tallcms/cms package assets
+        working-directory: packages/tallcms/cms
+        run: |
+          npm install
+          npm run build
+
       - name: Get version from tag
         id: version
         run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
