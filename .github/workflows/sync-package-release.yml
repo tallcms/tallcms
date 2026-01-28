@@ -1,0 +1,28 @@
+name: Sync Package Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  sync-release:
+    runs-on: ubuntu-latest
+    name: Create release on tallcms/cms
+
+    steps:
+      - name: Wait for package split to complete
+        run: sleep 30
+
+      - name: Create release on package repo
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: tallcms/cms
+          tag_name: ${{ github.event.release.tag_name }}
+          name: ${{ github.event.release.name }}
+          body: ${{ github.event.release.body }}
+          draft: false
+          prerelease: ${{ github.event.release.prerelease }}
+          token: ${{ secrets.PACKAGE_SPLIT_TOKEN }}
