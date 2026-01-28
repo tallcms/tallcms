@@ -179,33 +179,37 @@ jobs:
       - name: Generate checksums manifest
         run: |
           cd release
-          echo "=== Testing artisan with full output ==="
-          set +e
-          output=$(php artisan --version 2>&1)
-          exitcode=$?
-          set -e
-          echo "Exit code: $exitcode"
-          echo "Output: '$output'"
 
-          if [ -z "$output" ]; then
-            echo "WARNING: Artisan produced no output. Checking bootstrap..."
-            php -r "require 'vendor/autoload.php'; echo 'Autoload OK\n';"
-            php -r "
-              require 'vendor/autoload.php';
-              \$app = require 'bootstrap/app.php';
-              echo 'App loaded: ' . get_class(\$app) . PHP_EOL;
-            " 2>&1 || echo "App bootstrap failed"
-          fi
+          echo "=== Checking bootstrap/app.php ==="
+          php -d display_errors=1 -d error_reporting=E_ALL -r '
+            echo "Loading autoload...\n";
+            require "vendor/autoload.php";
+            echo "Autoload loaded\n";
 
-          echo "=== Generating manifest ==="
-          php artisan tallcms:generate-manifest --output=../checksums.json 2>&1 || {
-            echo "Manifest command failed"
-            exit 1
-          }
+            echo "Loading bootstrap/app.php...\n";
+            try {
+              $app = require "bootstrap/app.php";
+              echo "App class: " . get_class($app) . "\n";
+              echo "App path: " . $app->basePath() . "\n";
+            } catch (Throwable $e) {
+              echo "EXCEPTION: " . $e->getMessage() . "\n";
+              echo $e->getTraceAsString() . "\n";
+            }
+          ' 2>&1
+
+          echo "=== Running artisan inline ==="
+          php -d display_errors=1 -d error_reporting=E_ALL artisan --version 2>&1
+
+          echo "=== Check if tallcms config exists ==="
+          php artisan config:show tallcms 2>&1 | head -20 || echo "Config command failed"
+
+          echo "=== Try running manifest command ==="
+          php artisan tallcms:generate-manifest --output=../checksums.json -vvv 2>&1
 
           cd ..
           if [ -f checksums.json ]; then
             echo "Manifest created successfully"
+            head -20 checksums.json
             ZIP_HASH=$(sha256sum tallcms-${{ steps.version.outputs.version }}.zip | cut -d' ' -f1)
             jq --arg hash "$ZIP_HASH" '.zip_sha256 = $hash' checksums.json > checksums.tmp && mv checksums.tmp checksums.json
           else
