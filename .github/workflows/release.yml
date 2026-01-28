@@ -174,18 +174,44 @@ jobs:
           fi
 
           echo "=== Regenerate autoloader ==="
-          composer dump-autoload --optimize
-
-          echo "=== Test artisan ==="
-          php artisan --version
+          composer dump-autoload --optimize --no-scripts
 
       - name: Generate checksums manifest
         run: |
           cd release
-          php artisan tallcms:generate-manifest --output=../checksums.json
+          echo "=== Testing artisan with full output ==="
+          set +e
+          output=$(php artisan --version 2>&1)
+          exitcode=$?
+          set -e
+          echo "Exit code: $exitcode"
+          echo "Output: '$output'"
+
+          if [ -z "$output" ]; then
+            echo "WARNING: Artisan produced no output. Checking bootstrap..."
+            php -r "require 'vendor/autoload.php'; echo 'Autoload OK\n';"
+            php -r "
+              require 'vendor/autoload.php';
+              \$app = require 'bootstrap/app.php';
+              echo 'App loaded: ' . get_class(\$app) . PHP_EOL;
+            " 2>&1 || echo "App bootstrap failed"
+          fi
+
+          echo "=== Generating manifest ==="
+          php artisan tallcms:generate-manifest --output=../checksums.json 2>&1 || {
+            echo "Manifest command failed"
+            exit 1
+          }
+
           cd ..
-          ZIP_HASH=$(sha256sum tallcms-${{ steps.version.outputs.version }}.zip | cut -d' ' -f1)
-          jq --arg hash "$ZIP_HASH" '.zip_sha256 = $hash' checksums.json > checksums.tmp && mv checksums.tmp checksums.json
+          if [ -f checksums.json ]; then
+            echo "Manifest created successfully"
+            ZIP_HASH=$(sha256sum tallcms-${{ steps.version.outputs.version }}.zip | cut -d' ' -f1)
+            jq --arg hash "$ZIP_HASH" '.zip_sha256 = $hash' checksums.json > checksums.tmp && mv checksums.tmp checksums.json
+          else
+            echo "ERROR: checksums.json was not created"
+            exit 1
+          fi
 
       - name: Sign checksums with Ed25519
         run: |
