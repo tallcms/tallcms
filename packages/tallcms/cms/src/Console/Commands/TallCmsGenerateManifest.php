@@ -50,6 +50,7 @@ class TallCmsGenerateManifest extends Command
         '/\.log$/',
         '/\.DS_Store/',
         '/Thumbs\.db/',
+        '/public\/themes\//',  // Theme symlinks may be broken in release builds
     ];
 
     public function handle(): int
