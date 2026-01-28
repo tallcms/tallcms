@@ -150,16 +150,19 @@ jobs:
           # Remove composer.lock (contains local path references)
           rm -f composer.lock
 
-      - name: Setup release environment for manifest generation
-        run: |
-          cd release
-          cp .env.example .env
-          php artisan key:generate --force
-
       - name: Create ZIP archive
         run: |
           cd release
           zip -r ../tallcms-${{ steps.version.outputs.version }}.zip . -x ".env" -x ".env.*"
+
+      - name: Setup release environment for manifest generation
+        run: |
+          cd release
+          cp .env.example .env
+          # Create installer.lock to bypass installer redirect in CLI mode
+          # This is only for running artisan commands - it's not in the ZIP
+          touch installer.lock
+          php artisan key:generate --force
 
       - name: Fix vendor symlink and regenerate autoload
         run: |
@@ -179,43 +182,15 @@ jobs:
       - name: Generate checksums manifest
         run: |
           cd release
-
-          echo "=== Checking bootstrap/app.php ==="
-          php -d display_errors=1 -d error_reporting=E_ALL -r '
-            echo "Loading autoload...\n";
-            require "vendor/autoload.php";
-            echo "Autoload loaded\n";
-
-            echo "Loading bootstrap/app.php...\n";
-            try {
-              $app = require "bootstrap/app.php";
-              echo "App class: " . get_class($app) . "\n";
-              echo "App path: " . $app->basePath() . "\n";
-            } catch (Throwable $e) {
-              echo "EXCEPTION: " . $e->getMessage() . "\n";
-              echo $e->getTraceAsString() . "\n";
-            }
-          ' 2>&1
-
-          echo "=== Running artisan inline ==="
-          php -d display_errors=1 -d error_reporting=E_ALL artisan --version 2>&1
-
-          echo "=== Check if tallcms config exists ==="
-          php artisan config:show tallcms 2>&1 | head -20 || echo "Config command failed"
-
-          echo "=== Try running manifest command ==="
-          php artisan tallcms:generate-manifest --output=../checksums.json -vvv 2>&1
-
+          echo "Testing artisan..."
+          php artisan --version
+          echo "Generating manifest..."
+          php artisan tallcms:generate-manifest --output=../checksums.json
           cd ..
-          if [ -f checksums.json ]; then
-            echo "Manifest created successfully"
-            head -20 checksums.json
-            ZIP_HASH=$(sha256sum tallcms-${{ steps.version.outputs.version }}.zip | cut -d' ' -f1)
-            jq --arg hash "$ZIP_HASH" '.zip_sha256 = $hash' checksums.json > checksums.tmp && mv checksums.tmp checksums.json
-          else
-            echo "ERROR: checksums.json was not created"
-            exit 1
-          fi
+          echo "Adding ZIP hash to manifest..."
+          ZIP_HASH=$(sha256sum tallcms-${{ steps.version.outputs.version }}.zip | cut -d' ' -f1)
+          jq --arg hash "$ZIP_HASH" '.zip_sha256 = $hash' checksums.json > checksums.tmp && mv checksums.tmp checksums.json
+          echo "Manifest complete."
 
       - name: Sign checksums with Ed25519
         run: |
