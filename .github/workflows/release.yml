@@ -164,44 +164,33 @@ jobs:
       - name: Generate checksums manifest
         run: |
           cd release
-          echo "=== Testing basic PHP output ==="
-          php -r "echo 'PHP output works';"
-          echo ""
 
-          echo "=== Artisan file contents ==="
-          head -20 artisan
+          echo "=== Check vendor/tallcms/cms ==="
+          ls -la vendor/tallcms/
+          ls -la vendor/tallcms/cms || echo "Not a directory"
 
-          echo "=== Trying artisan directly with unbuffered output ==="
-          php -d output_buffering=Off artisan --version
+          echo "=== Fix symlink: replace with actual files ==="
+          if [ -L vendor/tallcms/cms ]; then
+            echo "Found symlink, replacing with actual files..."
+            rm vendor/tallcms/cms
+            cp -r packages/tallcms/cms vendor/tallcms/cms
+            echo "Symlink replaced with directory copy"
+          fi
 
-          echo "=== Check .env ==="
-          head -10 .env
+          ls -la vendor/tallcms/cms
 
-          echo "=== Run artisan with explicit ansi ==="
-          php artisan --version --ansi
+          echo "=== Test artisan now ==="
+          php artisan --version
 
-          echo "=== Check if TallCMS provider is loaded ==="
-          php artisan package:discover --ansi 2>&1 || true
+          echo "=== Generate manifest ==="
+          php artisan tallcms:generate-manifest --output=../checksums.json
 
-          echo "=== Try tinker to check app ==="
-          echo "config('app.name')" | php artisan tinker 2>&1 || true
-
-          echo "=== Run manifest with full verbosity ==="
-          php artisan tallcms:generate-manifest --output=../checksums.json -vvv 2>&1 || {
-            echo "Command failed with exit code $?"
-          }
-
-          echo "=== Check output file ==="
-          ls -la ../checksums.json || echo "File not created"
+          echo "=== Check output ==="
+          ls -la ../checksums.json
 
           cd ..
-          if [ -f checksums.json ]; then
-            ZIP_HASH=$(sha256sum tallcms-${{ steps.version.outputs.version }}.zip | cut -d' ' -f1)
-            jq --arg hash "$ZIP_HASH" '.zip_sha256 = $hash' checksums.json > checksums.tmp && mv checksums.tmp checksums.json
-          else
-            echo "Skipping jq - checksums.json not found"
-            exit 1
-          fi
+          ZIP_HASH=$(sha256sum tallcms-${{ steps.version.outputs.version }}.zip | cut -d' ' -f1)
+          jq --arg hash "$ZIP_HASH" '.zip_sha256 = $hash' checksums.json > checksums.tmp && mv checksums.tmp checksums.json
 
       - name: Sign checksums with Ed25519
         run: |
