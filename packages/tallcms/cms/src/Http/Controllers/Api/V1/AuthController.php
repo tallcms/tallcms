@@ -153,13 +153,18 @@ class AuthController extends Controller
             'email' => $user->email,
         ];
 
-        // Only include token info when authenticated via token (not session)
-        if ($token) {
+        // Only include token info when authenticated via a real PersonalAccessToken
+        // TransientToken (from Sanctum::actingAs) returns false for expires_at/last_used_at
+        if ($token && $token instanceof \Laravel\Sanctum\PersonalAccessToken) {
+            // Defensive check: expires_at/last_used_at may be false in some edge cases
+            $expiresAt = $token->expires_at;
+            $lastUsedAt = $token->last_used_at;
+
             $data['token'] = [
                 'name' => $token->name,
                 'abilities' => $token->abilities,
-                'expires_at' => $token->expires_at?->toIso8601String(),
-                'last_used_at' => $token->last_used_at?->toIso8601String(),
+                'expires_at' => ($expiresAt && $expiresAt !== false) ? $expiresAt->toIso8601String() : null,
+                'last_used_at' => ($lastUsedAt && $lastUsedAt !== false) ? $lastUsedAt->toIso8601String() : null,
             ];
         }
 

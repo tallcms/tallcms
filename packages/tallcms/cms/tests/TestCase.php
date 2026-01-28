@@ -5,6 +5,7 @@ namespace TallCms\Cms\Tests;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Kalnoy\Nestedset\NestedSetServiceProvider;
+use Laravel\Sanctum\SanctumServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 use TallCms\Cms\TallCmsServiceProvider;
 
@@ -19,6 +20,7 @@ abstract class TestCase extends Orchestra
     {
         return [
             NestedSetServiceProvider::class,
+            SanctumServiceProvider::class,
             TallCmsServiceProvider::class,
         ];
     }
@@ -62,6 +64,17 @@ abstract class TestCase extends Orchestra
         // Set up basic app config
         $app['config']->set('app.key', 'base64:2fl+Ktvkfl+Fuz4Qp/A75G2RTiWVA/ZoKZvp6fiiM10=');
 
+        // Configure Sanctum auth guard
+        $app['config']->set('auth.guards.sanctum', [
+            'driver' => 'sanctum',
+            'provider' => 'users',
+        ]);
+
+        $app['config']->set('auth.providers.users', [
+            'driver' => 'eloquent',
+            'model' => \TallCms\Cms\Tests\Fixtures\User::class,
+        ]);
+
         // Configure for plugin mode by default in tests
         $app['config']->set('tallcms.mode', 'plugin');
         $app['config']->set('tallcms.plugin_mode.preview_routes_enabled', true);
@@ -69,7 +82,12 @@ abstract class TestCase extends Orchestra
 
         // Use test User model
         $app['config']->set('tallcms.plugin_mode.user_model', \TallCms\Cms\Tests\Fixtures\User::class);
-        $app['config']->set('auth.providers.users.model', \TallCms\Cms\Tests\Fixtures\User::class);
+
+        // Enable API routes (must be set before service provider boots)
+        $app['config']->set('tallcms.api.enabled', true);
+        $app['config']->set('tallcms.api.prefix', 'api/v1/tallcms');
+        $app['config']->set('tallcms.api.rate_limit', 60);
+        $app['config']->set('tallcms.api.auth_rate_limit', 5);
     }
 
     /**
