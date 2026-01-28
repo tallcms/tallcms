@@ -1,10 +1,16 @@
 # TallCMS
 
-A modern, feature-rich CMS package for Laravel Filament. Works as a standalone application or as a plugin in existing Filament apps.
+[![Packagist Version](https://img.shields.io/packagist/v/tallcms/cms)](https://packagist.org/packages/tallcms/cms)
+[![Packagist Downloads](https://img.shields.io/packagist/dt/tallcms/cms)](https://packagist.org/packages/tallcms/cms)
+[![License](https://img.shields.io/packagist/l/tallcms/cms)](https://opensource.org/licenses/MIT)
+
+A modern Content Management System package for Laravel Filament. Add rich content editing, pages, posts, media library, and menus to your existing Filament application.
+
+> For a full standalone CMS with themes, plugins, and auto-updates, see [tallcms/tallcms](https://github.com/tallcms/tallcms).
 
 ## Features
 
-- **Rich Content Editor** - Block-based editor with many built-in content blocks
+- **Rich Content Editor** - Block-based editor with 16 built-in content blocks
 - **Pages & Posts** - Static pages and blog posts with categories
 - **Publishing Workflow** - Draft, Pending Review, Scheduled, and Published states
 - **Revision History** - Track changes with diff comparison and rollback
@@ -14,21 +20,54 @@ A modern, feature-rich CMS package for Laravel Filament. Works as a standalone a
 - **Site Settings** - Centralized configuration for site name, contact info, social links
 - **Contact Form** - Built-in contact form block with email notifications
 - **SEO Ready** - Meta descriptions, canonical URLs, and structured data support
+- **Role-Based Permissions** - Super Admin, Administrator, Editor, Author
 - **Multi-Panel Support** - Works with any Filament panel configuration
+
+## Screenshots
+
+### Page Editor
+Build rich pages with the block-based content editor.
+
+![Page Editor](https://raw.githubusercontent.com/tallcms/cms/main/docs/screenshots/page-editor.png)
+
+### Content Blocks
+Choose from many built-in blocks: Hero, CTA, Pricing, FAQ, Testimonials, and more.
+
+![Content Blocks](https://raw.githubusercontent.com/tallcms/cms/main/docs/screenshots/blocks.png)
+
+### Posts Management
+Manage blog posts with filters, bulk actions, and status indicators.
+
+![Posts List](https://raw.githubusercontent.com/tallcms/cms/main/docs/screenshots/posts-list.png)
+
+### Media Library
+Organize uploads with collections, metadata, and drag-and-drop.
+
+![Media Library](https://raw.githubusercontent.com/tallcms/cms/main/docs/screenshots/media-library.png)
+
+### Menu Builder
+Create navigation menus with drag-and-drop ordering.
+
+![Menu Builder](https://raw.githubusercontent.com/tallcms/cms/main/docs/screenshots/menu-builder.png)
+
+### Revision History
+Track changes with diff comparison and one-click rollback.
+
+![Revision History](https://raw.githubusercontent.com/tallcms/cms/main/docs/screenshots/revisions.png)
+
+### Site Settings
+Configure site name, contact info, social links, and more.
+
+![Site Settings](https://raw.githubusercontent.com/tallcms/cms/main/docs/screenshots/site-settings.png)
 
 ## Requirements
 
-- PHP ^8.2
-- Laravel ^11.0 or ^12.0
-- Filament ^4.0
+- **PHP**: 8.2+ with OpenSSL, PDO, Mbstring, GD extensions
+- **Laravel**: 11.0 or 12.0
+- **Filament**: 4.0
+- **Database**: MySQL 8.0+, MariaDB 10.3+, or SQLite
 
 ## Installation
-
-### As a Filament Plugin (Recommended)
-
-Add TallCMS to your Laravel application.
-
-> **Note:** TallCMS v2.x requires Filament 4.x (not Filament 5) because filament-shield doesn't yet have a Filament 5 compatible release.
 
 **1. Install via Composer:**
 
@@ -86,23 +125,11 @@ This single command handles everything:
 - Sets up roles and permissions via Filament Shield
 - Creates your admin user
 
-**5. (Optional) Publish configuration:**
+**6. (Optional) Publish configuration:**
 
 ```bash
 php artisan vendor:publish --tag=tallcms-config
 ```
-
-### As a Standalone Application
-
-For a full TallCMS installation with themes, plugins, web installer, and auto-updates:
-
-```bash
-composer create-project tallcms/tallcms my-cms
-cd my-cms
-composer setup
-```
-
-Or use the web installer by visiting `/install` after deployment.
 
 ## What Gets Registered
 
@@ -219,28 +246,26 @@ Most Laravel apps include Alpine via Livewire. If your app loads Alpine
 separately, ensure it's loaded BEFORE tallcms.js, as TallCMS registers
 components on `alpine:init`.
 
-## Content Blocks
-
-TallCMS includes many content blocks for building rich pages:
+## Built-in Blocks
 
 | Block | Description |
 |-------|-------------|
-| **Hero** | Full-width hero sections with background images and CTAs |
-| **Call to Action** | Promotional sections with buttons |
-| **Content** | Rich text content with headings and formatting |
+| **Hero** | Landing page headers with CTAs and background images |
+| **Call-to-Action** | Conversion-optimized promotional sections |
+| **Content** | Article content with headings and rich text |
 | **Features** | Feature grids with icons and descriptions |
-| **Pricing** | Pricing tables with plans and feature lists |
+| **Pricing** | Pricing tables with feature comparison |
 | **FAQ** | Accordion-style frequently asked questions |
-| **Testimonials** | Customer testimonials with photos and quotes |
-| **Team** | Team member profiles with photos and bios |
+| **Testimonials** | Customer testimonials with ratings |
+| **Team** | Team member profiles with social links |
 | **Stats** | Statistics and metrics display |
-| **Image Gallery** | Photo galleries with lightbox |
+| **Image Gallery** | Lightbox galleries with grid layouts |
 | **Logos** | Logo showcases for partners/clients |
 | **Timeline** | Chronological event displays |
-| **Contact Form** | Contact forms with email delivery |
+| **Contact Form** | Dynamic forms with email notifications |
 | **Posts** | Display recent blog posts |
 | **Parallax** | Parallax scrolling sections |
-| **Divider** | Visual separators between sections |
+| **Divider** | Visual section separators |
 
 ### Creating Custom Blocks
 
@@ -253,6 +278,25 @@ php artisan make:tallcms-block MyCustomBlock
 This creates:
 - Block class at `app/Filament/Blocks/MyCustomBlockBlock.php`
 - Blade template at `resources/views/cms/blocks/my-custom-block.blade.php`
+
+## TallCMS Pro
+
+Upgrade to **TallCMS Pro** for advanced features:
+
+- **9 Premium Blocks** - Accordion, Tabs, Counter, Table, Comparison, Video, Before/After, Code Snippet, Map
+- **Analytics Dashboard** - Google Analytics 4 integration with visitor stats
+- **Priority Support** - Direct email support
+
+Learn more at [tallcms.com/pro](https://tallcms.com/pro)
+
+## User Roles
+
+| Role | Description |
+|------|-------------|
+| **Super Admin** | Complete system control |
+| **Administrator** | Content and user management |
+| **Editor** | Full content management |
+| **Author** | Create and edit own content |
 
 ## Publishing Workflow
 
@@ -361,30 +405,15 @@ TallCMS creates these tables (all prefixed with `tallcms_`):
 | `tallcms_contact_submissions` | Contact form entries |
 | `tallcms_revisions` | Content revision history |
 | `tallcms_preview_tokens` | Preview sharing tokens |
-| `tallcms_plugin_migrations` | Plugin migration tracking |
-| `tallcms_plugin_licenses` | Plugin license storage |
 
 ## Artisan Commands
 
 | Command | Description |
 |---------|-------------|
+| `tallcms:install` | Full installation (migrations, roles, admin user) |
+| `tallcms:setup` | Setup roles, permissions, and admin user only |
 | `make:tallcms-block` | Create a custom content block |
 | `tallcms:clean-preview-tokens` | Remove expired preview tokens |
-
-### Setup Command
-
-| Command | Description |
-|---------|-------------|
-| `tallcms:setup` | Setup roles, permissions, and admin user |
-
-### Standalone-Only Commands
-
-These commands are only available in standalone mode:
-
-| Command | Description |
-|---------|-------------|
-| `tallcms:update` | Update to latest version |
-| `tallcms:version` | Display current version |
 
 ## Permissions
 
@@ -394,28 +423,9 @@ TallCMS integrates with [Filament Shield](https://github.com/bezhanSalleh/filame
 - `View:SiteSettings` for the settings page
 - `View:MenuItemsManager` for menu management
 
-## Upgrade Guide
-
-### From v1.x Standalone to v2.x
-
-If upgrading from a standalone TallCMS v1.x installation:
-
-1. Update `composer.json` to require `tallcms/cms: ^2.0`
-2. Run `composer update`
-3. The package auto-detects standalone mode via `.tallcms-standalone` marker file
-4. All existing data and customizations are preserved
-
-### Migrating Standalone to Plugin Mode
-
-To convert a standalone installation to plugin mode:
-
-1. Remove the `.tallcms-standalone` marker file
-2. Set `'mode' => 'plugin'` in `config/tallcms.php`
-3. Register `TallCmsPlugin` in your panel provider
-
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+Contributions are welcome! Please submit issues and pull requests on [GitHub](https://github.com/tallcms/cms).
 
 ## Security
 
@@ -427,5 +437,16 @@ TallCMS is open-source software licensed under the [MIT license](LICENSE.md).
 
 ## Credits
 
-- Built with [Laravel](https://laravel.com) and [Filament](https://filamentphp.com)
-- Uses [Spatie Laravel Package Tools](https://github.com/spatie/laravel-package-tools)
+- [Laravel](https://laravel.com/) - The PHP framework
+- [Filament](https://filamentphp.com/) - Admin panel framework
+- [Livewire](https://laravel-livewire.com/) - Dynamic frontend
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS
+- [daisyUI](https://daisyui.com/) - Tailwind component classes
+- [Spatie](https://spatie.be/) - Laravel packages
+
+## Links
+
+- **Website**: [tallcms.com](https://tallcms.com)
+- **Documentation**: [tallcms.com/docs](https://tallcms.com/docs)
+- **Standalone**: [github.com/tallcms/tallcms](https://github.com/tallcms/tallcms)
+- **Support**: hello@tallcms.com
