@@ -52,11 +52,13 @@ return new class extends Migration
             ->update(['status' => 'draft']);
 
         // Backfill author_id on pages with first user (if exists)
-        $firstUserId = DB::table('users')->first()?->id;
-        if ($firstUserId) {
-            DB::table('tallcms_pages')
-                ->whereNull('author_id')
-                ->update(['author_id' => $firstUserId]);
+        if (Schema::hasTable('users')) {
+            $firstUserId = DB::table('users')->first()?->id;
+            if ($firstUserId) {
+                DB::table('tallcms_pages')
+                    ->whereNull('author_id')
+                    ->update(['author_id' => $firstUserId]);
+            }
         }
     }
 
