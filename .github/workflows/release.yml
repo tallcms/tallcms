@@ -150,6 +150,12 @@ jobs:
           # Remove composer.lock (contains local path references)
           rm -f composer.lock
 
+      - name: Setup release environment for manifest generation
+        run: |
+          cd release
+          cp .env.example .env
+          php artisan key:generate --force
+
       - name: Create ZIP archive
         run: |
           cd release
