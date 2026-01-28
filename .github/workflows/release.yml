@@ -161,13 +161,9 @@ jobs:
           cd release
           zip -r ../tallcms-${{ steps.version.outputs.version }}.zip . -x ".env" -x ".env.*"
 
-      - name: Generate checksums manifest
+      - name: Fix vendor symlink and regenerate autoload
         run: |
           cd release
-
-          echo "=== Check vendor/tallcms/cms ==="
-          ls -la vendor/tallcms/
-          ls -la vendor/tallcms/cms || echo "Not a directory"
 
           echo "=== Fix symlink: replace with actual files ==="
           if [ -L vendor/tallcms/cms ]; then
@@ -177,17 +173,16 @@ jobs:
             echo "Symlink replaced with directory copy"
           fi
 
-          ls -la vendor/tallcms/cms
+          echo "=== Regenerate autoloader ==="
+          composer dump-autoload --optimize
 
-          echo "=== Test artisan now ==="
+          echo "=== Test artisan ==="
           php artisan --version
 
-          echo "=== Generate manifest ==="
+      - name: Generate checksums manifest
+        run: |
+          cd release
           php artisan tallcms:generate-manifest --output=../checksums.json
-
-          echo "=== Check output ==="
-          ls -la ../checksums.json
-
           cd ..
           ZIP_HASH=$(sha256sum tallcms-${{ steps.version.outputs.version }}.zip | cut -d' ' -f1)
           jq --arg hash "$ZIP_HASH" '.zip_sha256 = $hash' checksums.json > checksums.tmp && mv checksums.tmp checksums.json
