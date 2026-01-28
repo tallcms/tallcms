@@ -164,17 +164,26 @@ jobs:
       - name: Generate checksums manifest
         run: |
           cd release
+          echo "Current directory: $(pwd)"
+          echo "Checking PHP..."
+          php -v
+          echo "Checking artisan exists..."
+          ls -la artisan
+          echo "Checking bootstrap/app.php..."
+          ls -la bootstrap/app.php
+          echo "Checking vendor/autoload.php..."
+          ls -la vendor/autoload.php
           echo "Testing artisan..."
-          php artisan --version || echo "Artisan failed!"
-          echo "Generating manifest..."
-          php artisan tallcms:generate-manifest --output=../checksums.json -v 2>&1 || {
-            echo "Manifest generation failed. Checking if file exists..."
-            ls -la ../checksums.json 2>/dev/null || echo "File not created"
-            exit 1
-          }
+          php artisan --version 2>&1
+          echo "Exit code: $?"
+          echo "Listing artisan commands..."
+          php artisan list | head -50
+          echo "Running manifest generation..."
+          php artisan tallcms:generate-manifest --output=../checksums.json -v 2>&1
+          echo "Exit code: $?"
+          echo "Checking if file was created..."
+          ls -la ../checksums.json || echo "File not found"
           cd ..
-          echo "Manifest generated. Contents:"
-          head -20 checksums.json
           # Add ZIP hash to manifest
           ZIP_HASH=$(sha256sum tallcms-${{ steps.version.outputs.version }}.zip | cut -d' ' -f1)
           jq --arg hash "$ZIP_HASH" '.zip_sha256 = $hash' checksums.json > checksums.tmp && mv checksums.tmp checksums.json
