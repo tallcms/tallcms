@@ -1,0 +1,150 @@
+<?php
+
+declare(strict_types=1);
+
+namespace TallCms\Cms\Tests\Unit;
+
+use TallCms\Cms\Filament\Blocks\Concerns\HasAnimationOptions;
+use TallCms\Cms\Tests\TestCase;
+
+class HasAnimationOptionsTest extends TestCase
+{
+    use HasAnimationOptions;
+
+    // =========================================================================
+    // Animation Type Tests
+    // =========================================================================
+
+    public function test_empty_animation_type_stays_empty(): void
+    {
+        $result = self::getAnimationConfig(['animation_type' => '']);
+
+        $this->assertSame('', $result['animation_type']);
+    }
+
+    public function test_core_animation_types_pass_through(): void
+    {
+        $coreTypes = ['fade-in', 'fade-in-up'];
+
+        foreach ($coreTypes as $type) {
+            $result = self::getAnimationConfig(['animation_type' => $type]);
+            $this->assertSame($type, $result['animation_type'], "Core type '{$type}' should pass through");
+        }
+    }
+
+    public function test_invalid_animation_type_becomes_empty(): void
+    {
+        $result = self::getAnimationConfig(['animation_type' => 'invalid-type']);
+
+        $this->assertSame('', $result['animation_type']);
+    }
+
+    public function test_typo_animation_type_becomes_empty(): void
+    {
+        $result = self::getAnimationConfig(['animation_type' => 'fade-in-upp']);
+
+        $this->assertSame('', $result['animation_type']);
+    }
+
+    public function test_pro_animation_types_stripped_without_pro(): void
+    {
+        // Without Pro, these should become empty
+        $proTypes = ['fade-in-down', 'fade-in-left', 'fade-in-right', 'zoom-in', 'zoom-in-up'];
+
+        foreach ($proTypes as $type) {
+            $result = self::getAnimationConfig(['animation_type' => $type]);
+            $this->assertSame('', $result['animation_type'], "Pro type '{$type}' should be stripped without Pro");
+        }
+    }
+
+    // =========================================================================
+    // Animation Duration Tests
+    // =========================================================================
+
+    public function test_core_durations_pass_through(): void
+    {
+        $coreDurations = ['anim-duration-500', 'anim-duration-700'];
+
+        foreach ($coreDurations as $duration) {
+            $result = self::getAnimationConfig(['animation_duration' => $duration]);
+            $this->assertSame($duration, $result['animation_duration'], "Core duration '{$duration}' should pass through");
+        }
+    }
+
+    public function test_invalid_duration_defaults_to_500(): void
+    {
+        $result = self::getAnimationConfig(['animation_duration' => 'invalid-duration']);
+
+        $this->assertSame('anim-duration-500', $result['animation_duration']);
+    }
+
+    public function test_pro_durations_stripped_without_pro(): void
+    {
+        $proDurations = ['anim-duration-300', 'anim-duration-1000'];
+
+        foreach ($proDurations as $duration) {
+            $result = self::getAnimationConfig(['animation_duration' => $duration]);
+            $this->assertSame('anim-duration-500', $result['animation_duration'], "Pro duration '{$duration}' should default to 500ms without Pro");
+        }
+    }
+
+    // =========================================================================
+    // Stagger Tests
+    // =========================================================================
+
+    public function test_stagger_disabled_without_pro(): void
+    {
+        $result = self::getAnimationConfig(['animation_stagger' => true]);
+
+        $this->assertFalse($result['animation_stagger']);
+    }
+
+    public function test_stagger_delay_defaults_to_100(): void
+    {
+        $result = self::getAnimationConfig([]);
+
+        $this->assertSame(100, $result['animation_stagger_delay']);
+    }
+
+    public function test_valid_stagger_delays_pass_through(): void
+    {
+        $validDelays = [0, 100, 200, 300];
+
+        foreach ($validDelays as $delay) {
+            $result = self::getAnimationConfig(['animation_stagger_delay' => $delay]);
+            // Note: without Pro, stagger_delay is forced to 100
+            $this->assertSame(100, $result['animation_stagger_delay']);
+        }
+    }
+
+    public function test_invalid_stagger_delay_defaults_to_100(): void
+    {
+        $result = self::getAnimationConfig(['animation_stagger_delay' => 150]);
+
+        $this->assertSame(100, $result['animation_stagger_delay']);
+    }
+
+    // =========================================================================
+    // Default Values Tests
+    // =========================================================================
+
+    public function test_empty_config_returns_safe_defaults(): void
+    {
+        $result = self::getAnimationConfig([]);
+
+        $this->assertSame('', $result['animation_type']);
+        $this->assertSame('anim-duration-500', $result['animation_duration']);
+        $this->assertFalse($result['animation_stagger']);
+        $this->assertSame(100, $result['animation_stagger_delay']);
+    }
+
+    public function test_all_keys_always_present(): void
+    {
+        $result = self::getAnimationConfig([]);
+
+        $this->assertArrayHasKey('animation_type', $result);
+        $this->assertArrayHasKey('animation_duration', $result);
+        $this->assertArrayHasKey('animation_stagger', $result);
+        $this->assertArrayHasKey('animation_stagger_delay', $result);
+    }
+}

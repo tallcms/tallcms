@@ -7,6 +7,7 @@
         "dev": "vite"
     },
     "devDependencies": {
+        "@alpinejs/intersect": "^3.15.5",
         "@tailwindcss/typography": "^0.5.19",
         "@tailwindcss/vite": "^4.1.18",
         "axios": "^1.11.0",
