@@ -22,7 +22,7 @@ trait HasAnimationOptions
      */
     protected static function hasPro(): bool
     {
-        return class_exists(\TallCms\Pro\TallCmsProPlugin::class);
+        return class_exists(\Tallcms\Pro\Filament\TallcmsProPlugin::class);
     }
 
     /**
@@ -51,8 +51,8 @@ trait HasAnimationOptions
 
     /**
      * Get animation duration options.
-     * Core: Normal (500ms), Slow (700ms)
-     * Pro: + Fast (300ms), Very Slow (1000ms)
+     * Core: Normal (0.7s), Relaxed (1s), Dramatic (1.5s)
+     * Pro: + Snappy (0.3s), Quick (0.5s)
      */
     protected static function getAnimationDurationOptions(): array
     {
