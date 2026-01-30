@@ -10,12 +10,17 @@
  * @version 1.0.0
  */
 
-// Alpine plugins (registered via alpine:init event for Livewire 3 compatibility)
+// Alpine plugins
 import intersect from '@alpinejs/intersect';
 
-document.addEventListener('alpine:init', () => {
+// Register immediately if Alpine already exists, otherwise wait for alpine:init
+if (window.Alpine) {
     window.Alpine.plugin(intersect);
-});
+} else {
+    document.addEventListener('alpine:init', () => {
+        window.Alpine.plugin(intersect);
+    });
+}
 
 // Native block components
 import './components/contact-form';
