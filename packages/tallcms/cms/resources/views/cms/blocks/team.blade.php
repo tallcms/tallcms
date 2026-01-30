@@ -18,13 +18,29 @@
         'instagram' => 'Instagram',
         'facebook' => 'Facebook',
     ];
+
+    $animationType = $animation_type ?? '';
+    $animationDuration = $animation_duration ?? 'anim-duration-500';
+    $animationStagger = $animation_stagger ?? false;
+    $staggerDelay = (int) ($animation_stagger_delay ?? 100);
 @endphp
 
-<section @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="team-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}">
+<x-tallcms::animation-wrapper
+    tag="section"
+    :animation="$animationType"
+    :controller="true"
+    :id="$anchor_id ?? null"
+    class="team-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}"
+>
     <div class="{{ $contentWidthClass ?? 'max-w-7xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
         {{-- Section Header --}}
         @if(!empty($heading) || !empty($subheading))
-            <div class="{{ $text_alignment ?? 'text-center' }} mb-12 sm:mb-16">
+            <x-tallcms::animation-wrapper
+                :animation="$animationType"
+                :duration="$animationDuration"
+                :use-parent="true"
+                class="{{ $text_alignment ?? 'text-center' }} mb-12 sm:mb-16"
+            >
                 @if(!empty($heading))
                     <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-base-content">
                         {{ $heading }}
@@ -35,14 +51,23 @@
                         {{ $subheading }}
                     </p>
                 @endif
-            </div>
+            </x-tallcms::animation-wrapper>
         @endif
 
         {{-- Team Members --}}
         @if(!empty($members))
             <div class="grid gap-8 {{ $columnsClass }}">
-                @foreach($members as $member)
-                    <div class="{{ $card_style ?? 'card bg-base-200 shadow-lg' }} {{ $text_alignment ?? 'text-center' }} min-w-0">
+                @foreach($members as $index => $member)
+                    @php
+                        $itemDelay = $animationStagger ? ($staggerDelay * ($index + 1)) : 0;
+                    @endphp
+                    <x-tallcms::animation-wrapper
+                        :animation="$animationType"
+                        :duration="$animationDuration"
+                        :use-parent="true"
+                        :delay="$itemDelay"
+                        class="{{ $card_style ?? 'card bg-base-200 shadow-lg' }} {{ $text_alignment ?? 'text-center' }} min-w-0"
+                    >
                         <div class="card-body">
                             {{-- Photo --}}
                             <div class="mb-4 {{ ($text_alignment ?? 'text-center') === 'text-center' ? 'flex justify-center' : '' }}">
@@ -135,9 +160,9 @@
                                 </div>
                             @endif
                         </div>
-                    </div>
+                    </x-tallcms::animation-wrapper>
                 @endforeach
             </div>
         @endif
     </div>
-</section>
+</x-tallcms::animation-wrapper>

@@ -14,9 +14,18 @@
         'text-right' => 'justify-end',
         default => 'justify-center',
     };
+
+    $animationType = $animation_type ?? '';
+    $animationDuration = $animation_duration ?? 'anim-duration-500';
 @endphp
 
-<section @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="{{ $padding ?? 'py-16' }} {{ $background ?? 'bg-base-200' }} {{ $css_classes ?? '' }}">
+<x-tallcms::animation-wrapper
+    tag="section"
+    :animation="$animationType"
+    :duration="$animationDuration"
+    :id="$anchor_id ?? null"
+    class="{{ $padding ?? 'py-16' }} {{ $background ?? 'bg-base-200' }} {{ $css_classes ?? '' }}"
+>
     <div class="{{ $contentWidthClass ?? 'max-w-6xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }} flex flex-col {{ $alignmentClasses }}">
         @if($title ?? null)
             <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-base-content mb-6">
@@ -58,4 +67,4 @@
             </div>
         @endif
     </div>
-</section>
+</x-tallcms::animation-wrapper>

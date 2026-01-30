@@ -1,0 +1,185 @@
+<?php
+
+namespace TallCms\Cms\Filament\Blocks\Concerns;
+
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Section;
+
+/**
+ * Provides configurable entrance animations for blocks.
+ *
+ * Core (free) animations: Fade In, Fade In Up
+ * Pro animations: Fade In Down/Left/Right, Zoom In, Zoom In Up
+ *
+ * Animations use CSS keyframes + Alpine.js x-intersect for scroll-triggered
+ * animations that respect prefers-reduced-motion.
+ */
+trait HasAnimationOptions
+{
+    /**
+     * Check if TallCMS Pro is installed.
+     */
+    protected static function hasPro(): bool
+    {
+        return class_exists(\TallCms\Pro\TallCmsProPlugin::class);
+    }
+
+    /**
+     * Get animation type options.
+     * Core: None, Fade In, Fade In Up
+     * Pro: + Fade In Down/Left/Right, Zoom In, Zoom In Up
+     */
+    protected static function getAnimationTypeOptions(): array
+    {
+        $options = [
+            '' => 'None',
+            'fade-in' => 'Fade In',
+            'fade-in-up' => 'Fade In Up',
+        ];
+
+        if (static::hasPro()) {
+            $options['fade-in-down'] = 'Fade In Down';
+            $options['fade-in-left'] = 'Fade In Left';
+            $options['fade-in-right'] = 'Fade In Right';
+            $options['zoom-in'] = 'Zoom In';
+            $options['zoom-in-up'] = 'Zoom In Up';
+        }
+
+        return $options;
+    }
+
+    /**
+     * Get animation duration options.
+     * Core: Normal (500ms), Slow (700ms)
+     * Pro: + Fast (300ms), Very Slow (1000ms)
+     */
+    protected static function getAnimationDurationOptions(): array
+    {
+        $options = [
+            'anim-duration-500' => 'Normal (500ms)',
+            'anim-duration-700' => 'Slow (700ms)',
+        ];
+
+        if (static::hasPro()) {
+            // Insert Fast at beginning, Very Slow at end
+            $options = [
+                'anim-duration-300' => 'Fast (300ms)',
+            ] + $options + [
+                'anim-duration-1000' => 'Very Slow (1s)',
+            ];
+        }
+
+        return $options;
+    }
+
+    /**
+     * Get stagger delay options (Pro only).
+     */
+    protected static function getStaggerDelayOptions(): array
+    {
+        return [
+            '0' => 'None (0ms)',
+            '100' => 'Short (100ms)',
+            '200' => 'Medium (200ms)',
+            '300' => 'Long (300ms)',
+        ];
+    }
+
+    /**
+     * Get the animation configuration section for the block editor.
+     *
+     * @param  bool  $supportsStagger  Whether this block supports staggered item animations
+     */
+    protected static function getAnimationSection(bool $supportsStagger = false): Section
+    {
+        $schema = [
+            Select::make('animation_type')
+                ->label('Entrance Animation')
+                ->options(static::getAnimationTypeOptions())
+                ->default('')
+                ->helperText('Animation plays when block scrolls into view'),
+
+            Select::make('animation_duration')
+                ->label('Animation Speed')
+                ->options(static::getAnimationDurationOptions())
+                ->default('anim-duration-500'),
+        ];
+
+        // Add stagger options for Pro users on blocks that support it
+        if ($supportsStagger && static::hasPro()) {
+            $schema[] = Toggle::make('animation_stagger')
+                ->label('Stagger Items')
+                ->helperText('Animate items sequentially instead of all at once')
+                ->default(false)
+                ->live();
+
+            $schema[] = Select::make('animation_stagger_delay')
+                ->label('Stagger Delay')
+                ->options(static::getStaggerDelayOptions())
+                ->default('100')
+                ->visible(fn ($get): bool => $get('animation_stagger') === true);
+        }
+
+        return Section::make('Animation')
+            ->schema($schema)
+            ->columns(2)
+            ->collapsed()
+            ->compact();
+    }
+
+    /**
+     * Get sanitized animation configuration for rendering.
+     *
+     * This ensures Pro values are stripped when Pro is not installed,
+     * preventing bypass via manual JSON/DB edits.
+     */
+    public static function getAnimationConfig(array $config): array
+    {
+        $hasPro = static::hasPro();
+
+        $type = $config['animation_type'] ?? '';
+        $duration = $config['animation_duration'] ?? 'anim-duration-500';
+
+        // Valid animation types
+        $coreTypes = ['fade-in', 'fade-in-up'];
+        $proTypes = ['fade-in-down', 'fade-in-left', 'fade-in-right', 'zoom-in', 'zoom-in-up'];
+        $allValidTypes = array_merge([''], $coreTypes, $proTypes);
+
+        $coreDurations = ['anim-duration-500', 'anim-duration-700'];
+        $proDurations = ['anim-duration-300', 'anim-duration-1000'];
+        $allValidDurations = array_merge($coreDurations, $proDurations);
+
+        // Validate type - invalid/unknown values become '' (None)
+        if (! in_array($type, $allValidTypes)) {
+            $type = '';
+        }
+
+        // If valid Pro type but no Pro license → no animation
+        if (! $hasPro && in_array($type, $proTypes)) {
+            $type = '';
+        }
+
+        // Validate duration
+        if (! in_array($duration, $allValidDurations)) {
+            $duration = 'anim-duration-500';
+        }
+        if (! $hasPro && in_array($duration, $proDurations)) {
+            $duration = 'anim-duration-500';
+        }
+
+        // Validate stagger delay to allowed values
+        $allowedDelays = [0, 100, 200, 300];
+        $staggerDelay = (int) ($config['animation_stagger_delay'] ?? 100);
+        if (! in_array($staggerDelay, $allowedDelays, true)) {
+            $staggerDelay = 100;
+        }
+
+        return [
+            'animation_type' => $type,
+            'animation_duration' => $duration,
+            'animation_stagger' => $hasPro ? (bool) ($config['animation_stagger'] ?? false) : false,
+            'animation_stagger_delay' => $hasPro ? $staggerDelay : 100,
+        ];
+    }
+}

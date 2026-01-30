@@ -24,14 +24,30 @@
         'relaxed' => 'gap-8',
         default => 'gap-6'
     };
+
+    $animationType = $animation_type ?? '';
+    $animationDuration = $animation_duration ?? 'anim-duration-500';
+    $animationStagger = $animation_stagger ?? false;
+    $staggerDelay = (int) ($animation_stagger_delay ?? 100);
 @endphp
 
-<section @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="pricing-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}">
+<x-tallcms::animation-wrapper
+    tag="section"
+    :animation="$animationType"
+    :controller="true"
+    :id="$anchor_id ?? null"
+    class="pricing-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}"
+>
     <div class="{{ $contentWidthClass ?? 'max-w-7xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
 
         {{-- Header Section --}}
         @if($section_title || $section_subtitle)
-            <div class="mb-12 {{ $text_alignment ?? 'text-center' }}">
+            <x-tallcms::animation-wrapper
+                :animation="$animationType"
+                :duration="$animationDuration"
+                :use-parent="true"
+                class="mb-12 {{ $text_alignment ?? 'text-center' }}"
+            >
                 @if($section_title)
                     <h2 class="text-3xl md:text-4xl font-bold mb-4 text-base-content">
                         {{ $section_title }}
@@ -43,13 +59,13 @@
                         {{ $section_subtitle }}
                     </p>
                 @endif
-            </div>
+            </x-tallcms::animation-wrapper>
         @endif
 
         {{-- Pricing Plans Grid --}}
         @if(!empty($plans))
             <div class="grid {{ $gridClasses }} {{ $gapClass }}">
-                @foreach($plans as $plan)
+                @foreach($plans as $index => $plan)
                     @php
                         $isPopular = $plan['is_popular'] ?? false;
                         $planName = $plan['name'] ?? 'Plan';
@@ -80,9 +96,17 @@
 
                         // Button classes - use style from config directly
                         $buttonClasses = 'btn btn-block ' . $buttonStyle;
+
+                        $itemDelay = $animationStagger ? ($staggerDelay * ($index + 1)) : 0;
                     @endphp
 
-                    <div class="{{ $cardClasses }}">
+                    <x-tallcms::animation-wrapper
+                        :animation="$animationType"
+                        :duration="$animationDuration"
+                        :use-parent="true"
+                        :delay="$itemDelay"
+                        class="{{ $cardClasses }}"
+                    >
                         <div class="card-body">
 
                             {{-- Popular Badge --}}
@@ -164,10 +188,10 @@
                                 @endif
                             </div>
                         </div>
-                    </div>
+                    </x-tallcms::animation-wrapper>
                 @endforeach
             </div>
         @endif
 
     </div>
-</section>
+</x-tallcms::animation-wrapper>
