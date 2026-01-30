@@ -18,32 +18,32 @@
     }
 
     @keyframes fade-in-up {
-        from { opacity: 0; transform: translateY(20px); }
+        from { opacity: 0; transform: translateY(60px); }
         to { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes fade-in-down {
-        from { opacity: 0; transform: translateY(-20px); }
+        from { opacity: 0; transform: translateY(-60px); }
         to { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes fade-in-left {
-        from { opacity: 0; transform: translateX(-20px); }
+        from { opacity: 0; transform: translateX(-80px); }
         to { opacity: 1; transform: translateX(0); }
     }
 
     @keyframes fade-in-right {
-        from { opacity: 0; transform: translateX(20px); }
+        from { opacity: 0; transform: translateX(80px); }
         to { opacity: 1; transform: translateX(0); }
     }
 
     @keyframes zoom-in {
-        from { opacity: 0; transform: scale(0.95); }
+        from { opacity: 0; transform: scale(0.7); }
         to { opacity: 1; transform: scale(1); }
     }
 
     @keyframes zoom-in-up {
-        from { opacity: 0; transform: scale(0.95) translateY(10px); }
+        from { opacity: 0; transform: scale(0.8) translateY(40px); }
         to { opacity: 1; transform: scale(1) translateY(0); }
     }
 
@@ -93,6 +93,7 @@
     .anim-duration-500 { animation-duration: 500ms; }
     .anim-duration-700 { animation-duration: 700ms; }
     .anim-duration-1000 { animation-duration: 1000ms; }
+    .anim-duration-1500 { animation-duration: 1500ms; }
 
     /* Reduced motion: SINGLE selector for all TallCMS animations */
     @media (prefers-reduced-motion: reduce) {

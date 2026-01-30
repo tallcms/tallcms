@@ -100,7 +100,7 @@ class HasAnimationOptionsTest extends TestCase
 
     public function test_core_durations_pass_through(): void
     {
-        $coreDurations = ['anim-duration-500', 'anim-duration-700'];
+        $coreDurations = ['anim-duration-700', 'anim-duration-1000', 'anim-duration-1500'];
 
         foreach ($coreDurations as $duration) {
             $result = NonProAnimationHelper::getAnimationConfig(['animation_duration' => $duration]);
@@ -108,20 +108,20 @@ class HasAnimationOptionsTest extends TestCase
         }
     }
 
-    public function test_invalid_duration_defaults_to_500(): void
+    public function test_invalid_duration_defaults_to_700(): void
     {
         $result = NonProAnimationHelper::getAnimationConfig(['animation_duration' => 'invalid-duration']);
 
-        $this->assertSame('anim-duration-500', $result['animation_duration']);
+        $this->assertSame('anim-duration-700', $result['animation_duration']);
     }
 
     public function test_pro_durations_stripped_without_pro(): void
     {
-        $proDurations = ['anim-duration-300', 'anim-duration-1000'];
+        $proDurations = ['anim-duration-300', 'anim-duration-500'];
 
         foreach ($proDurations as $duration) {
             $result = NonProAnimationHelper::getAnimationConfig(['animation_duration' => $duration]);
-            $this->assertSame('anim-duration-500', $result['animation_duration'], "Pro duration '{$duration}' should default to 500ms without Pro");
+            $this->assertSame('anim-duration-700', $result['animation_duration'], "Pro duration '{$duration}' should default to 700ms without Pro");
         }
     }
 
@@ -131,7 +131,7 @@ class HasAnimationOptionsTest extends TestCase
 
     public function test_pro_durations_pass_through_with_pro(): void
     {
-        $proDurations = ['anim-duration-300', 'anim-duration-1000'];
+        $proDurations = ['anim-duration-300', 'anim-duration-500'];
 
         foreach ($proDurations as $duration) {
             $result = ProAnimationHelper::getAnimationConfig(['animation_duration' => $duration]);
@@ -197,7 +197,7 @@ class HasAnimationOptionsTest extends TestCase
         $result = NonProAnimationHelper::getAnimationConfig([]);
 
         $this->assertSame('', $result['animation_type']);
-        $this->assertSame('anim-duration-500', $result['animation_duration']);
+        $this->assertSame('anim-duration-700', $result['animation_duration']);
         $this->assertFalse($result['animation_stagger']);
         $this->assertSame(100, $result['animation_stagger_delay']);
     }

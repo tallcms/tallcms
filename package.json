@@ -16,5 +16,8 @@
         "laravel-vite-plugin": "^2.0.0",
         "tailwindcss": "^4.1.18",
         "vite": "^7.0.7"
+    },
+    "dependencies": {
+        "alpinejs": "^3.15.5"
     }
 }

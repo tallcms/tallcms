@@ -7,20 +7,17 @@
  * Usage in theme's app.js:
  *   import '../../../../resources/js/tallcms';
  *
+ * Note: Alpine.js is provided by Livewire. Plugins are exposed on window
+ * and registered via an inline script before @livewireScripts in the layout.
+ *
  * @version 1.0.0
  */
 
-// Alpine plugins
 import intersect from '@alpinejs/intersect';
 
-// Register immediately if Alpine already exists, otherwise wait for alpine:init
-if (window.Alpine) {
-    window.Alpine.plugin(intersect);
-} else {
-    document.addEventListener('alpine:init', () => {
-        window.Alpine.plugin(intersect);
-    });
-}
+// Expose plugins on window for registration before Livewire/Alpine starts
+window.__tallcmsPlugins = window.__tallcmsPlugins || [];
+window.__tallcmsPlugins.push(intersect);
 
 // Native block components
 import './components/contact-form';

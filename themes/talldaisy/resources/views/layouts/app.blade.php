@@ -341,6 +341,12 @@
         })();
     </script>
 
+    {{-- Register TallCMS Alpine plugins before Livewire starts Alpine --}}
+    <script>
+        document.addEventListener('alpine:init', () => {
+            (window.__tallcmsPlugins || []).forEach(plugin => window.Alpine.plugin(plugin));
+        });
+    </script>
     @livewireScripts
 </body>
 </html>

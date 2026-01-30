@@ -57,17 +57,17 @@ trait HasAnimationOptions
     protected static function getAnimationDurationOptions(): array
     {
         $options = [
-            'anim-duration-500' => 'Normal (500ms)',
-            'anim-duration-700' => 'Slow (700ms)',
+            'anim-duration-700' => 'Normal (0.7s)',
+            'anim-duration-1000' => 'Relaxed (1s)',
+            'anim-duration-1500' => 'Dramatic (1.5s)',
         ];
 
         if (static::hasPro()) {
-            // Insert Fast at beginning, Very Slow at end
+            // Insert faster options at beginning
             $options = [
-                'anim-duration-300' => 'Fast (300ms)',
-            ] + $options + [
-                'anim-duration-1000' => 'Very Slow (1s)',
-            ];
+                'anim-duration-300' => 'Snappy (0.3s)',
+                'anim-duration-500' => 'Quick (0.5s)',
+            ] + $options;
         }
 
         return $options;
@@ -103,7 +103,7 @@ trait HasAnimationOptions
             Select::make('animation_duration')
                 ->label('Animation Speed')
                 ->options(static::getAnimationDurationOptions())
-                ->default('anim-duration-500'),
+                ->default('anim-duration-700'),
         ];
 
         // Add stagger options for Pro users on blocks that support it
@@ -139,15 +139,15 @@ trait HasAnimationOptions
         $hasPro = static::hasPro();
 
         $type = $config['animation_type'] ?? '';
-        $duration = $config['animation_duration'] ?? 'anim-duration-500';
+        $duration = $config['animation_duration'] ?? 'anim-duration-700';
 
         // Valid animation types
         $coreTypes = ['fade-in', 'fade-in-up'];
         $proTypes = ['fade-in-down', 'fade-in-left', 'fade-in-right', 'zoom-in', 'zoom-in-up'];
         $allValidTypes = array_merge([''], $coreTypes, $proTypes);
 
-        $coreDurations = ['anim-duration-500', 'anim-duration-700'];
-        $proDurations = ['anim-duration-300', 'anim-duration-1000'];
+        $coreDurations = ['anim-duration-700', 'anim-duration-1000', 'anim-duration-1500'];
+        $proDurations = ['anim-duration-300', 'anim-duration-500'];
         $allValidDurations = array_merge($coreDurations, $proDurations);
 
         // Validate type - invalid/unknown values become '' (None)
@@ -162,10 +162,10 @@ trait HasAnimationOptions
 
         // Validate duration
         if (! in_array($duration, $allValidDurations)) {
-            $duration = 'anim-duration-500';
+            $duration = 'anim-duration-700';
         }
         if (! $hasPro && in_array($duration, $proDurations)) {
-            $duration = 'anim-duration-500';
+            $duration = 'anim-duration-700';
         }
 
         // Validate stagger delay to allowed values
