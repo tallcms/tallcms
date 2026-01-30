@@ -100,7 +100,8 @@ class HasAnimationOptionsTest extends TestCase
 
     public function test_core_durations_pass_through(): void
     {
-        $coreDurations = ['anim-duration-700', 'anim-duration-1000', 'anim-duration-1500'];
+        // Note: anim-duration-500 included for backwards compatibility
+        $coreDurations = ['anim-duration-500', 'anim-duration-700', 'anim-duration-1000', 'anim-duration-1500'];
 
         foreach ($coreDurations as $duration) {
             $result = NonProAnimationHelper::getAnimationConfig(['animation_duration' => $duration]);
@@ -117,7 +118,8 @@ class HasAnimationOptionsTest extends TestCase
 
     public function test_pro_durations_stripped_without_pro(): void
     {
-        $proDurations = ['anim-duration-300', 'anim-duration-500'];
+        // Only 300ms is Pro-only (500ms kept for backwards compatibility)
+        $proDurations = ['anim-duration-300'];
 
         foreach ($proDurations as $duration) {
             $result = NonProAnimationHelper::getAnimationConfig(['animation_duration' => $duration]);
@@ -131,7 +133,8 @@ class HasAnimationOptionsTest extends TestCase
 
     public function test_pro_durations_pass_through_with_pro(): void
     {
-        $proDurations = ['anim-duration-300', 'anim-duration-500'];
+        // Only 300ms is Pro-only in UI (500ms kept for backwards compatibility)
+        $proDurations = ['anim-duration-300'];
 
         foreach ($proDurations as $duration) {
             $result = ProAnimationHelper::getAnimationConfig(['animation_duration' => $duration]);

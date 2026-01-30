@@ -146,8 +146,10 @@ trait HasAnimationOptions
         $proTypes = ['fade-in-down', 'fade-in-left', 'fade-in-right', 'zoom-in', 'zoom-in-up'];
         $allValidTypes = array_merge([''], $coreTypes, $proTypes);
 
-        $coreDurations = ['anim-duration-700', 'anim-duration-1000', 'anim-duration-1500'];
-        $proDurations = ['anim-duration-300', 'anim-duration-500'];
+        // Note: anim-duration-500 included in Core for backwards compatibility
+        // (was Core in earlier versions, now Pro-only in UI but still valid)
+        $coreDurations = ['anim-duration-500', 'anim-duration-700', 'anim-duration-1000', 'anim-duration-1500'];
+        $proDurations = ['anim-duration-300'];
         $allValidDurations = array_merge($coreDurations, $proDurations);
 
         // Validate type - invalid/unknown values become '' (None)
