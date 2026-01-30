@@ -15,9 +15,22 @@
 
 import intersect from '@alpinejs/intersect';
 
-// Expose plugins on window for registration before Livewire/Alpine starts
-window.__tallcmsPlugins = window.__tallcmsPlugins || [];
-window.__tallcmsPlugins.push(intersect);
+// Register plugins with Alpine
+// If Alpine exists, register immediately; otherwise wait for alpine:init
+if (window.Alpine) {
+    window.Alpine.plugin(intersect);
+} else {
+    // Store for layout-level registration AND set up fallback listener
+    window.__tallcmsPlugins = window.__tallcmsPlugins || [];
+    window.__tallcmsPlugins.push(intersect);
+
+    document.addEventListener('alpine:init', () => {
+        (window.__tallcmsPlugins || []).forEach(plugin => {
+            window.Alpine.plugin(plugin);
+        });
+        window.__tallcmsPlugins = []; // Clear to avoid double registration
+    });
+}
 
 // Native block components
 import './components/contact-form';
