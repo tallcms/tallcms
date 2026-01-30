@@ -66,6 +66,8 @@ Block animations play once when content scrolls into view, creating engaging pag
 | **Snappy** | 0.3s | Quick interactions |
 | **Quick** | 0.5s | Subtle entrances |
 
+> **Note:** Blocks saved with "Quick (0.5s)" before upgrading to Pro will continue to work, even without a Pro license.
+
 ---
 
 ## Stagger Effect (Pro)
