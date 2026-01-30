@@ -203,9 +203,9 @@ class StatsBlock extends RichContentCustomBlock
                                             ->default(false),
                                     ])
                                     ->columns(2),
-
-                                static::getAnimationSection(supportsStagger: true),
                             ]),
+
+                        static::getAnimationTab(supportsStagger: true),
                     ]),
 
                 static::getIdentifiersSection(),

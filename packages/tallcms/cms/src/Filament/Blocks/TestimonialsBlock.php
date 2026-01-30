@@ -222,9 +222,9 @@ class TestimonialsBlock extends RichContentCustomBlock
                                             ->default(false),
                                     ])
                                     ->columns(3),
-
-                                static::getAnimationSection(supportsStagger: true),
                             ]),
+
+                        static::getAnimationTab(supportsStagger: true),
                     ]),
 
                 static::getIdentifiersSection(),

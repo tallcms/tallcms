@@ -5,6 +5,7 @@ namespace TallCms\Cms\Filament\Blocks\Concerns;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs\Tab;
 
 /**
  * Provides configurable entrance animations for blocks.
@@ -126,6 +127,46 @@ trait HasAnimationOptions
             ->columns(2)
             ->collapsed()
             ->compact();
+    }
+
+    /**
+     * Get the animation tab for the block editor.
+     *
+     * @param  bool  $supportsStagger  Whether this block supports staggered item animations
+     */
+    protected static function getAnimationTab(bool $supportsStagger = false): Tab
+    {
+        $schema = [
+            Select::make('animation_type')
+                ->label('Entrance Animation')
+                ->options(static::getAnimationTypeOptions())
+                ->default('')
+                ->helperText('Animation plays when block scrolls into view'),
+
+            Select::make('animation_duration')
+                ->label('Animation Speed')
+                ->options(static::getAnimationDurationOptions())
+                ->default('anim-duration-700'),
+        ];
+
+        // Add stagger options for Pro users on blocks that support it
+        if ($supportsStagger && static::hasPro()) {
+            $schema[] = Toggle::make('animation_stagger')
+                ->label('Stagger Items')
+                ->helperText('Animate items sequentially instead of all at once')
+                ->default(false)
+                ->live();
+
+            $schema[] = Select::make('animation_stagger_delay')
+                ->label('Stagger Delay')
+                ->options(static::getStaggerDelayOptions())
+                ->default('100')
+                ->visible(fn ($get): bool => $get('animation_stagger') === true);
+        }
+
+        return Tab::make('Animation')
+            ->icon('heroicon-m-sparkles')
+            ->schema($schema);
     }
 
     /**

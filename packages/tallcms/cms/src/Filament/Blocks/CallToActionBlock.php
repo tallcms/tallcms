@@ -213,9 +213,9 @@ class CallToActionBlock extends RichContentCustomBlock
                                             ->default('py-16'),
                                     ])
                                     ->columns(4),
-
-                                static::getAnimationSection(supportsStagger: false),
                             ]),
+
+                        static::getAnimationTab(supportsStagger: false),
                     ]),
 
                 static::getIdentifiersSection(),

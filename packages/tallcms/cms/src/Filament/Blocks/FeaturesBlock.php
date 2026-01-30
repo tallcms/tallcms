@@ -221,9 +221,9 @@ class FeaturesBlock extends RichContentCustomBlock
                                             ->default(false),
                                     ])
                                     ->columns(4),
-
-                                static::getAnimationSection(supportsStagger: true),
                             ]),
+
+                        static::getAnimationTab(supportsStagger: true),
                     ]),
 
                 static::getIdentifiersSection(),
