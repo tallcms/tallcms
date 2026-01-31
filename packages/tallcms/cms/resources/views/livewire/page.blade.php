@@ -100,8 +100,8 @@
 
                 $postContent = \TallCms\Cms\Services\MergeTagService::replaceTags($postContent, $post);
             @endphp
-            {{-- Only apply prose class to non-block content (blocks handle their own styling) --}}
-            <div class="{{ $needsBlockRendering ? '' : 'prose prose-lg max-w-none' }}">
+            {{-- Prose for text styling; blocks use not-prose class to exclude themselves --}}
+            <div class="prose prose-lg max-w-none">
                 {!! $postContent !!}
             </div>
         </article>

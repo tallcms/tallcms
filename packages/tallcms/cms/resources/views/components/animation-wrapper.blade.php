@@ -10,6 +10,8 @@
 @php
     $hasAnimation = !empty($animation);
     $delayMs = (int) $delay;
+    // Add not-prose to section tags (block roots) to prevent Tailwind Typography from overriding block styles
+    $notProseClass = $tag === 'section' ? 'not-prose' : '';
 @endphp
 
 <{{ $tag }}
@@ -36,7 +38,7 @@
             style="animation-delay: {{ $delayMs }}ms"
         @endif
     @endif
-    {{ $attributes }}
+    {{ $attributes->class([$notProseClass]) }}
 >
     {{ $slot }}
 </{{ $tag }}>
