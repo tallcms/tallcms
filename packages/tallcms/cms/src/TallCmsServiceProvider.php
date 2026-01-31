@@ -379,11 +379,12 @@ class TallCmsServiceProvider extends PackageServiceProvider
     }
 
     /**
-     * Patch Filament's CustomBlockAction to handle missing 'mode' argument.
+     * Patch Filament's CustomBlockAction to handle missing arguments.
      *
-     * This is a workaround for a bug in Filament v4.x where the modalSubmitActionLabel
-     * closure accesses $arguments['mode'] without null checking, while other places
-     * in the same file correctly use ($arguments['mode'] ?? null).
+     * This is a workaround for a bug in Filament v4.x where the CustomBlockAction
+     * accesses $arguments['id'] and $arguments['mode'] without null checking.
+     * When modal state gets corrupted (e.g., clicking block twice then closing),
+     * the arguments array may be empty, causing "Undefined array key" errors.
      */
     protected function patchCustomBlockAction(): void
     {
@@ -391,6 +392,21 @@ class TallCmsServiceProvider extends PackageServiceProvider
             if ($action->getName() !== 'customBlock') {
                 return;
             }
+
+            // Override modalHeading with null-safe version
+            $action->modalHeading(function (array $arguments, \Filament\Forms\Components\RichEditor $component): ?string {
+                $blockId = $arguments['id'] ?? null;
+                if ($blockId === null) {
+                    return null;
+                }
+
+                $block = $component->getCustomBlock($blockId);
+                if (blank($block)) {
+                    return null;
+                }
+
+                return $block::getLabel();
+            });
 
             // Override modalSubmitActionLabel with null-safe version
             $action->modalSubmitActionLabel(fn (array $arguments): ?string => match ($arguments['mode'] ?? null) {
