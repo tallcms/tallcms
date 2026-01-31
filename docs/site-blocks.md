@@ -16,7 +16,7 @@ order: 20
 
 Blocks are reusable content components that you add to pages and posts. They provide structured layouts for common content patterns like heroes, pricing tables, and testimonials.
 
-TallCMS includes 17 built-in blocks organized into categories.
+TallCMS includes 17 built-in blocks organized into categories, plus 9 additional Pro blocks available with a TallCMS Pro license.
 
 ---
 
@@ -37,6 +37,7 @@ The block picker organizes blocks by category:
 - **Social Proof**: Testimonials, Team, Logos, Stats
 - **Dynamic**: Posts, FAQ, Timeline
 - **Forms**: Contact Form
+- **Pro**: Accordion, Tabs, Table, Comparison, Before/After, Video, Counter, Code Snippet, Map
 
 Use the search box to quickly find blocks by name or keyword.
 
@@ -87,6 +88,22 @@ Click any block for detailed documentation and live examples.
 | Block | Description |
 |-------|-------------|
 | [Contact Form](block-contact-form) | Customizable contact form |
+
+### Pro Blocks
+
+Pro blocks require a TallCMS Pro license.
+
+| Block | Description |
+|-------|-------------|
+| [Accordion](block-pro-accordion) | Collapsible content sections for FAQs and lists |
+| [Tabs](block-pro-tabs) | Tabbed content sections with rich text and icons |
+| [Table](block-pro-table) | Data tables with headers, highlighting, and styling |
+| [Comparison](block-pro-comparison) | Side-by-side feature comparison for plans or products |
+| [Before/After](block-pro-before-after) | Interactive slider for image or text comparisons |
+| [Video](block-pro-video) | Embed YouTube, Vimeo, or self-hosted videos |
+| [Counter](block-pro-counter) | Animated number counters with scroll trigger |
+| [Code Snippet](block-pro-code-snippet) | Syntax-highlighted code with copy button |
+| [Map](block-pro-map) | Interactive maps from OpenStreetMap, Google, or Mapbox |
 
 ---
 
