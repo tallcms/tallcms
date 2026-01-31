@@ -398,7 +398,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
                 'edit' => __('filament-forms::components.rich_editor.actions.custom_block.modal.actions.save.label'),
                 default => null,
             });
-        }, isPrepend: true);
+        });
     }
 
     /**
