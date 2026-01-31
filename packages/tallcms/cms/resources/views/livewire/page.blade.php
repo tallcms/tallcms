@@ -43,64 +43,65 @@
                 </div>
             @endif
 
-            <div class="prose prose-lg max-w-none">
-                @php
-                    $content = $post->content;
-                    $contentStr = is_string($content) ? $content : json_encode($content);
+            @php
+                $content = $post->content;
+                $contentStr = is_string($content) ? $content : json_encode($content);
 
-                    // Check if content needs block rendering:
-                    // - Tiptap JSON (has "type":"doc")
-                    // - HTML with embedded customBlock divs (from admin editor)
-                    $needsBlockRendering = str_contains($contentStr, '"type":"doc"')
-                        || str_contains($contentStr, 'data-type="customBlock"')
-                        || str_contains($contentStr, "data-type='customBlock'");
+                // Check if content needs block rendering:
+                // - Tiptap JSON (has "type":"doc")
+                // - HTML with embedded customBlock divs (from admin editor)
+                $needsBlockRendering = str_contains($contentStr, '"type":"doc"')
+                    || str_contains($contentStr, 'data-type="customBlock"')
+                    || str_contains($contentStr, "data-type='customBlock'");
 
-                    if ($needsBlockRendering) {
-                        // Use RichContentRenderer for Tiptap JSON or HTML with blocks
-                        $postContent = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($content)
-                            ->customBlocks(\TallCms\Cms\Services\CustomBlockDiscoveryService::getBlocksArray())
-                            ->toUnsafeHtml();
-                    } else {
-                        // Raw HTML - output directly
-                        $postContent = is_string($content) ? $content : '';
-                    }
+                if ($needsBlockRendering) {
+                    // Use RichContentRenderer for Tiptap JSON or HTML with blocks
+                    $postContent = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($content)
+                        ->customBlocks(\TallCms\Cms\Services\CustomBlockDiscoveryService::getBlocksArray())
+                        ->toUnsafeHtml();
+                } else {
+                    // Raw HTML - output directly
+                    $postContent = is_string($content) ? $content : '';
+                }
 
-                    // Always add IDs to headings that don't have them (for TOC anchor links)
-                    // This handles both: RichContentRenderer stripping IDs, and admin edits removing IDs
-                    $postContent = preg_replace_callback(
-                        '/<(h[2-4])([^>]*)>([^<]+)<\/h[2-4]>/i',
-                        function ($matches) {
-                            $tag = $matches[1];
-                            $attrs = $matches[2];
-                            $text = $matches[3];
+                // Always add IDs to headings that don't have them (for TOC anchor links)
+                // This handles both: RichContentRenderer stripping IDs, and admin edits removing IDs
+                $postContent = preg_replace_callback(
+                    '/<(h[2-4])([^>]*)>([^<]+)<\/h[2-4]>/i',
+                    function ($matches) {
+                        $tag = $matches[1];
+                        $attrs = $matches[2];
+                        $text = $matches[3];
 
-                            // Skip if already has an id attribute
-                            if (preg_match('/\bid\s*=/i', $attrs)) {
-                                return $matches[0];
-                            }
+                        // Skip if already has an id attribute
+                        if (preg_match('/\bid\s*=/i', $attrs)) {
+                            return $matches[0];
+                        }
 
-                            $id = \Illuminate\Support\Str::slug($text);
-                            return "<{$tag} id=\"{$id}\"{$attrs}>{$text}</{$tag}>";
-                        },
-                        $postContent
-                    );
+                        $id = \Illuminate\Support\Str::slug($text);
+                        return "<{$tag} id=\"{$id}\"{$attrs}>{$text}</{$tag}>";
+                    },
+                    $postContent
+                );
 
-                    // Fix internal anchor links - RichEditor adds target="_blank" and rel attributes
-                    // to all links, but internal anchors (#...) should not have these
-                    $postContent = preg_replace_callback(
-                        '/<a([^>]*href="#[^"]*"[^>]*)>/i',
-                        function ($matches) {
-                            $attrs = $matches[1];
-                            // Remove target="_blank" and rel="..." from internal anchor links
-                            $attrs = preg_replace('/\s*target="_blank"/i', '', $attrs);
-                            $attrs = preg_replace('/\s*rel="[^"]*"/i', '', $attrs);
-                            return "<a{$attrs}>";
-                        },
-                        $postContent
-                    );
+                // Fix internal anchor links - RichEditor adds target="_blank" and rel attributes
+                // to all links, but internal anchors (#...) should not have these
+                $postContent = preg_replace_callback(
+                    '/<a([^>]*href="#[^"]*"[^>]*)>/i',
+                    function ($matches) {
+                        $attrs = $matches[1];
+                        // Remove target="_blank" and rel="..." from internal anchor links
+                        $attrs = preg_replace('/\s*target="_blank"/i', '', $attrs);
+                        $attrs = preg_replace('/\s*rel="[^"]*"/i', '', $attrs);
+                        return "<a{$attrs}>";
+                    },
+                    $postContent
+                );
 
-                    $postContent = \TallCms\Cms\Services\MergeTagService::replaceTags($postContent, $post);
-                @endphp
+                $postContent = \TallCms\Cms\Services\MergeTagService::replaceTags($postContent, $post);
+            @endphp
+            {{-- Only apply prose class to non-block content (blocks handle their own styling) --}}
+            <div class="{{ $needsBlockRendering ? '' : 'prose prose-lg max-w-none' }}">
                 {!! $postContent !!}
             </div>
         </article>
