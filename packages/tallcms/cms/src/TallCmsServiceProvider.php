@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace TallCms\Cms;
 
-use Filament\Actions\Action;
 use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
@@ -370,51 +369,6 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
         // Register webhook observers for model events
         $this->bootWebhookFeatures();
-
-        // Fix Filament bug: CustomBlockAction doesn't null-check 'mode' argument
-        // This causes "Undefined array key 'mode'" when modal state gets corrupted
-        // (e.g., clicking block twice, closing, then opening different block)
-        // See: vendor/filament/forms/src/Components/RichEditor/Actions/CustomBlockAction.php:28
-        $this->patchCustomBlockAction();
-    }
-
-    /**
-     * Patch Filament's CustomBlockAction to handle missing arguments.
-     *
-     * This is a workaround for a bug in Filament v4.x where the CustomBlockAction
-     * accesses $arguments['id'] and $arguments['mode'] without null checking.
-     * When modal state gets corrupted (e.g., clicking block twice then closing),
-     * the arguments array may be empty, causing "Undefined array key" errors.
-     */
-    protected function patchCustomBlockAction(): void
-    {
-        Action::configureUsing(function (Action $action) {
-            if ($action->getName() !== 'customBlock') {
-                return;
-            }
-
-            // Override modalHeading with null-safe version
-            $action->modalHeading(function (array $arguments, \Filament\Forms\Components\RichEditor $component): ?string {
-                $blockId = $arguments['id'] ?? null;
-                if ($blockId === null) {
-                    return null;
-                }
-
-                $block = $component->getCustomBlock($blockId);
-                if (blank($block)) {
-                    return null;
-                }
-
-                return $block::getLabel();
-            });
-
-            // Override modalSubmitActionLabel with null-safe version
-            $action->modalSubmitActionLabel(fn (array $arguments): ?string => match ($arguments['mode'] ?? null) {
-                'insert' => __('filament-forms::components.rich_editor.actions.custom_block.modal.actions.insert.label'),
-                'edit' => __('filament-forms::components.rich_editor.actions.custom_block.modal.actions.save.label'),
-                default => null,
-            });
-        });
     }
 
     /**
