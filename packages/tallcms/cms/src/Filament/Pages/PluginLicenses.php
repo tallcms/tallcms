@@ -2,7 +2,6 @@
 
 namespace TallCms\Cms\Filament\Pages;
 
-use TallCms\Cms\Services\PluginLicenseService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -10,6 +9,7 @@ use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use TallCms\Cms\Services\PluginLicenseService;
 
 class PluginLicenses extends Page implements HasForms
 {
@@ -44,6 +44,12 @@ class PluginLicenses extends Page implements HasForms
     public function mount(): void
     {
         $this->refreshStatuses();
+
+        // Handle pre-selected plugin from query string (after refreshStatuses populates licensablePlugins)
+        $requestedPlugin = request()->query('plugin');
+        if ($requestedPlugin && array_key_exists($requestedPlugin, $this->licensablePlugins)) {
+            $this->selected_plugin = $requestedPlugin;
+        }
     }
 
     protected function refreshStatuses(): void

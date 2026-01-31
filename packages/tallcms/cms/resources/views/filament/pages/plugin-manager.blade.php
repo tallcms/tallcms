@@ -1,4 +1,40 @@
 <x-filament-panels::page>
+    {{-- Updates Available Summary --}}
+    @php $pluginsWithUpdates = $this->plugins->filter(fn($p) => $p['hasUpdate']); @endphp
+    @if($pluginsWithUpdates->isNotEmpty())
+        <x-filament::section class="!bg-warning-50 dark:!bg-warning-900/20 !border-warning-200 dark:!border-warning-800">
+            <x-slot name="heading">
+                <div class="flex items-center gap-2 text-warning-700 dark:text-warning-300">
+                    <x-heroicon-o-arrow-path class="w-5 h-5" />
+                    {{ $pluginsWithUpdates->count() }} Update{{ $pluginsWithUpdates->count() > 1 ? 's' : '' }} Available
+                </div>
+            </x-slot>
+
+            <div class="space-y-2">
+                @foreach($pluginsWithUpdates as $plugin)
+                    <div class="flex items-center justify-between gap-4 py-2 {{ !$loop->last ? 'border-b border-warning-200 dark:border-warning-700/50' : '' }}">
+                        <div class="flex items-center gap-3">
+                            <span class="font-medium text-gray-900 dark:text-gray-100">{{ $plugin['name'] }}</span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">
+                                v{{ $plugin['version'] }} &rarr; v{{ $plugin['updateInfo']['latest_version'] }}
+                            </span>
+                        </div>
+                        @if($this->uploadsAllowed)
+                            <x-filament::button
+                                wire:click="mountAction('applyUpdate', { vendor: '{{ $plugin['vendor'] }}', slug: '{{ $plugin['slug'] }}', name: '{{ addslashes($plugin['name']) }}', latest_version: '{{ $plugin['updateInfo']['latest_version'] }}' })"
+                                color="warning"
+                                size="sm"
+                                icon="heroicon-o-arrow-path"
+                            >
+                                Update
+                            </x-filament::button>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        </x-filament::section>
+    @endif
+
     {{-- Available Plugins (not installed) --}}
     @if($this->availablePlugins->isNotEmpty())
         <x-filament::section>
@@ -97,9 +133,22 @@
         </div>
     @endif
 
+    {{-- Search Input --}}
+    @if($this->plugins->isNotEmpty())
+        <div class="mb-4">
+            <x-filament::input.wrapper>
+                <x-filament::input
+                    wire:model.live.debounce.300ms="search"
+                    type="search"
+                    placeholder="Search plugins by name, description, author, or tag..."
+                />
+            </x-filament::input.wrapper>
+        </div>
+    @endif
+
     {{-- Plugin List --}}
     <div class="space-y-3">
-        @foreach($this->plugins as $plugin)
+        @forelse($this->filteredPlugins as $plugin)
             <x-filament::section class="!p-4">
                 <div class="flex items-start justify-between gap-4">
                     {{-- Plugin Info --}}
@@ -111,6 +160,11 @@
                             <x-filament::badge color="gray" size="sm">
                                 v{{ $plugin['version'] }}
                             </x-filament::badge>
+                            @if($plugin['hasUpdate'])
+                                <x-filament::badge color="warning" size="sm">
+                                    Update: v{{ $plugin['updateInfo']['latest_version'] }}
+                                </x-filament::badge>
+                            @endif
                             <span class="text-xs text-gray-500 dark:text-gray-400">
                                 {{ $plugin['fullSlug'] }}
                             </span>
@@ -168,7 +222,18 @@
                     </div>
 
                     {{-- Actions --}}
-                    <div class="flex items-center gap-2 shrink-0">
+                    <div class="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                        @if($plugin['hasUpdate'] && $this->uploadsAllowed)
+                            <x-filament::button
+                                wire:click="mountAction('applyUpdate', { vendor: '{{ $plugin['vendor'] }}', slug: '{{ $plugin['slug'] }}', name: '{{ addslashes($plugin['name']) }}', latest_version: '{{ $plugin['updateInfo']['latest_version'] }}' })"
+                                color="warning"
+                                size="sm"
+                                icon="heroicon-o-arrow-path"
+                            >
+                                Update to v{{ $plugin['updateInfo']['latest_version'] }}
+                            </x-filament::button>
+                        @endif
+
                         @if($plugin['hasPendingMigrations'])
                             <x-filament::button
                                 wire:click="runMigrations('{{ $plugin['vendor'] }}', '{{ $plugin['slug'] }}')"
@@ -176,6 +241,19 @@
                                 size="sm"
                             >
                                 Run Migrations
+                            </x-filament::button>
+                        @endif
+
+                        @if($plugin['requiresLicense'])
+                            <x-filament::button
+                                tag="a"
+                                href="{{ route('filament.admin.pages.plugin-licenses') }}?plugin={{ urlencode($plugin['licenseSlug']) }}"
+                                color="gray"
+                                size="sm"
+                                outlined
+                                icon="heroicon-o-key"
+                            >
+                                License
                             </x-filament::button>
                         @endif
 
@@ -199,7 +277,28 @@
                     </div>
                 </div>
             </x-filament::section>
-        @endforeach
+        @empty
+            @if(!empty($this->search))
+                {{-- No search results --}}
+                <x-filament::section>
+                    <div class="text-center py-8">
+                        <x-heroicon-o-magnifying-glass class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+                        <h3 class="mt-2 text-sm font-semibold">No plugins found</h3>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            No plugins match your search "{{ $this->search }}".
+                        </p>
+                        <x-filament::button
+                            wire:click="$set('search', '')"
+                            color="gray"
+                            size="sm"
+                            class="mt-4"
+                        >
+                            Clear Search
+                        </x-filament::button>
+                    </div>
+                </x-filament::section>
+            @endif
+        @endforelse
     </div>
 
     {{-- Empty State --}}
@@ -228,6 +327,11 @@
                     <x-filament::badge color="gray" size="sm">
                         v{{ $pluginDetails['version'] }}
                     </x-filament::badge>
+                    @if($pluginDetails['hasUpdate'] ?? false)
+                        <x-filament::badge color="warning" size="sm">
+                            Update: v{{ $pluginDetails['updateInfo']['latest_version'] }}
+                        </x-filament::badge>
+                    @endif
                 @endif
             </div>
         </x-slot>
@@ -240,7 +344,17 @@
                 </p>
 
                 {{-- Quick Actions --}}
-                <div class="flex gap-2">
+                <div class="flex gap-2 flex-wrap">
+                    @if(($pluginDetails['hasUpdate'] ?? false) && $this->uploadsAllowed)
+                        <x-filament::button
+                            wire:click="mountAction('applyUpdate', { vendor: '{{ $pluginDetails['vendor'] }}', slug: '{{ $pluginDetails['slug'] }}', name: '{{ addslashes($pluginDetails['name']) }}', latest_version: '{{ $pluginDetails['updateInfo']['latest_version'] }}' })"
+                            color="warning"
+                            size="sm"
+                            icon="heroicon-o-arrow-path"
+                        >
+                            Update to v{{ $pluginDetails['updateInfo']['latest_version'] }}
+                        </x-filament::button>
+                    @endif
                     @if($pluginDetails['hasPendingMigrations'] ?? false)
                         <x-filament::button
                             wire:click="runMigrations('{{ $pluginDetails['vendor'] }}', '{{ $pluginDetails['slug'] }}')"
@@ -248,6 +362,18 @@
                             size="sm"
                         >
                             Run Migrations
+                        </x-filament::button>
+                    @endif
+                    @if($pluginDetails['requiresLicense'] ?? false)
+                        <x-filament::button
+                            tag="a"
+                            href="{{ route('filament.admin.pages.plugin-licenses') }}?plugin={{ urlencode($pluginDetails['licenseSlug']) }}"
+                            color="gray"
+                            size="sm"
+                            outlined
+                            icon="heroicon-o-key"
+                        >
+                            Manage License
                         </x-filament::button>
                     @endif
                     <x-filament::button

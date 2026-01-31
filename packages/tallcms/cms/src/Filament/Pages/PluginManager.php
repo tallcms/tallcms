@@ -2,11 +2,6 @@
 
 namespace TallCms\Cms\Filament\Pages;
 
-use TallCms\Cms\Services\PluginLicenseService;
-use TallCms\Cms\Models\Plugin;
-use TallCms\Cms\Services\PluginManager as PluginManagerService;
-use TallCms\Cms\Services\PluginMigrator;
-use TallCms\Cms\Services\PluginValidator;
 use BackedEnum;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\Action;
@@ -16,9 +11,18 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Url;
+use TallCms\Cms\Models\Plugin;
+use TallCms\Cms\Models\PluginLicense;
+use TallCms\Cms\Services\PluginLicenseService;
+use TallCms\Cms\Services\PluginManager as PluginManagerService;
+use TallCms\Cms\Services\PluginMigrator;
+use TallCms\Cms\Services\PluginValidator;
 
 class PluginManager extends Page implements HasForms
 {
@@ -67,9 +71,32 @@ class PluginManager extends Page implements HasForms
         return $count > 0 ? "{$count} update(s) available" : null;
     }
 
+    public function mount(): void
+    {
+        // Trigger automatic update check (rate-limited internally)
+        app(PluginLicenseService::class)->checkForUpdatesAutomatically();
+    }
+
+    #[Url]
+    public string $search = '';
+
     public ?string $selectedPlugin = null;
 
     public ?array $pluginDetails = null;
+
+    protected ?array $availableUpdates = null;
+
+    /**
+     * Get available updates (cached per request)
+     */
+    protected function getAvailableUpdates(): array
+    {
+        if ($this->availableUpdates === null) {
+            $this->availableUpdates = app(PluginLicenseService::class)->getAvailableUpdates();
+        }
+
+        return $this->availableUpdates;
+    }
 
     /**
      * Get the plugin manager service
@@ -101,6 +128,8 @@ class PluginManager extends Page implements HasForms
     #[Computed]
     public function plugins(): Collection
     {
+        $availableUpdates = $this->getAvailableUpdates();
+
         return $this->getPluginManager()->getInstalledPlugins()
             ->map(fn (Plugin $plugin) => [
                 'vendor' => $plugin->vendor,
@@ -118,8 +147,33 @@ class PluginManager extends Page implements HasForms
                 'meetsRequirements' => $plugin->meetsRequirements(),
                 'unmetRequirements' => $plugin->getUnmetRequirements(),
                 'hasPendingMigrations' => $this->getMigrator()->hasPendingMigrations($plugin),
+                'hasUpdate' => isset($availableUpdates[$plugin->getLicenseSlug()]),
+                'updateInfo' => $availableUpdates[$plugin->getLicenseSlug()] ?? null,
+                'requiresLicense' => $plugin->requiresLicense(),
+                'licenseSlug' => $plugin->getLicenseSlug(),
             ])
             ->values();
+    }
+
+    /**
+     * Get filtered plugins based on search query
+     */
+    #[Computed]
+    public function filteredPlugins(): Collection
+    {
+        if (empty($this->search)) {
+            return $this->plugins;
+        }
+
+        $search = strtolower(trim($this->search));
+
+        return $this->plugins->filter(function ($plugin) use ($search) {
+            return str_contains(strtolower($plugin['name']), $search)
+                || str_contains(strtolower($plugin['description']), $search)
+                || str_contains(strtolower($plugin['fullSlug']), $search)
+                || str_contains(strtolower($plugin['author']), $search)
+                || collect($plugin['tags'])->contains(fn ($tag) => str_contains(strtolower($tag), $search));
+        });
     }
 
     /**
@@ -138,6 +192,15 @@ class PluginManager extends Page implements HasForms
     }
 
     /**
+     * Check if plugin uploads/updates are allowed (for Blade access)
+     */
+    #[Computed]
+    public function uploadsAllowed(): bool
+    {
+        return $this->getPluginManager()->uploadsAllowed();
+    }
+
+    /**
      * Show plugin details in modal
      */
     public function showPluginDetails(string $vendor, string $slug): void
@@ -152,6 +215,8 @@ class PluginManager extends Page implements HasForms
 
         $migrationStatus = $this->getMigrator()->getMigrationStatus($plugin);
         $backups = $this->getPluginManager()->getAvailableBackups($vendor, $slug);
+
+        $availableUpdates = $this->getAvailableUpdates();
 
         $this->pluginDetails = [
             'vendor' => $plugin->vendor,
@@ -179,6 +244,10 @@ class PluginManager extends Page implements HasForms
             'unmetRequirements' => $plugin->getUnmetRequirements(),
             'path' => $plugin->path,
             'backups' => $backups,
+            'requiresLicense' => $plugin->requiresLicense(),
+            'licenseSlug' => $plugin->getLicenseSlug(),
+            'hasUpdate' => isset($availableUpdates[$plugin->getLicenseSlug()]),
+            'updateInfo' => $availableUpdates[$plugin->getLicenseSlug()] ?? null,
         ];
 
         $this->dispatch('open-modal', id: 'plugin-details-modal');
@@ -243,6 +312,162 @@ class PluginManager extends Page implements HasForms
         }
 
         unset($this->plugins);
+    }
+
+    /**
+     * One-click update for a plugin
+     */
+    public function oneClickUpdate(string $vendor, string $slug): void
+    {
+        // Guard: respect uploads config for one-click updates too
+        if (! $this->getPluginManager()->uploadsAllowed()) {
+            Notification::make()
+                ->title('Updates disabled')
+                ->body('Plugin updates are not enabled in configuration.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        // 1. Find plugin (guard null)
+        $plugin = $this->getPluginManager()->find($vendor, $slug);
+        if (! $plugin) {
+            Notification::make()
+                ->title('Plugin not found')
+                ->body("Could not find plugin {$vendor}/{$slug}.")
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $pluginSlug = $plugin->getLicenseSlug();
+        $licenseService = app(PluginLicenseService::class);
+
+        // 2. Call checkForUpdates() which BOTH validates license AND returns fresh download URL
+        //    (Anystack always returns the latest version URL - don't use cached URLs)
+        $updateCheck = $licenseService->checkForUpdates($pluginSlug);
+
+        // 3. Check if update check succeeded
+        if (! ($updateCheck['success'] ?? false)) {
+            // Determine if this is a license issue or network error:
+            // - purchase_url present = explicit license issue from server
+            // - no local license exists = license issue (user never activated)
+            // - otherwise = likely network/server error
+            $hasLocalLicense = PluginLicense::findByPluginSlug($pluginSlug) !== null;
+            $isLicenseIssue = ! empty($updateCheck['purchase_url']) || ! $hasLocalLicense;
+
+            if ($isLicenseIssue) {
+                Notification::make()
+                    ->title('License Required')
+                    ->body($updateCheck['message'] ?? 'A valid license is required to download updates.')
+                    ->danger()
+                    ->actions([
+                        \Filament\Actions\Action::make('manage_license')
+                            ->label('Manage License')
+                            ->url(route('filament.admin.pages.plugin-licenses', ['plugin' => $pluginSlug])),
+                    ])
+                    ->send();
+            } else {
+                // Network/server error (has license but check failed without purchase_url signal)
+                Notification::make()
+                    ->title('Update check failed')
+                    ->body($updateCheck['message'] ?? 'Could not check for updates. Please try again.')
+                    ->danger()
+                    ->send();
+            }
+
+            return;
+        }
+
+        // 4. Verify update is available and download URL exists
+        if (! $updateCheck['update_available']) {
+            Notification::make()->title('Already up to date')->success()->send();
+
+            return;
+        }
+
+        if (empty($updateCheck['download_url'])) {
+            Notification::make()
+                ->title('Download unavailable')
+                ->body('Could not get download URL. Please try again or download manually.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        // 5. Download ZIP from fresh URL
+        $downloadUrl = $updateCheck['download_url'];
+        $tempPath = storage_path('app/plugin-downloads/'.$vendor.'-'.$slug.'-'.uniqid().'.zip');
+
+        try {
+            File::ensureDirectoryExists(dirname($tempPath));
+            $response = Http::timeout(60)->get($downloadUrl);
+
+            if (! $response->successful()) {
+                Notification::make()
+                    ->title('Download failed')
+                    ->body('HTTP status: '.$response->status())
+                    ->danger()
+                    ->send();
+
+                return;
+            }
+
+            File::put($tempPath, $response->body());
+
+            // 6. Apply update
+            $result = $this->getPluginManager()->update($tempPath);
+
+            if ($result->success) {
+                // Clear update cache so badges refresh
+                $licenseService->clearUpdateCache();
+                $this->availableUpdates = null;
+                unset($this->plugins);
+                unset($this->filteredPlugins);
+
+                Notification::make()
+                    ->title('Plugin updated!')
+                    ->body($result->message)
+                    ->success()
+                    ->send();
+            } else {
+                Notification::make()
+                    ->title('Update failed')
+                    ->body(implode("\n", $result->errors))
+                    ->danger()
+                    ->send();
+            }
+        } catch (\Throwable $e) {
+            Log::error('One-click update failed', ['plugin' => "{$vendor}/{$slug}", 'error' => $e->getMessage()]);
+            Notification::make()
+                ->title('Update failed')
+                ->body('An error occurred: '.$e->getMessage())
+                ->danger()
+                ->send();
+        } finally {
+            // Clean up temp file
+            if (File::exists($tempPath)) {
+                File::delete($tempPath);
+            }
+        }
+    }
+
+    /**
+     * Apply update action with confirmation modal
+     */
+    public function applyUpdateAction(): Action
+    {
+        return Action::make('applyUpdate')
+            ->label('Update')
+            ->icon('heroicon-o-arrow-path')
+            ->color('warning')
+            ->requiresConfirmation()
+            ->modalHeading('Update Plugin')
+            ->modalDescription(fn (array $arguments) => "Update '{$arguments['name']}' to v{$arguments['latest_version']}? A backup will be created.")
+            ->action(fn (array $arguments) => $this->oneClickUpdate($arguments['vendor'], $arguments['slug']));
     }
 
     /**
@@ -328,15 +553,83 @@ class PluginManager extends Page implements HasForms
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('checkUpdates')
+                ->label('Check for Updates')
+                ->icon('heroicon-o-arrow-path')
+                ->color('gray')
+                ->action(function () {
+                    $licenseService = app(PluginLicenseService::class);
+                    $licenseService->clearUpdateCache();
+
+                    // Use checkAllForUpdates() to get detailed results including failures
+                    $results = $licenseService->checkAllForUpdates();
+
+                    // Build updates cache and count results
+                    $updates = [];
+                    $failedChecks = [];
+
+                    foreach ($results as $pluginSlug => $result) {
+                        if ($result['success'] ?? false) {
+                            if ($result['update_available'] ?? false) {
+                                $updates[$pluginSlug] = [
+                                    'plugin_name' => $result['plugin_name'] ?? $pluginSlug,
+                                    'current_version' => $result['current_version'] ?? '0.0.0',
+                                    'latest_version' => $result['latest_version'],
+                                    'download_url' => $result['download_url'] ?? null,
+                                    'changelog_url' => $result['changelog_url'] ?? null,
+                                ];
+                            }
+                        } else {
+                            // Determine if this is a license issue or network error:
+                            // - purchase_url present = explicit license issue from server/config
+                            // - no local license exists = license issue (user never activated)
+                            // - otherwise = likely network/server error
+                            $hasLocalLicense = PluginLicense::findByPluginSlug($pluginSlug) !== null;
+                            $isLicenseIssue = ! empty($result['purchase_url']) || ! $hasLocalLicense;
+
+                            if (! $isLicenseIssue) {
+                                $failedChecks[] = $result['plugin_name'] ?? $pluginSlug;
+                            }
+                        }
+                    }
+
+                    // Repopulate cache so badges update correctly and reset check interval
+                    $checkInterval = config('plugin.license.update_check_interval', 86400);
+                    \Illuminate\Support\Facades\Cache::put('plugin_available_updates', $updates, $checkInterval);
+                    \Illuminate\Support\Facades\Cache::put('plugin_updates_last_check', now(), $checkInterval);
+
+                    // Reset all cached/computed properties to force refresh
+                    $this->availableUpdates = null;
+                    unset($this->plugins);
+                    unset($this->filteredPlugins);
+
+                    // Show appropriate notification
+                    $updateCount = count($updates);
+                    if (! empty($failedChecks)) {
+                        Notification::make()
+                            ->title('Update check completed with errors')
+                            ->body($updateCount > 0
+                                ? "{$updateCount} update(s) found. Could not check: ".implode(', ', $failedChecks)
+                                : 'Could not check: '.implode(', ', $failedChecks))
+                            ->warning()
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->title($updateCount > 0 ? "{$updateCount} update(s) available" : 'All plugins up to date')
+                            ->success()
+                            ->send();
+                    }
+                }),
+
             Action::make('refresh')
                 ->label('Refresh')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
                 ->action(fn () => $this->refreshPlugins()),
 
-            // Plugin Upload action
-            Action::make('upload')
-                ->label('Upload Plugin')
+            // Combined Install/Update Plugin action
+            Action::make('install')
+                ->label('Install / Update Plugin')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('primary')
                 ->visible(fn () => $this->getPluginManager()->uploadsAllowed())
@@ -348,7 +641,7 @@ class PluginManager extends Page implements HasForms
                         ->required()
                         ->disk('local')
                         ->directory('plugin-uploads')
-                        ->helperText('Upload a plugin package (.zip file). Maximum size: 50MB.'),
+                        ->helperText('Upload a plugin package. Auto-detects new install vs update.'),
                 ])
                 ->action(function (array $data) {
                     // Server-side guard
@@ -366,7 +659,29 @@ class PluginManager extends Page implements HasForms
                     $zipPath = Storage::disk('local')->path($uploadedFile);
 
                     try {
-                        $result = $this->getPluginManager()->installFromZip($zipPath);
+                        // Validate ZIP and extract plugin info
+                        $validationResult = $this->getValidator()->validateZip($zipPath);
+
+                        if (! $validationResult->isValid) {
+                            Notification::make()
+                                ->title('Invalid plugin package')
+                                ->body(implode("\n", $validationResult->errors))
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        $pluginInfo = $validationResult->pluginData;
+                        $isUpdate = $this->getPluginManager()->isInstalled($pluginInfo['vendor'], $pluginInfo['slug']);
+
+                        if ($isUpdate) {
+                            $result = $this->getPluginManager()->update($zipPath);
+                            $actionVerb = 'updated';
+                        } else {
+                            $result = $this->getPluginManager()->installFromZip($zipPath);
+                            $actionVerb = 'installed';
+                        }
 
                         if ($result->success) {
                             // Show warnings if any
@@ -382,15 +697,22 @@ class PluginManager extends Page implements HasForms
                             $migrationMsg = $migrationCount > 0 ? " ({$migrationCount} migration(s) ran)" : '';
 
                             Notification::make()
-                                ->title('Plugin installed')
-                                ->body("'{$result->plugin->name}' v{$result->plugin->version} has been installed.{$migrationMsg}")
+                                ->title("Plugin {$actionVerb}")
+                                ->body("'{$result->plugin->name}' v{$result->plugin->version} has been {$actionVerb}.{$migrationMsg}")
                                 ->success()
                                 ->send();
 
+                            // Clear update cache so badges refresh (especially for manual updates)
+                            if ($isUpdate) {
+                                app(PluginLicenseService::class)->clearUpdateCache();
+                                $this->availableUpdates = null;
+                            }
+
                             unset($this->plugins);
+                            unset($this->filteredPlugins);
                         } else {
                             Notification::make()
-                                ->title('Installation failed')
+                                ->title($isUpdate ? 'Update failed' : 'Installation failed')
                                 ->body(implode("\n", $result->errors))
                                 ->danger()
                                 ->send();
@@ -403,78 +725,6 @@ class PluginManager extends Page implements HasForms
 
                         Notification::make()
                             ->title('Upload failed')
-                            ->body('An unexpected error occurred: '.$e->getMessage())
-                            ->danger()
-                            ->send();
-                    } finally {
-                        Storage::disk('local')->delete($uploadedFile);
-                    }
-                }),
-
-            // Plugin Update action
-            Action::make('update')
-                ->label('Update Plugin')
-                ->icon('heroicon-o-arrow-up-circle')
-                ->color('info')
-                ->visible(fn () => $this->getPluginManager()->uploadsAllowed())
-                ->form([
-                    FileUpload::make('plugin_zip')
-                        ->label('Plugin Package (ZIP)')
-                        ->acceptedFileTypes(['application/zip', 'application/x-zip-compressed'])
-                        ->maxSize(50 * 1024) // 50MB
-                        ->required()
-                        ->disk('local')
-                        ->directory('plugin-uploads')
-                        ->helperText('Upload a newer version of an existing plugin.'),
-                ])
-                ->action(function (array $data) {
-                    if (! $this->getPluginManager()->uploadsAllowed()) {
-                        Notification::make()
-                            ->title('Uploads disabled')
-                            ->body('Plugin uploads are not enabled in configuration.')
-                            ->danger()
-                            ->send();
-
-                        return;
-                    }
-
-                    $uploadedFile = $data['plugin_zip'];
-                    $zipPath = Storage::disk('local')->path($uploadedFile);
-
-                    try {
-                        $result = $this->getPluginManager()->update($zipPath);
-
-                        if ($result->success) {
-                            foreach ($result->warnings as $warning) {
-                                Notification::make()
-                                    ->title('Warning')
-                                    ->body($warning)
-                                    ->warning()
-                                    ->send();
-                            }
-
-                            Notification::make()
-                                ->title('Plugin updated')
-                                ->body($result->message)
-                                ->success()
-                                ->send();
-
-                            unset($this->plugins);
-                        } else {
-                            Notification::make()
-                                ->title('Update failed')
-                                ->body(implode("\n", $result->errors))
-                                ->danger()
-                                ->send();
-                        }
-                    } catch (\Throwable $e) {
-                        Log::error('Plugin update failed', [
-                            'error' => $e->getMessage(),
-                            'trace' => $e->getTraceAsString(),
-                        ]);
-
-                        Notification::make()
-                            ->title('Update failed')
                             ->body('An unexpected error occurred: '.$e->getMessage())
                             ->danger()
                             ->send();
