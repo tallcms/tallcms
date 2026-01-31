@@ -12,7 +12,7 @@
     @elseif($item['type'] === 'separator')
         <li></li>
     @elseif($hasChildren)
-        <details {{ $hasActiveChild ? 'open' : '' }}>
+        <details>
             <summary class="{{ $isActive || $hasActiveChild ? 'active' : '' }}">
                 @if($item['icon'])
                     <i class="{{ $item['icon'] }}"></i>
