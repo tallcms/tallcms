@@ -18,11 +18,6 @@
     $showDate = $show_date ?? true;
     $showAuthor = $show_author ?? false;
     $showCategories = $show_categories ?? true;
-
-    // Share post detail display settings for the post detail view
-    // These will be picked up by page.blade.php when rendering POST_DETAIL
-    View::share('postsBlockShowAuthor', $showAuthor);
-    View::share('postsBlockShowDate', $show_date ?? true);
     $showReadMore = $show_read_more ?? true;
     $emptyMessage = $empty_message ?? 'No posts found.';
     $firstSection = $first_section ?? false;

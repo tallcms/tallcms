@@ -11,16 +11,37 @@
     </div>
 @elseif($renderedContent === 'POST_DETAIL')
     {{-- Render individual post detail view --}}
+    @php
+        // Extract PostsBlock config from parent page to get display settings
+        $postsBlockConfig = [];
+        if (!empty($page->content)) {
+            $content = is_string($page->content) ? json_decode($page->content, true) : $page->content;
+            if (is_array($content)) {
+                // Recursive search for posts block config
+                $findPostsConfig = function($arr) use (&$findPostsConfig) {
+                    if (isset($arr['type']) && $arr['type'] === 'customBlock' &&
+                        isset($arr['attrs']['id']) && $arr['attrs']['id'] === 'posts') {
+                        return $arr['attrs']['config'] ?? [];
+                    }
+                    foreach ($arr as $value) {
+                        if (is_array($value)) {
+                            $result = $findPostsConfig($value);
+                            if (!empty($result)) return $result;
+                        }
+                    }
+                    return [];
+                };
+                $postsBlockConfig = $findPostsConfig($content);
+            }
+        }
+        $showDate = $postsBlockConfig['show_date'] ?? true;
+        $showAuthor = $postsBlockConfig['show_author'] ?? true;
+    @endphp
     <div class="max-w-4xl mx-auto px-4 py-16">
         <article>
             <header class="mb-8">
                 <h1 class="text-4xl font-bold text-gray-900 mb-4">{{ $post->title }}</h1>
 
-                @php
-                    // Get display settings from PostsBlock (shared via View::share)
-                    $showDate = View::shared('postsBlockShowDate', true);
-                    $showAuthor = View::shared('postsBlockShowAuthor', true);
-                @endphp
                 @if($showDate || $showAuthor)
                     <div class="flex items-center text-gray-600 text-sm space-x-4">
                         @if($showDate && $post->published_at)
