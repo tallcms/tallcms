@@ -27,6 +27,8 @@ class CmsPageRenderer extends Component
 
     public array $allPages = [];
 
+    public array $postsBlockConfig = [];
+
     public function mount(string $slug = '/', ?string $locale = null)
     {
         // Set locale if i18n enabled and locale provided
@@ -106,6 +108,7 @@ class CmsPageRenderer extends Component
                     $this->page = $homepage;
                     $this->post = $post;
                     $this->parentSlug = '';
+                    $this->postsBlockConfig = $this->getPostsBlockConfig($homepage);
                     $this->renderedContent = 'POST_DETAIL';
 
                     return;
@@ -152,6 +155,7 @@ class CmsPageRenderer extends Component
                     $this->page = $parentPage;
                     $this->post = $post;
                     $this->parentSlug = $parentSlug;
+                    $this->postsBlockConfig = $this->getPostsBlockConfig($parentPage);
                     $this->renderedContent = 'POST_DETAIL';
 
                     return true;
@@ -236,6 +240,53 @@ class CmsPageRenderer extends Component
         }
 
         return false;
+    }
+
+    /**
+     * Extract PostsBlock config from page content.
+     * Used to pass display settings to the post detail view.
+     */
+    protected function getPostsBlockConfig(CmsPage $page): array
+    {
+        if (empty($page->content)) {
+            return [];
+        }
+
+        $content = $page->content;
+
+        if (is_string($content)) {
+            $decoded = json_decode($content, true);
+            if (! is_array($decoded)) {
+                return [];
+            }
+            $content = $decoded;
+        }
+
+        return $this->extractPostsBlockConfig($content);
+    }
+
+    /**
+     * Recursively extract posts block config from content structure.
+     */
+    protected function extractPostsBlockConfig(array $content): array
+    {
+        // Check if this is a customBlock with id=posts
+        if (isset($content['type']) && $content['type'] === 'customBlock' &&
+            isset($content['attrs']['id']) && $content['attrs']['id'] === 'posts') {
+            return $content['attrs']['config'] ?? [];
+        }
+
+        // Search nested arrays
+        foreach ($content as $value) {
+            if (is_array($value)) {
+                $config = $this->extractPostsBlockConfig($value);
+                if (! empty($config)) {
+                    return $config;
+                }
+            }
+        }
+
+        return [];
     }
 
     /**
