@@ -73,9 +73,9 @@
                     >
                         @if($hasLink)
                             <a href="{{ e($feature['link']) }}"
-                               class="{{ $card_style ?? 'card bg-base-100 shadow-md' }} {{ $text_alignment ?? 'text-center' }} transition-all duration-200 hover:shadow-xl hover:-translate-y-1 cursor-pointer {{ $isIconLeft ? 'card-side' : '' }} h-full">
+                               class="{{ $card_style ?? 'card shadow-xl bg-base-100' }} {{ $text_alignment ?? 'text-center' }} transition-all duration-200 hover:shadow-xl hover:-translate-y-1 cursor-pointer {{ $isIconLeft ? 'card-side' : '' }} h-full">
                         @else
-                            <div class="{{ $card_style ?? 'card bg-base-100 shadow-md' }} {{ $text_alignment ?? 'text-center' }} transition-all duration-200 {{ $isIconLeft ? 'card-side' : '' }} h-full">
+                            <div class="{{ $card_style ?? 'card shadow-xl bg-base-100' }} {{ $text_alignment ?? 'text-center' }} transition-all duration-200 {{ $isIconLeft ? 'card-side' : '' }} h-full">
                         @endif
 
                             <div class="card-body {{ $isIconLeft ? 'flex-row items-start gap-4' : '' }}">
