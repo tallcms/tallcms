@@ -71,11 +71,14 @@ class FeaturesBlock extends RichContentCustomBlock
     protected static function getCardStyleOptions(): array
     {
         return [
-            'card bg-base-100 shadow-md' => 'Cards with Shadow',
-            'card bg-base-100 border border-base-300' => 'Bordered Cards',
-            'bg-base-100' => 'Minimal (No Border)',
-            'card bg-base-200' => 'Subtle Background',
-            'card bg-primary text-primary-content' => 'Primary Cards',
+            'card shadow-xl bg-base-100' => 'Shadow',
+            'card card-border bg-base-100' => 'Bordered',
+            'card card-dash bg-base-100' => 'Dashed',
+            'card bg-base-200' => 'Filled',
+            'card bg-primary text-primary-content' => 'Primary',
+            'card bg-secondary text-secondary-content' => 'Secondary',
+            'card bg-accent text-accent-content' => 'Accent',
+            'card bg-neutral text-neutral-content' => 'Neutral',
         ];
     }
 
@@ -178,7 +181,7 @@ class FeaturesBlock extends RichContentCustomBlock
                                         Select::make('card_style')
                                             ->label('Card Style')
                                             ->options(static::getCardStyleOptions())
-                                            ->default('card bg-base-100 shadow-md'),
+                                            ->default('card shadow-xl bg-base-100'),
 
                                         Select::make('icon_position')
                                             ->label('Icon Position')
@@ -253,7 +256,7 @@ class FeaturesBlock extends RichContentCustomBlock
             'subheading' => $config['subheading'] ?? '',
             'features' => $config['features'] ?? [],
             'columns' => $config['columns'] ?? '3',
-            'card_style' => $config['card_style'] ?? 'card bg-base-100 shadow-md',
+            'card_style' => $config['card_style'] ?? 'card shadow-xl bg-base-100',
             'icon_position' => $config['icon_position'] ?? 'top',
             'text_alignment' => $config['text_alignment'] ?? 'text-center',
             'icon_size' => $config['icon_size'] ?? 'w-10 h-10',
