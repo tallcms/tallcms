@@ -15,8 +15,9 @@ This roadmap outlines our vision for TallCMS development. We're committed to bui
 - [v2.6 - Full-Text Search](#v26---full-text-search) ✅
 - [v2.7 - Media Library](#v27---media-library) ✅
 - [v2.8 - REST API](#v28---rest-api) ✅
-- [v2.9 - Community & Users](#v29---community--users) 📋
-- [v2.10 - Marketplace](#v210---marketplace-integration) 📋
+- [v2.9 - Plugin Manager](#v29---plugin-manager) ✅
+- [v2.10 - Community & Users](#v210---community--users) 📋
+- [v2.11 - Marketplace](#v211---marketplace-integration) 📋
 - [Future Considerations](#future-considerations)
 - [How to Contribute](#how-to-contribute)
 
@@ -405,7 +406,32 @@ Focus: Full REST API for headless CMS usage and third-party integrations.
 
 ---
 
-## v2.9 - Community & Users
+## v2.9 - Plugin Manager
+
+**Status: ✅ Released (v2.9.0)**
+
+Focus: Streamlined plugin management with update notifications and one-click updates.
+
+### Update Management
+- [x] Update availability display with version badges
+- [x] "Check for Updates" button with cache refresh
+- [x] Updates summary section showing all available updates
+- [x] One-click updates with license validation
+- [x] Automatic ZIP download from Anystack CDN
+
+### Plugin Manager UI
+- [x] Plugin search/filter by name, description, author, or tags
+- [x] Combined "Install / Update Plugin" action (auto-detects mode)
+- [x] License button linking directly to Plugin Licenses page
+- [x] Pre-selected plugin on Plugin Licenses via query string
+
+### Version Constraints
+- [x] Support for OR operator (`||`) in version constraints
+- [x] Composer-style version matching (`^1.0 || ^2.0`)
+
+---
+
+## v2.10 - Community & Users
 
 Focus: Enable community interaction with your content.
 
@@ -432,7 +458,7 @@ Focus: Enable community interaction with your content.
 
 ---
 
-## v2.10 - Marketplace Integration
+## v2.11 - Marketplace Integration
 
 Focus: Connect to the official TallCMS marketplace for plugins and themes.
 
@@ -457,7 +483,7 @@ Items we're exploring for future releases:
 ### TallCMS Pro Roadmap
 Premium features planned for TallCMS Pro plugin:
 
-**Current (v1.2.0):**
+**Current (v1.3.0):**
 - 9 Advanced Blocks (Accordion, Tabs, Counter, Table, Comparison, Video, Before/After, Code Snippet, Map)
 - Google Analytics 4 dashboard integration
 - Email marketing settings (Mailchimp, ConvertKit, Sendinblue)
@@ -525,8 +551,9 @@ We welcome community input on our roadmap:
 | v2.7 | ✅ Released | Media | Image optimization, WebP variants, collections, video support |
 | v2.8 | ✅ Released | API | REST API, Sanctum auth, Webhooks, OpenAPI docs |
 | v2.8.5 | ✅ Released | Animations | Block entrance animations, stagger effects |
-| v2.9 | 📋 Planned | Community | Comments, User profiles, Analytics |
-| v2.10 | 📋 Planned | Ecosystem | Marketplace integration |
+| v2.9 | ✅ Released | Plugins | Plugin Manager updates, search, one-click updates |
+| v2.10 | 📋 Planned | Community | Comments, User profiles, Analytics |
+| v2.11 | 📋 Planned | Ecosystem | Marketplace integration |
 | Pro | 🔄 Ongoing | Premium | Advanced blocks, Analytics, AI Content, Translation |
 
 ---
@@ -534,10 +561,9 @@ We welcome community input on our roadmap:
 ## Community
 
 - 🌐 **Website**: [tallcms.com](https://tallcms.com)
-- 💬 **Discord**: [Join our community](https://discord.gg/tallcms)
 - 🐙 **GitHub**: [github.com/tallcms/tallcms](https://github.com/tallcms/tallcms)
-- 🐦 **Twitter/X**: [@tallcms](https://twitter.com/tallcms)
+- 🐦 **Twitter/X**: [@tallcms](@tallcms59858)
 
 ---
 
-*Last updated: January 31, 2026 — v2.8.5 Block Animations released*
+*Last updated: January 31, 2026 — v2.9.0 Plugin Manager improvements released*
