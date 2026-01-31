@@ -4,13 +4,30 @@
     $showConnector = $show_connector ?? true;
     $isNumbered = $numbered ?? false;
     $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
+
+    // Animation config
+    $animationType = $animation_type ?? '';
+    $animationDuration = $animation_duration ?? 'anim-duration-700';
+    $animationStagger = $animation_stagger ?? false;
+    $staggerDelay = (int) ($animation_stagger_delay ?? 100);
 @endphp
 
-<section @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="timeline-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}">
+<x-tallcms::animation-wrapper
+    tag="section"
+    :animation="$animationType"
+    :controller="true"
+    :id="$anchor_id ?? null"
+    class="timeline-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}"
+>
     <div class="{{ $contentWidthClass ?? 'max-w-7xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
         {{-- Section Header --}}
         @if(!empty($heading) || !empty($subheading))
-            <div class="{{ $text_alignment ?? 'text-center' }} mb-12 sm:mb-16">
+            <x-tallcms::animation-wrapper
+                :animation="$animationType"
+                :duration="$animationDuration"
+                :use-parent="true"
+                class="{{ $text_alignment ?? 'text-center' }} mb-12 sm:mb-16"
+            >
                 @if(!empty($heading))
                     <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-base-content">
                         {{ $heading }}
@@ -21,7 +38,7 @@
                         {{ $subheading }}
                     </p>
                 @endif
-            </div>
+            </x-tallcms::animation-wrapper>
         @endif
 
         {{-- Timeline Items --}}
@@ -40,9 +57,16 @@
                                 $isEven = $index % 2 === 0;
                                 $iconName = $item['icon'] ?? '';
                                 $isValidIcon = !empty($iconName) && preg_match('/^heroicon-[oms]-[\w-]+$/', $iconName);
+                                $itemDelay = $animationStagger ? ($staggerDelay * ($index + 1)) : 0;
                             @endphp
 
-                            <div class="relative {{ $isAlternating ? 'flex items-center' : 'pl-16 sm:pl-20' }}">
+                            <x-tallcms::animation-wrapper
+                                :animation="$animationType"
+                                :duration="$animationDuration"
+                                :use-parent="true"
+                                :delay="$itemDelay"
+                                class="relative {{ $isAlternating ? 'flex items-center' : 'pl-16 sm:pl-20' }}"
+                            >
                                 @if($isAlternating)
                                     {{-- Alternating Layout --}}
                                     {{-- Left side (even items): right-aligned text pointing toward center --}}
@@ -83,7 +107,7 @@
 
                                     @include('cms.blocks.partials.timeline-content', ['item' => $item, 'alignRight' => false, 'isNumbered' => $isNumbered])
                                 @endif
-                            </div>
+                            </x-tallcms::animation-wrapper>
                         @endforeach
                     </div>
                 </div>
@@ -96,9 +120,17 @@
                                 $iconName = $item['icon'] ?? '';
                                 $isValidIcon = !empty($iconName) && preg_match('/^heroicon-[oms]-[\w-]+$/', $iconName);
                                 $isLast = $loop->last;
+                                $itemDelay = $animationStagger ? ($staggerDelay * ($index + 1)) : 0;
                             @endphp
 
-                            <div class="relative flex flex-col items-center {{ !$isLast ? 'mr-8 sm:mr-16' : '' }}" style="min-width: 200px; max-width: 280px;">
+                            <x-tallcms::animation-wrapper
+                                :animation="$animationType"
+                                :duration="$animationDuration"
+                                :use-parent="true"
+                                :delay="$itemDelay"
+                                class="relative flex flex-col items-center {{ !$isLast ? 'mr-8 sm:mr-16' : '' }}"
+                                style="min-width: 200px; max-width: 280px;"
+                            >
                                 {{-- Node --}}
                                 @include('cms.blocks.partials.timeline-node', [
                                     'index' => $index,
@@ -135,11 +167,11 @@
                                         >
                                     @endif
                                 </div>
-                            </div>
+                            </x-tallcms::animation-wrapper>
                         @endforeach
                     </div>
                 </div>
             @endif
         @endif
     </div>
-</section>
+</x-tallcms::animation-wrapper>

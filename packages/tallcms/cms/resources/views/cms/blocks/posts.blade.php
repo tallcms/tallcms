@@ -144,6 +144,12 @@
     // Section spacing
     $sectionPadding = $firstSection ? 'pb-16' : $sectionPaddingClass;
 
+    // Animation config
+    $animationType = $animation_type ?? '';
+    $animationDuration = $animation_duration ?? 'anim-duration-700';
+    $animationStagger = $animation_stagger ?? false;
+    $staggerDelay = (int) ($animation_stagger_delay ?? 100);
+
     // Grid column classes
     $gridColumnClass = match($columns) {
         '2' => 'sm:grid-cols-2',
@@ -194,7 +200,13 @@
     };
 @endphp
 
-<section @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="posts-block {{ $sectionPadding }} {{ $sectionBackground }} {{ $css_classes ?? '' }}">
+<x-tallcms::animation-wrapper
+    tag="section"
+    :animation="$animationType"
+    :controller="true"
+    :id="$anchor_id ?? null"
+    class="posts-block {{ $sectionPadding }} {{ $sectionBackground }} {{ $css_classes ?? '' }}"
+>
     <div class="{{ $contentWidthClass ?? 'max-w-6xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
         {{-- Active filter indicator --}}
         @if($filterCategory)
@@ -233,9 +245,18 @@
             @if($layout === 'grid')
                 {{-- Grid Layout --}}
                 <div class="grid gap-6 sm:gap-8 {{ $gridColumnClass }}">
-                    @foreach($posts as $post)
-                        @php $postUrl = $getPostUrl($post); @endphp
-                        <article class="card bg-base-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+                    @foreach($posts as $index => $post)
+                        @php
+                            $postUrl = $getPostUrl($post);
+                            $itemDelay = $animationStagger ? ($staggerDelay * ($index + 1)) : 0;
+                        @endphp
+                        <x-tallcms::animation-wrapper
+                            :animation="$animationType"
+                            :duration="$animationDuration"
+                            :use-parent="true"
+                            :delay="$itemDelay"
+                        >
+                            <article class="card bg-base-200 shadow-sm hover:shadow-md transition-shadow duration-200 h-full">
                             @if($showImage && $post->featured_image)
                                 <figure>
                                     <a href="{{ $postUrl }}" class="block">
@@ -302,14 +323,24 @@
                                 @endif
                             </div>
                         </article>
+                        </x-tallcms::animation-wrapper>
                     @endforeach
                 </div>
             @else
                 {{-- List Layout --}}
                 <div class="space-y-6">
-                    @foreach($posts as $post)
-                        @php $postUrl = $getPostUrl($post); @endphp
-                        <article class="card card-side bg-base-200 shadow-sm hover:shadow-md transition-shadow duration-200 {{ $layout === 'compact-list' ? 'py-2 border-b border-base-300 bg-transparent shadow-none' : '' }}">
+                    @foreach($posts as $index => $post)
+                        @php
+                            $postUrl = $getPostUrl($post);
+                            $itemDelay = $animationStagger ? ($staggerDelay * ($index + 1)) : 0;
+                        @endphp
+                        <x-tallcms::animation-wrapper
+                            :animation="$animationType"
+                            :duration="$animationDuration"
+                            :use-parent="true"
+                            :delay="$itemDelay"
+                        >
+                            <article class="card card-side bg-base-200 shadow-sm hover:shadow-md transition-shadow duration-200 {{ $layout === 'compact-list' ? 'py-2 border-b border-base-300 bg-transparent shadow-none' : '' }}">
                             @if($showImage && $post->featured_image && $layout !== 'compact-list')
                                 <figure class="flex-shrink-0">
                                     <a href="{{ $postUrl }}">
@@ -376,6 +407,7 @@
                                 @endif
                             </div>
                         </article>
+                        </x-tallcms::animation-wrapper>
                     @endforeach
                 </div>
             @endif
@@ -388,4 +420,4 @@
             @endif
         @endif
     </div>
-</section>
+</x-tallcms::animation-wrapper>

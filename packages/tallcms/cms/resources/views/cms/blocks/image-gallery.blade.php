@@ -22,6 +22,12 @@
     $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
     $galleryId = 'gallery-' . uniqid();
 
+    // Animation config
+    $animationType = $animation_type ?? '';
+    $animationDuration = $animation_duration ?? 'anim-duration-700';
+    $animationStagger = $animation_stagger ?? false;
+    $staggerDelay = (int) ($animation_stagger_delay ?? 100);
+
     // Resolve media from source
     $source = $source ?? 'manual';
     $mediaType = $media_type ?? 'images';
@@ -63,8 +69,11 @@
     ])->values()->all();
 @endphp
 
-<section
-    @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif
+<x-tallcms::animation-wrapper
+    tag="section"
+    :animation="$animationType"
+    :controller="true"
+    :id="$anchor_id ?? null"
     class="image-gallery-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}"
     x-data="{
         items: @js($lightboxData),
@@ -76,7 +85,6 @@
         },
         close() {
             this.isOpen = false;
-            // Pause any playing videos
             this.$refs.lightboxVideo?.pause();
         },
         next() {
@@ -97,123 +105,156 @@
 >
     <div class="{{ $contentWidthClass ?? 'max-w-7xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
         @if($title ?? false)
-            <h3 class="text-2xl font-bold text-base-content text-center mb-8">
-                {{ $title }}
-            </h3>
+            <x-tallcms::animation-wrapper
+                :animation="$animationType"
+                :duration="$animationDuration"
+                :use-parent="true"
+                class="mb-8"
+            >
+                <h3 class="text-2xl font-bold text-base-content text-center">
+                    {{ $title }}
+                </h3>
+            </x-tallcms::animation-wrapper>
         @endif
 
         @if(($layout ?? 'grid-3') === 'masonry')
             <div class="{{ $gridClass }} gap-4">
                 @foreach($galleryItems as $index => $item)
-                    <figure class="break-inside-avoid mb-4">
-                        @if(($item['type'] ?? 'image') === 'video')
-                            <div class="relative cursor-pointer group" @click="open({{ $index }})">
-                                <video
-                                    src="{{ $item['url'] }}"
-                                    class="w-full rounded-lg shadow-md group-hover:shadow-lg transition-shadow"
-                                    muted
-                                    preload="metadata"
-                                ></video>
-                                <div class="absolute inset-0 flex items-center justify-center">
-                                    <div class="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center group-hover:bg-black/70 transition-colors">
-                                        <x-heroicon-s-play class="w-8 h-8 text-white ml-1" />
+                    @php $itemDelay = $animationStagger ? ($staggerDelay * ($index + 1)) : 0; @endphp
+                    <x-tallcms::animation-wrapper
+                        :animation="$animationType"
+                        :duration="$animationDuration"
+                        :use-parent="true"
+                        :delay="$itemDelay"
+                        class="break-inside-avoid mb-4"
+                    >
+                        <figure>
+                            @if(($item['type'] ?? 'image') === 'video')
+                                <div class="relative cursor-pointer group" @click="open({{ $index }})">
+                                    <video
+                                        src="{{ $item['url'] }}"
+                                        class="w-full rounded-lg shadow-md group-hover:shadow-lg transition-shadow"
+                                        muted
+                                        preload="metadata"
+                                    ></video>
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <div class="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center group-hover:bg-black/70 transition-colors">
+                                            <x-heroicon-s-play class="w-8 h-8 text-white ml-1" />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        @else
-                            <picture>
-                                @if(!empty($item['webp']))
-                                    <source srcset="{{ $item['webp'] }}" type="image/webp">
-                                @endif
-                                <img
-                                    src="{{ $item['url'] }}"
-                                    alt="{{ $item['alt'] ?: 'Gallery image ' . ($index + 1) }}"
-                                    class="w-full rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                                    loading="lazy"
-                                    @click="open({{ $index }})"
-                                >
-                            </picture>
-                        @endif
-                        @if(!empty($item['caption']))
-                            <figcaption class="mt-2 text-sm text-base-content/70 text-center">{{ $item['caption'] }}</figcaption>
-                        @endif
-                    </figure>
+                            @else
+                                <picture>
+                                    @if(!empty($item['webp']))
+                                        <source srcset="{{ $item['webp'] }}" type="image/webp">
+                                    @endif
+                                    <img
+                                        src="{{ $item['url'] }}"
+                                        alt="{{ $item['alt'] ?: 'Gallery image ' . ($index + 1) }}"
+                                        class="w-full rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                                        loading="lazy"
+                                        @click="open({{ $index }})"
+                                    >
+                                </picture>
+                            @endif
+                            @if(!empty($item['caption']))
+                                <figcaption class="mt-2 text-sm text-base-content/70 text-center">{{ $item['caption'] }}</figcaption>
+                            @endif
+                        </figure>
+                    </x-tallcms::animation-wrapper>
                 @endforeach
             </div>
         @elseif(($layout ?? 'grid-3') === 'carousel')
             <div class="{{ $gridClass }} pb-4">
                 @foreach($galleryItems as $index => $item)
-                    <figure class="flex-none w-80 snap-start">
-                        @if(($item['type'] ?? 'image') === 'video')
-                            <div class="relative cursor-pointer group" @click="open({{ $index }})">
-                                <video
-                                    src="{{ $item['url'] }}"
-                                    class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md group-hover:shadow-lg transition-shadow"
-                                    muted
-                                    preload="metadata"
-                                ></video>
-                                <div class="absolute inset-0 flex items-center justify-center">
-                                    <div class="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center group-hover:bg-black/70 transition-colors">
-                                        <x-heroicon-s-play class="w-8 h-8 text-white ml-1" />
+                    @php $itemDelay = $animationStagger ? ($staggerDelay * ($index + 1)) : 0; @endphp
+                    <x-tallcms::animation-wrapper
+                        :animation="$animationType"
+                        :duration="$animationDuration"
+                        :use-parent="true"
+                        :delay="$itemDelay"
+                        class="flex-none w-80 snap-start"
+                    >
+                        <figure>
+                            @if(($item['type'] ?? 'image') === 'video')
+                                <div class="relative cursor-pointer group" @click="open({{ $index }})">
+                                    <video
+                                        src="{{ $item['url'] }}"
+                                        class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md group-hover:shadow-lg transition-shadow"
+                                        muted
+                                        preload="metadata"
+                                    ></video>
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <div class="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center group-hover:bg-black/70 transition-colors">
+                                            <x-heroicon-s-play class="w-8 h-8 text-white ml-1" />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        @else
-                            <picture>
-                                @if(!empty($item['webp']))
-                                    <source srcset="{{ $item['webp'] }}" type="image/webp">
-                                @endif
-                                <img
-                                    src="{{ $item['url'] }}"
-                                    alt="{{ $item['alt'] ?: 'Gallery image ' . ($index + 1) }}"
-                                    class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                                    loading="lazy"
-                                    @click="open({{ $index }})"
-                                >
-                            </picture>
-                        @endif
-                        @if(!empty($item['caption']))
-                            <figcaption class="mt-2 text-sm text-base-content/70 text-center">{{ $item['caption'] }}</figcaption>
-                        @endif
-                    </figure>
+                            @else
+                                <picture>
+                                    @if(!empty($item['webp']))
+                                        <source srcset="{{ $item['webp'] }}" type="image/webp">
+                                    @endif
+                                    <img
+                                        src="{{ $item['url'] }}"
+                                        alt="{{ $item['alt'] ?: 'Gallery image ' . ($index + 1) }}"
+                                        class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                                        loading="lazy"
+                                        @click="open({{ $index }})"
+                                    >
+                                </picture>
+                            @endif
+                            @if(!empty($item['caption']))
+                                <figcaption class="mt-2 text-sm text-base-content/70 text-center">{{ $item['caption'] }}</figcaption>
+                            @endif
+                        </figure>
+                    </x-tallcms::animation-wrapper>
                 @endforeach
             </div>
         @else
             <div class="grid {{ $gridClass }} gap-6">
                 @foreach($galleryItems as $index => $item)
-                    <figure>
-                        @if(($item['type'] ?? 'image') === 'video')
-                            <div class="relative cursor-pointer group" @click="open({{ $index }})">
-                                <video
-                                    src="{{ $item['url'] }}"
-                                    class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md group-hover:shadow-lg transition-shadow"
-                                    muted
-                                    preload="metadata"
-                                ></video>
-                                <div class="absolute inset-0 flex items-center justify-center">
-                                    <div class="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center group-hover:bg-black/70 transition-colors">
-                                        <x-heroicon-s-play class="w-8 h-8 text-white ml-1" />
+                    @php $itemDelay = $animationStagger ? ($staggerDelay * ($index + 1)) : 0; @endphp
+                    <x-tallcms::animation-wrapper
+                        :animation="$animationType"
+                        :duration="$animationDuration"
+                        :use-parent="true"
+                        :delay="$itemDelay"
+                    >
+                        <figure>
+                            @if(($item['type'] ?? 'image') === 'video')
+                                <div class="relative cursor-pointer group" @click="open({{ $index }})">
+                                    <video
+                                        src="{{ $item['url'] }}"
+                                        class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md group-hover:shadow-lg transition-shadow"
+                                        muted
+                                        preload="metadata"
+                                    ></video>
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <div class="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center group-hover:bg-black/70 transition-colors">
+                                            <x-heroicon-s-play class="w-8 h-8 text-white ml-1" />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        @else
-                            <picture>
-                                @if(!empty($item['webp']))
-                                    <source srcset="{{ $item['webp'] }}" type="image/webp">
-                                @endif
-                                <img
-                                    src="{{ $item['url'] }}"
-                                    alt="{{ $item['alt'] ?: 'Gallery image ' . ($index + 1) }}"
-                                    class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                                    loading="lazy"
-                                    @click="open({{ $index }})"
-                                >
-                            </picture>
-                        @endif
-                        @if(!empty($item['caption']))
-                            <figcaption class="mt-2 text-sm text-base-content/70 text-center">{{ $item['caption'] }}</figcaption>
-                        @endif
-                    </figure>
+                            @else
+                                <picture>
+                                    @if(!empty($item['webp']))
+                                        <source srcset="{{ $item['webp'] }}" type="image/webp">
+                                    @endif
+                                    <img
+                                        src="{{ $item['url'] }}"
+                                        alt="{{ $item['alt'] ?: 'Gallery image ' . ($index + 1) }}"
+                                        class="w-full {{ $sizeClass }} object-cover rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                                        loading="lazy"
+                                        @click="open({{ $index }})"
+                                    >
+                                </picture>
+                            @endif
+                            @if(!empty($item['caption']))
+                                <figcaption class="mt-2 text-sm text-base-content/70 text-center">{{ $item['caption'] }}</figcaption>
+                            @endif
+                        </figure>
+                    </x-tallcms::animation-wrapper>
                 @endforeach
             </div>
         @endif
@@ -276,4 +317,4 @@
             </button>
         </div>
     </div>
-</section>
+</x-tallcms::animation-wrapper>
