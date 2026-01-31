@@ -2,7 +2,7 @@
 title: "Code Snippet Block"
 slug: "block-pro-code-snippet"
 audience: "site-owner"
-category: "blocks-pro"
+category: "blocks"
 order: 27
 ---
 

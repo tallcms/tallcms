@@ -2,7 +2,7 @@
 title: "Counter Block"
 slug: "block-pro-counter"
 audience: "site-owner"
-category: "blocks-pro"
+category: "blocks"
 order: 26
 ---
 

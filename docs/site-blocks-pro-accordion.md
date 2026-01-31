@@ -2,7 +2,7 @@
 title: "Accordion Block"
 slug: "block-pro-accordion"
 audience: "site-owner"
-category: "blocks-pro"
+category: "blocks"
 order: 20
 ---
 

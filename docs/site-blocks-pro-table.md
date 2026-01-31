@@ -2,7 +2,7 @@
 title: "Table Block"
 slug: "block-pro-table"
 audience: "site-owner"
-category: "blocks-pro"
+category: "blocks"
 order: 22
 ---
 

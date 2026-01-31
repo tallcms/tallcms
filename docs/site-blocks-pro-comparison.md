@@ -2,7 +2,7 @@
 title: "Comparison Block"
 slug: "block-pro-comparison"
 audience: "site-owner"
-category: "blocks-pro"
+category: "blocks"
 order: 23
 ---
 

@@ -2,7 +2,7 @@
 title: "Tabs Block"
 slug: "block-pro-tabs"
 audience: "site-owner"
-category: "blocks-pro"
+category: "blocks"
 order: 21
 ---
 

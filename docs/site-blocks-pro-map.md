@@ -2,7 +2,7 @@
 title: "Map Block"
 slug: "block-pro-map"
 audience: "site-owner"
-category: "blocks-pro"
+category: "blocks"
 order: 28
 ---
 

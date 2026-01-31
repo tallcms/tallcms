@@ -2,7 +2,7 @@
 title: "Video Block"
 slug: "block-pro-video"
 audience: "site-owner"
-category: "blocks-pro"
+category: "blocks"
 order: 25
 ---
 

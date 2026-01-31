@@ -2,7 +2,7 @@
 title: "Before/After Block"
 slug: "block-pro-before-after"
 audience: "site-owner"
-category: "blocks-pro"
+category: "blocks"
 order: 24
 ---
 
