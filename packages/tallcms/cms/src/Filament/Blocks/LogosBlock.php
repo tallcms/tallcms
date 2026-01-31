@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasAnimationOptions;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
@@ -21,6 +22,7 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class LogosBlock extends RichContentCustomBlock
 {
+    use HasAnimationOptions;
     use HasBlockIdentifiers;
     use HasBlockMetadata;
     use HasContentWidth;
@@ -200,6 +202,8 @@ class LogosBlock extends RichContentCustomBlock
                                     ])
                                     ->columns(4),
                             ]),
+
+                        static::getAnimationTab(supportsStagger: false),
                     ]),
 
                 static::getIdentifiersSection(),
@@ -231,6 +235,7 @@ class LogosBlock extends RichContentCustomBlock
     protected static function renderBlock(array $config): string
     {
         $widthConfig = static::resolveWidthClass($config);
+        $animConfig = static::getAnimationConfig($config);
 
         return view('tallcms::cms.blocks.logos', [
             'id' => static::getId(),
@@ -248,6 +253,8 @@ class LogosBlock extends RichContentCustomBlock
             'first_section' => $config['first_section'] ?? false,
             'anchor_id' => static::getAnchorId($config, $config['heading'] ?? null),
             'css_classes' => static::getCssClasses($config),
+            'animation_type' => $animConfig['animation_type'],
+            'animation_duration' => $animConfig['animation_duration'],
         ])->render();
     }
 

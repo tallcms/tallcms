@@ -19,9 +19,18 @@
     $hoverColorClass = (($grayscale ?? true) && ($hover_color ?? true)) ? 'hover:grayscale-0 hover:opacity-100' : '';
 
     $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
+
+    $animationType = $animation_type ?? '';
+    $animationDuration = $animation_duration ?? 'anim-duration-700';
 @endphp
 
-<section @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="logos-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}">
+<x-tallcms::animation-wrapper
+    tag="section"
+    :animation="$animationType"
+    :duration="$animationDuration"
+    :id="$anchor_id ?? null"
+    class="logos-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}"
+>
     <div class="{{ $contentWidthClass ?? 'max-w-7xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
         {{-- Section Header --}}
         @if(!empty($heading))
@@ -107,4 +116,4 @@
             @endif
         @endif
     </div>
-</section>
+</x-tallcms::animation-wrapper>

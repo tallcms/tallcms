@@ -11,13 +11,29 @@
     $styleClasses = str_replace('quote-marks', 'relative', $styleClasses);
     $isSingleLayout = ($layout ?? 'grid') === 'single';
     $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
+
+    $animationType = $animation_type ?? '';
+    $animationDuration = $animation_duration ?? 'anim-duration-500';
+    $animationStagger = $animation_stagger ?? false;
+    $staggerDelay = (int) ($animation_stagger_delay ?? 100);
 @endphp
 
-<section @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="testimonials-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}">
+<x-tallcms::animation-wrapper
+    tag="section"
+    :animation="$animationType"
+    :controller="true"
+    :id="$anchor_id ?? null"
+    class="testimonials-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}"
+>
     <div class="{{ $contentWidthClass ?? 'max-w-7xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
         {{-- Section Header --}}
         @if(!empty($heading) || !empty($subheading))
-            <div class="{{ $text_alignment ?? 'text-center' }} mb-12 sm:mb-16">
+            <x-tallcms::animation-wrapper
+                :animation="$animationType"
+                :duration="$animationDuration"
+                :use-parent="true"
+                class="{{ $text_alignment ?? 'text-center' }} mb-12 sm:mb-16"
+            >
                 @if(!empty($heading))
                     <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-base-content">
                         {{ $heading }}
@@ -28,7 +44,7 @@
                         {{ $subheading }}
                     </p>
                 @endif
-            </div>
+            </x-tallcms::animation-wrapper>
         @endif
 
         {{-- Testimonials --}}
@@ -36,8 +52,17 @@
             @if($isSingleLayout)
                 {{-- Single Large Layout --}}
                 <div class="max-w-4xl mx-auto">
-                    @foreach($testimonials as $testimonial)
-                        <div class="{{ $styleClasses }} {{ !$loop->last ? 'mb-8' : '' }}">
+                    @foreach($testimonials as $index => $testimonial)
+                        @php
+                            $itemDelay = $animationStagger ? ($staggerDelay * ($index + 1)) : 0;
+                        @endphp
+                        <x-tallcms::animation-wrapper
+                            :animation="$animationType"
+                            :duration="$animationDuration"
+                            :use-parent="true"
+                            :delay="$itemDelay"
+                            class="{{ $styleClasses }} {{ !$loop->last ? 'mb-8' : '' }}"
+                        >
                             <div class="card-body">
                                 @if($isQuoteMarks)
                                     <div class="absolute top-4 left-6 text-6xl text-primary/20 font-serif leading-none">"</div>
@@ -103,14 +128,23 @@
                                     @endif
                                 </div>
                             </div>
-                        </div>
+                        </x-tallcms::animation-wrapper>
                     @endforeach
                 </div>
             @else
                 {{-- Grid Layout --}}
                 <div class="grid gap-6 sm:gap-8 {{ $columnsClass }}">
-                    @foreach($testimonials as $testimonial)
-                        <div class="{{ $styleClasses }}">
+                    @foreach($testimonials as $index => $testimonial)
+                        @php
+                            $itemDelay = $animationStagger ? ($staggerDelay * ($index + 1)) : 0;
+                        @endphp
+                        <x-tallcms::animation-wrapper
+                            :animation="$animationType"
+                            :duration="$animationDuration"
+                            :use-parent="true"
+                            :delay="$itemDelay"
+                            class="{{ $styleClasses }}"
+                        >
                             <div class="card-body">
                                 @if($isQuoteMarks)
                                     <div class="absolute top-4 left-6 text-5xl text-primary/20 font-serif leading-none">"</div>
@@ -180,10 +214,10 @@
                                     </div>
                                 @endif
                             </div>
-                        </div>
+                        </x-tallcms::animation-wrapper>
                     @endforeach
                 </div>
             @endif
         @endif
     </div>
-</section>
+</x-tallcms::animation-wrapper>

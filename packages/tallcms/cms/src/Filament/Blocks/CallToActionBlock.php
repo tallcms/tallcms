@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasAnimationOptions;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
@@ -20,6 +21,7 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class CallToActionBlock extends RichContentCustomBlock
 {
+    use HasAnimationOptions;
     use HasBlockIdentifiers;
     use HasBlockMetadata;
     use HasContentWidth;
@@ -212,6 +214,8 @@ class CallToActionBlock extends RichContentCustomBlock
                                     ])
                                     ->columns(4),
                             ]),
+
+                        static::getAnimationTab(supportsStagger: false),
                     ]),
 
                 static::getIdentifiersSection(),
@@ -233,6 +237,7 @@ class CallToActionBlock extends RichContentCustomBlock
         $buttonUrl = BlockLinkResolver::resolveButtonUrl($config, 'button');
         $secondaryButtonUrl = BlockLinkResolver::resolveButtonUrl($config, 'secondary_button');
         $widthConfig = static::resolveWidthClass($config);
+        $animConfig = static::getAnimationConfig($config);
 
         return view('tallcms::cms.blocks.call-to-action', [
             'id' => static::getId(),
@@ -253,6 +258,8 @@ class CallToActionBlock extends RichContentCustomBlock
             'padding' => $config['padding'] ?? 'py-16',
             'anchor_id' => static::getAnchorId($config, $config['title'] ?? null),
             'css_classes' => static::getCssClasses($config),
+            'animation_type' => $animConfig['animation_type'],
+            'animation_duration' => $animConfig['animation_duration'],
         ])->render();
     }
 }

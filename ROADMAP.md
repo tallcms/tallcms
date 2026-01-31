@@ -395,6 +395,14 @@ Focus: Full REST API for headless CMS usage and third-party integrations.
 - [ ] Debug toolbar integration
 - [ ] List on Filament plugin directory
 
+### Block Animations (v2.8.5)
+- [x] Scroll-triggered entrance animations for content blocks
+- [x] Animation types: Fade In, Fade In Up (Core); + Down/Left/Right, Zoom In, Zoom In Up (Pro)
+- [x] Configurable animation speed (Normal, Relaxed, Dramatic; + Snappy, Quick in Pro)
+- [x] Stagger effect for multi-item blocks (Pro)
+- [x] Accessibility: respects prefers-reduced-motion
+- [x] Supported blocks: Features, Testimonials, Pricing, Stats, Team, FAQ, CTA, Logos
+
 ---
 
 ## v2.9 - Community & Users
@@ -516,6 +524,7 @@ We welcome community input on our roadmap:
 | v2.6 | ✅ Released | Discovery | Full-text search for Pages and Posts |
 | v2.7 | ✅ Released | Media | Image optimization, WebP variants, collections, video support |
 | v2.8 | ✅ Released | API | REST API, Sanctum auth, Webhooks, OpenAPI docs |
+| v2.8.5 | ✅ Released | Animations | Block entrance animations, stagger effects |
 | v2.9 | 📋 Planned | Community | Comments, User profiles, Analytics |
 | v2.10 | 📋 Planned | Ecosystem | Marketplace integration |
 | Pro | 🔄 Ongoing | Premium | Advanced blocks, Analytics, AI Content, Translation |
@@ -531,4 +540,4 @@ We welcome community input on our roadmap:
 
 ---
 
-*Last updated: January 27, 2026 — v2.8 REST API released*
+*Last updated: January 31, 2026 — v2.8.5 Block Animations released*

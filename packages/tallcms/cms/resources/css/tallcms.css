@@ -19,6 +19,111 @@ html {
    Applies prose-like typography to content typed
    directly in the Rich Editor (not inside blocks)
    ============================================ */
+/* ============================================
+   TallCMS Block Animations
+   Scroll-triggered entrance animations using
+   CSS keyframes + Alpine.js x-intersect.
+   Respects prefers-reduced-motion.
+   ============================================ */
+@layer utilities {
+    /* Keyframes */
+    @keyframes fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes fade-in-up {
+        from { opacity: 0; transform: translateY(60px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fade-in-down {
+        from { opacity: 0; transform: translateY(-60px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fade-in-left {
+        from { opacity: 0; transform: translateX(-80px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes fade-in-right {
+        from { opacity: 0; transform: translateX(80px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes zoom-in {
+        from { opacity: 0; transform: scale(0.7); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes zoom-in-up {
+        from { opacity: 0; transform: scale(0.8) translateY(40px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* Base class for ALL TallCMS animations - single point for reduced-motion */
+    .tallcms-animate {
+        animation-fill-mode: both;
+    }
+
+    /* Animation modifier classes - applied alongside .tallcms-animate */
+    .tallcms-animate.animate-fade-in {
+        animation-name: fade-in;
+        animation-timing-function: ease-out;
+    }
+
+    .tallcms-animate.animate-fade-in-up {
+        animation-name: fade-in-up;
+        animation-timing-function: ease-out;
+    }
+
+    .tallcms-animate.animate-fade-in-down {
+        animation-name: fade-in-down;
+        animation-timing-function: ease-out;
+    }
+
+    .tallcms-animate.animate-fade-in-left {
+        animation-name: fade-in-left;
+        animation-timing-function: ease-out;
+    }
+
+    .tallcms-animate.animate-fade-in-right {
+        animation-name: fade-in-right;
+        animation-timing-function: ease-out;
+    }
+
+    .tallcms-animate.animate-zoom-in {
+        animation-name: zoom-in;
+        animation-timing-function: ease-out;
+    }
+
+    .tallcms-animate.animate-zoom-in-up {
+        animation-name: zoom-in-up;
+        animation-timing-function: ease-out;
+    }
+
+    /* Duration utilities (prefixed to avoid Tailwind collision) */
+    .anim-duration-300 { animation-duration: 300ms; }
+    .anim-duration-500 { animation-duration: 500ms; }
+    .anim-duration-700 { animation-duration: 700ms; }
+    .anim-duration-1000 { animation-duration: 1000ms; }
+    .anim-duration-1500 { animation-duration: 1500ms; }
+
+    /* Reduced motion: SINGLE selector for all TallCMS animations */
+    @media (prefers-reduced-motion: reduce) {
+        .tallcms-animate {
+            animation: none !important;
+            opacity: 1 !important;
+        }
+    }
+}
+
+/* ============================================
+   CMS Content - Inline Text Styling
+   Applies prose-like typography to content typed
+   directly in the Rich Editor (not inside blocks)
+   ============================================ */
 .cms-content {
     /* Direct paragraph children */
     & > p {
