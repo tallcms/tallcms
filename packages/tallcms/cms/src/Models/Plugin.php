@@ -499,6 +499,18 @@ class Plugin
      */
     protected function versionSatisfies(string $current, string $requirement): bool
     {
+        // Handle OR constraints (e.g., "^1.0 || ^2.0")
+        if (str_contains($requirement, '||')) {
+            $constraints = array_map('trim', explode('||', $requirement));
+            foreach ($constraints as $constraint) {
+                if ($this->versionSatisfies($current, $constraint)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         // Handle caret (^) version constraints
         if (str_starts_with($requirement, '^')) {
             $minVersion = substr($requirement, 1);
