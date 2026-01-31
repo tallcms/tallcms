@@ -404,9 +404,21 @@ class PluginManager extends Page implements HasForms
 
         try {
             File::ensureDirectoryExists(dirname($tempPath));
-            $response = Http::timeout(60)->get($downloadUrl);
+
+            Log::info('One-click update: Downloading', [
+                'plugin' => "{$vendor}/{$slug}",
+                'url' => $downloadUrl,
+            ]);
+
+            $response = Http::timeout(60)
+                ->withOptions(['allow_redirects' => true])
+                ->get($downloadUrl);
 
             if (! $response->successful()) {
+                Log::error('One-click update: Download HTTP error', [
+                    'plugin' => "{$vendor}/{$slug}",
+                    'status' => $response->status(),
+                ]);
                 Notification::make()
                     ->title('Download failed')
                     ->body('HTTP status: '.$response->status())
@@ -416,7 +428,27 @@ class PluginManager extends Page implements HasForms
                 return;
             }
 
-            File::put($tempPath, $response->body());
+            $body = $response->body();
+            $contentType = $response->header('Content-Type') ?? 'unknown';
+
+            // Validate response is actually a ZIP file (magic bytes: PK)
+            if (strlen($body) < 4 || substr($body, 0, 2) !== 'PK') {
+                Log::error('One-click update: Invalid ZIP response', [
+                    'plugin' => "{$vendor}/{$slug}",
+                    'content_type' => $contentType,
+                    'body_length' => strlen($body),
+                    'body_preview' => substr($body, 0, 200),
+                ]);
+                Notification::make()
+                    ->title('Download failed')
+                    ->body('Server returned invalid response (not a ZIP file). Check logs for details.')
+                    ->danger()
+                    ->send();
+
+                return;
+            }
+
+            File::put($tempPath, $body);
 
             // 6. Apply update
             $result = $this->getPluginManager()->update($tempPath);
