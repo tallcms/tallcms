@@ -245,6 +245,7 @@ class CmsPageRenderer extends Component
     /**
      * Extract PostsBlock config from page content.
      * Used to pass display settings to the post detail view.
+     * Handles both Tiptap JSON format and HTML format with data attributes.
      */
     protected function getPostsBlockConfig(CmsPage $page): array
     {
@@ -254,19 +255,28 @@ class CmsPageRenderer extends Component
 
         $content = $page->content;
 
+        // Handle string content (could be JSON or HTML)
         if (is_string($content)) {
+            // Try JSON format first (Tiptap)
             $decoded = json_decode($content, true);
-            if (! is_array($decoded)) {
-                return [];
+            if (is_array($decoded)) {
+                return $this->extractPostsBlockConfig($decoded);
             }
-            $content = $decoded;
+
+            // Fall back to HTML format with data attributes
+            return $this->extractPostsBlockConfigFromHtml($content);
         }
 
-        return $this->extractPostsBlockConfig($content);
+        // Already an array (decoded JSON)
+        if (is_array($content)) {
+            return $this->extractPostsBlockConfig($content);
+        }
+
+        return [];
     }
 
     /**
-     * Recursively extract posts block config from content structure.
+     * Recursively extract posts block config from Tiptap JSON content structure.
      */
     protected function extractPostsBlockConfig(array $content): array
     {
@@ -284,6 +294,25 @@ class CmsPageRenderer extends Component
                     return $config;
                 }
             }
+        }
+
+        return [];
+    }
+
+    /**
+     * Extract posts block config from HTML content with data attributes.
+     */
+    protected function extractPostsBlockConfigFromHtml(string $html): array
+    {
+        // Look for data-type="customBlock" data-id="posts" data-config="..."
+        if (preg_match('/data-type=["\']customBlock["\'][^>]*data-id=["\']posts["\'][^>]*data-config=["\']([^"\']+)["\']/', $html, $matches) ||
+            preg_match('/data-id=["\']posts["\'][^>]*data-type=["\']customBlock["\'][^>]*data-config=["\']([^"\']+)["\']/', $html, $matches) ||
+            preg_match('/data-config=["\']([^"\']+)["\'][^>]*data-type=["\']customBlock["\'][^>]*data-id=["\']posts["\']/', $html, $matches) ||
+            preg_match('/data-config=["\']([^"\']+)["\'][^>]*data-id=["\']posts["\']/', $html, $matches)) {
+            $configJson = html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8');
+            $config = json_decode($configJson, true);
+
+            return is_array($config) ? $config : [];
         }
 
         return [];
