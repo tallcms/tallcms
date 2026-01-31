@@ -8,6 +8,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use TallCms\Cms\Filament\Blocks\Concerns\HasAnimationOptions;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
@@ -67,121 +69,133 @@ class DocumentListBlock extends RichContentCustomBlock
     public static function configureEditorAction(Action $action): Action
     {
         return $action
-            ->modalWidth('2xl')
+            ->modalWidth('4xl')
             ->modalDescription('Display a list of downloadable documents')
             ->schema([
-                TextInput::make('title')
-                    ->label('Section Title')
-                    ->maxLength(255)
-                    ->placeholder('e.g., Downloads, Resources, Attachments'),
+                Tabs::make('Document List Configuration')
+                    ->tabs([
+                        Tab::make('Content')
+                            ->icon('heroicon-m-document-text')
+                            ->schema([
+                                TextInput::make('title')
+                                    ->label('Section Title')
+                                    ->maxLength(255)
+                                    ->placeholder('e.g., Downloads, Resources, Attachments'),
 
-                TextInput::make('description')
-                    ->label('Description')
-                    ->maxLength(500)
-                    ->placeholder('Optional description text'),
+                                TextInput::make('description')
+                                    ->label('Description')
+                                    ->maxLength(500)
+                                    ->placeholder('Optional description text'),
 
-                Select::make('collection_ids')
-                    ->label('Collections')
-                    ->multiple()
-                    ->options(fn () => MediaCollection::pluck('name', 'id')->toArray())
-                    ->searchable()
-                    ->required()
-                    ->helperText('Select collections containing documents'),
+                                Select::make('collection_ids')
+                                    ->label('Collections')
+                                    ->multiple()
+                                    ->options(fn () => MediaCollection::pluck('name', 'id')->toArray())
+                                    ->searchable()
+                                    ->required()
+                                    ->helperText('Select collections containing documents'),
 
-                Select::make('file_types')
-                    ->label('File Types')
-                    ->multiple()
-                    ->options([
-                        'application/pdf' => 'PDF',
-                        'application/msword' => 'Word (DOC)',
-                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'Word (DOCX)',
-                        'application/vnd.ms-excel' => 'Excel (XLS)',
-                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'Excel (XLSX)',
-                        'application/zip' => 'ZIP',
-                    ])
-                    ->placeholder('All document types')
-                    ->helperText('Leave empty to show all documents'),
+                                Select::make('file_types')
+                                    ->label('File Types')
+                                    ->multiple()
+                                    ->options([
+                                        'application/pdf' => 'PDF',
+                                        'application/msword' => 'Word (DOC)',
+                                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'Word (DOCX)',
+                                        'application/vnd.ms-excel' => 'Excel (XLS)',
+                                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'Excel (XLSX)',
+                                        'application/zip' => 'ZIP',
+                                    ])
+                                    ->placeholder('All document types')
+                                    ->helperText('Leave empty to show all documents'),
 
-                Select::make('order')
-                    ->label('Order')
-                    ->options([
-                        'newest' => 'Newest First',
-                        'oldest' => 'Oldest First',
-                        'name' => 'Alphabetical',
-                    ])
-                    ->default('newest'),
+                                Select::make('order')
+                                    ->label('Order')
+                                    ->options([
+                                        'newest' => 'Newest First',
+                                        'oldest' => 'Oldest First',
+                                        'name' => 'Alphabetical',
+                                    ])
+                                    ->default('newest'),
 
-                TextInput::make('max_items')
-                    ->label('Maximum Items')
-                    ->numeric()
-                    ->minValue(1)
-                    ->maxValue(100)
-                    ->placeholder('No limit'),
+                                TextInput::make('max_items')
+                                    ->label('Maximum Items')
+                                    ->numeric()
+                                    ->minValue(1)
+                                    ->maxValue(100)
+                                    ->placeholder('No limit'),
+                            ]),
 
-                Select::make('layout')
-                    ->label('Layout')
-                    ->options([
-                        'list' => 'Simple List',
-                        'cards' => 'Cards',
-                        'compact' => 'Compact',
-                    ])
-                    ->default('list'),
+                        Tab::make('Layout')
+                            ->icon('heroicon-m-squares-2x2')
+                            ->schema([
+                                Select::make('layout')
+                                    ->label('Layout')
+                                    ->options([
+                                        'list' => 'Simple List',
+                                        'cards' => 'Cards',
+                                        'compact' => 'Compact',
+                                    ])
+                                    ->default('list'),
 
-                Toggle::make('show_file_size')
-                    ->label('Show File Size')
-                    ->default(true),
+                                Toggle::make('show_file_size')
+                                    ->label('Show File Size')
+                                    ->default(true),
 
-                Toggle::make('show_file_type')
-                    ->label('Show File Type Badge')
-                    ->default(true),
+                                Toggle::make('show_file_type')
+                                    ->label('Show File Type Badge')
+                                    ->default(true),
 
-                Section::make('Appearance')
-                    ->schema([
-                        static::getContentWidthField(),
+                                Section::make('Appearance')
+                                    ->schema([
+                                        static::getContentWidthField(),
 
-                        Select::make('background')
-                            ->label('Background')
-                            ->options(static::getBackgroundOptions())
-                            ->default('bg-base-100'),
+                                        Select::make('background')
+                                            ->label('Background')
+                                            ->options(static::getBackgroundOptions())
+                                            ->default('bg-base-100'),
 
-                        Select::make('padding')
-                            ->label('Section Padding')
-                            ->options(static::getPaddingOptions())
-                            ->default('py-16'),
+                                        Select::make('padding')
+                                            ->label('Section Padding')
+                                            ->options(static::getPaddingOptions())
+                                            ->default('py-16'),
 
-                        Toggle::make('first_section')
-                            ->label('First Section (Remove Top Padding)')
-                            ->default(false),
-                    ])
-                    ->columns(4),
+                                        Toggle::make('first_section')
+                                            ->label('First Section (Remove Top Padding)')
+                                            ->default(false),
+                                    ])
+                                    ->columns(4),
+                            ]),
 
-                Section::make('Animation')
-                    ->schema([
-                        Select::make('animation_type')
-                            ->label('Entrance Animation')
-                            ->options(static::getAnimationTypeOptions())
-                            ->default('')
-                            ->helperText('Animation plays when block scrolls into view'),
+                        Tab::make('Animation')
+                            ->icon('heroicon-m-sparkles')
+                            ->schema([
+                                Select::make('animation_type')
+                                    ->label('Entrance Animation')
+                                    ->options(static::getAnimationTypeOptions())
+                                    ->default('')
+                                    ->helperText('Animation plays when block scrolls into view'),
 
-                        Select::make('animation_duration')
-                            ->label('Animation Speed')
-                            ->options(static::getAnimationDurationOptions())
-                            ->default('anim-duration-700'),
+                                Select::make('animation_duration')
+                                    ->label('Animation Speed')
+                                    ->options(static::getAnimationDurationOptions())
+                                    ->default('anim-duration-700'),
 
-                        Toggle::make('animation_stagger')
-                            ->label('Stagger Items')
-                            ->helperText('Animate items sequentially instead of all at once')
-                            ->default(false)
-                            ->live()
-                            ->visible(fn (): bool => static::hasPro()),
+                                Toggle::make('animation_stagger')
+                                    ->label('Stagger Items')
+                                    ->helperText('Animate items sequentially instead of all at once')
+                                    ->default(false)
+                                    ->live()
+                                    ->visible(fn (): bool => static::hasPro()),
 
-                        Select::make('animation_stagger_delay')
-                            ->label('Stagger Delay')
-                            ->options(static::getStaggerDelayOptions())
-                            ->default('100')
-                            ->visible(fn (Get $get): bool => static::hasPro() && $get('animation_stagger') === true),
-                    ])
-                    ->columns(2),
+                                Select::make('animation_stagger_delay')
+                                    ->label('Stagger Delay')
+                                    ->options(static::getStaggerDelayOptions())
+                                    ->default('100')
+                                    ->visible(fn (Get $get): bool => static::hasPro() && $get('animation_stagger') === true),
+                            ])
+                            ->columns(2),
+                    ]),
 
                 static::getIdentifiersSection(),
             ])->slideOver();
