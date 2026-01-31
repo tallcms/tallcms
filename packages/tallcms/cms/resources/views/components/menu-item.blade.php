@@ -19,7 +19,7 @@
                 @endif
                 {{ $item['label'] }}
             </summary>
-            <ul>
+            <ul class="bg-base-100 rounded-t-none p-2 min-w-max z-50">
                 @foreach($item['children'] as $child)
                     @include('tallcms::components.menu-item', ['item' => $child, 'level' => $level + 1])
                 @endforeach
