@@ -72,9 +72,9 @@ class FeaturesBlock extends RichContentCustomBlock
     {
         return [
             'card shadow-xl bg-base-100' => 'Shadow',
-            'card card-border bg-base-100' => 'Bordered',
-            'card card-dash bg-base-100' => 'Dashed',
+            'card border border-base-300 bg-base-100' => 'Bordered',
             'card bg-base-200' => 'Filled',
+            'card bg-base-300' => 'Filled Dark',
             'card bg-primary text-primary-content' => 'Primary',
             'card bg-secondary text-secondary-content' => 'Secondary',
             'card bg-accent text-accent-content' => 'Accent',
