@@ -16,17 +16,24 @@
             <header class="mb-8">
                 <h1 class="text-4xl font-bold text-gray-900 mb-4">{{ $post->title }}</h1>
 
-                <div class="flex items-center text-gray-600 text-sm space-x-4">
-                    @if($post->published_at)
-                        <time datetime="{{ $post->published_at->toISOString() }}">
-                            {{ $post->published_at->format('F j, Y') }}
-                        </time>
-                    @endif
+                @php
+                    // Get display settings from PostsBlock (shared via View::share)
+                    $showDate = View::shared('postsBlockShowDate', true);
+                    $showAuthor = View::shared('postsBlockShowAuthor', true);
+                @endphp
+                @if($showDate || $showAuthor)
+                    <div class="flex items-center text-gray-600 text-sm space-x-4">
+                        @if($showDate && $post->published_at)
+                            <time datetime="{{ $post->published_at->toISOString() }}">
+                                {{ $post->published_at->format('F j, Y') }}
+                            </time>
+                        @endif
 
-                    @if($post->author)
-                        <span>by {{ $post->author->name ?? $post->author }}</span>
-                    @endif
-                </div>
+                        @if($showAuthor && $post->author)
+                            <span>by {{ $post->author->name ?? $post->author }}</span>
+                        @endif
+                    </div>
+                @endif
             </header>
 
             @if($post->featured_image)
