@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasAnimationOptions;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
@@ -13,9 +14,12 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 
 class ContentBlockBlock extends RichContentCustomBlock
 {
+    use HasAnimationOptions;
     use HasBlockIdentifiers;
     use HasBlockMetadata;
     use HasContentWidth;
@@ -61,50 +65,59 @@ class ContentBlockBlock extends RichContentCustomBlock
         return $action
             ->modalDescription('Add a content section with title and rich text body')
             ->schema([
-                TextInput::make('title')
-                    ->label('Title')
-                    ->maxLength(255)
-                    ->placeholder('Enter section title'),
+                Tabs::make('Content Configuration')
+                    ->tabs([
+                        Tab::make('Content')
+                            ->icon('heroicon-m-document-text')
+                            ->schema([
+                                TextInput::make('title')
+                                    ->label('Title')
+                                    ->maxLength(255)
+                                    ->placeholder('Enter section title'),
 
-                TextInput::make('subtitle')
-                    ->label('Subtitle')
-                    ->maxLength(255)
-                    ->placeholder('Optional subtitle or subheading'),
+                                TextInput::make('subtitle')
+                                    ->label('Subtitle')
+                                    ->maxLength(255)
+                                    ->placeholder('Optional subtitle or subheading'),
 
-                RichEditor::make('body')
-                    ->label('Content')
-                    ->placeholder('Write your content here...'),
+                                RichEditor::make('body')
+                                    ->label('Content')
+                                    ->placeholder('Write your content here...'),
 
-                static::getContentWidthField(),
+                                static::getContentWidthField(),
 
-                Select::make('heading_level')
-                    ->label('Heading Level')
-                    ->options([
-                        'h2' => 'H2 (recommended for sections)',
-                        'h3' => 'H3 (for subsections)',
-                        'h4' => 'H4 (for smaller headings)',
-                    ])
-                    ->default('h2')
-                    ->helperText('Choose appropriate heading level for page structure'),
+                                Select::make('heading_level')
+                                    ->label('Heading Level')
+                                    ->options([
+                                        'h2' => 'H2 (recommended for sections)',
+                                        'h3' => 'H3 (for subsections)',
+                                        'h4' => 'H4 (for smaller headings)',
+                                    ])
+                                    ->default('h2')
+                                    ->helperText('Choose appropriate heading level for page structure'),
+                            ]),
 
-                Section::make('Appearance')
-                    ->schema([
-                        Select::make('background')
-                            ->label('Background')
-                            ->options(static::getBackgroundOptions())
-                            ->default('bg-base-100'),
+                        Tab::make('Appearance')
+                            ->icon('heroicon-m-paint-brush')
+                            ->schema([
+                                Select::make('background')
+                                    ->label('Background')
+                                    ->options(static::getBackgroundOptions())
+                                    ->default('bg-base-100'),
 
-                        Select::make('padding')
-                            ->label('Section Padding')
-                            ->options(static::getPaddingOptions())
-                            ->default('py-16'),
+                                Select::make('padding')
+                                    ->label('Section Padding')
+                                    ->options(static::getPaddingOptions())
+                                    ->default('py-16'),
 
-                        Toggle::make('first_section')
-                            ->label('First Section (Remove Top Padding)')
-                            ->helperText('Overrides padding setting above')
-                            ->default(false),
-                    ])
-                    ->columns(3),
+                                Toggle::make('first_section')
+                                    ->label('First Section (Remove Top Padding)')
+                                    ->helperText('Overrides padding setting above')
+                                    ->default(false),
+                            ]),
+
+                        static::getAnimationTab(supportsStagger: false),
+                    ]),
 
                 static::getIdentifiersSection(),
             ])->slideOver();
@@ -127,6 +140,7 @@ class ContentBlockBlock extends RichContentCustomBlock
     protected static function renderBlock(array $config): string
     {
         $widthConfig = static::resolveWidthClass($config);
+        $animConfig = static::getAnimationConfig($config);
 
         return view('tallcms::cms.blocks.content-block', [
             'id' => static::getId(),
@@ -141,6 +155,8 @@ class ContentBlockBlock extends RichContentCustomBlock
             'first_section' => $config['first_section'] ?? false,
             'anchor_id' => static::getAnchorId($config, $config['title'] ?? null),
             'css_classes' => static::getCssClasses($config),
+            'animation_type' => $animConfig['animation_type'],
+            'animation_duration' => $animConfig['animation_duration'],
         ])->render();
     }
 }

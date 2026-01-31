@@ -8,13 +8,30 @@
 
     // Add custom classes if provided
     $allClasses = trim($baseClasses . ' ' . ($css_classes ?? ''));
+
+    // Animation config
+    $animationType = $animation_type ?? '';
+    $animationDuration = $animation_duration ?? 'anim-duration-700';
 @endphp
 
-<article @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="{{ $allClasses }}">
+<x-tallcms::animation-wrapper
+    tag="article"
+    :animation="$animationType"
+    :duration="$animationDuration"
+    :controller="true"
+    :id="$anchor_id ?? null"
+    class="{{ $allClasses }}"
+>
     <div class="{{ $contentWidthClass ?? 'max-w-6xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
 
         @if(($title ?? null) || ($subtitle ?? null))
-            <header class="mb-8 sm:mb-10">
+            <x-tallcms::animation-wrapper
+                :animation="$animationType"
+                :duration="$animationDuration"
+                :use-parent="true"
+                tag="header"
+                class="mb-8 sm:mb-10"
+            >
                 @if($title ?? null)
                     <{{ $heading_level ?? 'h2' }} class="text-3xl sm:text-4xl font-bold leading-tight mb-4 text-base-content">
                         {{ $title }}
@@ -34,14 +51,19 @@
                         {{ $subtitle }}
                     </{{ $subtitleLevel }}>
                 @endif
-            </header>
+            </x-tallcms::animation-wrapper>
         @endif
 
         @if($body ?? null)
-            <div class="prose prose-lg max-w-none text-base-content">
+            <x-tallcms::animation-wrapper
+                :animation="$animationType"
+                :duration="$animationDuration"
+                :use-parent="true"
+                class="prose prose-lg max-w-none text-base-content"
+            >
                 {!! HtmlSanitizerService::sanitizeTipTapContent($body) !!}
-            </div>
+            </x-tallcms::animation-wrapper>
         @endif
 
     </div>
-</article>
+</x-tallcms::animation-wrapper>

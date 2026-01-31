@@ -52,9 +52,19 @@
 
     // Section classes - keep -mt-20 for non-preview (tucks under nav)
     $sectionClasses = "hero {$height} " . ($isPreview ? '' : '-mt-20') . " relative overflow-hidden " . ($css_classes ?? '');
+
+    // Animation config
+    $animationType = $animation_type ?? '';
+    $animationDuration = $animation_duration ?? 'anim-duration-700';
 @endphp
 
-<section @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="{{ trim($sectionClasses) }}">
+<x-tallcms::animation-wrapper
+    tag="section"
+    :animation="$animationType"
+    :controller="true"
+    :id="$anchor_id ?? null"
+    class="{{ trim($sectionClasses) }}"
+>
     {{-- Background (custom overlay div for opacity control, NOT .hero-overlay) --}}
     @if($hasBackgroundImage)
         <div class="absolute inset-0 z-0"
@@ -72,13 +82,24 @@
 
         {{-- Figure Image (figure layouts) - checks existence via $hasFigureImage --}}
         @if(in_array($layout ?? 'centered', ['figure-left', 'figure-right']) && $hasFigureImage)
-            <img src="{{ Storage::disk(cms_media_disk())->url($figure_image) }}"
-                 alt="{{ $figure_alt ?? '' }}"
-                 class="max-w-sm {{ ($figure_rounded ?? true) ? 'rounded-lg' : '' }} {{ ($figure_shadow ?? true) ? 'shadow-2xl' : '' }}" />
+            <x-tallcms::animation-wrapper
+                :animation="$animationType"
+                :duration="$animationDuration"
+                :use-parent="true"
+            >
+                <img src="{{ Storage::disk(cms_media_disk())->url($figure_image) }}"
+                     alt="{{ $figure_alt ?? '' }}"
+                     class="max-w-sm {{ ($figure_rounded ?? true) ? 'rounded-lg' : '' }} {{ ($figure_shadow ?? true) ? 'shadow-2xl' : '' }}" />
+            </x-tallcms::animation-wrapper>
         @endif
 
         {{-- Text Content - textColorClass scoped HERE only --}}
-        <div class="{{ $textColorClass }} {{ ($layout ?? 'centered') === 'centered' ? 'max-w-5xl mx-auto' : 'flex-1' }} {{ ($layout ?? 'centered') !== 'centered' ? ($text_alignment ?? 'text-left') : '' }}">
+        <x-tallcms::animation-wrapper
+            :animation="$animationType"
+            :duration="$animationDuration"
+            :use-parent="true"
+            class="{{ $textColorClass }} {{ ($layout ?? 'centered') === 'centered' ? 'max-w-5xl mx-auto' : 'flex-1' }} {{ ($layout ?? 'centered') !== 'centered' ? ($text_alignment ?? 'text-left') : '' }}"
+        >
             @if($heading ?? null)
                 <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight mb-6 drop-shadow-lg">
                     {!! $processedHeading !!}
@@ -115,7 +136,7 @@
                     @endif
                 </div>
             @endif
-        </div>
+        </x-tallcms::animation-wrapper>
 
         {{-- Form Card (with-form layout) --}}
         @if(($layout ?? 'centered') === 'with-form')
@@ -130,7 +151,12 @@
                 $formSubmitText = $form_submit_text ?? 'Get Started';
             @endphp
             {{-- Form card with explicit text-base-content to override any inherited text color --}}
-            <div class="card {{ $form_card_style ?? 'bg-base-100 shadow-2xl' }} w-full max-w-md shrink-0 text-base-content">
+            <x-tallcms::animation-wrapper
+                :animation="$animationType"
+                :duration="$animationDuration"
+                :use-parent="true"
+                class="card {{ $form_card_style ?? 'bg-base-100 shadow-2xl' }} w-full max-w-md shrink-0 text-base-content"
+            >
                 <div class="card-body text-base-content">
                     @if($form_title ?? null)
                         <h2 class="card-title">{{ $form_title }}</h2>
@@ -191,7 +217,7 @@
                         </div>
                     @endif
                 </div>
-            </div>
+            </x-tallcms::animation-wrapper>
         @endif
     </div>
 
@@ -203,4 +229,4 @@
             </svg>
         </div>
     @endif
-</section>
+</x-tallcms::animation-wrapper>

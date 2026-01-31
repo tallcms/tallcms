@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasAnimationOptions;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
@@ -26,6 +27,7 @@ use Filament\Schemas\Components\Utilities\Get;
 
 class HeroBlock extends RichContentCustomBlock
 {
+    use HasAnimationOptions;
     use HasBlockIdentifiers;
     use HasBlockMetadata;
     use HasDaisyUIOptions;
@@ -466,6 +468,8 @@ class HeroBlock extends RichContentCustomBlock
                                     ])
                                     ->columns(3),
                             ]),
+
+                        static::getAnimationTab(supportsStagger: false),
                     ]),
 
                 static::getIdentifiersSection(),
@@ -486,6 +490,7 @@ class HeroBlock extends RichContentCustomBlock
     {
         $buttonUrl = BlockLinkResolver::resolveButtonUrl($config, 'button');
         $secondaryButtonUrl = BlockLinkResolver::resolveButtonUrl($config, 'secondary_button');
+        $animConfig = static::getAnimationConfig($config);
 
         // Build button classes
         $buttonVariant = $config['button_variant'] ?? 'btn-primary';
@@ -537,6 +542,8 @@ class HeroBlock extends RichContentCustomBlock
             'form_card_style' => $config['form_card_style'] ?? 'bg-base-100 shadow-2xl',
             'anchor_id' => static::getAnchorId($config, $config['heading'] ?? null),
             'css_classes' => static::getCssClasses($config),
+            'animation_type' => $animConfig['animation_type'],
+            'animation_duration' => $animConfig['animation_duration'],
         ])->render();
     }
 }
