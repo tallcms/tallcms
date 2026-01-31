@@ -102,6 +102,7 @@ For blocks with multiple items (grids, cards), enable **Stagger Items** to anima
 | Stats | Yes |
 | Team | Yes |
 | Call to Action | No |
+| Logos | No |
 
 ---
 
