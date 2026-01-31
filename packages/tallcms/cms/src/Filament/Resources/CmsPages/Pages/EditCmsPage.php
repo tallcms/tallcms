@@ -35,6 +35,9 @@ class EditCmsPage extends EditRecord
             // Copy from default locale action (for translation workflow)
             $this->getCopyFromDefaultAction(),
 
+            $this->getSaveFormAction()
+            ->formId('form'),
+
             // Workflow Actions Group
             ActionGroup::make([
                 $this->getSubmitForReviewAction(),
