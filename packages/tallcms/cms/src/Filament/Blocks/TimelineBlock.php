@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasAnimationOptions;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
@@ -17,9 +18,11 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Get;
 
 class TimelineBlock extends RichContentCustomBlock
 {
+    use HasAnimationOptions;
     use HasBlockIdentifiers;
     use HasBlockMetadata;
     use HasContentWidth;
@@ -205,6 +208,35 @@ class TimelineBlock extends RichContentCustomBlock
                                     ])
                                     ->columns(3),
                             ]),
+
+                        Tab::make('Animation')
+                            ->icon('heroicon-m-sparkles')
+                            ->schema([
+                                Select::make('animation_type')
+                                    ->label('Entrance Animation')
+                                    ->options(static::getAnimationTypeOptions())
+                                    ->default('')
+                                    ->helperText('Animation plays when block scrolls into view'),
+
+                                Select::make('animation_duration')
+                                    ->label('Animation Speed')
+                                    ->options(static::getAnimationDurationOptions())
+                                    ->default('anim-duration-700'),
+
+                                Toggle::make('animation_stagger')
+                                    ->label('Stagger Items')
+                                    ->helperText('Animate timeline items sequentially instead of all at once')
+                                    ->default(false)
+                                    ->live()
+                                    ->visible(fn (): bool => static::hasPro()),
+
+                                Select::make('animation_stagger_delay')
+                                    ->label('Stagger Delay')
+                                    ->options(static::getStaggerDelayOptions())
+                                    ->default('100')
+                                    ->visible(fn (Get $get): bool => static::hasPro() && $get('animation_stagger') === true),
+                            ])
+                            ->columns(2),
                     ]),
 
                 static::getIdentifiersSection(),
@@ -230,6 +262,7 @@ class TimelineBlock extends RichContentCustomBlock
     protected static function renderBlock(array $config): string
     {
         $widthConfig = static::resolveWidthClass($config);
+        $animConfig = static::getAnimationConfig($config);
 
         return view('tallcms::cms.blocks.timeline', [
             'id' => static::getId(),
@@ -248,6 +281,10 @@ class TimelineBlock extends RichContentCustomBlock
             'first_section' => $config['first_section'] ?? false,
             'anchor_id' => static::getAnchorId($config, $config['heading'] ?? null),
             'css_classes' => static::getCssClasses($config),
+            'animation_type' => $animConfig['animation_type'],
+            'animation_duration' => $animConfig['animation_duration'],
+            'animation_stagger' => $animConfig['animation_stagger'],
+            'animation_stagger_delay' => $animConfig['animation_stagger_delay'],
         ])->render();
     }
 

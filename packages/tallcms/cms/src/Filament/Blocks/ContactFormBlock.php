@@ -2,6 +2,7 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
+use TallCms\Cms\Filament\Blocks\Concerns\HasAnimationOptions;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
@@ -15,10 +16,13 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 
 class ContactFormBlock extends RichContentCustomBlock
 {
+    use HasAnimationOptions;
     use HasBlockIdentifiers;
     use HasBlockMetadata;
     use HasContentWidth;
@@ -196,6 +200,22 @@ class ContactFormBlock extends RichContentCustomBlock
                     ->columns(3)
                     ->collapsible(),
 
+                Section::make('Animation')
+                    ->schema([
+                        Select::make('animation_type')
+                            ->label('Entrance Animation')
+                            ->options(static::getAnimationTypeOptions())
+                            ->default('')
+                            ->helperText('Animation plays when block scrolls into view'),
+
+                        Select::make('animation_duration')
+                            ->label('Animation Speed')
+                            ->options(static::getAnimationDurationOptions())
+                            ->default('anim-duration-700'),
+                    ])
+                    ->columns(2)
+                    ->collapsible(),
+
                 static::getIdentifiersSection(),
             ])
             ->slideOver();
@@ -234,6 +254,7 @@ class ContactFormBlock extends RichContentCustomBlock
     {
         $normalizedConfig = self::normalizeConfig($config);
         $widthConfig = static::resolveWidthClass($config);
+        $animConfig = static::getAnimationConfig($config);
 
         return view($view, [
             'config' => $normalizedConfig,
@@ -241,6 +262,8 @@ class ContactFormBlock extends RichContentCustomBlock
             'contentPadding' => $widthConfig['padding'],
             'anchor_id' => static::getAnchorId($config, $config['title'] ?? null),
             'css_classes' => static::getCssClasses($config),
+            'animation_type' => $animConfig['animation_type'],
+            'animation_duration' => $animConfig['animation_duration'],
         ])->render();
     }
 }
