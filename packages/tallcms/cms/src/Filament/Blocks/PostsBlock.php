@@ -178,6 +178,7 @@ class PostsBlock extends RichContentCustomBlock
                                         'grid' => 'Grid (cards)',
                                         'list' => 'List (horizontal)',
                                         'compact-list' => 'Compact List (minimal)',
+                                        'featured-hero' => 'Featured Hero + Grid',
                                     ])
                                     ->default('grid')
                                     ->live(),
@@ -190,7 +191,7 @@ class PostsBlock extends RichContentCustomBlock
                                         '4' => '4 Columns',
                                     ])
                                     ->default('3')
-                                    ->visible(fn (Get $get) => $get('layout') === 'grid')
+                                    ->visible(fn (Get $get) => in_array($get('layout'), ['grid', 'featured-hero']))
                                     ->helperText('Responsive: 1 on mobile, 2 on tablet, selected on desktop'),
 
                                 Section::make('Pagination')
@@ -215,6 +216,47 @@ class PostsBlock extends RichContentCustomBlock
                                             ->helperText('Number of posts to show per page'),
                                     ])
                                     ->columns(2),
+
+                                Section::make('Featured Posts')
+                                    ->schema([
+                                        Toggle::make('show_featured_badge')
+                                            ->label('Show Featured Badge')
+                                            ->helperText('Display a badge on featured posts')
+                                            ->default(false)
+                                            ->live(),
+
+                                        Select::make('featured_badge_style')
+                                            ->label('Badge Style')
+                                            ->options([
+                                                'badge' => 'Text Badge ("Featured")',
+                                                'star' => 'Star Icon',
+                                                'ribbon' => 'Corner Ribbon',
+                                            ])
+                                            ->default('badge')
+                                            ->visible(fn (Get $get) => $get('show_featured_badge')),
+
+                                        Select::make('featured_badge_color')
+                                            ->label('Badge Color')
+                                            ->options([
+                                                'primary' => 'Primary',
+                                                'secondary' => 'Secondary',
+                                                'accent' => 'Accent',
+                                                'warning' => 'Warning (Gold)',
+                                            ])
+                                            ->default('warning')
+                                            ->visible(fn (Get $get) => $get('show_featured_badge')),
+
+                                        Select::make('featured_card_style')
+                                            ->label('Featured Card Style')
+                                            ->options([
+                                                'default' => 'Same as Regular',
+                                                'border' => 'Accent Border',
+                                                'gradient' => 'Gradient Background',
+                                                'elevated' => 'Elevated Shadow',
+                                            ])
+                                            ->default('default'),
+                                    ])
+                                    ->columns(4),
 
                                 Section::make('Appearance')
                                     ->schema([

@@ -25,6 +25,56 @@
     $sectionPaddingClass = $padding ?? 'py-16';
     $isPreview = $isPreview ?? false;
 
+    // Featured badge settings with static class mapping
+    $showFeaturedBadge = $show_featured_badge ?? false;
+    $featuredBadgeStyle = $featured_badge_style ?? 'badge';
+    $featuredBadgeColorKey = $featured_badge_color ?? 'warning';
+    $featuredCardStyle = $featured_card_style ?? 'default';
+
+    // Static class maps for Tailwind JIT compatibility
+    $badgeClassMap = [
+        'primary' => 'badge-primary',
+        'secondary' => 'badge-secondary',
+        'accent' => 'badge-accent',
+        'warning' => 'badge-warning',
+    ];
+    $textClassMap = [
+        'primary' => 'text-primary',
+        'secondary' => 'text-secondary',
+        'accent' => 'text-accent',
+        'warning' => 'text-warning',
+    ];
+    $bgClassMap = [
+        'primary' => 'bg-primary text-primary-content',
+        'secondary' => 'bg-secondary text-secondary-content',
+        'accent' => 'bg-accent text-accent-content',
+        'warning' => 'bg-warning text-warning-content',
+    ];
+
+    // Card style class maps for featured posts (Tailwind JIT safe)
+    $borderClassMap = [
+        'primary' => 'border-2 border-primary',
+        'secondary' => 'border-2 border-secondary',
+        'accent' => 'border-2 border-accent',
+        'warning' => 'border-2 border-warning',
+    ];
+    $gradientClassMap = [
+        'primary' => 'bg-gradient-to-br from-base-200 to-primary/10',
+        'secondary' => 'bg-gradient-to-br from-base-200 to-secondary/10',
+        'accent' => 'bg-gradient-to-br from-base-200 to-accent/10',
+        'warning' => 'bg-gradient-to-br from-base-200 to-warning/10',
+    ];
+    $ringClassMap = [
+        'primary' => 'ring-1 ring-primary/20',
+        'secondary' => 'ring-1 ring-secondary/20',
+        'accent' => 'ring-1 ring-accent/20',
+        'warning' => 'ring-1 ring-warning/20',
+    ];
+
+    $badgeClass = $badgeClassMap[$featuredBadgeColorKey] ?? 'badge-warning';
+    $textClass = $textClassMap[$featuredBadgeColorKey] ?? 'text-warning';
+    $bgClass = $bgClassMap[$featuredBadgeColorKey] ?? 'bg-warning text-warning-content';
+
     // Pagination configuration
     $enablePagination = $enable_pagination ?? false;
     $perPage = (int) ($per_page ?? 12);
@@ -248,13 +298,255 @@
                 @endif
             </div>
         @else
-            @if($layout === 'grid')
+            @if($layout === 'featured-hero')
+                {{-- Featured Hero + Grid Layout --}}
+                @php
+                    // Separate featured and regular posts
+                    // Take first featured post for hero, put remaining featured + all regular in grid
+                    $featuredPosts = $posts->filter(fn($p) => $p->is_featured);
+                    $heroPost = $featuredPosts->first();
+                    $remainingFeatured = $featuredPosts->skip(1);
+                    $regularPosts = $posts->filter(fn($p) => !$p->is_featured);
+                    // Combine remaining featured + regular for the grid
+                    $gridPosts = $remainingFeatured->concat($regularPosts);
+                @endphp
+
+                {{-- Featured Hero Section (only if we have a featured post) --}}
+                @if($heroPost)
+                    @php
+                        $heroUrl = $getPostUrl($heroPost);
+                    @endphp
+                    <x-tallcms::animation-wrapper
+                        :animation="$animationType"
+                        :duration="$animationDuration"
+                        :use-parent="true"
+                        :delay="0"
+                    >
+                        <div class="mb-8">
+                            <article class="card lg:card-side bg-base-200 shadow-lg relative overflow-hidden">
+                                @if($showImage && $heroPost->featured_image)
+                                    <figure class="lg:w-1/2">
+                                        <a href="{{ $heroUrl }}" class="block">
+                                            <img src="{{ Storage::disk(cms_media_disk())->url($heroPost->featured_image) }}"
+                                                 alt="{{ $heroPost->title }}"
+                                                 class="w-full h-64 lg:h-80 object-cover">
+                                        </a>
+                                    </figure>
+                                @endif
+                                <div class="card-body lg:w-1/2">
+                                    @if($showFeaturedBadge)
+                                        <span class="badge {{ $badgeClass }} gap-1 w-fit">
+                                            <x-heroicon-s-star class="w-3 h-3" />
+                                            Featured
+                                        </span>
+                                    @endif
+
+                                    @if($showCategories && $heroPost->categories->isNotEmpty())
+                                        <div class="flex flex-wrap gap-2">
+                                            @foreach($heroPost->categories->take(3) as $category)
+                                                <a
+                                                    href="{{ $getCategoryFilterUrl($category) }}"
+                                                    class="badge badge-sm hover:opacity-80 transition-opacity"
+                                                    style="background-color: {{ $category->color ?? 'var(--p)' }}20; color: {{ $category->color ?? 'var(--p)' }};"
+                                                >
+                                                    {{ $category->name }}
+                                                </a>
+                                            @endforeach
+                                        </div>
+                                    @endif
+
+                                    <h2 class="card-title text-2xl lg:text-3xl">
+                                        <a href="{{ $heroUrl }}" class="hover:underline text-base-content">
+                                            {{ $heroPost->title }}
+                                        </a>
+                                    </h2>
+
+                                    @if($showDate || $showAuthor)
+                                        <div class="flex items-center gap-2 text-sm text-base-content/60">
+                                            @if($showDate && $heroPost->published_at)
+                                                <time datetime="{{ $heroPost->published_at->toISOString() }}">
+                                                    {{ $heroPost->published_at->format('M j, Y') }}
+                                                </time>
+                                            @endif
+                                            @if($showDate && $showAuthor && $heroPost->author)
+                                                <span>&middot;</span>
+                                            @endif
+                                            @if($showAuthor && $heroPost->author)
+                                                <span>{{ $heroPost->author->name }}</span>
+                                            @endif
+                                        </div>
+                                    @endif
+
+                                    @if($showExcerpt && $heroPost->excerpt)
+                                        <p class="text-base-content/70 line-clamp-3">{{ $heroPost->excerpt }}</p>
+                                    @endif
+
+                                    @if($showReadMore)
+                                        <div class="card-actions justify-start mt-4">
+                                            <a href="{{ $heroUrl }}" class="btn btn-primary">
+                                                Read more
+                                                <x-heroicon-m-arrow-right class="w-4 h-4" />
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
+                            </article>
+                        </div>
+                    </x-tallcms::animation-wrapper>
+                @endif
+
+                {{-- Grid for remaining posts (or all posts if no featured) --}}
+                @php
+                    $postsForGrid = $heroPost ? $gridPosts : $posts;
+                    $heroOffset = $heroPost ? 1 : 0; // Offset animation delay if hero exists
+                @endphp
+                @if($postsForGrid->isNotEmpty())
+                    <div class="grid gap-6 sm:gap-8 {{ $gridColumnClass }}">
+                        @foreach($postsForGrid as $index => $post)
+                            @php
+                                $postUrl = $getPostUrl($post);
+                                $itemDelay = $animationStagger ? ($staggerDelay * ($index + 1 + $heroOffset)) : 0;
+                                $isFeatured = $post->is_featured;
+                                $baseCardClass = 'card shadow-sm hover:shadow-md transition-shadow duration-200 h-full relative';
+                                $cardBgClass = 'bg-base-200';
+                                $cardExtraClass = '';
+
+                                if ($isFeatured && $featuredCardStyle !== 'default') {
+                                    $cardExtraClass = match($featuredCardStyle) {
+                                        'border' => $borderClassMap[$featuredBadgeColorKey] ?? 'border-2 border-warning',
+                                        'gradient' => '',
+                                        'elevated' => 'shadow-lg hover:shadow-xl ' . ($ringClassMap[$featuredBadgeColorKey] ?? 'ring-1 ring-warning/20'),
+                                        default => '',
+                                    };
+
+                                    if ($featuredCardStyle === 'gradient') {
+                                        $cardBgClass = $gradientClassMap[$featuredBadgeColorKey] ?? 'bg-gradient-to-br from-base-200 to-warning/10';
+                                    }
+                                }
+                            @endphp
+                            <x-tallcms::animation-wrapper
+                                :animation="$animationType"
+                                :duration="$animationDuration"
+                                :use-parent="true"
+                                :delay="$itemDelay"
+                            >
+                                <article class="{{ $baseCardClass }} {{ $cardBgClass }} {{ $cardExtraClass }}">
+                                    {{-- Featured Badge --}}
+                                    @if($showFeaturedBadge && $isFeatured)
+                                        @if($featuredBadgeStyle === 'star')
+                                            <div class="absolute top-2 right-2 z-10">
+                                                <x-heroicon-s-star class="w-6 h-6 {{ $textClass }}" />
+                                            </div>
+                                        @elseif($featuredBadgeStyle === 'ribbon')
+                                            <div class="absolute top-0 right-0 overflow-hidden w-20 h-20 z-10">
+                                                <div class="absolute transform rotate-45 {{ $bgClass }} text-xs font-bold py-1 right-[-35px] top-[15px] w-[120px] text-center shadow-sm">
+                                                    Featured
+                                                </div>
+                                            </div>
+                                        @else
+                                            <div class="absolute top-2 left-2 z-10">
+                                                <span class="badge {{ $badgeClass }} badge-sm gap-1">
+                                                    <x-heroicon-s-star class="w-3 h-3" />
+                                                    Featured
+                                                </span>
+                                            </div>
+                                        @endif
+                                    @endif
+
+                                    @if($showImage && $post->featured_image)
+                                        <figure>
+                                            <a href="{{ $postUrl }}" class="block">
+                                                <img
+                                                    src="{{ Storage::disk(cms_media_disk())->url($post->featured_image) }}"
+                                                    alt="{{ $post->title }}"
+                                                    class="w-full h-48 object-cover"
+                                                    loading="lazy"
+                                                >
+                                            </a>
+                                        </figure>
+                                    @endif
+
+                                    <div class="card-body">
+                                        @if($showCategories && $post->categories->isNotEmpty())
+                                            <div class="flex flex-wrap gap-2 mb-2">
+                                                @foreach($post->categories->take(3) as $category)
+                                                    <a
+                                                        href="{{ $getCategoryFilterUrl($category) }}"
+                                                        class="badge badge-sm hover:opacity-80 transition-opacity"
+                                                        style="background-color: {{ $category->color ?? 'var(--p)' }}20; color: {{ $category->color ?? 'var(--p)' }};"
+                                                    >
+                                                        {{ $category->name }}
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        @endif
+
+                                        <h3 class="card-title text-lg">
+                                            <a href="{{ $postUrl }}" class="hover:underline text-base-content">
+                                                {{ $post->title }}
+                                            </a>
+                                        </h3>
+
+                                        @if($showDate || $showAuthor)
+                                            <div class="flex items-center gap-2 text-sm text-base-content/60">
+                                                @if($showDate && $post->published_at)
+                                                    <time datetime="{{ $post->published_at->toISOString() }}">
+                                                        {{ $post->published_at->format('M j, Y') }}
+                                                    </time>
+                                                @endif
+                                                @if($showDate && $showAuthor && $post->author)
+                                                    <span>&middot;</span>
+                                                @endif
+                                                @if($showAuthor && $post->author)
+                                                    <span>{{ $post->author->name }}</span>
+                                                @endif
+                                            </div>
+                                        @endif
+
+                                        @if($showExcerpt && $post->excerpt)
+                                            <p class="text-sm text-base-content/70 line-clamp-3">
+                                                {{ $post->excerpt }}
+                                            </p>
+                                        @endif
+
+                                        @if($showReadMore)
+                                            <div class="card-actions justify-start mt-2">
+                                                <a href="{{ $postUrl }}" class="link link-primary link-hover text-sm inline-flex items-center">
+                                                    Read more
+                                                    <x-heroicon-m-arrow-right class="w-4 h-4 ml-1" />
+                                                </a>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </article>
+                            </x-tallcms::animation-wrapper>
+                        @endforeach
+                    </div>
+                @endif
+            @elseif($layout === 'grid')
                 {{-- Grid Layout --}}
                 <div class="grid gap-6 sm:gap-8 {{ $gridColumnClass }}">
                     @foreach($posts as $index => $post)
                         @php
                             $postUrl = $getPostUrl($post);
                             $itemDelay = $animationStagger ? ($staggerDelay * ($index + 1)) : 0;
+                            $isFeatured = $post->is_featured;
+                            $baseCardClass = 'card shadow-sm hover:shadow-md transition-shadow duration-200 h-full relative';
+                            $cardBgClass = 'bg-base-200';
+                            $cardExtraClass = '';
+
+                            if ($isFeatured && $featuredCardStyle !== 'default') {
+                                $cardExtraClass = match($featuredCardStyle) {
+                                    'border' => $borderClassMap[$featuredBadgeColorKey] ?? 'border-2 border-warning',
+                                    'gradient' => '',
+                                    'elevated' => 'shadow-lg hover:shadow-xl ' . ($ringClassMap[$featuredBadgeColorKey] ?? 'ring-1 ring-warning/20'),
+                                    default => '',
+                                };
+
+                                if ($featuredCardStyle === 'gradient') {
+                                    $cardBgClass = $gradientClassMap[$featuredBadgeColorKey] ?? 'bg-gradient-to-br from-base-200 to-warning/10';
+                                }
+                            }
                         @endphp
                         <x-tallcms::animation-wrapper
                             :animation="$animationType"
@@ -262,7 +554,29 @@
                             :use-parent="true"
                             :delay="$itemDelay"
                         >
-                            <article class="card bg-base-200 shadow-sm hover:shadow-md transition-shadow duration-200 h-full">
+                            <article class="{{ $baseCardClass }} {{ $cardBgClass }} {{ $cardExtraClass }}">
+                                {{-- Featured Badge --}}
+                                @if($showFeaturedBadge && $isFeatured)
+                                    @if($featuredBadgeStyle === 'star')
+                                        <div class="absolute top-2 right-2 z-10">
+                                            <x-heroicon-s-star class="w-6 h-6 {{ $textClass }}" />
+                                        </div>
+                                    @elseif($featuredBadgeStyle === 'ribbon')
+                                        <div class="absolute top-0 right-0 overflow-hidden w-20 h-20 z-10">
+                                            <div class="absolute transform rotate-45 {{ $bgClass }} text-xs font-bold py-1 right-[-35px] top-[15px] w-[120px] text-center shadow-sm">
+                                                Featured
+                                            </div>
+                                        </div>
+                                    @else
+                                        <div class="absolute top-2 left-2 z-10">
+                                            <span class="badge {{ $badgeClass }} badge-sm gap-1">
+                                                <x-heroicon-s-star class="w-3 h-3" />
+                                                Featured
+                                            </span>
+                                        </div>
+                                    @endif
+                                @endif
+
                             @if($showImage && $post->featured_image)
                                 <figure>
                                     <a href="{{ $postUrl }}" class="block">
@@ -339,6 +653,30 @@
                         @php
                             $postUrl = $getPostUrl($post);
                             $itemDelay = $animationStagger ? ($staggerDelay * ($index + 1)) : 0;
+                            $isFeatured = $post->is_featured;
+                            $isCompact = $layout === 'compact-list';
+
+                            // Base classes for list layout
+                            $baseListClass = 'card card-side shadow-sm hover:shadow-md transition-shadow duration-200 relative';
+                            $listBgClass = 'bg-base-200';
+                            $listExtraClass = '';
+
+                            if ($isCompact) {
+                                $baseListClass = 'card card-side py-2 border-b border-base-300 relative';
+                                $listBgClass = 'bg-transparent';
+                                $listExtraClass = 'shadow-none';
+                            } elseif ($isFeatured && $featuredCardStyle !== 'default') {
+                                $listExtraClass = match($featuredCardStyle) {
+                                    'border' => $borderClassMap[$featuredBadgeColorKey] ?? 'border-2 border-warning',
+                                    'gradient' => '',
+                                    'elevated' => 'shadow-lg hover:shadow-xl ' . ($ringClassMap[$featuredBadgeColorKey] ?? 'ring-1 ring-warning/20'),
+                                    default => '',
+                                };
+
+                                if ($featuredCardStyle === 'gradient') {
+                                    $listBgClass = $gradientClassMap[$featuredBadgeColorKey] ?? 'bg-gradient-to-br from-base-200 to-warning/10';
+                                }
+                            }
                         @endphp
                         <x-tallcms::animation-wrapper
                             :animation="$animationType"
@@ -346,8 +684,30 @@
                             :use-parent="true"
                             :delay="$itemDelay"
                         >
-                            <article class="card card-side bg-base-200 shadow-sm hover:shadow-md transition-shadow duration-200 {{ $layout === 'compact-list' ? 'py-2 border-b border-base-300 bg-transparent shadow-none' : '' }}">
-                            @if($showImage && $post->featured_image && $layout !== 'compact-list')
+                            <article class="{{ $baseListClass }} {{ $listBgClass }} {{ $listExtraClass }}">
+                                {{-- Featured Badge (list layout - only for non-compact) --}}
+                                @if($showFeaturedBadge && $isFeatured && !$isCompact)
+                                    @if($featuredBadgeStyle === 'star')
+                                        <div class="absolute top-2 right-2 z-10">
+                                            <x-heroicon-s-star class="w-6 h-6 {{ $textClass }}" />
+                                        </div>
+                                    @elseif($featuredBadgeStyle === 'ribbon')
+                                        <div class="absolute top-0 right-0 overflow-hidden w-20 h-20 z-10">
+                                            <div class="absolute transform rotate-45 {{ $bgClass }} text-xs font-bold py-1 right-[-35px] top-[15px] w-[120px] text-center shadow-sm">
+                                                Featured
+                                            </div>
+                                        </div>
+                                    @else
+                                        <div class="absolute top-2 left-2 z-10">
+                                            <span class="badge {{ $badgeClass }} badge-sm gap-1">
+                                                <x-heroicon-s-star class="w-3 h-3" />
+                                                Featured
+                                            </span>
+                                        </div>
+                                    @endif
+                                @endif
+
+                            @if($showImage && $post->featured_image && !$isCompact)
                                 <figure class="flex-shrink-0">
                                     <a href="{{ $postUrl }}">
                                         <img
@@ -361,7 +721,15 @@
                             @endif
 
                             <div class="card-body py-4">
-                                @if($showCategories && $post->categories->isNotEmpty() && $layout !== 'compact-list')
+                                {{-- Inline featured indicator for compact list --}}
+                                @if($showFeaturedBadge && $isFeatured && $isCompact)
+                                    <span class="badge {{ $badgeClass }} badge-sm gap-1 w-fit mb-1">
+                                        <x-heroicon-s-star class="w-3 h-3" />
+                                        Featured
+                                    </span>
+                                @endif
+
+                                @if($showCategories && $post->categories->isNotEmpty() && !$isCompact)
                                     <div class="flex flex-wrap gap-2 mb-1">
                                         @foreach($post->categories->take(3) as $category)
                                             <a
@@ -375,7 +743,7 @@
                                     </div>
                                 @endif
 
-                                <h3 class="card-title {{ $layout === 'compact-list' ? 'text-base' : 'text-xl' }}">
+                                <h3 class="card-title {{ $isCompact ? 'text-base' : 'text-xl' }}">
                                     <a href="{{ $postUrl }}" class="hover:underline text-base-content">
                                         {{ $post->title }}
                                     </a>
@@ -397,13 +765,13 @@
                                     </div>
                                 @endif
 
-                                @if($showExcerpt && $post->excerpt && $layout !== 'compact-list')
+                                @if($showExcerpt && $post->excerpt && !$isCompact)
                                     <p class="text-sm text-base-content/70 line-clamp-2">
                                         {{ $post->excerpt }}
                                     </p>
                                 @endif
 
-                                @if($showReadMore && $layout !== 'compact-list')
+                                @if($showReadMore && !$isCompact)
                                     <div class="card-actions justify-start mt-1">
                                         <a href="{{ $postUrl }}" class="link link-primary link-hover text-sm inline-flex items-center">
                                             Read more
