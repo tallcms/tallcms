@@ -19,6 +19,10 @@ class MediaCollection extends Model
         'color',
     ];
 
+    protected $attributes = [
+        'color' => '#6366f1',
+    ];
+
     protected static function booted()
     {
         static::creating(function (MediaCollection $collection) {

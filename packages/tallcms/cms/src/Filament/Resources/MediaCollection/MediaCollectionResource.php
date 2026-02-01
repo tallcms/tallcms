@@ -64,6 +64,7 @@ class MediaCollectionResource extends Resource
 
                 ColorPicker::make('color')
                     ->label('Color')
+                    ->default('#6366f1')
                     ->helperText('Used for badges and visual identification'),
 
                 Textarea::make('description')
