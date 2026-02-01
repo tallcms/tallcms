@@ -11,7 +11,7 @@
     </div>
 @elseif($renderedContent === 'POST_DETAIL')
     {{-- Render individual post detail view --}}
-    @include('tallcms::partials.post-detail', ['post' => $post, 'config' => $postsBlockConfig])
+    @include('tallcms::partials.post-detail', ['post' => $post, 'config' => $postsBlockConfig, 'parentSlug' => $parentSlug])
 @else
     {{-- Block Canvas --}}
     <div class="cms-content w-full">

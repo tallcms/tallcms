@@ -1,4 +1,4 @@
-@props(['post', 'config' => []])
+@props(['post', 'config' => [], 'parentSlug' => ''])
 
 @php
     // Display settings from PostsBlock config
@@ -6,6 +6,10 @@
     $showAuthor = $config['show_author'] ?? true;
     $showImage = $config['show_image'] ?? true;
     $showExcerpt = $config['show_excerpt'] ?? true;
+
+    // Share parent page slug with blocks rendered within post content
+    // This ensures Posts blocks inside posts use the correct parent page slug
+    Illuminate\Support\Facades\View::share('cmsPageSlug', $parentSlug);
 
     // Share post content width so blocks can inherit it
     // Posts use max-w-4xl which maps to 'prose' width

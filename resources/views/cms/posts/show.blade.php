@@ -4,6 +4,11 @@
     use App\Services\HtmlSanitizerService;
     use Filament\Forms\Components\RichEditor\RichContentRenderer;
     use Illuminate\Support\Facades\Storage;
+    use Illuminate\Support\Facades\View;
+
+    // Share parent page slug with blocks rendered within post content
+    // This ensures Posts blocks inside posts use the correct parent page slug
+    View::share('cmsPageSlug', $parentSlug ?? '');
 
     // Render post content blocks
     $renderedContent = '';
