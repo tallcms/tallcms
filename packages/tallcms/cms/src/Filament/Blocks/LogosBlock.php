@@ -150,6 +150,8 @@ class LogosBlock extends RichContentCustomBlock
                                         Select::make('columns')
                                             ->label('Columns (Grid Layout)')
                                             ->options([
+                                                '2' => '2 Columns',
+                                                '3' => '3 Columns',
                                                 '4' => '4 Columns',
                                                 '5' => '5 Columns',
                                                 '6' => '6 Columns',
