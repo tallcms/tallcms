@@ -116,10 +116,10 @@
                 $query->orderBy('published_at', 'asc');
                 break;
             case 'title_asc':
-                $query->orderBy('title', 'asc');
+                $query->orderByRaw('LOWER(title) ASC');
                 break;
             case 'title_desc':
-                $query->orderBy('title', 'desc');
+                $query->orderByRaw('LOWER(title) DESC');
                 break;
             case 'featured_first':
                 $query->orderBy('is_featured', 'desc')
