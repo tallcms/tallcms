@@ -26,19 +26,6 @@ class WidgetRegistry
                 'show_count' => ['type' => 'boolean', 'default' => true, 'label' => 'Show post count'],
             ],
         ],
-        'tags' => [
-            'label' => 'Tags',
-            'description' => 'Tag cloud or list',
-            'component' => 'tallcms::widgets.tags',
-            'settings_schema' => [
-                'style' => [
-                    'type' => 'select',
-                    'default' => 'cloud',
-                    'label' => 'Display style',
-                    'options' => ['cloud' => 'Cloud', 'list' => 'List'],
-                ],
-            ],
-        ],
         'toc' => [
             'label' => 'Table of Contents',
             'description' => 'Auto-generated from page headings',

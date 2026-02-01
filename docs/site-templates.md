@@ -75,14 +75,6 @@ Lists post categories with optional post counts.
 |---------|-------------|
 | **Show post count** | Display number of posts per category |
 
-### Tags
-
-Displays tags as a cloud or list.
-
-| Setting | Description |
-|---------|-------------|
-| **Display style** | Cloud or List format |
-
 ### Table of Contents
 
 Auto-generates navigation from your page headings.
