@@ -121,8 +121,7 @@
         if ($isPreview) {
             return '#';
         }
-        $slug = empty($parentSlug) ? $post->slug : $parentSlug . '/' . $post->slug;
-        return route('cms.page', ['slug' => $slug]);
+        return cms_post_url($post, $parentSlug ?? '');
     };
 
     // Helper to generate category filter URL
@@ -130,10 +129,8 @@
         if ($isPreview) {
             return '#';
         }
-        if (empty($parentSlug)) {
-            return route('cms.home') . '?category=' . $category->slug;
-        }
-        return route('cms.page', ['slug' => $parentSlug]) . '?category=' . $category->slug;
+        $baseUrl = tallcms_localized_url($parentSlug ?? '');
+        return $baseUrl . '?category=' . $category->slug;
     };
 
     // Helper to generate clear filter URL
@@ -141,10 +138,7 @@
         if ($isPreview) {
             return '#';
         }
-        if (empty($parentSlug)) {
-            return route('cms.home');
-        }
-        return route('cms.page', ['slug' => $parentSlug]);
+        return tallcms_localized_url($parentSlug ?? '');
     };
 @endphp
 

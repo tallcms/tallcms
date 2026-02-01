@@ -36,9 +36,7 @@
                 <div class="post-detail__categories flex flex-wrap gap-2 mb-4">
                     @foreach($post->categories as $category)
                         @php
-                            $categoryUrl = $parentSlug
-                                ? route('cms.page', ['slug' => $parentSlug]) . '?category=' . $category->slug
-                                : route('cms.home') . '?category=' . $category->slug;
+                            $categoryUrl = tallcms_localized_url($parentSlug ?? '') . '?category=' . $category->slug;
                         @endphp
                         <a
                             href="{{ $categoryUrl }}"
@@ -116,7 +114,7 @@
     <footer class="post-detail__footer w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-12">
         <div class="max-w-4xl mx-auto">
             <a
-                href="{{ $parentSlug ? route('cms.page', ['slug' => $parentSlug]) : route('cms.home') }}"
+                href="{{ tallcms_localized_url($parentSlug ?? '') }}"
                 class="link link-primary inline-flex items-center gap-2 text-sm font-medium"
             >
                 <x-heroicon-o-arrow-left class="w-4 h-4" />
