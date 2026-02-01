@@ -372,25 +372,41 @@ class CmsPageRenderer extends Component
      */
     protected function addHeadingIds(string $html): string
     {
+        $usedIds = [];
+
         return preg_replace_callback(
             '/<(h[2-4])([^>]*)>(.*?)<\/\1>/is',
-            function ($matches) {
+            function ($matches) use (&$usedIds) {
                 $tag = $matches[1];
                 $attrs = $matches[2];
                 $content = $matches[3];
 
                 // Skip if already has ID
                 if (preg_match('/\bid\s*=/i', $attrs)) {
+                    // Track existing IDs to avoid collisions
+                    if (preg_match('/\bid\s*=\s*["\']([^"\']+)["\']/i', $attrs, $idMatch)) {
+                        $usedIds[$idMatch[1]] = ($usedIds[$idMatch[1]] ?? 0) + 1;
+                    }
+
                     return $matches[0];
                 }
 
                 // Extract text content (strip tags for slug generation)
                 $text = strip_tags($content);
-                $id = Str::slug($text);
+                $baseId = Str::slug($text);
 
                 // Handle empty slugs
-                if (empty($id)) {
-                    $id = 'heading-'.substr(md5($content), 0, 8);
+                if (empty($baseId)) {
+                    $baseId = 'heading-'.substr(md5($content), 0, 8);
+                }
+
+                // De-duplicate: append counter if ID already used
+                $id = $baseId;
+                if (isset($usedIds[$baseId])) {
+                    $usedIds[$baseId]++;
+                    $id = $baseId.'-'.$usedIds[$baseId];
+                } else {
+                    $usedIds[$baseId] = 1;
                 }
 
                 return "<{$tag} id=\"{$id}\"{$attrs}>{$content}</{$tag}>";
