@@ -12,19 +12,19 @@ order: 50
 
 ---
 
-## Version 1.5.2
-
-**Released:** 2026-02-01
-
-- Fix radial/gauge progress showing 100% instead of actual percentage
-
----
-
 ## Version 1.5.1
 
 **Released:** 2026-02-01
 
-- Fix radial/gauge progress stroke color not rendering (SVG doesn't support oklch CSS syntax)
+### Counter Block (Radial/Gauge)
+
+- Fix progress stroke color not rendering (SVG doesn't support oklch CSS)
+- Fix progress showing 100% instead of actual percentage
+
+### Tabs Block
+
+- Fix vertical layout not stacking tabs properly
+- Fix underline indicator for vertical mode (use left border)
 
 ---
 
