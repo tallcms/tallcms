@@ -10,16 +10,20 @@ use TallCms\Cms\Services\CustomBlockDiscoveryService;
 use TallCms\Cms\Services\LocaleRegistry;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use TallCms\Cms\Filament\Forms\Components\CmsRichEditor;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
+use TallCms\Cms\Services\TemplateRegistry;
+use TallCms\Cms\Services\WidgetRegistry;
 
 class CmsPageForm
 {
@@ -202,8 +206,16 @@ class CmsPageForm
                                             ->helperText('Display navigation breadcrumbs on this page. Homepage never shows breadcrumbs.')
                                             ->columnSpan(2),
 
-                                        TextInput::make('template')
-                                            ->helperText('Optional: Custom blade template')
+                                        Select::make('template')
+                                            ->label('Page Template')
+                                            ->options(fn () => app(TemplateRegistry::class)->getTemplateOptions())
+                                            ->default('default')
+                                            ->live()
+                                            ->helperText(function (?string $state) {
+                                                $config = app(TemplateRegistry::class)->getTemplateConfig($state ?? 'default');
+
+                                                return $config['description'] ?? null;
+                                            })
                                             ->columnSpan(1),
 
                                         Select::make('content_width')
@@ -216,6 +228,74 @@ class CmsPageForm
                                             ->default('standard')
                                             ->helperText('Default width for inline content. Blocks can override.')
                                             ->columnSpan(1),
+                                    ]),
+
+                                Section::make('Sidebar Widgets')
+                                    ->description('Configure widgets for templates with sidebars. Leave empty to use template defaults.')
+                                    ->visible(function (Get $get) {
+                                        $template = $get('template') ?? 'default';
+                                        $config = app(TemplateRegistry::class)->getTemplateConfig($template);
+
+                                        return $config['has_sidebar'] ?? false;
+                                    })
+                                    ->schema([
+                                        Repeater::make('sidebar_widgets')
+                                            ->label('')
+                                            ->schema([
+                                                Select::make('widget')
+                                                    ->label('Widget')
+                                                    ->options(fn () => app(WidgetRegistry::class)->getWidgetOptions(auth()->user()))
+                                                    ->required()
+                                                    ->live()
+                                                    ->columnSpan(1),
+
+                                                TextInput::make('settings.limit')
+                                                    ->label('Limit')
+                                                    ->numeric()
+                                                    ->default(5)
+                                                    ->visible(fn (Get $get) => in_array($get('widget'), ['recent-posts']))
+                                                    ->columnSpan(1),
+
+                                                Toggle::make('settings.show_image')
+                                                    ->label('Show thumbnails')
+                                                    ->default(true)
+                                                    ->visible(fn (Get $get) => $get('widget') === 'recent-posts')
+                                                    ->columnSpan(1),
+
+                                                Toggle::make('settings.show_count')
+                                                    ->label('Show post count')
+                                                    ->default(true)
+                                                    ->visible(fn (Get $get) => $get('widget') === 'categories')
+                                                    ->columnSpan(1),
+
+                                                Select::make('settings.style')
+                                                    ->label('Display Style')
+                                                    ->options(['cloud' => 'Cloud', 'list' => 'List'])
+                                                    ->default('cloud')
+                                                    ->visible(fn (Get $get) => $get('widget') === 'tags')
+                                                    ->columnSpan(1),
+
+                                                TextInput::make('settings.max_depth')
+                                                    ->label('Max Heading Depth')
+                                                    ->numeric()
+                                                    ->default(3)
+                                                    ->minValue(2)
+                                                    ->maxValue(4)
+                                                    ->visible(fn (Get $get) => $get('widget') === 'toc')
+                                                    ->columnSpan(1),
+
+                                                Textarea::make('settings.content')
+                                                    ->label('HTML Content')
+                                                    ->rows(4)
+                                                    ->visible(fn (Get $get) => $get('widget') === 'custom-html')
+                                                    ->columnSpanFull(),
+                                            ])
+                                            ->columns(2)
+                                            ->defaultItems(0)
+                                            ->reorderable()
+                                            ->collapsible()
+                                            ->itemLabel(fn (array $state): ?string => app(WidgetRegistry::class)->getWidget($state['widget'] ?? '')['label'] ?? 'Widget')
+                                            ->columnSpanFull(),
                                     ]),
                             ]),
 

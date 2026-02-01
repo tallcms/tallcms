@@ -281,6 +281,7 @@ $assetUrl = theme_asset('images/logo.png');
 
 ## Next Steps
 
-- [Block development](block-development)
+- [Template & widget development](templates-widgets)
+- [Block development](blocks)
 - [Block styling](block-styling)
 - [Plugin development](plugins)

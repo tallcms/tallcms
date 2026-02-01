@@ -69,6 +69,7 @@
 </head>
 <body class="font-inter antialiased bg-white">
     <div class="min-h-screen">
+        @if(!($minimalChrome ?? false))
         <!-- Navigation -->
         <nav x-data="{ open: false }" class="absolute top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-sm">
             <div class="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
@@ -165,6 +166,7 @@
                 </div>
             </div>
         </nav>
+        @endif
 
         {{-- Breadcrumbs --}}
         @if($showBreadcrumbs ?? false)
@@ -177,6 +179,7 @@
             @yield('content')
         </main>
 
+        @if(!($minimalChrome ?? false))
         <!-- Footer -->
         <footer class="bg-gray-50">
             <div class="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-16">
@@ -287,6 +290,7 @@
                 </div>
             </div>
         </footer>
+        @endif
     </div>
 
     @livewireScripts

@@ -16,8 +16,10 @@ This roadmap outlines our vision for TallCMS development. We're committed to bui
 - [v2.7 - Media Library](#v27---media-library) ✅
 - [v2.8 - REST API](#v28---rest-api) ✅
 - [v2.9 - Plugin Manager](#v29---plugin-manager) ✅
-- [v2.10 - Community & Users](#v210---community--users) 📋
-- [v2.11 - Marketplace](#v211---marketplace-integration) 📋
+- [v2.10 - Featured Posts Enhancements](#v210---featured-posts-enhancements) ✅
+- [v2.11 - Page Templates & Widgets](#v211---page-templates--widgets) 🔄
+- [v2.12 - Community & Users](#v212---community--users) 📋
+- [v2.13 - Marketplace](#v213---marketplace-integration) 📋
 - [Future Considerations](#future-considerations)
 - [How to Contribute](#how-to-contribute)
 
@@ -431,7 +433,64 @@ Focus: Streamlined plugin management with update notifications and one-click upd
 
 ---
 
-## v2.10 - Community & Users
+## v2.10 - Featured Posts Enhancements
+
+**Status: ✅ Released (v2.10.0)**
+
+Focus: Enhanced Posts block with featured post badges, hero layouts, and improved styling.
+
+### Posts Block Improvements
+- [x] Featured post badges with customizable text
+- [x] Hero layout for featured posts (large feature + grid)
+- [x] Card styling enhancements
+- [x] Case-insensitive title sorting
+- [x] Title sorting options (A-Z, Z-A)
+- [x] Stagger delay index fixes
+
+---
+
+## v2.11 - Page Templates & Widgets
+
+**Status: 🔄 In Progress**
+
+Focus: WordPress-like page templates with configurable sidebar widgets.
+
+### Page Templates
+- [x] Template registry service with theme override support
+- [x] 6 built-in templates:
+  - Default (standard centered content)
+  - Full Width (edge-to-edge layout)
+  - Sidebar Left (content with left sidebar)
+  - Sidebar Right (content with right sidebar)
+  - Documentation (prose styling with TOC)
+  - Landing (minimal header/footer)
+- [x] Per-page template selection in admin
+- [x] Minimal chrome mode for landing pages
+
+### Sidebar Widgets
+- [x] Widget registry service with permission support
+- [x] 5 built-in widgets:
+  - Recent Posts (with thumbnails)
+  - Categories (with post counts)
+  - Table of Contents (auto-generated from headings)
+  - Search box
+  - Custom HTML (admin-only)
+- [x] Per-page widget configuration via repeater
+- [x] Template default widgets (e.g., Documentation defaults to TOC)
+- [x] Widget settings (limit, show thumbnails, max depth, etc.)
+
+### TOC & Heading Support
+- [x] Automatic heading ID generation for anchor links
+- [x] Duplicate heading ID de-duplication
+- [x] Configurable max heading depth (h2-h4)
+
+### Documentation
+- [x] Site owner guide (templates & widgets usage)
+- [x] Developer guide (custom templates & widgets)
+
+---
+
+## v2.12 - Community & Users
 
 Focus: Enable community interaction with your content.
 
@@ -458,7 +517,7 @@ Focus: Enable community interaction with your content.
 
 ---
 
-## v2.11 - Marketplace Integration
+## v2.13 - Marketplace Integration
 
 Focus: Connect to the official TallCMS marketplace for plugins and themes.
 
@@ -552,8 +611,10 @@ We welcome community input on our roadmap:
 | v2.8 | ✅ Released | API | REST API, Sanctum auth, Webhooks, OpenAPI docs |
 | v2.8.5 | ✅ Released | Animations | Block entrance animations, stagger effects |
 | v2.9 | ✅ Released | Plugins | Plugin Manager updates, search, one-click updates |
-| v2.10 | 📋 Planned | Community | Comments, User profiles, Analytics |
-| v2.11 | 📋 Planned | Ecosystem | Marketplace integration |
+| v2.10 | ✅ Released | Posts | Featured post badges, hero layout, card styling |
+| v2.11 | 🔄 In Progress | Templates | Page templates, sidebar widgets, TOC |
+| v2.12 | 📋 Planned | Community | Comments, User profiles, Analytics |
+| v2.13 | 📋 Planned | Ecosystem | Marketplace integration |
 | Pro | 🔄 Ongoing | Premium | Advanced blocks, Analytics, AI Content, Translation |
 
 ---
@@ -566,4 +627,4 @@ We welcome community input on our roadmap:
 
 ---
 
-*Last updated: January 31, 2026 — v2.9.0 Plugin Manager improvements released*
+*Last updated: February 1, 2026 — v2.11.0 Page Templates & Widgets in progress*

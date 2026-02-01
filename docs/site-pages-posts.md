@@ -55,11 +55,13 @@ Only one page can be the homepage. Setting a new homepage automatically removes 
 
 ### Page Templates
 
-For custom layouts, you can assign a custom template:
+TallCMS includes built-in templates for different layouts:
 
 1. Go to the **Settings** tab
-2. Enter a template name in **Custom Template** (e.g., `pages.landing`)
-3. Create the template file at `resources/views/pages/landing.blade.php`
+2. Select a **Page Template** (Default, Full Width, Sidebar, Documentation, Landing)
+3. For sidebar templates, configure **Sidebar Widgets**
+
+See [Page Templates & Sidebar Widgets](templates) for full details.
 
 ---
 
