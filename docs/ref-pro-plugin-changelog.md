@@ -12,6 +12,14 @@ order: 50
 
 ---
 
+## Version 1.4.2
+
+**Released:** 2026-02-01
+
+- Fix ComparisonBlock error with unresolvable `$index` in nested repeater
+
+---
+
 ## Version 1.4.1
 
 **Released:** 2026-02-01
