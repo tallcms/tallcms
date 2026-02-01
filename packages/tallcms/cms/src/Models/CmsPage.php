@@ -57,6 +57,7 @@ class CmsPage extends Model
         'sort_order',
         'show_breadcrumbs',
         'template',
+        'sidebar_widgets',
         'content_width',
         'author_id',
         // Publishing workflow fields
@@ -69,6 +70,7 @@ class CmsPage extends Model
 
     protected $casts = [
         'content' => TranslatableArray::class,
+        'sidebar_widgets' => 'array',
         'published_at' => 'datetime',
         'is_homepage' => 'boolean',
         'show_breadcrumbs' => 'boolean',

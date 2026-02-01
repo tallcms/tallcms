@@ -14,6 +14,8 @@ use TallCms\Cms\Services\CustomBlockDiscoveryService;
 use TallCms\Cms\Services\LocaleRegistry;
 use TallCms\Cms\Services\MergeTagService;
 use TallCms\Cms\Services\SeoService;
+use TallCms\Cms\Services\TemplateRegistry;
+use Illuminate\Support\Str;
 
 class CmsPageRenderer extends Component
 {
@@ -364,6 +366,39 @@ class CmsPageRenderer extends Component
         $this->renderedContent = 'WELCOME_PAGE';
     }
 
+    /**
+     * Add IDs to headings that don't have them (for TOC anchor links).
+     * Handles headings with inline markup (e.g., <h2><span>Title</span></h2>).
+     */
+    protected function addHeadingIds(string $html): string
+    {
+        return preg_replace_callback(
+            '/<(h[2-4])([^>]*)>(.*?)<\/\1>/is',
+            function ($matches) {
+                $tag = $matches[1];
+                $attrs = $matches[2];
+                $content = $matches[3];
+
+                // Skip if already has ID
+                if (preg_match('/\bid\s*=/i', $attrs)) {
+                    return $matches[0];
+                }
+
+                // Extract text content (strip tags for slug generation)
+                $text = strip_tags($content);
+                $id = Str::slug($text);
+
+                // Handle empty slugs
+                if (empty($id)) {
+                    $id = 'heading-'.substr(md5($content), 0, 8);
+                }
+
+                return "<{$tag} id=\"{$id}\"{$attrs}>{$content}</{$tag}>";
+            },
+            $html
+        );
+    }
+
     protected function renderPageContent(): void
     {
         // Share page slug with all views so blocks can generate correct URLs
@@ -377,6 +412,9 @@ class CmsPageRenderer extends Component
         $renderedContent = RichContentRenderer::make($this->page->content)
             ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
             ->toUnsafeHtml();
+
+        // Add heading IDs for TOC support
+        $renderedContent = $this->addHeadingIds($renderedContent);
 
         $this->renderedContent = MergeTagService::replaceTags($renderedContent, $this->page);
     }
@@ -397,6 +435,9 @@ class CmsPageRenderer extends Component
         $rendered = RichContentRenderer::make($page->content)
             ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
             ->toUnsafeHtml();
+
+        // Add heading IDs for SPA mode TOC support
+        $rendered = $this->addHeadingIds($rendered);
 
         $result = MergeTagService::replaceTags($rendered, $page);
 
@@ -527,21 +568,43 @@ class CmsPageRenderer extends Component
         // Detect if breadcrumbs will appear over a hero block
         $breadcrumbsOverHero = $showBreadcrumbs && $this->pageStartsWithHero($this->page);
 
-        return view('tallcms::livewire.page')
-            ->layout('tallcms::layouts.app', [
-                'title' => $title,
-                'description' => $description,
-                'featuredImage' => $featuredImage,
-                'seoType' => $seoType,
-                'seoArticle' => $seoArticle,
-                'seoTwitter' => $seoTwitter,
-                'seoPost' => $seoPost,
-                'seoPage' => $seoPage,
-                'seoBreadcrumbs' => $seoBreadcrumbs,
-                'seoIncludeWebsite' => $seoIncludeWebsite,
-                'showBreadcrumbs' => $showBreadcrumbs,
-                'breadcrumbItems' => $breadcrumbItems,
-                'breadcrumbsOverHero' => $breadcrumbsOverHero,
-            ]);
+        // Resolve template and widgets for pages (not posts)
+        $templateRegistry = app(TemplateRegistry::class);
+        $template = $this->page->template ?: 'default';
+        $templateView = $templateRegistry->resolveTemplateView($template);
+        $templateConfig = $templateRegistry->getTemplateConfig($template);
+
+        // Sidebar widgets: empty array OR null = use template defaults
+        $sidebarWidgets = [];
+        if ($templateConfig['has_sidebar'] ?? false) {
+            $pageWidgets = $this->page->sidebar_widgets;
+            $sidebarWidgets = (! empty($pageWidgets))
+                ? $pageWidgets
+                : ($templateConfig['default_widgets'] ?? []);
+        }
+
+        // Minimal chrome flag for landing pages
+        $minimalChrome = $templateConfig['minimal_chrome'] ?? false;
+
+        return view('tallcms::livewire.page', [
+            'templateView' => $templateView,
+            'templateConfig' => $templateConfig,
+            'sidebarWidgets' => $sidebarWidgets,
+        ])->layout('tallcms::layouts.app', [
+            'title' => $title,
+            'description' => $description,
+            'featuredImage' => $featuredImage,
+            'seoType' => $seoType,
+            'seoArticle' => $seoArticle,
+            'seoTwitter' => $seoTwitter,
+            'seoPost' => $seoPost,
+            'seoPage' => $seoPage,
+            'seoBreadcrumbs' => $seoBreadcrumbs,
+            'seoIncludeWebsite' => $seoIncludeWebsite,
+            'showBreadcrumbs' => $showBreadcrumbs,
+            'breadcrumbItems' => $breadcrumbItems,
+            'breadcrumbsOverHero' => $breadcrumbsOverHero,
+            'minimalChrome' => $minimalChrome,
+        ]);
     }
 }

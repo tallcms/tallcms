@@ -87,6 +87,8 @@ class TallCmsServiceProvider extends PackageServiceProvider
         'App\\Services\\ThemeManager' => Services\ThemeManager::class,
         'App\\Services\\ThemeResolver' => Services\ThemeResolver::class,
         'App\\Services\\ThemeValidator' => Services\ThemeValidator::class,
+        'App\\Services\\TemplateRegistry' => Services\TemplateRegistry::class,
+        'App\\Services\\WidgetRegistry' => Services\WidgetRegistry::class,
 
         // Providers
         'App\\Providers\\PluginServiceProvider' => Providers\PluginServiceProvider::class,
@@ -279,6 +281,12 @@ class TallCmsServiceProvider extends PackageServiceProvider
         // Register LocaleRegistry singleton (needed for i18n features)
         $this->app->singleton(Services\LocaleRegistry::class);
         $this->app->alias(Services\LocaleRegistry::class, 'tallcms.locales');
+
+        // Register TemplateRegistry singleton (needed for page templates)
+        $this->app->singleton(Services\TemplateRegistry::class);
+
+        // Register WidgetRegistry singleton (needed for sidebar widgets)
+        $this->app->singleton(Services\WidgetRegistry::class);
 
         // Register search services
         $this->app->singleton(Services\ContentIndexer::class);
@@ -800,6 +808,9 @@ class TallCmsServiceProvider extends PackageServiceProvider
             '2026_01_27_200002_create_tallcms_webhooks_table',
             '2026_01_27_200003_create_tallcms_webhook_deliveries_table',
             '2026_01_27_200004_change_webhook_deliveries_unique_key',
+
+            // Page templates & widgets
+            '2026_02_01_000001_add_sidebar_widgets_to_tallcms_pages',
         ];
     }
 
