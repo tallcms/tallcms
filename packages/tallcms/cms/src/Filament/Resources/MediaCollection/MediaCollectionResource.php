@@ -18,7 +18,6 @@ use Filament\Tables\Table;
 use TallCms\Cms\Filament\Resources\MediaCollection\Pages\CreateMediaCollection;
 use TallCms\Cms\Filament\Resources\MediaCollection\Pages\EditMediaCollection;
 use TallCms\Cms\Filament\Resources\MediaCollection\Pages\ListMediaCollections;
-use TallCms\Cms\Filament\Resources\TallcmsMedia\TallcmsMediaResource;
 use TallCms\Cms\Models\MediaCollection;
 
 class MediaCollectionResource extends Resource
@@ -116,12 +115,7 @@ class MediaCollectionResource extends Resource
             ])
             ->toolbarActions([
                 DeleteBulkAction::make(),
-            ])
-            ->recordUrl(fn (MediaCollection $record) => TallcmsMediaResource::getUrl('index', [
-                'tableFilters' => [
-                    'collections' => ['value' => $record->id],
-                ],
-            ]));
+            ]);
     }
 
     public static function getPages(): array
