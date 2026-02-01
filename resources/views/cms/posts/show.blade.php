@@ -6,6 +6,15 @@
     use Illuminate\Support\Facades\Storage;
     use Illuminate\Support\Facades\View;
 
+    // Display settings from PostsBlock config
+    $config = $config ?? [];
+    $showExcerpt = $config['show_excerpt'] ?? true;
+    $showDate = $config['show_date'] ?? true;
+    $showAuthor = $config['show_author'] ?? false;
+    $showImage = $config['show_image'] ?? true;
+    $showCategories = $config['show_categories'] ?? true;
+
+
     // Save previous cmsPageSlug to restore after rendering (avoid global bleed)
     $previousCmsPageSlug = View::shared('cmsPageSlug');
 
@@ -20,6 +29,10 @@
             ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
             ->toUnsafeHtml();
         $renderedContent = MergeTagService::replaceTags($renderedContent, $post);
+
+        // Strip first heading if it matches the post title (avoid duplicate title display)
+        $titlePattern = '/^\s*<h[1-2][^>]*>\s*' . preg_quote($post->title, '/') . '\s*<\/h[1-2]>\s*/i';
+        $renderedContent = preg_replace($titlePattern, '', $renderedContent, 1);
     }
 
     // Restore previous cmsPageSlug
@@ -28,7 +41,7 @@
 
 <article class="post-detail bg-base-100">
     {{-- Featured Image --}}
-    @if($post->featured_image)
+    @if($showImage && $post->featured_image)
         <div class="post-detail__hero relative w-full h-64 sm:h-80 md:h-96 overflow-hidden">
             <img
                 src="{{ Storage::disk(cms_media_disk())->url($post->featured_image) }}"
@@ -43,7 +56,7 @@
     <header class="post-detail__header w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 {{ $post->featured_image ? '-mt-24 relative z-10' : 'pt-12 sm:pt-16' }}">
         <div class="max-w-4xl mx-auto {{ $post->featured_image ? 'bg-base-100 rounded-t-2xl shadow-lg p-6 sm:p-10' : '' }}">
             {{-- Categories --}}
-            @if($post->categories->isNotEmpty())
+            @if($showCategories && $post->categories->isNotEmpty())
                 <div class="post-detail__categories flex flex-wrap gap-2 mb-4">
                     @foreach($post->categories as $category)
                         @php
@@ -66,39 +79,41 @@
             </h1>
 
             {{-- Meta --}}
-            <div class="post-detail__meta flex flex-wrap items-center gap-4 text-sm text-base-content/70">
-                @if($post->author)
-                    <div class="flex items-center gap-2">
-                        <div class="avatar placeholder">
-                            <div class="w-8 h-8 rounded-full bg-base-200">
-                                <span class="text-sm font-medium">
-                                    {{ strtoupper(substr($post->author->name, 0, 1)) }}
-                                </span>
+            @if($showAuthor || $showDate)
+                <div class="post-detail__meta flex flex-wrap items-center gap-4 text-sm text-base-content/70">
+                    @if($showAuthor && $post->author)
+                        <div class="flex items-center gap-2">
+                            <div class="avatar placeholder">
+                                <div class="w-8 h-8 rounded-full bg-base-200">
+                                    <span class="text-sm font-medium">
+                                        {{ strtoupper(substr($post->author->name, 0, 1)) }}
+                                    </span>
+                                </div>
                             </div>
+                            <span class="font-medium">{{ $post->author->name }}</span>
                         </div>
-                        <span class="font-medium">{{ $post->author->name }}</span>
-                    </div>
-                @endif
+                    @endif
 
-                @if($post->published_at)
-                    <div class="flex items-center gap-1">
-                        <x-heroicon-o-calendar class="w-4 h-4" />
-                        <time datetime="{{ $post->published_at->toISOString() }}">
-                            {{ $post->published_at->format('F j, Y') }}
-                        </time>
-                    </div>
-                @endif
+                    @if($showDate && $post->published_at)
+                        <div class="flex items-center gap-1">
+                            <x-heroicon-o-calendar class="w-4 h-4" />
+                            <time datetime="{{ $post->published_at->toISOString() }}">
+                                {{ $post->published_at->format('F j, Y') }}
+                            </time>
+                        </div>
+                    @endif
 
-                @if($post->reading_time)
-                    <div class="flex items-center gap-1">
-                        <x-heroicon-o-clock class="w-4 h-4" />
-                        <span>{{ $post->reading_time }} min read</span>
-                    </div>
-                @endif
-            </div>
+                    @if($showDate && $post->reading_time)
+                        <div class="flex items-center gap-1">
+                            <x-heroicon-o-clock class="w-4 h-4" />
+                            <span>{{ $post->reading_time }} min read</span>
+                        </div>
+                    @endif
+                </div>
+            @endif
 
             {{-- Excerpt --}}
-            @if($post->excerpt)
+            @if($showExcerpt && $post->excerpt)
                 <p class="post-detail__excerpt mt-6 text-lg leading-relaxed text-base-content/80">
                     {{ $post->excerpt }}
                 </p>

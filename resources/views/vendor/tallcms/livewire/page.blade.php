@@ -5,6 +5,7 @@
     {{-- Render individual post detail view --}}
     @include('cms.posts.show', [
         'post' => $post,
+        'config' => $postsBlockConfig ?? [],
         'parentSlug' => $parentSlug,
     ])
 @else
