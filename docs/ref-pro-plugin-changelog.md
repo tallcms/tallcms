@@ -12,6 +12,14 @@ order: 50
 
 ---
 
+## Version 1.5.1
+
+**Released:** 2026-02-01
+
+- Fix radial/gauge progress stroke color not rendering (SVG doesn't support oklch CSS syntax)
+
+---
+
 ## Version 1.5.0
 
 **Released:** 2026-02-01
