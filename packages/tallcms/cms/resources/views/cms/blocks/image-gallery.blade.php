@@ -67,16 +67,22 @@
         'caption' => $item['caption'] ?? null,
         'type' => $item['type'] ?? 'image',
     ])->values()->all();
+
+    // Pre-encode JSON for x-data - Js::from() outputs JSON.parse('...') with proper escaping
+    // This safely handles quotes and special characters in HTML attribute context
+    $lightboxDataJson = \Illuminate\Support\Js::from($lightboxData)->toHtml();
+
+    // Build anchor ID attribute (avoid @if inside tag to prevent Blade comment injection)
+    $anchorIdAttr = !empty($anchor_id) ? 'id="' . e($anchor_id) . '"' : '';
 @endphp
 
-<x-tallcms::animation-wrapper
-    tag="section"
-    :animation="$animationType"
-    :controller="true"
-    :id="$anchor_id ?? null"
-    class="image-gallery-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}"
+<section
+    {!! $anchorIdAttr !!}
+    class="not-prose image-gallery-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}"
     x-data="{
-        items: @js($lightboxData),
+        tallcmsShown: false,
+        tallcmsReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        items: {!! $lightboxDataJson !!},
         currentIndex: 0,
         isOpen: false,
         open(index) {
@@ -99,6 +105,7 @@
             return this.items[this.currentIndex] || {};
         }
     }"
+    x-intersect:enter.once="tallcmsShown = true"
     @keydown.escape.window="close()"
     @keydown.left.window="isOpen && prev()"
     @keydown.right.window="isOpen && next()"
@@ -317,4 +324,4 @@
             </button>
         </div>
     </div>
-</x-tallcms::animation-wrapper>
+</section>
