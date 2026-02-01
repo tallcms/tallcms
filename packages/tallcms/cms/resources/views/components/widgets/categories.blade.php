@@ -15,7 +15,7 @@
     <ul class="space-y-2">
         @foreach($categories as $category)
             <li class="flex justify-between items-center">
-                <a href="{{ route('tallcms.archive.category', $category->slug) }}" class="link link-hover text-sm">
+                <a href="{{ Route::has('tallcms.category.show') ? route('tallcms.category.show', $category->slug) : url('/category/' . $category->slug) }}" class="link link-hover text-sm">
                     {{ $category->name }}
                 </a>
                 @if($showCount)
