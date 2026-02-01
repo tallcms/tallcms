@@ -7,6 +7,10 @@
         ->when($showCount, fn($q) => $q->withCount(['posts' => fn($q) => $q->published()]))
         ->orderBy('name')
         ->get();
+
+    // Use the current page for category filter URLs
+    $currentPageSlug = $page?->slug ?? '';
+    $blogUrl = tallcms_localized_url($currentPageSlug ?: '/');
 @endphp
 
 @if($categories->isNotEmpty())
@@ -14,8 +18,13 @@
     <h3 class="text-lg font-semibold mb-4">Categories</h3>
     <ul class="space-y-2">
         @foreach($categories as $category)
+            @php
+                $categorySlug = tallcms_i18n_enabled()
+                    ? ($category->getTranslation('slug', app()->getLocale(), false) ?? $category->slug)
+                    : $category->slug;
+            @endphp
             <li class="flex justify-between items-center">
-                <a href="{{ Route::has('tallcms.category.show') ? route('tallcms.category.show', $category->slug) : url('/category/' . $category->slug) }}" class="link link-hover text-sm">
+                <a href="{{ $blogUrl }}?category={{ $categorySlug }}" class="link link-hover text-sm">
                     {{ $category->name }}
                 </a>
                 @if($showCount)
