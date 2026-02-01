@@ -12,6 +12,14 @@ order: 50
 
 ---
 
+## Version 1.4.1
+
+**Released:** 2026-02-01
+
+- Fix CodeSnippet line highlighting not visible against dark mockup-code background
+
+---
+
 ## Version 1.4.0
 
 **Released:** 2026-02-01
