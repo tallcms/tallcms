@@ -26,8 +26,9 @@ trait HasContentWidth
         return Select::make('content_width')
             ->label('Content Width')
             ->options([
-                'inherit' => 'Inherit from Page',
+                'inherit' => 'Inherit from Page/Post',
                 'narrow' => 'Narrow (672px)',
+                'prose' => 'Prose (896px)',
                 'standard' => 'Standard (1152px)',
                 'wide' => 'Wide (1280px)',
                 'full' => 'Full Width',
@@ -52,6 +53,7 @@ trait HasContentWidth
 
         $widthClass = match ($blockWidth) {
             'narrow' => 'max-w-2xl mx-auto',
+            'prose' => 'max-w-4xl mx-auto',
             'standard' => 'max-w-6xl mx-auto',
             'wide' => 'max-w-7xl mx-auto',
             'full' => 'w-full',

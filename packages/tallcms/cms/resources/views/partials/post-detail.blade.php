@@ -6,6 +6,10 @@
     $showAuthor = $config['show_author'] ?? true;
     $showImage = $config['show_image'] ?? true;
     $showExcerpt = $config['show_excerpt'] ?? true;
+
+    // Share post content width so blocks can inherit it
+    // Posts use max-w-4xl which maps to 'prose' width
+    Illuminate\Support\Facades\View::share('cmsPageContentWidth', 'prose');
 @endphp
 
 <div class="max-w-4xl mx-auto px-4 py-16">
