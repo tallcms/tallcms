@@ -4,7 +4,7 @@
     $showCount = (bool) ($settings['show_count'] ?? true);
 
     $categories = \TallCms\Cms\Models\CmsCategory::query()
-        ->when($showCount, fn($q) => $q->withCount('posts'))
+        ->when($showCount, fn($q) => $q->withCount(['posts' => fn($q) => $q->published()]))
         ->orderBy('name')
         ->get();
 @endphp
