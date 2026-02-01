@@ -12,6 +12,30 @@ order: 50
 
 ---
 
+## Version 1.5.0
+
+**Released:** 2026-02-01
+
+Differentiate Pro Counter from core Stats block with premium visual styles.
+
+### Counter Block Display Styles
+
+| Style | Description |
+|-------|-------------|
+| Classic | Standard animated numbers (backwards compatible) |
+| Radial Progress | Full circle SVG with animated progress ring |
+| Gauge Meter | Half-circle speedometer with tick marks |
+
+### New Options
+
+- Add `display_style` selection: classic, radial, gauge
+- Add `radial_size`: sm (120px), md (160px), lg (200px)
+- Add `stroke_width`: thin, normal, thick
+- Add `default_max` for percentage calculations
+- Add per-counter `max_value` override
+
+---
+
 ## Version 1.4.2
 
 **Released:** 2026-02-01
