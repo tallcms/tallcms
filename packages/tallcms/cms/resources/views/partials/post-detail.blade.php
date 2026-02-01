@@ -1,19 +1,25 @@
 @props(['post', 'config' => [], 'parentSlug' => ''])
 
 @php
+    use Illuminate\Support\Facades\View;
+
     // Display settings from PostsBlock config
     $showDate = $config['show_date'] ?? true;
     $showAuthor = $config['show_author'] ?? true;
     $showImage = $config['show_image'] ?? true;
     $showExcerpt = $config['show_excerpt'] ?? true;
 
+    // Save previous values to restore after rendering (avoid global bleed)
+    $previousCmsPageSlug = View::shared('cmsPageSlug');
+    $previousCmsPageContentWidth = View::shared('cmsPageContentWidth');
+
     // Share parent page slug with blocks rendered within post content
     // This ensures Posts blocks inside posts use the correct parent page slug
-    Illuminate\Support\Facades\View::share('cmsPageSlug', $parentSlug);
+    View::share('cmsPageSlug', $parentSlug);
 
     // Share post content width so blocks can inherit it
     // Posts use max-w-4xl which maps to 'prose' width
-    Illuminate\Support\Facades\View::share('cmsPageContentWidth', 'prose');
+    View::share('cmsPageContentWidth', 'prose');
 @endphp
 
 <div class="max-w-4xl mx-auto px-4 py-16">
@@ -113,3 +119,9 @@
         </div>
     </article>
 </div>
+
+@php
+    // Restore previous View::share values to avoid global bleed
+    View::share('cmsPageSlug', $previousCmsPageSlug);
+    View::share('cmsPageContentWidth', $previousCmsPageContentWidth);
+@endphp

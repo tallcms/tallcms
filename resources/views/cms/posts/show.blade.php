@@ -6,6 +6,9 @@
     use Illuminate\Support\Facades\Storage;
     use Illuminate\Support\Facades\View;
 
+    // Save previous cmsPageSlug to restore after rendering (avoid global bleed)
+    $previousCmsPageSlug = View::shared('cmsPageSlug');
+
     // Share parent page slug with blocks rendered within post content
     // This ensures Posts blocks inside posts use the correct parent page slug
     View::share('cmsPageSlug', $parentSlug ?? '');
@@ -18,6 +21,9 @@
             ->toUnsafeHtml();
         $renderedContent = MergeTagService::replaceTags($renderedContent, $post);
     }
+
+    // Restore previous cmsPageSlug
+    View::share('cmsPageSlug', $previousCmsPageSlug);
 @endphp
 
 <article class="post-detail bg-base-100">
