@@ -115,6 +115,12 @@
             case 'oldest':
                 $query->orderBy('published_at', 'asc');
                 break;
+            case 'title_asc':
+                $query->orderBy('title', 'asc');
+                break;
+            case 'title_desc':
+                $query->orderBy('title', 'desc');
+                break;
             case 'featured_first':
                 $query->orderBy('is_featured', 'desc')
                       ->orderBy('published_at', 'desc');

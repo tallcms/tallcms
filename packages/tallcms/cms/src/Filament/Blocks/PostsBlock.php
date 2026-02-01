@@ -118,6 +118,8 @@ class PostsBlock extends RichContentCustomBlock
                                             ->options([
                                                 'newest' => 'Newest First',
                                                 'oldest' => 'Oldest First',
+                                                'title_asc' => 'Title (A-Z)',
+                                                'title_desc' => 'Title (Z-A)',
                                                 'featured_first' => 'Featured First, then Newest',
                                                 'manual' => 'Manual Selection',
                                             ])
