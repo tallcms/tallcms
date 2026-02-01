@@ -12,6 +12,14 @@ order: 50
 
 ---
 
+## Version 1.5.2
+
+**Released:** 2026-02-01
+
+- Fix radial/gauge progress showing 100% instead of actual percentage
+
+---
+
 ## Version 1.5.1
 
 **Released:** 2026-02-01
