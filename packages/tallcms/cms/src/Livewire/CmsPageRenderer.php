@@ -372,6 +372,7 @@ class CmsPageRenderer extends Component
      */
     protected function addHeadingIds(string $html): string
     {
+        // Track all used IDs (both existing and generated) to avoid collisions
         $usedIds = [];
 
         return preg_replace_callback(
@@ -381,11 +382,10 @@ class CmsPageRenderer extends Component
                 $attrs = $matches[2];
                 $content = $matches[3];
 
-                // Skip if already has ID
+                // Skip if already has ID, but track it
                 if (preg_match('/\bid\s*=/i', $attrs)) {
-                    // Track existing IDs to avoid collisions
                     if (preg_match('/\bid\s*=\s*["\']([^"\']+)["\']/i', $attrs, $idMatch)) {
-                        $usedIds[$idMatch[1]] = ($usedIds[$idMatch[1]] ?? 0) + 1;
+                        $usedIds[$idMatch[1]] = true;
                     }
 
                     return $matches[0];
@@ -400,14 +400,14 @@ class CmsPageRenderer extends Component
                     $baseId = 'heading-'.substr(md5($content), 0, 8);
                 }
 
-                // De-duplicate: append counter if ID already used
+                // Find an unused ID by checking both base and suffixed candidates
                 $id = $baseId;
-                if (isset($usedIds[$baseId])) {
-                    $usedIds[$baseId]++;
-                    $id = $baseId.'-'.$usedIds[$baseId];
-                } else {
-                    $usedIds[$baseId] = 1;
+                $counter = 1;
+                while (isset($usedIds[$id])) {
+                    $counter++;
+                    $id = $baseId.'-'.$counter;
                 }
+                $usedIds[$id] = true;
 
                 return "<{$tag} id=\"{$id}\"{$attrs}>{$content}</{$tag}>";
             },
