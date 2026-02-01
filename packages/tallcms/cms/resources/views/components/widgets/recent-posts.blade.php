@@ -9,8 +9,8 @@
         ->limit($limit)
         ->get();
 
-    // Get the blog parent slug (page containing PostsBlock)
-    $blogParentSlug = \TallCms\Cms\Services\SeoService::getBlogParentSlug() ?? '';
+    // Use the current page slug for post URLs
+    $parentSlug = $page?->slug ?? '';
 @endphp
 
 @if($posts->isNotEmpty())
@@ -20,7 +20,7 @@
         @foreach($posts as $post)
             <li class="flex gap-3">
                 @if($showImage && $post->featured_image)
-                    <a href="{{ cms_post_url($post, $blogParentSlug) }}" class="flex-shrink-0">
+                    <a href="{{ cms_post_url($post, $parentSlug) }}" class="flex-shrink-0">
                         <img
                             src="{{ Storage::disk(cms_media_disk())->url($post->featured_image) }}"
                             alt="{{ $post->title }}"
@@ -29,7 +29,7 @@
                     </a>
                 @endif
                 <div class="min-w-0">
-                    <a href="{{ cms_post_url($post, $blogParentSlug) }}" class="link link-hover font-medium text-sm line-clamp-2">
+                    <a href="{{ cms_post_url($post, $parentSlug) }}" class="link link-hover font-medium text-sm line-clamp-2">
                         {{ $post->title }}
                     </a>
                     <p class="text-xs text-base-content/60 mt-1">
