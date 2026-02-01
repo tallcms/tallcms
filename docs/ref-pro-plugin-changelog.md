@@ -1,202 +1,230 @@
-# TallCMS Pro Plugin Changelog
+---
+title: "Pro Plugin Changelog"
+slug: "pro-plugin-changelog"
+audience: "developer"
+category: "reference"
+order: 50
+---
 
-All notable changes to the TallCMS Pro Plugin are documented in this file.
+# Pro Plugin Changelog
+
+> **What you'll learn:** Track all changes, new features, and fixes in the TallCMS Pro Plugin across versions.
 
 ---
 
-## [1.4.0] - 2026-02-01
+## Version 1.4.0
 
-### Enhanced Pro Blocks with Premium Customization
+**Released:** 2026-02-01
 
-Enhanced all Pro blocks with premium customization options while maintaining full backwards compatibility.
+Enhance all Pro blocks with premium customization options. All changes maintain backwards compatibility.
 
-#### AccordionBlock
-- **Icon Styles**: Choose from arrow (default), plus/minus, chevron, numbered, or no icon
-- **Icon Position**: Place collapse icons on left or right
-- **Accent Colors**: Apply theme colors to icons and badges
-- **Per-Item Icons**: Add heroicons to individual accordion items
-- **Bug Fix**: Removed duplicate array keys in `toHtml()`
+### Accordion Block
 
-#### CounterBlock
-- **Per-Counter Icons**: Add heroicons or emojis to each counter
-- **Number Formatting**: Plain (1000), thousands (1,000), or abbreviated (1K/1M)
+- Add icon styles: arrow (default), plus/minus, chevron, numbered, or none
+- Add icon position: left or right placement
+- Add accent color selection for icons and badges
+- Add per-item heroicons from curated list
+- Fix duplicate array keys in `toHtml()`
 
-#### TabsBlock
-- **Icon Position**: Left of text, above text, or icon-only mode
-- **Active Indicator**: Default theme, underline, or filled background styles
+### Counter Block
 
-#### ComparisonBlock
-- **Dynamic Columns**: Support 2-5 columns (previously hardcoded to 2)
-- **Highlight Toggle**: Mark any column as "recommended" with visual badge
-- **Backwards Compatible**: Old 2-column configs automatically migrate
+- Add per-counter icons (heroicon or emoji)
+- Add number formatting: plain (1000), thousands (1,000), abbreviated (1K/1M)
 
-#### CodeSnippetBlock
-- **Themes**: Dark (default) or light background
-- **Line Highlighting**: Highlight specific lines with `1,3-5,10` syntax
+### Tabs Block
 
-#### Infrastructure
-- New `icon.blade.php` component for consistent icon rendering
-- New `HasIconSelection` trait with 30 curated heroicons
-- Helper functions: `tallcms_pro_parse_highlight_lines()`, `tallcms_pro_abbreviate_number()`
+- Add icon position: left of text, above text, or icon-only
+- Add active indicator styles: default, underline, or filled
 
----
+### Comparison Block
 
-## [1.3.0] - 2026-01-31
+- Support 2-5 dynamic columns (previously hardcoded to 2)
+- Add highlight toggle to mark columns as "recommended"
+- Auto-migrate old 2-column configs to new schema
 
-### Animation Support
+### Code Snippet Block
 
-Added scroll-triggered animations with stagger support to all Pro blocks.
+- Add theme selection: dark (default) or light
+- Add line highlighting with `1,3-5,10` syntax
 
-#### Features
-- **Animation Types**: Fade, slide, zoom, and flip animations
-- **Stagger Support**: Items animate sequentially with configurable delays
-- **Content Width**: Added `HasContentWidth` trait for page-level width control
-- **Standardized Widths**: All blocks now use consistent `max-w-6xl` width
+### Infrastructure
 
-#### Blocks Updated
-- AccordionBlock
-- TabsBlock
-- CounterBlock
-- TableBlock
-- ComparisonBlock
-- VideoBlock
-- BeforeAfterBlock
-- CodeSnippetBlock
-- MapBlock
+- Create `icon.blade.php` component for consistent rendering
+- Create `HasIconSelection` trait with 30 curated heroicons
+- Add helper functions: `tallcms_pro_parse_highlight_lines()`, `tallcms_pro_abbreviate_number()`
 
 ---
 
-## [1.2.2] - 2026-01-25
+## Version 1.3.0
 
-### Anchor IDs & Table Enhancements
+**Released:** 2026-01-31
 
-- **Anchor ID Support**: All blocks now support custom anchor IDs for deep linking
-- **Table Block**: Allow HTML content in table cells for richer formatting
+Add scroll-triggered animations with stagger support to all Pro blocks.
 
----
+### Features
 
-## [1.2.1] - 2026-01-24
+- Add animation types: fade, slide, zoom, and flip
+- Add stagger support with configurable delays
+- Add `HasContentWidth` trait for page-level width control
+- Standardize all blocks to `max-w-6xl` width
 
-### Block Fixes & Flexible Versioning
+### Blocks Updated
 
-#### Fixes
-- Fixed block form reactivity issues
-- Fixed `ProSetting` to handle missing migrations gracefully
-- Security improvements for block rendering
-
-#### Developer Experience
-- Added `CLAUDE.md` with release checklist and development guide
-- Updated TallCMS compatibility requirements
+All 9 Pro blocks now support animations:
+- Accordion, Tabs, Counter, Table, Comparison
+- Video, Before/After, Code Snippet, Map
 
 ---
 
-## [1.2.0] - 2026-01-14
+## Version 1.2.2
 
-### Google Analytics & Security
+**Released:** 2026-01-25
 
-#### Features
-- **Google Analytics Integration**: Simple gtag tracking via Measurement ID
-- **Dashboard Analytics Widget**: Step-by-step setup guide included
-- **Analytics Middleware**: Automatic gtag injection on frontend pages
-
-#### Security
-- Removed test license bypass
-- Enhanced license validation
-
-#### Housekeeping
-- Added `.DS_Store` to gitignore
+- Add anchor ID support to all blocks for deep linking
+- Allow HTML content in Table block cells
 
 ---
 
-## [1.1.0] - 2026-01-12
+## Version 1.2.1
 
-### daisyUI Integration
+**Released:** 2026-01-24
 
-Major refactor of all Pro blocks to use daisyUI semantic classes for better theming and consistency.
+### Fixes
 
-#### Block Refactors
-- **AccordionBlock**: Uses daisyUI collapse component
-- **TabsBlock**: Uses daisyUI tabs component
-- **CounterBlock**: Styled with daisyUI cards
-- **TableBlock**: Uses daisyUI table component
-- **ComparisonBlock**: Refactored to daisyUI table with semantic colors
-- **BeforeAfterBlock**: Uses daisyUI diff component
-- **CodeSnippetBlock**: Uses daisyUI mockup-code component
+- Fix block form reactivity issues
+- Fix `ProSetting` to handle missing migrations gracefully
+- Improve security for block rendering
 
-#### Enhancements
-- Added daisyUI color options (primary, secondary, accent, etc.)
-- Added size options (xs, sm, md, lg)
-- Fixed comparison block grid layout with cards style
+### Developer Experience
+
+- Add `CLAUDE.md` with release checklist
+- Update TallCMS compatibility requirements
 
 ---
 
-## [1.0.5] - 2026-01-10
+## Version 1.2.0
 
-### Core License Migration
+**Released:** 2026-01-14
 
-- Migrated license management to core TallCMS `PluginLicenseService`
-- Simplified plugin architecture by removing duplicate license logic
+### Google Analytics Integration
+
+- Add simple gtag tracking via Measurement ID
+- Add Dashboard Analytics widget with setup guide
+- Add middleware for automatic gtag injection
+
+### Security
+
+- Remove test license bypass
+- Enhance license validation
 
 ---
 
-## [1.0.4] - 2026-01-10
+## Version 1.1.0
 
-### Watermark Fix
+**Released:** 2026-01-12
 
-- Fixed watermark to only show for users who have never been licensed
+Refactor all Pro blocks to use daisyUI semantic classes.
+
+### Block Updates
+
+| Block | daisyUI Component |
+|-------|-------------------|
+| Accordion | `collapse` |
+| Tabs | `tabs` |
+| Counter | `card` |
+| Table | `table` |
+| Comparison | `table` with semantic colors |
+| Before/After | `diff` |
+| Code Snippet | `mockup-code` |
+
+### Enhancements
+
+- Add daisyUI color options (primary, secondary, accent, etc.)
+- Add size options (xs, sm, md, lg)
+- Fix Comparison block grid layout
+
+---
+
+## Version 1.0.5
+
+**Released:** 2026-01-10
+
+- Migrate license management to core `PluginLicenseService`
+- Remove duplicate license logic from plugin
+
+---
+
+## Version 1.0.4
+
+**Released:** 2026-01-10
+
+- Fix watermark to only show for never-licensed users
 - Previously licensed users no longer see watermarks after expiration
 
 ---
 
-## [1.0.3] - 2026-01-10
+## Version 1.0.3
 
-### License Refactor
+**Released:** 2026-01-10
 
-- Refactored license management to use core TallCMS services
-- Improved license validation flow
-
----
-
-## [1.0.2] - 2026-01-09
-
-### Anystack Integration
-
-- Added Anystack product ID for license management
-- Configured license proxy integration
+- Refactor license management to use core TallCMS services
+- Improve license validation flow
 
 ---
 
-## [1.0.1] - 2026-01-09
+## Version 1.0.2
 
-### Patch Release
+**Released:** 2026-01-09
 
-- Minor fixes and improvements after initial release
+- Add Anystack product ID for license management
+- Configure license proxy integration
 
 ---
 
-## [1.0.0] - 2026-01-09
+## Version 1.0.1
 
-### Initial Release
+**Released:** 2026-01-09
 
-First public release of TallCMS Pro Plugin.
+- Minor fixes after initial release
 
-#### Pro Blocks (9 total)
-- **AccordionBlock**: Collapsible FAQ-style sections
-- **TabsBlock**: Tabbed content panels
-- **CounterBlock**: Animated number counters
-- **TableBlock**: Data tables with sorting
-- **ComparisonBlock**: Side-by-side feature comparison
-- **VideoBlock**: YouTube/Vimeo embeds with lazy loading
-- **BeforeAfterBlock**: Image comparison slider
-- **CodeSnippetBlock**: Syntax-highlighted code blocks
-- **MapBlock**: OpenStreetMap/Google Maps integration
+---
 
-#### Features
+## Version 1.0.0
+
+**Released:** 2026-01-09
+
+Initial public release of TallCMS Pro Plugin.
+
+### Pro Blocks
+
+| Block | Description |
+|-------|-------------|
+| Accordion | Collapsible FAQ-style sections |
+| Tabs | Tabbed content panels |
+| Counter | Animated number counters |
+| Table | Data tables with sorting |
+| Comparison | Side-by-side feature comparison |
+| Video | YouTube/Vimeo embeds with lazy loading |
+| Before/After | Image comparison slider |
+| Code Snippet | Syntax-highlighted code blocks |
+| Map | OpenStreetMap/Google Maps integration |
+
+### Features
+
 - License management with Anystack integration
-- Pro Settings page in Filament admin
+- Pro Settings page in admin panel
 - License status widget
 - Watermark overlay for unlicensed usage
 
-#### Requirements
+### Requirements
+
 - PHP ^8.2
 - TallCMS >=2.0
+
+---
+
+## Next Steps
+
+- [Pro Blocks Overview](site-blocks)
+- [Plugin Development](dev-plugins)
+- [Block Animations](site-blocks-animations)
