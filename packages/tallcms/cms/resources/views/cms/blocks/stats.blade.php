@@ -16,10 +16,22 @@
 
     // StatsBlock requires merging animation state with count-up animation x-data
     $hasEntranceAnimation = !empty($animationType);
+
+    // Build anchor ID attribute (avoid @if inside tag to prevent Blade comment injection)
+    $anchorIdAttr = !empty($anchor_id) ? 'id="' . e($anchor_id) . '"' : '';
+
+    // Build x-intersect attribute (avoid @if inside attribute value)
+    $animateCode = $shouldAnimate ? " \$el.querySelectorAll('[data-stat-value]').forEach(el => animateValue(el, el.dataset.statValue))" : '';
+    $xIntersect = 'tallcmsShown = true;' . $animateCode;
+
+    // Build :class attribute for entrance animation (avoid @if inside tag)
+    $entranceClassAttr = $hasEntranceAnimation
+        ? ':class="tallcmsShown || tallcmsReducedMotion ? \'tallcms-animate animate-' . e($animationType) . ' ' . e($animationDuration) . '\' : \'opacity-0\'"'
+        : '';
 @endphp
 
 <section
-    @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif
+    {!! $anchorIdAttr !!}
     class="stats-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}"
     x-data="{
         tallcmsShown: false,
@@ -47,10 +59,8 @@
             window.requestAnimationFrame(step);
         }
     }"
-    x-intersect:enter.once="tallcmsShown = true; @if($shouldAnimate) $el.querySelectorAll('[data-stat-value]').forEach(el => animateValue(el, el.dataset.statValue)) @endif"
-    @if($hasEntranceAnimation)
-        :class="tallcmsShown || tallcmsReducedMotion ? 'tallcms-animate animate-{{ $animationType }} {{ $animationDuration }}' : 'opacity-0'"
-    @endif
+    x-intersect:enter.once="{{ $xIntersect }}"
+    {!! $entranceClassAttr !!}
 >
     <div class="{{ $contentWidthClass ?? 'max-w-7xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
         {{-- Section Header --}}

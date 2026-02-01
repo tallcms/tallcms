@@ -36,9 +36,12 @@
 
     $hasContent = !empty($heading) || !empty($subheading) || !empty($cta_text);
     $imageUrl = !empty($image) ? Storage::disk(cms_media_disk())->url($image) : null;
+
+    // Build anchor ID attribute (avoid @if inside tag to prevent Blade comment injection)
+    $anchorIdAttr = !empty($anchor_id) ? 'id="' . e($anchor_id) . '"' : '';
 @endphp
 
-<section @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="parallax-block relative overflow-hidden {{ $heightClass }} {{ $css_classes ?? '' }}">
+<section {!! $anchorIdAttr !!} class="parallax-block relative overflow-hidden {{ $heightClass }} {{ $css_classes ?? '' }}">
     {{-- Background with CSS-only parallax (inline style like Hero block for post compatibility) --}}
     @if($imageUrl)
         <div

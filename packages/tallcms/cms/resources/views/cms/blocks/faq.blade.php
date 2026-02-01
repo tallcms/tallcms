@@ -7,19 +7,15 @@
     $animationDuration = $animation_duration ?? 'anim-duration-700';
     $animationStagger = $animation_stagger ?? false;
     $staggerDelay = (int) ($animation_stagger_delay ?? 100);
-@endphp
 
-{{-- FAQ block needs custom x-data that combines animation state with accordion functionality --}}
-<section
-    @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif
-    class="faq-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}"
-    x-data="{
-        tallcmsShown: false,
-        tallcmsReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-        @if($isAccordion)
-        activeItem: {{ ($first_open ?? false) ? '0' : 'null' }},
-        allowMultiple: {{ ($allow_multiple ?? false) ? 'true' : 'false' }},
-        openItems: {{ ($first_open ?? false) ? '[0]' : '[]' }},
+    // Build anchor ID attribute (avoid @if inside tag to prevent Blade comment injection)
+    $anchorIdAttr = !empty($anchor_id) ? 'id="' . e($anchor_id) . '"' : '';
+
+    // Build x-data (avoid @if inside attribute value)
+    $accordionData = $isAccordion ? "
+        activeItem: " . (($first_open ?? false) ? '0' : 'null') . ",
+        allowMultiple: " . (($allow_multiple ?? false) ? 'true' : 'false') . ",
+        openItems: " . (($first_open ?? false) ? '[0]' : '[]') . ",
         toggle(index) {
             if (this.allowMultiple) {
                 const idx = this.openItems.indexOf(index);
@@ -34,8 +30,16 @@
         },
         isOpen(index) {
             return this.allowMultiple ? this.openItems.includes(index) : this.activeItem === index;
-        }
-        @endif
+        }" : '';
+@endphp
+
+{{-- FAQ block needs custom x-data that combines animation state with accordion functionality --}}
+<section
+    {!! $anchorIdAttr !!}
+    class="faq-block {{ $sectionPadding }} {{ $background ?? 'bg-base-100' }} {{ $css_classes ?? '' }}"
+    x-data="{
+        tallcmsShown: false,
+        tallcmsReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches{{ $isAccordion ? ',' : '' }}{!! $accordionData !!}
     }"
     x-intersect:enter.once="tallcmsShown = true"
 >

@@ -30,9 +30,12 @@
         'end' => 'divider-end',
         default => '',
     };
+
+    // Build anchor ID attribute (avoid @if inside tag to prevent Blade comment injection)
+    $anchorIdAttr = !empty($anchor_id) ? 'id="' . e($anchor_id) . '"' : '';
 @endphp
 
-<div @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="divider-block {{ $heightClass }} {{ $css_classes ?? '' }}">
+<div {!! $anchorIdAttr !!} class="divider-block {{ $heightClass }} {{ $css_classes ?? '' }}">
     <div class="flex w-full flex-col {{ $contentWidthClass ?? 'max-w-6xl mx-auto' }} {{ $contentPadding ?? 'px-4 sm:px-6 lg:px-8' }}">
         @if($dividerStyle === 'space')
             {{-- Space only - no visible element --}}
