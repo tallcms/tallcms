@@ -39,11 +39,11 @@
 @endphp
 
 <section @if($anchor_id ?? null) id="{{ $anchor_id }}" @endif class="parallax-block relative overflow-hidden {{ $heightClass }} {{ $css_classes ?? '' }}">
-    {{-- Background with CSS-only parallax --}}
+    {{-- Background with CSS-only parallax (inline style like Hero block for post compatibility) --}}
     @if($imageUrl)
         <div
             class="parallax-bg absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style="background-image: url('{{ $imageUrl }}');"
+            style="background-image: url('{{ $imageUrl }}'); background-attachment: fixed;"
         ></div>
     @else
         {{-- Placeholder gradient for preview --}}
@@ -87,32 +87,3 @@
         </div>
     @endif
 </section>
-
-<style>
-    /* CSS-only parallax effect */
-    .parallax-block .parallax-bg {
-        background-attachment: fixed;
-        will-change: transform;
-    }
-
-    /* Disable parallax for reduced motion preference */
-    @media (prefers-reduced-motion: reduce) {
-        .parallax-block .parallax-bg {
-            background-attachment: scroll;
-        }
-    }
-
-    /* Disable parallax on mobile (performance + iOS issues) */
-    @media (max-width: 768px) {
-        .parallax-block .parallax-bg {
-            background-attachment: scroll;
-        }
-    }
-
-    /* Disable parallax on touch devices */
-    @media (hover: none) {
-        .parallax-block .parallax-bg {
-            background-attachment: scroll;
-        }
-    }
-</style>

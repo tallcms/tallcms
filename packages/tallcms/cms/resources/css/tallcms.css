@@ -184,3 +184,20 @@ html {
         @apply max-w-4xl mx-auto my-8 border-base-300;
     }
 }
+
+/* ============================================
+   Parallax Block - Mobile/Accessibility Fallbacks
+   Disable parallax effect on mobile, touch devices,
+   and for users who prefer reduced motion.
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+    .parallax-block .parallax-bg {
+        background-attachment: scroll !important;
+    }
+}
+
+@media (max-width: 768px), (hover: none) {
+    .parallax-block .parallax-bg {
+        background-attachment: scroll !important;
+    }
+}
