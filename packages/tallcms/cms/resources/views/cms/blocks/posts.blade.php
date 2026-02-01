@@ -307,14 +307,15 @@
                     $heroPost = $featuredPosts->first();
                     $remainingFeatured = $featuredPosts->skip(1);
                     $regularPosts = $posts->filter(fn($p) => !$p->is_featured);
-                    // Combine remaining featured + regular for the grid
-                    $gridPosts = $remainingFeatured->concat($regularPosts);
+                    // Combine remaining featured + regular for the grid, normalize keys for consistent stagger delays
+                    $gridPosts = $remainingFeatured->concat($regularPosts)->values();
                 @endphp
 
                 {{-- Featured Hero Section (only if we have a featured post) --}}
                 @if($heroPost)
                     @php
                         $heroUrl = $getPostUrl($heroPost);
+                        $heroHasImage = $showImage && $heroPost->featured_image;
                     @endphp
                     <x-tallcms::animation-wrapper
                         :animation="$animationType"
@@ -323,8 +324,8 @@
                         :delay="0"
                     >
                         <div class="mb-8">
-                            <article class="card lg:card-side bg-base-200 shadow-lg relative overflow-hidden">
-                                @if($showImage && $heroPost->featured_image)
+                            <article class="card {{ $heroHasImage ? 'lg:card-side' : '' }} bg-base-200 shadow-lg relative overflow-hidden">
+                                @if($heroHasImage)
                                     <figure class="lg:w-1/2">
                                         <a href="{{ $heroUrl }}" class="block">
                                             <img src="{{ Storage::disk(cms_media_disk())->url($heroPost->featured_image) }}"
@@ -333,7 +334,7 @@
                                         </a>
                                     </figure>
                                 @endif
-                                <div class="card-body lg:w-1/2">
+                                <div class="card-body {{ $heroHasImage ? 'lg:w-1/2' : '' }}">
                                     @if($showFeaturedBadge)
                                         <span class="badge {{ $badgeClass }} gap-1 w-fit">
                                             <x-heroicon-s-star class="w-3 h-3" />
