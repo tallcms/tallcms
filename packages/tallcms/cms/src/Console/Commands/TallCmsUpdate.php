@@ -265,8 +265,9 @@ class TallCmsUpdate extends Command
 
             $composerOutput = [];
             $composerExitCode = 0;
-            $basePath = base_path();
-            exec("composer install --no-interaction --no-dev --optimize-autoloader -d {$basePath} 2>&1", $composerOutput, $composerExitCode);
+            $composer = $this->findComposerBinary();
+            $basePath = escapeshellarg(base_path());
+            exec("{$composer} install --no-interaction --no-dev --optimize-autoloader -d {$basePath} 2>&1", $composerOutput, $composerExitCode);
 
             if ($composerExitCode !== 0) {
                 throw new UpdateException('Composer install failed: ' . implode("\n", $composerOutput));
@@ -464,5 +465,68 @@ class TallCmsUpdate extends Command
         }
 
         rmdir($dir);
+    }
+
+    /**
+     * Find the Composer binary path.
+     *
+     * @throws UpdateException
+     */
+    private function findComposerBinary(): string
+    {
+        // 1. Check config override first (highest priority)
+        if ($configured = config('tallcms.updates.composer_binary')) {
+            if (is_executable($configured) || str_ends_with($configured, '.phar')) {
+                return $this->resolveComposerCommand($configured);
+            }
+        }
+
+        // 2. Check for composer.phar in project root
+        $pharPath = base_path('composer.phar');
+        if (file_exists($pharPath)) {
+            return $this->resolveComposerCommand($pharPath);
+        }
+
+        // 3. Check known paths
+        $paths = [
+            '/usr/local/bin/composer',
+            '/usr/bin/composer',
+            '/usr/bin/composer2',
+            '/opt/homebrew/bin/composer',
+        ];
+
+        foreach ($paths as $path) {
+            if (is_executable($path)) {
+                return $path;
+            }
+        }
+
+        // 4. Try command -v to find composer in PATH
+        foreach (['composer2', 'composer'] as $cmd) {
+            $output = [];
+            $exitCode = 0;
+            exec("command -v {$cmd} 2>/dev/null", $output, $exitCode);
+
+            if ($exitCode === 0 && ! empty($output[0]) && is_executable($output[0])) {
+                return $output[0];
+            }
+        }
+
+        // 5. Not found - throw with helpful message
+        throw new UpdateException(
+            'Composer not found. Install Composer or set tallcms.updates.composer_binary in config.'
+        );
+    }
+
+    /**
+     * Resolve the composer command, handling .phar files.
+     */
+    private function resolveComposerCommand(string $path): string
+    {
+        if (str_ends_with($path, '.phar')) {
+            return PHP_BINARY . ' ' . escapeshellarg($path);
+        }
+
+        return $path;
     }
 }
