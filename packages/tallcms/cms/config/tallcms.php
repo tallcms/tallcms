@@ -6,11 +6,18 @@ return [
     | TallCMS Version
     |--------------------------------------------------------------------------
     |
-    | The current version of TallCMS. Used for theme compatibility checking.
-    | This is the single source of truth for version comparisons.
+    | The current version of TallCMS. Read dynamically from composer.json
+    | to ensure it's always in sync with the installed package version.
     |
     */
-    'version' => '2.9.0',
+    'version' => (function () {
+        $composerJson = dirname(__DIR__) . '/composer.json';
+        if (file_exists($composerJson)) {
+            $data = json_decode(file_get_contents($composerJson), true);
+            return $data['version'] ?? 'unknown';
+        }
+        return 'unknown';
+    })(),
 
     /*
     |--------------------------------------------------------------------------
