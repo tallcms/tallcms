@@ -268,13 +268,10 @@ class TallCmsUpdate extends Command
             exec('composer install --no-interaction --no-dev --optimize-autoloader 2>&1', $composerOutput, $composerExitCode);
 
             if ($composerExitCode !== 0) {
-                $this->warn('Composer install had issues:');
-                foreach ($composerOutput as $line) {
-                    $this->line('  ' . $line);
-                }
-            } else {
-                $this->components->info('Composer dependencies updated.');
+                throw new UpdateException('Composer install failed: ' . implode("\n", $composerOutput));
             }
+
+            $this->components->info('Composer dependencies updated.');
 
             // Step 15: Clear caches
             $this->updateStep('clearing_cache', 'Clearing caches...');
