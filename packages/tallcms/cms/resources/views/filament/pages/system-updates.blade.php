@@ -119,10 +119,50 @@
                     @endif
                 </div>
 
-                @if($dbBackupCapability['warning'])
+                @php
+                    $dbCapable = $dbBackupCapability['capable'] ?? false;
+                    $dbWarning = $dbBackupCapability['warning'] ?? null;
+                @endphp
+
+                @if(!$dbCapable)
+                    <div class="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                        <div class="flex items-start gap-3">
+                            <x-heroicon-s-exclamation-triangle class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                            <div class="space-y-2">
+                                <p class="text-sm font-medium text-amber-700 dark:text-amber-300">
+                                    Automatic database backup is not available
+                                </p>
+                                @if($dbWarning)
+                                    <p class="text-sm text-amber-600 dark:text-amber-400">
+                                        {{ $dbWarning }}
+                                    </p>
+                                @endif
+
+                                @if(config('tallcms.updates.require_db_backup', true))
+                                    <div class="pt-2 border-t border-amber-200 dark:border-amber-700">
+                                        <p class="text-sm text-amber-700 dark:text-amber-300 mb-2">
+                                            <strong>Before updating:</strong> Please create a manual backup of your database using your hosting control panel (cPanel, Plesk) or contact your hosting provider.
+                                        </p>
+
+                                        <label class="flex items-start gap-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                wire:model.live="skipDbBackup"
+                                                class="mt-1 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                                            >
+                                            <span class="text-sm text-amber-700 dark:text-amber-300">
+                                                I understand that my database will <strong>not</strong> be backed up automatically. I have made a manual backup or accept the risk.
+                                            </span>
+                                        </label>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @elseif($dbWarning)
                     <div class="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                         <p class="text-sm text-amber-700 dark:text-amber-300">
-                            {{ $dbBackupCapability['warning'] }}
+                            {{ $dbWarning }}
                         </p>
                     </div>
                 @endif
@@ -133,12 +173,21 @@
         <div class="flex justify-end gap-4">
             @php
                 $canUpdate = collect($preflightChecks)->every(fn($c) => $c['status'] !== 'fail');
+                $requireDbBackup = config('tallcms.updates.require_db_backup', true);
+                $dbCapable = $dbBackupCapability['capable'] ?? false;
+                $dbBackupBlocking = $requireDbBackup && !$dbCapable && !$skipDbBackup;
             @endphp
+
+            @if($dbBackupBlocking)
+                <p class="text-sm text-amber-600 dark:text-amber-400 self-center">
+                    Please acknowledge the database backup warning above to continue.
+                </p>
+            @endif
 
             <x-filament::button
                 wire:click="startUpdate"
                 size="lg"
-                :disabled="!$canUpdate"
+                :disabled="!$canUpdate || $dbBackupBlocking"
             >
                 <x-heroicon-s-arrow-down-tray class="w-5 h-5 mr-2" />
                 Update to v{{ $latestRelease['version'] }}

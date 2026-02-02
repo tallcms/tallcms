@@ -28,11 +28,19 @@ class TallCmsUpdateJob implements ShouldQueue
     public int $timeout = 600; // 10 minutes
 
     /**
+     * Whether to skip database backup (safe for deserialization of old jobs).
+     */
+    public bool $skipDbBackup = false;
+
+    /**
      * Create a new job instance.
      */
     public function __construct(
-        public string $targetVersion
-    ) {}
+        public string $targetVersion,
+        bool $skipDbBackup = false
+    ) {
+        $this->skipDbBackup = $skipDbBackup;
+    }
 
     /**
      * Execute the job.
@@ -49,10 +57,16 @@ class TallCmsUpdateJob implements ShouldQueue
             ]);
 
             // Run the actual update command
-            $exitCode = Artisan::call('tallcms:update', [
+            $options = [
                 '--target' => $this->targetVersion,
                 '--force' => true,
-            ]);
+            ];
+
+            if ($this->skipDbBackup) {
+                $options['--skip-db-backup'] = true;
+            }
+
+            $exitCode = Artisan::call('tallcms:update', $options);
 
             if ($exitCode !== 0) {
                 $output = Artisan::output();
