@@ -17,7 +17,7 @@ This roadmap outlines our vision for TallCMS development. We're committed to bui
 - [v2.8 - REST API](#v28---rest-api) ✅
 - [v2.9 - Plugin Manager](#v29---plugin-manager) ✅
 - [v2.10 - Featured Posts Enhancements](#v210---featured-posts-enhancements) ✅
-- [v2.11 - Page Templates & Widgets](#v211---page-templates--widgets) 🔄
+- [v2.11 - Page Templates & Widgets](#v211---page-templates--widgets) ✅
 - [v2.12 - Community & Users](#v212---community--users) 📋
 - [v2.13 - Marketplace](#v213---marketplace-integration) 📋
 - [Future Considerations](#future-considerations)
@@ -451,7 +451,7 @@ Focus: Enhanced Posts block with featured post badges, hero layouts, and improve
 
 ## v2.11 - Page Templates & Widgets
 
-**Status: 🔄 In Progress**
+**Status: ✅ Released (v2.11.0 - v2.11.6)**
 
 Focus: WordPress-like page templates with configurable sidebar widgets.
 
@@ -487,6 +487,16 @@ Focus: WordPress-like page templates with configurable sidebar widgets.
 ### Documentation
 - [x] Site owner guide (templates & widgets usage)
 - [x] Developer guide (custom templates & widgets)
+
+### Self-Updater Improvements (v2.11.1 - v2.11.6)
+- [x] Skip database backup option when mysqldump/pg_dump unavailable
+- [x] Acknowledgment checkbox for non-technical users
+- [x] Server-side guard to prevent bypass of backup acknowledgment
+- [x] Run `composer install` during updates to sync dependencies
+- [x] Robust composer binary detection (config override, known paths, PATH lookup)
+- [x] Support for `composer.phar` with automatic PHP binary prefix
+- [x] Dynamic version reading from `composer.json`
+- [x] Fix version display when user has published config
 
 ---
 
@@ -612,7 +622,7 @@ We welcome community input on our roadmap:
 | v2.8.5 | ✅ Released | Animations | Block entrance animations, stagger effects |
 | v2.9 | ✅ Released | Plugins | Plugin Manager updates, search, one-click updates |
 | v2.10 | ✅ Released | Posts | Featured post badges, hero layout, card styling |
-| v2.11 | 🔄 In Progress | Templates | Page templates, sidebar widgets, TOC |
+| v2.11 | ✅ Released | Templates | Page templates, sidebar widgets, TOC, self-updater improvements |
 | v2.12 | 📋 Planned | Community | Comments, User profiles, Analytics |
 | v2.13 | 📋 Planned | Ecosystem | Marketplace integration |
 | Pro | 🔄 Ongoing | Premium | Advanced blocks, Analytics, AI Content, Translation |
@@ -627,4 +637,4 @@ We welcome community input on our roadmap:
 
 ---
 
-*Last updated: February 1, 2026 — v2.11.0 Page Templates & Widgets in progress*
+*Last updated: February 2, 2026 — v2.11.6 Self-Updater Improvements released*
