@@ -50,6 +50,12 @@ class UpdateManual extends Page
         return app(TallCmsUpdater::class)->isQueueAvailable();
     }
 
+    #[Computed]
+    public function skipDbBackup(): bool
+    {
+        return $this->updateState['skip_db_backup'] ?? false;
+    }
+
     /**
      * Check if running in standalone mode
      */

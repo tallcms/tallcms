@@ -52,6 +52,8 @@ class SystemUpdates extends Page
 
     public bool $quarantineConfirmed = false;
 
+    public bool $skipDbBackup = false;
+
     public static function getNavigationIcon(): string
     {
         return 'heroicon-o-arrow-path';
@@ -94,6 +96,7 @@ class SystemUpdates extends Page
         $this->latestRelease = $updater->checkForUpdates();
         $this->updateAvailable = $updater->isUpdateAvailable();
         $this->preflightChecks = $updater->runPreflightChecks();
+        $this->dbBackupCapability = $updater->checkDatabaseBackupCapability();
 
         Notification::make()
             ->title('Update check complete')
@@ -116,6 +119,19 @@ class SystemUpdates extends Page
 
                 return;
             }
+        }
+
+        // SERVER-SIDE GUARD: Block update if backup required but not capable AND not acknowledged
+        $requireDbBackup = config('tallcms.updates.require_db_backup', true);
+        $dbCapable = $this->dbBackupCapability['capable'] ?? false;
+        if ($requireDbBackup && !$dbCapable && !$this->skipDbBackup) {
+            Notification::make()
+                ->title('Database backup acknowledgment required')
+                ->body('Please acknowledge the database backup warning before proceeding.')
+                ->danger()
+                ->send();
+
+            return;
         }
 
         try {
@@ -148,6 +164,7 @@ class SystemUpdates extends Page
             'version' => $targetVersion,
             'started_at' => now()->toIso8601String(),
             'steps' => [],
+            'skip_db_backup' => $this->skipDbBackup,
         ]);
 
         // Try execution methods in order
@@ -187,12 +204,13 @@ class SystemUpdates extends Page
 
         $php = $this->findPhpBinary();
         $artisan = base_path('artisan');
+        $skipDbFlag = $this->skipDbBackup ? ' --skip-db-backup' : '';
 
         if (PHP_OS_FAMILY === 'Windows') {
-            pclose(popen("start /B {$php} {$artisan} tallcms:update --target={$targetVersion} --force > {$logFile} 2>&1", 'r'));
+            pclose(popen("start /B {$php} {$artisan} tallcms:update --target={$targetVersion} --force{$skipDbFlag} > {$logFile} 2>&1", 'r'));
         } else {
             // Redirect stdin from /dev/null, stdout/stderr to log file, run in background
-            exec("{$php} {$artisan} tallcms:update --target={$targetVersion} --force > {$logFile} 2>&1 < /dev/null &");
+            exec("{$php} {$artisan} tallcms:update --target={$targetVersion} --force{$skipDbFlag} > {$logFile} 2>&1 < /dev/null &");
         }
 
         Log::info('SystemUpdates: Started update via exec', ['version' => $targetVersion]);
@@ -206,7 +224,7 @@ class SystemUpdates extends Page
             return null;
         }
 
-        TallCmsUpdateJob::dispatch($targetVersion)
+        TallCmsUpdateJob::dispatch($targetVersion, $this->skipDbBackup)
             ->onQueue('tallcms-updates');
 
         Log::info('SystemUpdates: Dispatched update job', ['version' => $targetVersion]);

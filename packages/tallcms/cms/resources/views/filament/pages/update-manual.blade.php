@@ -26,12 +26,12 @@
                     Run this command via SSH or your hosting control panel:
                 </p>
                 <div class="relative">
-                    <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto font-mono">php artisan tallcms:update --target={{ $this->targetVersion }} --force</pre>
+                    <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto font-mono">php artisan tallcms:update --target={{ $this->targetVersion }} --force{{ $this->skipDbBackup ? ' --skip-db-backup' : '' }}</pre>
                     <button
                         type="button"
                         x-data="{ copied: false }"
                         x-on:click="
-                            navigator.clipboard.writeText('php artisan tallcms:update --target={{ $this->targetVersion }} --force');
+                            navigator.clipboard.writeText('php artisan tallcms:update --target={{ $this->targetVersion }} --force{{ $this->skipDbBackup ? ' --skip-db-backup' : '' }}');
                             copied = true;
                             setTimeout(() => copied = false, 2000);
                         "
