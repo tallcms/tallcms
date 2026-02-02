@@ -328,6 +328,15 @@ class TallCmsServiceProvider extends PackageServiceProvider
     {
         parent::packageBooted();
 
+        // Override version from composer.json (ensures correct version even with published config)
+        $composerJson = __DIR__ . '/../composer.json';
+        if (file_exists($composerJson)) {
+            $data = json_decode(file_get_contents($composerJson), true);
+            if (isset($data['version'])) {
+                config(['tallcms.version' => $data['version']]);
+            }
+        }
+
         // Publish Scribe config for API documentation
         $this->publishes([
             __DIR__.'/../config/scribe.php' => config_path('scribe.php'),
