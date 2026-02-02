@@ -260,7 +260,23 @@ class TallCmsUpdate extends Command
             Artisan::call('migrate', ['--force' => true]);
             $this->line(Artisan::output());
 
-            // Step 14: Clear caches
+            // Step 14: Update composer dependencies
+            $this->updateStep('composer', 'Installing composer dependencies...');
+
+            $composerOutput = [];
+            $composerExitCode = 0;
+            exec('composer install --no-interaction --no-dev --optimize-autoloader 2>&1', $composerOutput, $composerExitCode);
+
+            if ($composerExitCode !== 0) {
+                $this->warn('Composer install had issues:');
+                foreach ($composerOutput as $line) {
+                    $this->line('  ' . $line);
+                }
+            } else {
+                $this->components->info('Composer dependencies updated.');
+            }
+
+            // Step 15: Clear caches
             $this->updateStep('clearing_cache', 'Clearing caches...');
 
             Artisan::call('config:clear');
