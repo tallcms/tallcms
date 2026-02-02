@@ -265,7 +265,8 @@ class TallCmsUpdate extends Command
 
             $composerOutput = [];
             $composerExitCode = 0;
-            exec('composer install --no-interaction --no-dev --optimize-autoloader 2>&1', $composerOutput, $composerExitCode);
+            $basePath = base_path();
+            exec("composer install --no-interaction --no-dev --optimize-autoloader -d {$basePath} 2>&1", $composerOutput, $composerExitCode);
 
             if ($composerExitCode !== 0) {
                 throw new UpdateException('Composer install failed: ' . implode("\n", $composerOutput));
