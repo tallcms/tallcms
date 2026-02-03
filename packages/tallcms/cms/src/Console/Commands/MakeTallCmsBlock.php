@@ -54,7 +54,7 @@ class MakeTallCmsBlock extends Command
         $this->createBlockTemplate($kebabName, $className);
 
         $this->info("TallCMS block '{$className}' created successfully!");
-        $this->info("Block class: app/Filament/Forms/Components/RichEditor/RichContentCustomBlocks/{$className}.php");
+        $this->info("Block class: app/Filament/Blocks/{$className}.php");
         $this->info("Template: resources/views/cms/blocks/{$kebabName}.blade.php");
         $this->newLine();
         $this->info('✅ No registration required! The block will be auto-discovered and available immediately.');
@@ -72,7 +72,7 @@ class MakeTallCmsBlock extends Command
      */
     protected function createBlockClass(string $className, string $kebabName, string $snakeName, string $titleName): void
     {
-        $classPath = app_path("Filament/Forms/Components/RichEditor/RichContentCustomBlocks/{$className}.php");
+        $classPath = app_path("Filament/Blocks/{$className}.php");
 
         // Ensure directory exists
         $this->files->ensureDirectoryExists(dirname($classPath));
@@ -115,7 +115,7 @@ class MakeTallCmsBlock extends Command
         return <<<'EOT'
 <?php
 
-namespace App\Filament\Forms\Components\RichEditor\RichContentCustomBlocks;
+namespace App\Filament\Blocks;
 
 use Filament\Actions\Action;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
@@ -189,7 +189,7 @@ class {{CLASS_NAME}} extends RichContentCustomBlock
 
     public static function toPreviewHtml(array $config): string
     {
-        return view('tallcms::cms.blocks.{{KEBAB_NAME}}', [
+        return view('cms.blocks.{{KEBAB_NAME}}', [
             'title' => $config['title'] ?? 'Sample Title',
             'description' => $config['description'] ?? 'Sample description text',
         ])->render();
@@ -197,7 +197,7 @@ class {{CLASS_NAME}} extends RichContentCustomBlock
 
     public static function toHtml(array $config, array $data): string
     {
-        return view('tallcms::cms.blocks.{{KEBAB_NAME}}', [
+        return view('cms.blocks.{{KEBAB_NAME}}', [
             'title' => $config['title'] ?? '',
             'description' => $config['description'] ?? '',
         ])->render();

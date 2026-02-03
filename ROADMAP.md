@@ -18,8 +18,9 @@ This roadmap outlines our vision for TallCMS development. We're committed to bui
 - [v2.9 - Plugin Manager](#v29---plugin-manager) ✅
 - [v2.10 - Featured Posts Enhancements](#v210---featured-posts-enhancements) ✅
 - [v2.11 - Page Templates & Widgets](#v211---page-templates--widgets) ✅
-- [v2.12 - Community & Users](#v212---community--users) 📋
-- [v2.13 - Marketplace](#v213---marketplace-integration) 📋
+- [v3.0 - Filament 5 & Livewire 4](#v30---filament-5--livewire-4) ✅
+- [v3.1 - Community & Users](#v31---community--users) 📋
+- [v3.2 - Marketplace](#v32---marketplace-integration) 📋
 - [Future Considerations](#future-considerations)
 - [How to Contribute](#how-to-contribute)
 
@@ -500,7 +501,38 @@ Focus: WordPress-like page templates with configurable sidebar widgets.
 
 ---
 
-## v2.12 - Community & Users
+## v3.0 - Filament 5 & Livewire 4
+
+**Status: ✅ Released (v3.0.0)**
+
+Focus: Major framework upgrade to Filament 5 and Livewire 4 for improved performance and modern Alpine.js patterns.
+
+### Framework Upgrades
+- [x] Filament 5.x support
+- [x] Livewire 4.x support
+- [x] Updated Alpine.js patterns for nested component scopes
+- [x] Asset republishing for new Livewire/Filament versions
+
+### Rich Editor Enhancements
+- [x] CMS Rich Editor with enhanced block panel
+- [x] Block search functionality
+- [x] Category grouping with collapsible sections
+- [x] Block icons in panel
+
+### Developer Experience
+- [x] Fixed `make:tallcms-block` command path and namespace
+- [x] Blocks auto-discovered from `app/Filament/Blocks/`
+- [x] Comprehensive CLI commands documentation
+- [x] Updated version compatibility checks
+
+### Breaking Changes
+- Requires Filament 5.x (previously 4.x)
+- Requires Livewire 4.x (previously 3.x)
+- Custom blocks should be placed in `app/Filament/Blocks/` (not nested RichContentCustomBlocks path)
+
+---
+
+## v3.1 - Community & Users
 
 Focus: Enable community interaction with your content.
 
@@ -527,7 +559,7 @@ Focus: Enable community interaction with your content.
 
 ---
 
-## v2.13 - Marketplace Integration
+## v3.2 - Marketplace Integration
 
 Focus: Connect to the official TallCMS marketplace for plugins and themes.
 
@@ -623,8 +655,9 @@ We welcome community input on our roadmap:
 | v2.9 | ✅ Released | Plugins | Plugin Manager updates, search, one-click updates |
 | v2.10 | ✅ Released | Posts | Featured post badges, hero layout, card styling |
 | v2.11 | ✅ Released | Templates | Page templates, sidebar widgets, TOC, self-updater improvements |
-| v2.12 | 📋 Planned | Community | Comments, User profiles, Analytics |
-| v2.13 | 📋 Planned | Ecosystem | Marketplace integration |
+| v3.0 | ✅ Released | Framework | Filament 5, Livewire 4, enhanced block panel, CLI docs |
+| v3.1 | 📋 Planned | Community | Comments, User profiles, Analytics |
+| v3.2 | 📋 Planned | Ecosystem | Marketplace integration |
 | Pro | 🔄 Ongoing | Premium | Advanced blocks, Analytics, AI Content, Translation |
 
 ---
@@ -637,4 +670,4 @@ We welcome community input on our roadmap:
 
 ---
 
-*Last updated: February 2, 2026 — v2.11.6 Self-Updater Improvements released*
+*Last updated: February 3, 2026 — v3.0.0 Filament 5 & Livewire 4 released*

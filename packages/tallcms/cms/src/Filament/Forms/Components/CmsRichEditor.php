@@ -27,8 +27,7 @@ class CmsRichEditor extends RichEditor
     {
         parent::setUp();
 
-        // Only use enhanced view if Filament v4.x is installed
-        // Otherwise, use parent's view for full compatibility
+        // Use enhanced view for Filament v4.x/v5.x
         if (static::isFilamentCompatible()) {
             $this->view = 'tallcms::filament.forms.components.cms-rich-editor';
         }
@@ -57,7 +56,7 @@ class CmsRichEditor extends RichEditor
     /**
      * Check if the current Filament version is compatible with the enhanced panel.
      *
-     * We require Filament v4.x for the enhanced block panel features.
+     * We require Filament v4.x or v5.x for the enhanced block panel features.
      * If incompatible, the view will fall back to the standard panel.
      */
     public static function isFilamentCompatible(): bool
@@ -71,7 +70,7 @@ class CmsRichEditor extends RichEditor
 
             return $version
                 && version_compare($version, '4.0.0', '>=')
-                && version_compare($version, '5.0.0', '<');
+                && version_compare($version, '6.0.0', '<');
         } catch (\Throwable) {
             return false;
         }

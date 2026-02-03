@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "tallcms/cms",
     "type": "library",
-    "version": "2.11.7",
+    "version": "3.0.0",
     "description": "TallCMS - A modern CMS for Filament admin panels. Works standalone or as a plugin in existing Filament apps.",
     "keywords": [
         "cms",
@@ -37,11 +37,11 @@
     ],
     "require": {
         "php": "^8.2",
-        "filament/filament": "^4.0",
+        "filament/filament": "^4.0 || ^5.0",  
         "intervention/image": "^3.0",
-        "lara-zeus/spatie-translatable": "^1.0",
+        "lara-zeus/spatie-translatable": "^1.0 || ^2.0",   
         "spatie/laravel-package-tools": "^1.16",
-        "bezhansalleh/filament-shield": "^4.0",
+        "bezhansalleh/filament-shield": "^4.0 || ^5.0",
         "spatie/laravel-permission": "^6.0",
         "ezyang/htmlpurifier": "^4.19",
         "paragonie/sodium_compat": "^2.0",

@@ -30,14 +30,17 @@
     "require": {
         "php": "^8.2",
         "aws/aws-sdk-php": "^3.369",
+        "filament/filament": "^5.0",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "league/flysystem-aws-s3-v3": "^3.30",
+        "livewire/livewire": "^4.0",
         "symfony/yaml": "^7.4",
         "tallcms/cms": "^2.5"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "filament/upgrade": "^5.0",
         "knuckleswtf/scribe": "^5.6",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
