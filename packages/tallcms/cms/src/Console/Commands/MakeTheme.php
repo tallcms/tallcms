@@ -631,38 +631,44 @@ GITIGNORE;
     <style>[x-cloak] { display: none !important; }</style>
 </head>
 <body class="min-h-screen bg-base-100 text-base-content">
-    <!-- Navbar -->
-    <div class="navbar bg-base-100 shadow-sm sticky top-0 z-50">
-        <div class="navbar-start">
-            <!-- Mobile Menu -->
-            <div class="dropdown lg:hidden">
-                <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                    </svg>
+    <!-- Header -->
+    @if(function_exists('pro_header_active') && pro_header_active('header'))
+        {{-- TallCMS Pro Full Header (Mode 2) --}}
+        <x-tallcms-pro::full-header location="header" />
+    @else
+        {{-- Theme's Default Navbar --}}
+        <div class="navbar bg-base-100 shadow-sm sticky top-0 z-50">
+            <div class="navbar-start">
+                <!-- Mobile Menu -->
+                <div class="dropdown lg:hidden">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </div>
+                    <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-lg bg-base-100 rounded-box w-52">
+                        <x-menu location="header" style="vertical" />
+                    </ul>
                 </div>
-                <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-lg bg-base-100 rounded-box w-52">
-                    <x-menu location="header" style="vertical" />
+                <!-- Logo -->
+                <a href="{{ tallcms_home_url() }}" class="btn btn-ghost text-xl font-bold">
+                    {{ config('app.name') }}
+                </a>
+            </div>
+
+            <!-- Desktop Menu -->
+            <div class="navbar-center hidden lg:flex">
+                <ul class="menu menu-horizontal px-1">
+                    <x-menu location="header" style="horizontal" />
                 </ul>
             </div>
-            <!-- Logo -->
-            <a href="{{ tallcms_home_url() }}" class="btn btn-ghost text-xl font-bold">
-                {{ config('app.name') }}
-            </a>
-        </div>
 
-        <!-- Desktop Menu -->
-        <div class="navbar-center hidden lg:flex">
-            <ul class="menu menu-horizontal px-1">
-                <x-menu location="header" style="horizontal" />
-            </ul>
+            <div class="navbar-end gap-2">
+                <!-- Theme Switcher -->
+                {$themeSwitcher}
+            </div>
         </div>
-
-        <div class="navbar-end gap-2">
-            <!-- Theme Switcher -->
-            {$themeSwitcher}
-        </div>
-    </div>
+    @endif
 
     {{-- Breadcrumbs --}}
     @if(\$showBreadcrumbs ?? false)
