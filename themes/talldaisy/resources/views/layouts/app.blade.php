@@ -94,55 +94,61 @@
         <div class="drawer-content">
     @endif
             <!-- Navbar -->
-            <div class="navbar bg-base-100 shadow-sm sticky top-0 z-50">
-                <div class="navbar-start">
-                    <!-- Mobile Menu -->
-                    <div class="dropdown lg:hidden">
-                        <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                            </svg>
+            @if(function_exists('pro_header_active') && pro_header_active('header'))
+                {{-- Mode 2: Pro handles entire header --}}
+                <x-tallcms-pro::full-header location="header" />
+            @else
+                {{-- Original theme navbar --}}
+                <div class="navbar bg-base-100 shadow-sm sticky top-0 z-50">
+                    <div class="navbar-start">
+                        <!-- Mobile Menu -->
+                        <div class="dropdown lg:hidden">
+                            <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                                </svg>
+                            </div>
+                            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-lg bg-base-100 rounded-box w-52">
+                                <x-menu location="header" style="vertical" />
+                            </ul>
                         </div>
-                        <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-lg bg-base-100 rounded-box w-52">
-                            <x-menu location="header" style="vertical" />
+                        <!-- Logo -->
+                        @php
+                            $logo = \TallCms\Cms\Models\SiteSetting::get('logo');
+                            $siteName = \TallCms\Cms\Models\SiteSetting::get('site_name', config('app.name'));
+                        @endphp
+                        <a href="{{ tallcms_home_url() }}" class="btn btn-ghost text-xl font-bold">
+                            @if($logo)
+                                <img src="{{ Storage::disk(cms_media_disk())->url($logo) }}"
+                                     alt="{{ $siteName }}"
+                                     class="h-8 w-auto">
+                            @else
+                                {{ $siteName }}
+                            @endif
+                        </a>
+                    </div>
+
+                    <!-- Desktop Menu -->
+                    <div class="navbar-center hidden lg:flex">
+                        <ul class="menu menu-horizontal px-1">
+                            <x-menu location="header" style="horizontal" />
                         </ul>
                     </div>
-                    <!-- Logo -->
-                    @php
-                        $logo = \TallCms\Cms\Models\SiteSetting::get('logo');
-                        $siteName = \TallCms\Cms\Models\SiteSetting::get('site_name', config('app.name'));
-                    @endphp
-                    <a href="{{ tallcms_home_url() }}" class="btn btn-ghost text-xl font-bold">
-                        @if($logo)
-                            <img src="{{ Storage::disk(cms_media_disk())->url($logo) }}"
-                                 alt="{{ $siteName }}"
-                                 class="h-8 w-auto">
-                        @else
-                            {{ $siteName }}
+
+                    <div class="navbar-end gap-2">
+                        <!-- Search -->
+                        @include('theme.talldaisy::components.header-search')
+
+                        <!-- Language Switcher -->
+                        @include('theme.talldaisy::components.language-switcher')
+
+                        <!-- Theme Switcher -->
+                        @if(supports_theme_controller())
+                            @include('theme.talldaisy::components.theme-switcher')
                         @endif
-                    </a>
+                    </div>
                 </div>
-
-                <!-- Desktop Menu -->
-                <div class="navbar-center hidden lg:flex">
-                    <ul class="menu menu-horizontal px-1">
-                        <x-menu location="header" style="horizontal" />
-                    </ul>
-                </div>
-
-                <div class="navbar-end gap-2">
-                    <!-- Search -->
-                    @include('theme.talldaisy::components.header-search')
-
-                    <!-- Language Switcher -->
-                    @include('theme.talldaisy::components.language-switcher')
-
-                    <!-- Theme Switcher -->
-                    @if(supports_theme_controller())
-                        @include('theme.talldaisy::components.theme-switcher')
-                    @endif
-                </div>
-            </div>
+            @endif
 
             {{-- Breadcrumbs --}}
             @if($showBreadcrumbs ?? false)
