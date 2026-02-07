@@ -25,20 +25,20 @@
 >
     <div class="fi-sn-tree-item-rowinfo flex justify-between relative group px-4 gap-4 hover:bg-gray-50 dark:hover:bg-white/5">
         <div class="flex gap-4 grow">
-            <button 
+            <button
                 class="fi-sn-tree-item-handle flex items-center ltr:rounded-l-lg rtl:rounded-r-lg"
-                type="button" 
+                type="button"
                 data-sortable-handle
             >
-                @svg('heroicon-m-bars-2', 'text-gray-400 w-5 h-5 cursor-move ltr:-mr-2 rtl:-ml-2')
+                @svg('heroicon-m-bars-2', 'text-gray-400 dark:text-gray-500 w-5 h-5 cursor-move ltr:-mr-2 rtl:-ml-2')
             </button>
 
-            <div class="appearance-none px-3 py-4 ltr:text-left rtl:text-right inline-block">
+            <div class="appearance-none px-3 py-4 ltr:text-left rtl:text-right inline-block text-gray-900 dark:text-white">
                 <span>{{ $this->getRecordLabel($record) }}</span>
             </div>
 
             @if($record->children->isNotEmpty())
-                <button type="button" x-on:click="open = !open" title="Toggle children" class="appearance-none text-gray-500">
+                <button type="button" x-on:click="open = !open" title="Toggle children" class="appearance-none text-gray-500 dark:text-gray-400">
                     <svg class="w-5 h-5 transition ease-in-out duration-200" x-bind:class="{
                         '-rotate-90': !open,
                     }" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
