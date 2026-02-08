@@ -24,6 +24,7 @@ Welcome to TallCMS — a modern, block-based CMS built on Laravel and Filament.
 | [Media Library](media) | Upload and manage images |
 | [SEO](seo) | Sitemaps, meta tags, structured data |
 | [Menus](menus) | Full navigation guide |
+| [Mega Menu](mega-menu) | Advanced navigation with badges, CTAs, templates |
 | [Site Settings](site-settings) | Logo, contact info, SPA mode |
 
 ### Building Themes & Plugins
@@ -31,6 +32,7 @@ Welcome to TallCMS — a modern, block-based CMS built on Laravel and Filament.
 | Guide | Description |
 |-------|-------------|
 | [Theme Development](themes) | Create custom themes |
+| [Theme Switcher](theme-switcher) | Enable runtime theme switching |
 | [Plugin Development](plugins) | Extend TallCMS functionality |
 | [Block Development](block-development) | Build custom content blocks |
 | [Block Styling](block-styling) | daisyUI styling patterns |
