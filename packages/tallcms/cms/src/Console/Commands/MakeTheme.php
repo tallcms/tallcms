@@ -408,6 +408,10 @@ JS;
 /* Scan paths for class discovery */
 @source '../views/**/*.blade.php';
 @source '../../../../resources/views/**/*.blade.php';
+/* TallCMS Core package views (breadcrumbs, menu, etc.) */
+@source '../../../../packages/tallcms/cms/resources/views/**/*.blade.php';
+/* TallCMS Block PHP files (contains daisyUI class definitions) */
+@source '../../../../packages/tallcms/cms/src/Filament/Blocks/**/*.php';
 /* Plugins - Tailwind v4 silently ignores missing paths */
 @source '../../../../plugins/tallcms/mega-menu/resources/views/**/*.blade.php';
 @source '../../../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php';
@@ -484,6 +488,10 @@ CSS;
 /* Scan paths for class discovery */
 @source '../views/**/*.blade.php';
 @source '../../../../resources/views/**/*.blade.php';
+/* TallCMS Core package views (breadcrumbs, menu, etc.) */
+@source '../../../../packages/tallcms/cms/resources/views/**/*.blade.php';
+/* TallCMS Block PHP files (contains daisyUI class definitions) */
+@source '../../../../packages/tallcms/cms/src/Filament/Blocks/**/*.php';
 /* Plugins - Tailwind v4 silently ignores missing paths */
 @source '../../../../plugins/tallcms/mega-menu/resources/views/**/*.blade.php';
 @source '../../../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php';
