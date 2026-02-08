@@ -1,12 +1,12 @@
 {
-    "name": "Minimal",
-    "slug": "minimal",
+    "name": "Autumn",
+    "slug": "autumn",
     "version": "1.0.0",
-    "description": "Simple, distraction-free design for content-focused sites",
+    "description": "Warm autumn colors with cozy dark mode",
     "author": "TallCMS",
     "daisyui": {
-        "preset": "lofi",
-        "prefersDark": "nord"
+        "preset": "autumn",
+        "prefersDark": "black"
     },
     "supports": {
         "dark_mode": true,

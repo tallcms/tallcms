@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 @plugin "daisyui" {
-  themes: autumn --default, coffee --prefersdark;
+  themes: autumn --default, black --prefersdark;
 }
 
 /* Scan paths for class discovery */

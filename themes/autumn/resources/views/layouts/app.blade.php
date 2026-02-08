@@ -93,7 +93,7 @@
     <footer class="footer footer-center bg-base-200 text-base-content p-10">
         <aside>
             <p class="font-bold text-lg">{{ config('app.name') }}</p>
-            <p>Minimal theme for TallCMS</p>
+            <p>Autumn theme for TallCMS</p>
         </aside>
         <nav>
             <x-menu location="footer" style="footer" />

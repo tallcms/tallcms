@@ -1,15 +1,15 @@
 {
-    "name": "Minimal",
-    "slug": "minimal",
+    "name": "Candy",
+    "slug": "candy",
     "version": "1.0.0",
-    "description": "Simple, distraction-free design for content-focused sites",
+    "description": "Playful pastel colors with a sweet aesthetic",
     "author": "TallCMS",
     "daisyui": {
-        "preset": "lofi",
-        "prefersDark": "nord"
+        "preset": "candy",
+        "custom": true
     },
     "supports": {
-        "dark_mode": true,
+        "dark_mode": false,
         "theme_controller": false
     },
     "screenshots": {

@@ -8,17 +8,25 @@
         "preset": "autumn",
         "prefersDark": "coffee"
     },
-    "screenshots": {
-        "primary": "screenshot.png"
-    },
     "supports": {
         "dark_mode": true,
         "theme_controller": false
+    },
+    "screenshots": {
+        "primary": "screenshot.png"
     },
     "build": {
         "entries": [
             "resources/css/app.css",
             "resources/js/app.js"
         ]
+    },
+    "templates": {
+        "example": {
+            "label": "Example Template",
+            "description": "A custom example template for this theme",
+            "has_sidebar": false,
+            "minimal_chrome": false
+        }
     }
 }

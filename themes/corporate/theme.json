@@ -6,20 +6,27 @@
     "author": "TallCMS",
     "daisyui": {
         "preset": "corporate",
-        "prefersDark": "business",
-        "presets": ["corporate", "business"]
-    },
-    "screenshots": {
-        "primary": "screenshot.png"
+        "prefersDark": "business"
     },
     "supports": {
         "dark_mode": true,
         "theme_controller": false
+    },
+    "screenshots": {
+        "primary": "screenshot.png"
     },
     "build": {
         "entries": [
             "resources/css/app.css",
             "resources/js/app.js"
         ]
+    },
+    "templates": {
+        "example": {
+            "label": "Example Template",
+            "description": "A custom example template for this theme",
+            "has_sidebar": false,
+            "minimal_chrome": false
+        }
     }
 }

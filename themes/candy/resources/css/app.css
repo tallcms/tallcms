@@ -1,0 +1,64 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@plugin "daisyui";
+
+/* Custom daisyUI theme - Customize these colors as needed */
+/* See: https://daisyui.com/docs/themes/#custom-themes */
+@plugin "daisyui/theme" {
+  name: "candy";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+
+  /* Base colors */
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(96% 0 0);
+  --color-base-300: oklch(92% 0 0);
+  --color-base-content: oklch(20% 0 0);
+
+  /* Brand colors */
+  --color-primary: oklch(55% 0.3 260);
+  --color-primary-content: oklch(100% 0 0);
+  --color-secondary: oklch(70% 0.2 330);
+  --color-secondary-content: oklch(100% 0 0);
+  --color-accent: oklch(75% 0.15 180);
+  --color-accent-content: oklch(20% 0 0);
+
+  /* Neutral */
+  --color-neutral: oklch(30% 0.02 260);
+  --color-neutral-content: oklch(98% 0 0);
+
+  /* Status colors */
+  --color-info: oklch(65% 0.2 240);
+  --color-info-content: oklch(100% 0 0);
+  --color-success: oklch(65% 0.2 150);
+  --color-success-content: oklch(100% 0 0);
+  --color-warning: oklch(75% 0.15 85);
+  --color-warning-content: oklch(20% 0 0);
+  --color-error: oklch(60% 0.25 25);
+  --color-error-content: oklch(100% 0 0);
+
+  /* Border radius */
+  --radius-selector: 0.5rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+
+  /* Sizing */
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+/* Scan paths for class discovery */
+@source '../views/**/*.blade.php';
+@source '../../../../resources/views/**/*.blade.php';
+/* Plugins - Tailwind v4 silently ignores missing paths */
+@source '../../../../plugins/tallcms/mega-menu/resources/views/**/*.blade.php';
+@source '../../../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php';
+
+/* TallCMS Core Styles */
+@import "../../../../resources/css/tallcms.css";
+
+/* Theme-specific styles */
