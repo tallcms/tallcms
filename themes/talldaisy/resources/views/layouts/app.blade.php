@@ -94,8 +94,11 @@
         <div class="drawer-content">
     @endif
             <!-- Navbar -->
-            @if(function_exists('pro_header_active') && pro_header_active('header'))
-                {{-- Mode 2: Pro handles entire header --}}
+            @if(function_exists('mega_menu_header_active') && mega_menu_header_active('header'))
+                {{-- Mega Menu Full Header --}}
+                <x-mega-menu::header location="header" />
+            @elseif(function_exists('pro_header_active') && pro_header_active('header'))
+                {{-- TallCMS Pro Full Header (Legacy) --}}
                 <x-tallcms-pro::full-header location="header" />
             @else
                 {{-- Original theme navbar --}}

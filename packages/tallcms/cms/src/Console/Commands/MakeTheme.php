@@ -408,7 +408,8 @@ JS;
 /* Scan paths for class discovery */
 @source '../views/**/*.blade.php';
 @source '../../../../resources/views/**/*.blade.php';
-/* Pro plugin - Tailwind v4 silently ignores missing paths */
+/* Plugins - Tailwind v4 silently ignores missing paths */
+@source '../../../../plugins/tallcms/mega-menu/resources/views/**/*.blade.php';
 @source '../../../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php';
 
 /* TallCMS Core Styles */
@@ -483,7 +484,8 @@ CSS;
 /* Scan paths for class discovery */
 @source '../views/**/*.blade.php';
 @source '../../../../resources/views/**/*.blade.php';
-/* Pro plugin - Tailwind v4 silently ignores missing paths */
+/* Plugins - Tailwind v4 silently ignores missing paths */
+@source '../../../../plugins/tallcms/mega-menu/resources/views/**/*.blade.php';
 @source '../../../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php';
 
 /* TallCMS Core Styles */
@@ -632,8 +634,11 @@ GITIGNORE;
 </head>
 <body class="min-h-screen bg-base-100 text-base-content">
     <!-- Header -->
-    @if(function_exists('pro_header_active') && pro_header_active('header'))
-        {{-- TallCMS Pro Full Header (Mode 2) --}}
+    @if(function_exists('mega_menu_header_active') && mega_menu_header_active('header'))
+        {{-- Mega Menu Full Header --}}
+        <x-mega-menu::header location="header" />
+    @elseif(function_exists('pro_header_active') && pro_header_active('header'))
+        {{-- TallCMS Pro Full Header (Mode 2) - Legacy --}}
         <x-tallcms-pro::full-header location="header" />
     @else
         {{-- Theme's Default Navbar --}}

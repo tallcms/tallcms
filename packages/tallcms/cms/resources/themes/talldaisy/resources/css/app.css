@@ -5,6 +5,7 @@
 @source "../views/**/*.blade.php";
 @source "../../../../resources/views/**/*.blade.php";
 @source "../../../../resources/views/cms/blocks/**/*.blade.php";
+@source "../../../../plugins/tallcms/mega-menu/resources/views/**/*.blade.php";
 @source "../../../../plugins/tallcms/pro/resources/views/blocks/**/*.blade.php";
 @source "../../../../packages/tallcms/cms/resources/views/**/*.blade.php";
 /* TallCMS Block PHP files (contains DaisyUI class definitions) */
