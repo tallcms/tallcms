@@ -132,5 +132,13 @@ return [
 
         // Hide default locale from URL (/ instead of /en/)
         'hide_default_locale' => env('TALLCMS_HIDE_DEFAULT_LOCALE', true),
+
+        'search' => [
+            'enabled' => env('TALLCMS_SEARCH_ENABLED', true),
+            'min_query_length' => 2,
+            'results_per_page' => 10,
+            'max_results_per_type' => 50,
+            'searchable_types' => ['pages', 'posts'],
+        ],
     ],
 ];
