@@ -56,14 +56,14 @@ class InstallerRunner
                 return $this->runTallCmsSetup($config['admin']);
             });
 
-            // Step 6: Seed website content (homepage)
-            $this->runStep('Seeding website content', function () {
-                return $this->runSeeder('Database\\Seeders\\TallcmsWebsiteSeeder');
-            });
-
-            // Step 7: Seed documentation
+            // Step 6: Seed documentation (creates categories and posts)
             $this->runStep('Seeding documentation', function () {
                 return $this->runSeeder('Database\\Seeders\\DocumentationSeeder');
+            });
+
+            // Step 7: Seed website content (homepage, docs page, menus — depends on categories from step 6)
+            $this->runStep('Seeding website content', function () {
+                return $this->runSeeder('Database\\Seeders\\TallcmsWebsiteSeeder');
             });
 
             // Step 8: Clear all caches

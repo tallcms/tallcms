@@ -6,6 +6,10 @@ use App\Enums\ContentStatus;
 use App\Models\CmsPage;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
+use TallCms\Cms\Models\CmsCategory;
+use TallCms\Cms\Models\TallcmsMenu;
+use TallCms\Cms\Models\TallcmsMenuItem;
 
 class TallcmsWebsiteSeeder extends Seeder
 {
@@ -19,29 +23,95 @@ class TallcmsWebsiteSeeder extends Seeder
         ]);
 
         $this->createHomepage();
+        $this->createDocumentationPage();
+        $this->createHeaderMenu();
 
-        $this->command->info('TallCMS homepage created successfully!');
+        $this->command->info('TallCMS website seeded successfully!');
     }
 
     protected function createHomepage(): void
     {
-        $page = CmsPage::updateOrCreate(
-            ['slug' => 'home'],
-            [
+        $page = CmsPage::withSlug('home')->first();
+
+        if (! $page) {
+            $page = CmsPage::create([
                 'title' => 'Home',
+                'slug' => 'home',
                 'meta_title' => 'TallCMS - The Modern CMS for Laravel Developers',
                 'meta_description' => 'Build beautiful, content-rich websites with the TALL stack, Filament 4, and 30+ DaisyUI themes. Free and open source.',
                 'status' => ContentStatus::Published->value,
                 'published_at' => now(),
                 'is_homepage' => true,
                 'author_id' => $this->author->id,
-            ]
-        );
+            ]);
+        }
 
         $page->setTranslation('content', app()->getLocale(), $this->getHomepageContent());
         $page->save();
 
         $this->command->info('Created homepage');
+    }
+
+    protected function createDocumentationPage(): void
+    {
+        $page = CmsPage::withSlug('documentation')->first();
+
+        if (! $page) {
+            $page = CmsPage::create([
+                'title' => 'Documentation',
+                'slug' => 'documentation',
+                'meta_title' => 'Documentation - TallCMS',
+                'meta_description' => 'Learn how to install, configure, and build with TallCMS.',
+                'status' => ContentStatus::Published->value,
+                'published_at' => now(),
+                'is_homepage' => false,
+                'author_id' => $this->author->id,
+            ]);
+        }
+
+        $page->setTranslation('content', app()->getLocale(), $this->getDocumentationContent());
+        $page->save();
+
+        $this->command->info('Created documentation page');
+    }
+
+    protected function createHeaderMenu(): void
+    {
+        $menu = TallcmsMenu::firstOrCreate(
+            ['location' => 'header'],
+            [
+                'name' => 'Header',
+                'is_active' => true,
+            ]
+        );
+
+        // Skip if menu already has items
+        if ($menu->allItems()->count() > 0) {
+            $this->command->info('Header menu already has items, skipping');
+
+            return;
+        }
+
+        $homePage = CmsPage::withSlug('home')->first();
+        $docsPage = CmsPage::withSlug('documentation')->first();
+
+        TallcmsMenuItem::create([
+            'menu_id' => $menu->id,
+            'label' => 'Home',
+            'type' => 'page',
+            'page_id' => $homePage?->id,
+            'is_active' => true,
+        ]);
+
+        TallcmsMenuItem::create([
+            'menu_id' => $menu->id,
+            'label' => 'Documentation',
+            'type' => 'page',
+            'page_id' => $docsPage?->id,
+            'is_active' => true,
+        ]);
+
+        $this->command->info('Created header menu');
     }
 
     /**
@@ -66,6 +136,63 @@ class TallcmsWebsiteSeeder extends Seeder
         return [
             'type' => 'doc',
             'content' => $transformedBlocks,
+        ];
+    }
+
+    protected function getDocumentationContent(): array
+    {
+        // Look up the "Getting Started" category by slug
+        $category = CmsCategory::withSlug('getting-started')->first();
+        $categoryIds = $category ? [$category->id] : [];
+
+        $blocks = [
+            [
+                'type' => 'heading',
+                'attrs' => ['level' => 2],
+                'content' => [
+                    ['type' => 'text', 'text' => 'Getting Started'],
+                ],
+            ],
+            [
+                'type' => 'customBlock',
+                'attrs' => [
+                    'id' => 'posts',
+                    'config' => [
+                        'block_uuid' => (string) Str::uuid(),
+                        'categories' => $categoryIds,
+                        'featured_only' => false,
+                        'posts_count' => 6,
+                        'offset' => 0,
+                        'sort_by' => 'oldest',
+                        'show_image' => true,
+                        'show_excerpt' => true,
+                        'show_date' => true,
+                        'show_author' => false,
+                        'show_categories' => true,
+                        'show_read_more' => true,
+                        'empty_message' => null,
+                        'layout' => 'grid',
+                        'columns' => 3,
+                        'enable_pagination' => false,
+                        'show_featured_badge' => false,
+                        'featured_card_style' => 'default',
+                        'content_width' => 'inherit',
+                        'background' => 'bg-base-100',
+                        'padding' => 'py-16',
+                        'first_section' => false,
+                        'animation_type' => null,
+                        'animation_duration' => 'anim-duration-700',
+                        'anchor_id' => null,
+                        'css_classes' => null,
+                    ],
+                ],
+                'content' => [],
+            ],
+        ];
+
+        return [
+            'type' => 'doc',
+            'content' => $blocks,
         ];
     }
 
