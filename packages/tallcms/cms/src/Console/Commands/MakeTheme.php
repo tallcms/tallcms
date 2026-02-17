@@ -644,10 +644,10 @@ GITIGNORE;
     <!-- Header -->
     @if(function_exists('mega_menu_header_active') && mega_menu_header_active('header'))
         {{-- Mega Menu Full Header --}}
-        <x-mega-menu::header location="header" />
+        <x-dynamic-component component="mega-menu::header" location="header" />
     @elseif(function_exists('pro_header_active') && pro_header_active('header'))
         {{-- TallCMS Pro Full Header (Mode 2) - Legacy --}}
-        <x-tallcms-pro::full-header location="header" />
+        <x-dynamic-component component="tallcms-pro::full-header" location="header" />
     @else
         {{-- Theme's Default Navbar --}}
         <div class="navbar bg-base-100 shadow-sm sticky top-0 z-50">

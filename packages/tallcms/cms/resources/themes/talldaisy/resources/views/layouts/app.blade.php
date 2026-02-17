@@ -57,7 +57,7 @@
             <!-- Navbar -->
             @if(function_exists('mega_menu_header_active') && mega_menu_header_active('header'))
                 {{-- Mega Menu Full Header --}}
-                <x-mega-menu::header location="header" />
+                <x-dynamic-component component="mega-menu::header" location="header" />
             @else
             <div class="navbar bg-base-100 shadow-sm sticky top-0 z-50">
                 <div class="navbar-start">
