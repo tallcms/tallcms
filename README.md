@@ -236,7 +236,7 @@ tallcms/tallcms (Skeleton)     tallcms/cms (Package)
 ### Core Technologies
 
 - [Laravel](https://laravel.com/) - The PHP framework
-- [Filament v4](https://filamentphp.com/) - Admin panel framework
+- [Filament v5](https://filamentphp.com/) - Admin panel framework
 - [Livewire](https://laravel-livewire.com/) - Dynamic frontend
 - [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS
 - [daisyUI](https://daisyui.com/) - Tailwind component classes and themes
