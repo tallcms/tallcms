@@ -64,7 +64,7 @@ Configure site name, contact info, social links, and more.
 
 - **PHP**: 8.2+ with OpenSSL, PDO, Mbstring, GD extensions
 - **Laravel**: 11.0 or 12.0
-- **Filament**: 4.0
+- **Filament**: 5.0
 - **Database**: MySQL 8.0+, MariaDB 10.3+, or SQLite
 
 ## Installation
@@ -75,7 +75,7 @@ Configure site name, contact info, social links, and more.
 composer require tallcms/cms
 ```
 
-This will also install Filament 4.x as a dependency.
+This will also install Filament 5.x as a dependency.
 
 **2. Configure Filament (if not already done):**
 
