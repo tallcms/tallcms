@@ -119,7 +119,7 @@
         </div>
     </article>
 
-    @if(config('tallcms.comments.enabled', true) && $post->isPublished())
+    @if(($config['show_comments'] ?? config('tallcms.comments.enabled', true)) && $post->isPublished())
         <x-tallcms::comments :post="$post" />
     @endif
 </div>

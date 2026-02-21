@@ -699,6 +699,69 @@ class CommentSystemTest extends TestCase
         Notification::assertNothingSent();
     }
 
+    // ---------------------------------------------------------------
+    // Login route resolution tests (guest comments disabled UI)
+    // ---------------------------------------------------------------
+
+    /**
+     * Resolve a login URL using the same logic as comment-form.blade.php.
+     */
+    protected function resolveLoginUrl(): string
+    {
+        $loginRoute = config('tallcms.auth.login_route');
+
+        if ($loginRoute && (str_starts_with($loginRoute, '/') || str_starts_with($loginRoute, 'http'))) {
+            return $loginRoute;
+        }
+
+        if ($loginRoute && \Illuminate\Support\Facades\Route::has($loginRoute)) {
+            return route($loginRoute);
+        }
+
+        $filamentLogin = 'filament.' . config('tallcms.filament.panel_id', 'admin') . '.auth.login';
+        if (\Illuminate\Support\Facades\Route::has($filamentLogin)) {
+            return route($filamentLogin);
+        }
+
+        if (\Illuminate\Support\Facades\Route::has('login')) {
+            return route('login');
+        }
+
+        return url('/login');
+    }
+
+    public function test_login_route_config_as_path(): void
+    {
+        config(['tallcms.auth.login_route' => '/custom/login']);
+
+        $this->assertEquals('/custom/login', $this->resolveLoginUrl());
+    }
+
+    public function test_login_route_config_as_absolute_url(): void
+    {
+        config(['tallcms.auth.login_route' => 'https://auth.example.com/login']);
+
+        $this->assertEquals('https://auth.example.com/login', $this->resolveLoginUrl());
+    }
+
+    public function test_login_route_config_as_named_route(): void
+    {
+        \Illuminate\Support\Facades\Route::get('/test-login', fn () => '')->name('custom.login');
+        app('router')->getRoutes()->refreshNameLookups();
+        config(['tallcms.auth.login_route' => 'custom.login']);
+
+        $this->assertStringContainsString('/test-login', $this->resolveLoginUrl());
+    }
+
+    public function test_login_route_falls_back_when_null(): void
+    {
+        config(['tallcms.auth.login_route' => null]);
+
+        // Falls through to Filament, login route, or /login
+        $url = $this->resolveLoginUrl();
+        $this->assertNotEmpty($url);
+    }
+
     public function test_approve_survives_deleted_user(): void
     {
         config(['tallcms.comments.notify_on_approval' => true]);

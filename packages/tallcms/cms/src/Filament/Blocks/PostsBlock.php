@@ -160,6 +160,10 @@ class PostsBlock extends RichContentCustomBlock
                                         Toggle::make('show_read_more')
                                             ->label('Show Read More Link')
                                             ->default(true),
+
+                                        Toggle::make('show_comments')
+                                            ->label('Show Comments')
+                                            ->default(config('tallcms.comments.enabled', true)),
                                     ])
                                     ->columns(3),
 

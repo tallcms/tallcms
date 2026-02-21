@@ -72,9 +72,11 @@
             @else
                 @php
                     $loginUrl = null;
-                    // Try configured login route, then common route names, then fall back to /login
+                    // Try configured login route (route name or URL), then common route names, then fall back to /login
                     $loginRoute = config('tallcms.auth.login_route');
-                    if ($loginRoute && \Illuminate\Support\Facades\Route::has($loginRoute)) {
+                    if ($loginRoute && (str_starts_with($loginRoute, '/') || str_starts_with($loginRoute, 'http'))) {
+                        $loginUrl = $loginRoute;
+                    } elseif ($loginRoute && \Illuminate\Support\Facades\Route::has($loginRoute)) {
                         $loginUrl = route($loginRoute);
                     } elseif (\Illuminate\Support\Facades\Route::has('filament.' . config('tallcms.filament.panel_id', 'admin') . '.auth.login')) {
                         $loginUrl = route('filament.' . config('tallcms.filament.panel_id', 'admin') . '.auth.login');
