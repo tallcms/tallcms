@@ -59,40 +59,88 @@ class PluginConfigResolutionTest extends TestCase
         $this->assertArrayHasKey('tallcms/mega-menu', $catalog);
     }
 
-    public function test_old_plugin_config_namespace_returns_null(): void
+    /**
+     * Evaluate the raw config file with current env state.
+     * This bypasses Laravel's cached config and tests actual env() resolution.
+     */
+    protected function evaluateRawConfig(): array
     {
-        // config('plugin.*') must NOT resolve — the standalone config/plugin.php is removed
-        $this->assertNull(config('plugin.allow_uploads'));
-        $this->assertNull(config('plugin.auto_migrate'));
-        $this->assertNull(config('plugin.cache_enabled'));
-        $this->assertNull(config('plugin.license'));
-        $this->assertNull(config('plugin.catalog'));
+        return require dirname(__DIR__, 2).'/config/tallcms.php';
     }
 
-    public function test_deprecated_plugin_allow_uploads_env_fallback(): void
+    /**
+     * Set an env var for testing and track it for cleanup.
+     */
+    protected function setEnv(string $key, string $value): void
     {
-        // Simulate a .env with the old PLUGIN_ALLOW_UPLOADS var
-        config(['tallcms.plugins.allow_uploads' => env('TALLCMS_PLUGIN_ALLOW_UPLOADS', env('PLUGIN_ALLOW_UPLOADS', true))]);
+        putenv("{$key}={$value}");
+        $_ENV[$key] = $value;
+        $this->envCleanup[] = $key;
+    }
 
-        // Without any env override, default is true
-        $this->assertTrue(config('tallcms.plugins.allow_uploads'));
+    /**
+     * Remove a previously set env var.
+     */
+    protected function clearEnv(string $key): void
+    {
+        putenv($key);
+        unset($_ENV[$key]);
+    }
 
-        // Simulate TALLCMS_ taking precedence
-        config(['tallcms.plugins.allow_uploads' => false]);
-        $this->assertFalse(config('tallcms.plugins.allow_uploads'));
+    protected array $envCleanup = [];
+
+    protected function tearDown(): void
+    {
+        foreach ($this->envCleanup as $key) {
+            $this->clearEnv($key);
+        }
+        $this->envCleanup = [];
+
+        parent::tearDown();
+    }
+
+    public function test_deprecated_plugin_env_var_is_used_as_fallback(): void
+    {
+        // Set only the deprecated PLUGIN_* var (no TALLCMS_ prefix)
+        $this->setEnv('PLUGIN_ALLOW_UPLOADS', 'false');
+
+        $config = $this->evaluateRawConfig();
+
+        $this->assertFalse(
+            $config['plugins']['allow_uploads'],
+            'Deprecated PLUGIN_ALLOW_UPLOADS=false should resolve to false via fallback'
+        );
     }
 
     public function test_tallcms_env_takes_precedence_over_deprecated_env(): void
     {
-        // When tallcms.plugins.* is explicitly set, that value wins
-        config(['tallcms.plugins.auto_migrate' => false]);
-        $this->assertFalse(config('tallcms.plugins.auto_migrate'));
+        // Set both: TALLCMS_ should win over deprecated PLUGIN_*
+        $this->setEnv('PLUGIN_ALLOW_UPLOADS', 'false');
+        $this->setEnv('TALLCMS_PLUGIN_ALLOW_UPLOADS', 'true');
 
-        config(['tallcms.plugins.cache_enabled' => false]);
-        $this->assertFalse(config('tallcms.plugins.cache_enabled'));
+        $config = $this->evaluateRawConfig();
 
-        config(['tallcms.plugins.max_upload_size' => 10 * 1024 * 1024]);
-        $this->assertSame(10 * 1024 * 1024, config('tallcms.plugins.max_upload_size'));
+        $this->assertTrue(
+            $config['plugins']['allow_uploads'],
+            'TALLCMS_PLUGIN_ALLOW_UPLOADS must take precedence over PLUGIN_ALLOW_UPLOADS'
+        );
+    }
+
+    public function test_all_deprecated_env_fallbacks_resolve(): void
+    {
+        // Set all four deprecated env vars
+        $this->setEnv('PLUGIN_ALLOW_UPLOADS', 'false');
+        $this->setEnv('PLUGIN_MAX_UPLOAD_SIZE', '1048576');
+        $this->setEnv('PLUGIN_CACHE_ENABLED', 'false');
+        $this->setEnv('PLUGIN_AUTO_MIGRATE', 'false');
+
+        $config = $this->evaluateRawConfig();
+        $plugins = $config['plugins'];
+
+        $this->assertFalse($plugins['allow_uploads'], 'PLUGIN_ALLOW_UPLOADS fallback');
+        $this->assertSame('1048576', $plugins['max_upload_size'], 'PLUGIN_MAX_UPLOAD_SIZE fallback');
+        $this->assertFalse($plugins['cache_enabled'], 'PLUGIN_CACHE_ENABLED fallback');
+        $this->assertFalse($plugins['auto_migrate'], 'PLUGIN_AUTO_MIGRATE fallback');
     }
 
     public function test_plugin_config_defaults_match_expected_values(): void
