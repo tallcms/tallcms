@@ -90,7 +90,7 @@ class CmsCommentsTable
                     ->label('Approve')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->visible(fn ($record) => $record->isPending())
+                    ->visible(fn ($record) => $record->isPending() && auth()->user()?->can('Approve:CmsComment'))
                     ->requiresConfirmation()
                     ->action(fn ($record) => $record->approve(auth()->user())),
 
@@ -98,7 +98,7 @@ class CmsCommentsTable
                     ->label('Reject')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
-                    ->visible(fn ($record) => $record->isPending() || $record->isApproved())
+                    ->visible(fn ($record) => ($record->isPending() || $record->isApproved()) && auth()->user()?->can('Reject:CmsComment'))
                     ->requiresConfirmation()
                     ->action(fn ($record) => $record->reject()),
 
@@ -106,6 +106,7 @@ class CmsCommentsTable
                     ->label('Spam')
                     ->icon('heroicon-o-shield-exclamation')
                     ->color('gray')
+                    ->visible(fn () => auth()->user()?->can('MarkAsSpam:CmsComment'))
                     ->requiresConfirmation()
                     ->action(fn ($record) => $record->markAsSpam()),
             ])
@@ -114,6 +115,7 @@ class CmsCommentsTable
                     BulkAction::make('approve_selected')
                         ->label('Approve Selected')
                         ->icon('heroicon-o-check-circle')
+                        ->visible(fn () => auth()->user()?->can('Approve:CmsComment'))
                         ->requiresConfirmation()
                         ->action(fn (Collection $records) => $records->each(fn ($record) => $record->approve(auth()->user())))
                         ->deselectRecordsAfterCompletion(),
@@ -121,6 +123,7 @@ class CmsCommentsTable
                     BulkAction::make('reject_selected')
                         ->label('Reject Selected')
                         ->icon('heroicon-o-x-circle')
+                        ->visible(fn () => auth()->user()?->can('Reject:CmsComment'))
                         ->requiresConfirmation()
                         ->action(fn (Collection $records) => $records->each->reject())
                         ->deselectRecordsAfterCompletion(),
@@ -128,6 +131,7 @@ class CmsCommentsTable
                     BulkAction::make('mark_spam_selected')
                         ->label('Mark as Spam')
                         ->icon('heroicon-o-shield-exclamation')
+                        ->visible(fn () => auth()->user()?->can('MarkAsSpam:CmsComment'))
                         ->requiresConfirmation()
                         ->action(fn (Collection $records) => $records->each->markAsSpam())
                         ->deselectRecordsAfterCompletion(),

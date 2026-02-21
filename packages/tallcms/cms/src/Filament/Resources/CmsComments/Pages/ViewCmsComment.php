@@ -103,7 +103,7 @@ class ViewCmsComment extends ViewRecord
                 ->label('Approve')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
-                ->visible(fn () => $this->record->isPending())
+                ->visible(fn () => $this->record->isPending() && auth()->user()?->can('Approve:CmsComment'))
                 ->requiresConfirmation()
                 ->action(function () {
                     $this->record->approve(auth()->user());
@@ -114,7 +114,7 @@ class ViewCmsComment extends ViewRecord
                 ->label('Reject')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
-                ->visible(fn () => $this->record->isPending() || $this->record->isApproved())
+                ->visible(fn () => ($this->record->isPending() || $this->record->isApproved()) && auth()->user()?->can('Reject:CmsComment'))
                 ->requiresConfirmation()
                 ->action(function () {
                     $this->record->reject();
@@ -125,6 +125,7 @@ class ViewCmsComment extends ViewRecord
                 ->label('Mark as Spam')
                 ->icon('heroicon-o-shield-exclamation')
                 ->color('gray')
+                ->visible(fn () => auth()->user()?->can('MarkAsSpam:CmsComment'))
                 ->requiresConfirmation()
                 ->action(function () {
                     $this->record->markAsSpam();

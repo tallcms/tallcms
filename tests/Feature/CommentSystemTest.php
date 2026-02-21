@@ -644,6 +644,62 @@ class CommentSystemTest extends TestCase
     }
 
     // ---------------------------------------------------------------
+    // Auto-moderation tests
+    // ---------------------------------------------------------------
+
+    public function test_auto_moderation_creates_approved_comment(): void
+    {
+        config(['tallcms.comments.moderation' => 'auto']);
+
+        $response = $this->postJson(route('tallcms.comments.submit'), [
+            'post_id' => $this->publishedPost->id,
+            'content' => 'Auto-approved comment',
+            'author_name' => 'Guest',
+            'author_email' => 'guest@example.com',
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonFragment(['message' => 'Your comment has been posted.']);
+
+        $comment = CmsComment::latest('id')->first();
+        $this->assertEquals('approved', $comment->status);
+        $this->assertNotNull($comment->approved_at);
+    }
+
+    public function test_auto_moderation_skips_approver_notification(): void
+    {
+        config(['tallcms.comments.moderation' => 'auto']);
+
+        $this->postJson(route('tallcms.comments.submit'), [
+            'post_id' => $this->publishedPost->id,
+            'content' => 'Auto-approved comment',
+            'author_name' => 'Guest',
+            'author_email' => 'guest@example.com',
+        ]);
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_manual_moderation_creates_pending_comment(): void
+    {
+        config(['tallcms.comments.moderation' => 'manual']);
+
+        $response = $this->postJson(route('tallcms.comments.submit'), [
+            'post_id' => $this->publishedPost->id,
+            'content' => 'Pending comment',
+            'author_name' => 'Guest',
+            'author_email' => 'guest@example.com',
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonFragment(['message' => 'Your comment has been submitted and is awaiting moderation.']);
+
+        $comment = CmsComment::latest('id')->first();
+        $this->assertEquals('pending', $comment->status);
+        $this->assertNull($comment->approved_at);
+    }
+
+    // ---------------------------------------------------------------
     // Notification tests
     // ---------------------------------------------------------------
 

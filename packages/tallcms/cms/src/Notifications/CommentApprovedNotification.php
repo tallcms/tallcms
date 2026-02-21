@@ -7,6 +7,7 @@ namespace TallCms\Cms\Notifications;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use TallCms\Cms\Models\CmsComment;
+use TallCms\Cms\Services\SeoService;
 
 class CommentApprovedNotification extends Notification
 {
@@ -34,10 +35,10 @@ class CommentApprovedNotification extends Notification
 
     protected function getPostUrl(): string
     {
-        $prefix = config('tallcms.plugin_mode.routes_prefix', '');
-        $prefix = $prefix ? "/{$prefix}" : '';
-        $slug = $this->comment->post?->slug ?? '';
+        if ($this->comment->post) {
+            return SeoService::getPostUrl($this->comment->post) . '#comment-' . $this->comment->id;
+        }
 
-        return url("{$prefix}/blog/{$slug}#comment-{$this->comment->id}");
+        return url('/');
     }
 }
