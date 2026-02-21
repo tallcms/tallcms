@@ -19,8 +19,8 @@ This roadmap outlines our vision for TallCMS development. We're committed to bui
 - [v2.10 - Featured Posts Enhancements](#v210---featured-posts-enhancements) ✅
 - [v2.11 - Page Templates & Widgets](#v211---page-templates--widgets) ✅
 - [v3.0 - Filament 5 & Livewire 4](#v30---filament-5--livewire-4) ✅
-- [v3.1 - Community & Users](#v31---community--users) 📋
-- [v3.2 - Marketplace](#v32---marketplace-integration) 📋
+- [v3.1/3.2 - Comments & Plugin Config](#v3132---comments--plugin-config) ✅
+- [v3.3 - Marketplace](#v33---marketplace-integration) 📋
 - [Future Considerations](#future-considerations)
 - [How to Contribute](#how-to-contribute)
 
@@ -532,26 +532,42 @@ Focus: Major framework upgrade to Filament 5 and Livewire 4 for improved perform
 
 ---
 
-## v3.1 - Community & Users
+## v3.1/3.2 - Comments & Plugin Config
 
-Focus: Enable community interaction with your content.
+**Status: ✅ Released (v3.2.0)**
+
+Focus: Native comments system and plugin configuration consolidation.
 
 ### Comments System
-- [ ] Native commenting on posts
-- [ ] Nested replies
-- [ ] Moderation queue
-- [ ] Spam protection
-- [ ] Email notifications
-- [ ] Guest vs. authenticated comments
+- [x] Native commenting on posts
+- [x] Nested replies (threaded comments)
+- [x] Moderation queue (pending, approved, rejected, spam)
+- [x] Auto-approve moderation mode
+- [x] Spam protection (mark as spam / unmark)
+- [x] Email notifications (new comment, comment approved)
+- [x] Guest vs. authenticated comments
+- [x] Block-level comment toggle (enable/disable per Posts block)
+- [x] Admin resource with approve, reject, unreject, mark/unmark spam actions
+- [x] Filament Shield permissions for comment moderation
+- [x] Alpine.js-powered frontend with reply forms
 
-### User Features
+### Plugin Configuration
+- [x] Consolidate `config/plugin.php` into `tallcms.plugins.*` namespace
+- [x] Plugin config resolution with proper env() fallback support
+- [x] Regression tests for plugin config resolution and env fallbacks
+- [x] Plugin license requirement support (per-plugin `requires_license` flag)
+
+### Remaining (Community & Users)
+The following items from the original v3.1 roadmap are deferred to a future release:
+
+#### User Features
 - [ ] Frontend user registration
 - [ ] User profiles
 - [ ] Password reset flow
 - [ ] Social login (Google, GitHub, etc.)
 - [ ] Email verification
 
-### Activity & Analytics
+#### Activity & Analytics
 - [ ] User activity logging (audit trail)
 - [ ] Content analytics dashboard
 - [ ] Popular content tracking
@@ -559,7 +575,7 @@ Focus: Enable community interaction with your content.
 
 ---
 
-## v3.2 - Marketplace Integration
+## v3.3 - Marketplace Integration
 
 Focus: Connect to the official TallCMS marketplace for plugins and themes.
 
@@ -656,8 +672,8 @@ We welcome community input on our roadmap:
 | v2.10 | ✅ Released | Posts | Featured post badges, hero layout, card styling |
 | v2.11 | ✅ Released | Templates | Page templates, sidebar widgets, TOC, self-updater improvements |
 | v3.0 | ✅ Released | Framework | Filament 5, Livewire 4, enhanced block panel, CLI docs |
-| v3.1 | 📋 Planned | Community | Comments, User profiles, Analytics |
-| v3.2 | 📋 Planned | Ecosystem | Marketplace integration |
+| v3.2 | ✅ Released | Community | Native comments system, plugin config consolidation |
+| v3.3 | 📋 Planned | Ecosystem | Marketplace integration |
 | Pro | 🔄 Ongoing | Premium | Advanced blocks, Analytics, AI Content, Translation |
 
 ---
@@ -670,4 +686,4 @@ We welcome community input on our roadmap:
 
 ---
 
-*Last updated: February 3, 2026 — v3.0.0 Filament 5 & Livewire 4 released*
+*Last updated: February 21, 2026 — v3.2.0 Comments System & Plugin Config released*
