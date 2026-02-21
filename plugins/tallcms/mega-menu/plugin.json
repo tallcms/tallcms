@@ -1,0 +1,20 @@
+{
+    "name": "TallCMS Mega Menu",
+    "slug": "mega-menu",
+    "vendor": "tallcms",
+    "version": "1.0.0",
+    "description": "Advanced mega menu, header templates, sticky navigation, and mobile menu for TallCMS",
+    "author": "TallCMS",
+    "author_url": "https://tallcms.com",
+    "homepage": "https://tallcms.com/mega-menu",
+    "license": "Proprietary",
+    "namespace": "Tallcms\\MegaMenu",
+    "provider": "Tallcms\\MegaMenu\\Providers\\MegaMenuServiceProvider",
+    "filament_plugin": "Tallcms\\MegaMenu\\Filament\\TallcmsMegaMenuPlugin",
+    "tags": ["menu", "mega-menu", "navigation", "header", "mobile-menu"],
+    "license_required": true,
+    "compatibility": {
+        "php": "^8.2",
+        "tallcms": ">=3.0"
+    }
+}
