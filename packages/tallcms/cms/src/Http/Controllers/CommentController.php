@@ -142,7 +142,11 @@ class CommentController extends Controller
 
         while ($current->parent_id !== null) {
             $depth++;
-            $current = $current->parent;
+            // Use withTrashed to avoid null when an ancestor is soft-deleted
+            $current = CmsComment::withTrashed()->find($current->parent_id);
+            if ($current === null) {
+                break;
+            }
         }
 
         return $depth;

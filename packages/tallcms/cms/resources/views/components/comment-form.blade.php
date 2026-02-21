@@ -70,9 +70,23 @@
                     </div>
                 </div>
             @else
+                @php
+                    $loginUrl = null;
+                    // Try configured login route, then common route names, then fall back to /login
+                    $loginRoute = config('tallcms.auth.login_route');
+                    if ($loginRoute && \Illuminate\Support\Facades\Route::has($loginRoute)) {
+                        $loginUrl = route($loginRoute);
+                    } elseif (\Illuminate\Support\Facades\Route::has('filament.' . config('tallcms.filament.panel_id', 'admin') . '.auth.login')) {
+                        $loginUrl = route('filament.' . config('tallcms.filament.panel_id', 'admin') . '.auth.login');
+                    } elseif (\Illuminate\Support\Facades\Route::has('login')) {
+                        $loginUrl = route('login');
+                    } else {
+                        $loginUrl = url('/login');
+                    }
+                @endphp
                 <div class="alert alert-info">
                     <x-heroicon-o-information-circle class="w-5 h-5" />
-                    <span>You must <a href="{{ route('login') }}" class="link">log in</a> to leave a comment.</span>
+                    <span>You must <a href="{{ $loginUrl }}" class="link">log in</a> to leave a comment.</span>
                 </div>
             @endif
         @endauth

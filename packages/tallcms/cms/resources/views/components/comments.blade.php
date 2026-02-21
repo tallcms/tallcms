@@ -3,15 +3,20 @@
 @php
     $maxDepth = max(1, (int) config('tallcms.comments.max_depth', 2));
 
-    // Build eager-loading chain for nested approved replies
-    $eagerLoad = 'approvedReplies';
-    for ($i = 2; $i < $maxDepth; $i++) {
-        $eagerLoad .= '.approvedReplies';
+    // Build eager-loading chains for nested approved replies + their authors
+    $eagerLoads = ['user'];
+    $replyChain = 'approvedReplies';
+    for ($i = 1; $i < $maxDepth; $i++) {
+        $eagerLoads[] = $replyChain . '.user';
+        if ($i < $maxDepth - 1) {
+            $replyChain .= '.approvedReplies';
+        }
     }
+    $eagerLoads[] = $replyChain;
 
     $comments = $post->approvedComments()
         ->topLevel()
-        ->with([$eagerLoad, 'user'])
+        ->with($eagerLoads)
         ->orderBy('created_at', 'asc')
         ->get();
 
