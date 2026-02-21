@@ -114,6 +114,7 @@ class CommentController extends Controller
         RateLimiter::hit($key, $decay);
 
         // Create comment
+        $autoApprove = config('tallcms.comments.moderation') === 'auto';
         $comment = CmsComment::create([
             'post_id' => $post->id,
             'parent_id' => $request->input('parent_id'),
@@ -121,10 +122,18 @@ class CommentController extends Controller
             'author_name' => auth()->check() ? null : $request->input('author_name'),
             'author_email' => auth()->check() ? null : $request->input('author_email'),
             'content' => $content,
-            'status' => 'pending',
+            'status' => $autoApprove ? 'approved' : 'pending',
+            'approved_at' => $autoApprove ? now() : null,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
+
+        if ($autoApprove) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Your comment has been posted.',
+            ]);
+        }
 
         // Notify approvers
         $this->notifyApprovers($comment);

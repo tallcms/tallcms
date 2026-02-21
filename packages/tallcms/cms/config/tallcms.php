@@ -461,7 +461,7 @@ return [
     */
     'comments' => [
         'enabled' => env('TALLCMS_COMMENTS_ENABLED', true),
-        'moderation' => 'manual',           // all comments require approval
+        'moderation' => env('TALLCMS_COMMENTS_MODERATION', 'manual'), // 'manual' = require approval, 'auto' = publish immediately
         'max_depth' => 2,                   // top-level + 1 reply level (min 1)
         'max_length' => 5000,               // max comment content length
         'rate_limit' => 5,                  // max comments per IP per window

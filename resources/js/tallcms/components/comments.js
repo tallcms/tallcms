@@ -18,6 +18,7 @@ function registerCommentForm() {
         errors: {},
         formError: '',
         submitted: false,
+        successMessage: '',
         submitting: false,
 
         // Config (populated from data attribute)
@@ -97,6 +98,7 @@ function registerCommentForm() {
                 }
 
                 if (response.ok) {
+                    this.successMessage = data.message || 'Your comment has been submitted.';
                     this.submitted = true;
                 } else if (response.status === 422) {
                     this.errors = data.errors || {};

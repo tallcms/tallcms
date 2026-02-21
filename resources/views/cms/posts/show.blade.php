@@ -136,6 +136,15 @@
         </div>
     </div>
 
+    {{-- Comments --}}
+    @if(config('tallcms.comments.enabled', true) && ($config['show_comments'] ?? true) && $post->isPublished())
+        <div class="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
+            <div class="max-w-4xl mx-auto">
+                <x-tallcms::comments :post="$post" />
+            </div>
+        </div>
+    @endif
+
     {{-- Back Link --}}
     <footer class="post-detail__footer w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-12">
         <div class="max-w-4xl mx-auto">

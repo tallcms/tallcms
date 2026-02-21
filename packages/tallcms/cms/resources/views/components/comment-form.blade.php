@@ -3,16 +3,17 @@
 @php
     $formId = 'comment-form-' . ($parentId ?? 'main') . '-' . uniqid();
     $submitUrl = route('tallcms.comments.submit');
+    $commentConfig = json_encode([
+        'submitUrl' => $submitUrl,
+        'postId' => $postId,
+        'parentId' => $parentId,
+    ]);
 @endphp
 
 <div
     id="{{ $formId }}"
     x-data="commentForm"
-    data-comment-config='@json([
-        'submitUrl' => $submitUrl,
-        'postId' => $postId,
-        'parentId' => $parentId,
-    ])'
+    data-comment-config="{{ $commentConfig }}"
     x-cloak
 >
     {{-- Error Alert --}}
@@ -24,7 +25,7 @@
     {{-- Success Message --}}
     <div x-show="submitted" x-cloak class="alert alert-success">
         <x-heroicon-o-check-circle class="w-5 h-5" />
-        <span>Your comment has been submitted and is awaiting moderation.</span>
+        <span x-text="successMessage"></span>
     </div>
 
     {{-- Form --}}
