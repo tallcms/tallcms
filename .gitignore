@@ -54,7 +54,6 @@ tallcms-*.zip
 /plugins/tallcms/license-proxy
 
 # Internal documentation
-CLAUDE.md
 daisyui.md
 
 # Scribe API documentation (generated)
