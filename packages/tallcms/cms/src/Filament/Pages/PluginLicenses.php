@@ -292,7 +292,7 @@ class PluginLicenses extends Page implements HasForms
         }
 
         // Check if catalog has any plugins (they all require licenses)
-        return ! empty(config('plugin.catalog', []));
+        return ! empty(config('tallcms.plugins.catalog', []));
     }
 
     /**
@@ -300,7 +300,7 @@ class PluginLicenses extends Page implements HasForms
      */
     public function getAvailablePlugins(): array
     {
-        $catalog = config('plugin.catalog', []);
+        $catalog = config('tallcms.plugins.catalog', []);
         $installedSlugs = array_keys($this->statuses);
 
         return collect($catalog)

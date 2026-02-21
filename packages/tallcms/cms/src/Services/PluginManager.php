@@ -64,7 +64,7 @@ class PluginManager
             Cache::put(
                 $this->getCacheKey(),
                 $this->discoveredPlugins,
-                config('plugin.cache_ttl', 3600)
+                config('tallcms.plugins.cache_ttl', 3600)
             );
         }
 
@@ -172,7 +172,7 @@ class PluginManager
      */
     protected function isCacheEnabled(): bool
     {
-        return config('plugin.cache_enabled', true);
+        return config('tallcms.plugins.cache_enabled', true);
     }
 
     /**
@@ -487,7 +487,7 @@ class PluginManager
      */
     public function uploadsAllowed(): bool
     {
-        return config('plugin.allow_uploads', true);
+        return config('tallcms.plugins.allow_uploads', true);
     }
 
     /**
@@ -495,7 +495,7 @@ class PluginManager
      */
     public function getMaxUploadSize(): int
     {
-        return config('plugin.max_upload_size', 50 * 1024 * 1024);
+        return config('tallcms.plugins.max_upload_size', 50 * 1024 * 1024);
     }
 
     /**
@@ -593,7 +593,7 @@ class PluginManager
 
             // Run migrations if auto_migrate is enabled
             $migrationsRan = [];
-            if (config('plugin.auto_migrate', true)) {
+            if (config('tallcms.plugins.auto_migrate', true)) {
                 $migrator = app(PluginMigrator::class);
                 $migrationResult = $migrator->migrate($plugin);
 
@@ -843,7 +843,7 @@ class PluginManager
 
             // Run any new migrations
             $migrationsRan = [];
-            if (config('plugin.auto_migrate', true)) {
+            if (config('tallcms.plugins.auto_migrate', true)) {
                 $migrator = app(PluginMigrator::class);
                 $migrationResult = $migrator->migrate($plugin);
 

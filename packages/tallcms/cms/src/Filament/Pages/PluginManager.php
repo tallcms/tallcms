@@ -626,7 +626,7 @@ class PluginManager extends Page implements HasForms
                     }
 
                     // Repopulate cache so badges update correctly and reset check interval
-                    $checkInterval = config('plugin.license.update_check_interval', 86400);
+                    $checkInterval = config('tallcms.plugins.license.update_check_interval', 86400);
                     \Illuminate\Support\Facades\Cache::put('plugin_available_updates', $updates, $checkInterval);
                     \Illuminate\Support\Facades\Cache::put('plugin_updates_last_check', now(), $checkInterval);
 

@@ -2,8 +2,8 @@
 
 namespace TallCms\Cms\Console\Commands;
 
-use TallCms\Cms\Services\PluginLicenseService;
 use Illuminate\Console\Command;
+use TallCms\Cms\Services\PluginLicenseService;
 
 class LicenseTestCommand extends Command
 {
@@ -21,8 +21,8 @@ class LicenseTestCommand extends Command
         $licenseKey = $this->option('key') ?? 'TALLCMS-PRO-TEST-LICENSE';
 
         $this->info("Plugin: {$pluginSlug}");
-        $this->info("Environment: " . app()->environment());
-        $this->info("Proxy URL: " . config('plugin.license.proxy_url'));
+        $this->info('Environment: '.app()->environment());
+        $this->info('Proxy URL: '.config('tallcms.plugins.license.proxy_url'));
         $this->newLine();
 
         return match ($action) {
@@ -45,7 +45,7 @@ class LicenseTestCommand extends Command
             ['Field', 'Value'],
             collect($status)->map(fn ($value, $key) => [
                 $key,
-                is_bool($value) ? ($value ? 'Yes' : 'No') : (is_array($value) ? json_encode($value) : ($value ?? 'null'))
+                is_bool($value) ? ($value ? 'Yes' : 'No') : (is_array($value) ? json_encode($value) : ($value ?? 'null')),
             ])->toArray()
         );
 
@@ -55,7 +55,7 @@ class LicenseTestCommand extends Command
     protected function activate(PluginLicenseService $service, string $pluginSlug, string $licenseKey): int
     {
         $this->info('=== Activating License ===');
-        $this->info("License Key: " . substr($licenseKey, 0, 10) . '...');
+        $this->info('License Key: '.substr($licenseKey, 0, 10).'...');
 
         $result = $service->activate($pluginSlug, $licenseKey);
 
@@ -63,14 +63,14 @@ class LicenseTestCommand extends Command
             ['Field', 'Value'],
             collect($result)->map(fn ($value, $key) => [
                 $key,
-                is_bool($value) ? ($value ? 'Yes' : 'No') : (is_array($value) ? json_encode($value) : ($value ?? 'null'))
+                is_bool($value) ? ($value ? 'Yes' : 'No') : (is_array($value) ? json_encode($value) : ($value ?? 'null')),
             ])->toArray()
         );
 
         if ($result['valid'] ?? false) {
             $this->info('License activated successfully!');
         } else {
-            $this->error('License activation failed: ' . ($result['message'] ?? 'Unknown error'));
+            $this->error('License activation failed: '.($result['message'] ?? 'Unknown error'));
         }
 
         return ($result['valid'] ?? false) ? 0 : 1;
@@ -86,14 +86,14 @@ class LicenseTestCommand extends Command
             ['Field', 'Value'],
             collect($result)->map(fn ($value, $key) => [
                 $key,
-                is_bool($value) ? ($value ? 'Yes' : 'No') : ($value ?? 'null')
+                is_bool($value) ? ($value ? 'Yes' : 'No') : ($value ?? 'null'),
             ])->toArray()
         );
 
         if ($result['success'] ?? false) {
             $this->info('License deactivated successfully!');
         } else {
-            $this->error('License deactivation failed: ' . ($result['message'] ?? 'Unknown error'));
+            $this->error('License deactivation failed: '.($result['message'] ?? 'Unknown error'));
         }
 
         return ($result['success'] ?? false) ? 0 : 1;
@@ -116,6 +116,7 @@ class LicenseTestCommand extends Command
 
         // Show full status
         $this->newLine();
+
         return $this->showStatus($service, $pluginSlug);
     }
 
@@ -129,7 +130,7 @@ class LicenseTestCommand extends Command
             ['Field', 'Value'],
             collect($result)->map(fn ($value, $key) => [
                 $key,
-                is_bool($value) ? ($value ? 'Yes' : 'No') : (is_array($value) ? json_encode($value) : ($value ?? 'null'))
+                is_bool($value) ? ($value ? 'Yes' : 'No') : (is_array($value) ? json_encode($value) : ($value ?? 'null')),
             ])->toArray()
         );
 

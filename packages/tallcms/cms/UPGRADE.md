@@ -294,6 +294,31 @@ If dark mode styling is inconsistent:
 
 ---
 
+## Upgrading to v3.1: Plugin Config Consolidation
+
+### `config/plugin.php` Removed
+
+All plugin configuration now lives under `config('tallcms.plugins.*')` in the package config. The standalone `config/plugin.php` file has been removed.
+
+**If you have a published `config/tallcms.php`**, re-publish to get the new `purchase_urls` and `download_urls` keys:
+
+```bash
+php artisan vendor:publish --tag=tallcms-config --force
+```
+
+### Deprecated Env Vars
+
+The `PLUGIN_*` environment variables are deprecated in favor of `TALLCMS_PLUGIN_*`. Fallback support is included so existing `.env` files continue to work, but operators should migrate:
+
+| Old (deprecated)         | New                              |
+|--------------------------|----------------------------------|
+| `PLUGIN_ALLOW_UPLOADS`   | `TALLCMS_PLUGIN_ALLOW_UPLOADS`   |
+| `PLUGIN_MAX_UPLOAD_SIZE` | `TALLCMS_PLUGIN_MAX_UPLOAD_SIZE` |
+| `PLUGIN_CACHE_ENABLED`   | `TALLCMS_PLUGIN_CACHE_ENABLED`   |
+| `PLUGIN_AUTO_MIGRATE`    | `TALLCMS_PLUGIN_AUTO_MIGRATE`    |
+
+---
+
 ## Getting Help
 
 - **Documentation**: [tallcms.com/docs](https://tallcms.com/docs)

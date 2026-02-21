@@ -71,8 +71,8 @@ class PluginLicenseService
         }
 
         // Tier 2: Database cache - check if cached validation is still fresh
-        $cacheTtl = config('plugin.license.cache_ttl', 86400);
-        $renewalGraceDays = config('plugin.license.renewal_grace_days', 14);
+        $cacheTtl = config('tallcms.plugins.license.cache_ttl', 86400);
+        $renewalGraceDays = config('tallcms.plugins.license.renewal_grace_days', 14);
 
         // License is valid if:
         // - Cache is fresh AND status is active AND not hard-expired (past grace period)
@@ -110,7 +110,7 @@ class PluginLicenseService
         }
 
         // If validation failed due to connection error, check grace periods
-        $offlineGraceDays = config('plugin.license.offline_grace_days', 7);
+        $offlineGraceDays = config('tallcms.plugins.license.offline_grace_days', 7);
         if ($result['status'] === 'error') {
             // Honor either offline grace (7 days from last validation) OR renewal grace (14 days from expiry)
             if ($license->isWithinGracePeriod($offlineGraceDays) || $license->isWithinRenewalGracePeriod($renewalGraceDays)) {
@@ -276,13 +276,13 @@ class PluginLicenseService
                 'status_label' => 'No License',
                 'status_color' => 'gray',
                 'message' => 'Enter your license key to activate this plugin',
-                'purchase_url' => config("plugin.license.purchase_urls.{$pluginSlug}"),
-                'download_url' => config("plugin.license.download_urls.{$pluginSlug}"),
+                'purchase_url' => config("tallcms.plugins.license.purchase_urls.{$pluginSlug}"),
+                'download_url' => config("tallcms.plugins.license.download_urls.{$pluginSlug}"),
             ];
         }
 
         $isValid = $this->isValid($pluginSlug);
-        $renewalGraceDays = config('plugin.license.renewal_grace_days', 14);
+        $renewalGraceDays = config('tallcms.plugins.license.renewal_grace_days', 14);
         $inRenewalGrace = $license->isWithinRenewalGracePeriod($renewalGraceDays);
 
         // Determine detailed message based on license state
@@ -306,8 +306,8 @@ class PluginLicenseService
             'last_validated' => $license->last_validated_at?->diffForHumans(),
             'message' => $message,
             'is_in_grace_period' => $inRenewalGrace,
-            'purchase_url' => config("plugin.license.purchase_urls.{$pluginSlug}"),
-            'download_url' => config("plugin.license.download_urls.{$pluginSlug}"),
+            'purchase_url' => config("tallcms.plugins.license.purchase_urls.{$pluginSlug}"),
+            'download_url' => config("tallcms.plugins.license.download_urls.{$pluginSlug}"),
         ];
     }
 
@@ -461,7 +461,7 @@ class PluginLicenseService
     public function checkForUpdates(string $pluginSlug): array
     {
         $license = PluginLicense::findByPluginSlug($pluginSlug);
-        $purchaseUrl = config("plugin.license.purchase_urls.{$pluginSlug}");
+        $purchaseUrl = config("tallcms.plugins.license.purchase_urls.{$pluginSlug}");
 
         if (! $license) {
             return [
@@ -548,7 +548,7 @@ class PluginLicenseService
     public function checkForUpdatesAutomatically(): void
     {
         $cacheKey = 'plugin_updates_last_check';
-        $checkInterval = config('plugin.license.update_check_interval', 86400); // 24 hours default
+        $checkInterval = config('tallcms.plugins.license.update_check_interval', 86400); // 24 hours default
 
         // Check if we've already checked recently
         $lastCheck = Cache::get($cacheKey);

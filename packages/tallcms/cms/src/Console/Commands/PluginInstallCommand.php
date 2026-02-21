@@ -2,8 +2,8 @@
 
 namespace TallCms\Cms\Console\Commands;
 
-use TallCms\Cms\Services\PluginManager;
 use Illuminate\Console\Command;
+use TallCms\Cms\Services\PluginManager;
 
 class PluginInstallCommand extends Command
 {
@@ -24,15 +24,15 @@ class PluginInstallCommand extends Command
         }
 
         if (! $manager->uploadsAllowed()) {
-            $this->error('Plugin uploads are disabled. Enable by setting PLUGIN_ALLOW_UPLOADS=true');
+            $this->error('Plugin uploads are disabled. Enable by setting TALLCMS_PLUGIN_ALLOW_UPLOADS=true');
 
             return self::FAILURE;
         }
 
         // Temporarily disable auto_migrate if --no-migrate is passed
-        $originalAutoMigrate = config('plugin.auto_migrate');
+        $originalAutoMigrate = config('tallcms.plugins.auto_migrate');
         if ($this->option('no-migrate')) {
-            config(['plugin.auto_migrate' => false]);
+            config(['tallcms.plugins.auto_migrate' => false]);
         }
 
         $this->info('Installing plugin...');
@@ -40,7 +40,7 @@ class PluginInstallCommand extends Command
         $result = $manager->installFromZip($zipPath);
 
         // Restore original setting
-        config(['plugin.auto_migrate' => $originalAutoMigrate]);
+        config(['tallcms.plugins.auto_migrate' => $originalAutoMigrate]);
 
         if (! $result->success) {
             $this->error('Installation failed:');

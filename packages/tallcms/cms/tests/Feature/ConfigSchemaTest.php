@@ -189,6 +189,8 @@ class ConfigSchemaTest extends TestCase
             'offline_grace_days',
             'renewal_grace_days',
             'update_check_interval',
+            'purchase_urls',
+            'download_urls',
         ];
 
         foreach ($requiredKeys as $key) {
