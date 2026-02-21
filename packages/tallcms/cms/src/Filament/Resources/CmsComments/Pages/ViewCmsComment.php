@@ -6,7 +6,7 @@ use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
-use Filament\Infolists\Components\Section;
+use Filament\Schemas\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Schema;
@@ -121,14 +121,36 @@ class ViewCmsComment extends ViewRecord
                     $this->record = $this->record->fresh();
                 }),
 
+            Action::make('unreject')
+                ->label('Unreject')
+                ->icon('heroicon-o-arrow-uturn-left')
+                ->color('warning')
+                ->visible(fn () => $this->record->isRejected() && auth()->user()?->can('Reject:CmsComment'))
+                ->requiresConfirmation()
+                ->action(function () {
+                    $this->record->unreject();
+                    $this->record = $this->record->fresh();
+                }),
+
             Action::make('mark_spam')
                 ->label('Mark as Spam')
                 ->icon('heroicon-o-shield-exclamation')
                 ->color('gray')
-                ->visible(fn () => auth()->user()?->can('MarkAsSpam:CmsComment'))
+                ->visible(fn () => ! $this->record->isSpam() && auth()->user()?->can('MarkAsSpam:CmsComment'))
                 ->requiresConfirmation()
                 ->action(function () {
                     $this->record->markAsSpam();
+                    $this->record = $this->record->fresh();
+                }),
+
+            Action::make('not_spam')
+                ->label('Not Spam')
+                ->icon('heroicon-o-shield-check')
+                ->color('warning')
+                ->visible(fn () => $this->record->isSpam() && auth()->user()?->can('MarkAsSpam:CmsComment'))
+                ->requiresConfirmation()
+                ->action(function () {
+                    $this->record->unmarkSpam();
                     $this->record = $this->record->fresh();
                 }),
 

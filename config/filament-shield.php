@@ -172,6 +172,22 @@ return [
                 'update',
                 'delete',
             ],
+            \TallCms\Cms\Filament\Resources\CmsComments\CmsCommentResource::class => [
+                'viewAny',
+                'view',
+                'create',
+                'update',
+                'delete',
+                'restore',
+                'forceDelete',
+                'forceDeleteAny',
+                'restoreAny',
+                'replicate',
+                'reorder',
+                'approve',
+                'reject',
+                'markAsSpam',
+            ],
         ],
         'exclude' => [
             //

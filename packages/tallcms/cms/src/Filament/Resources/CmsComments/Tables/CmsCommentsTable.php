@@ -102,13 +102,29 @@ class CmsCommentsTable
                     ->requiresConfirmation()
                     ->action(fn ($record) => $record->reject()),
 
+                Action::make('unreject')
+                    ->label('Unreject')
+                    ->icon('heroicon-o-arrow-uturn-left')
+                    ->color('warning')
+                    ->visible(fn ($record) => $record->isRejected() && auth()->user()?->can('Reject:CmsComment'))
+                    ->requiresConfirmation()
+                    ->action(fn ($record) => $record->unreject()),
+
                 Action::make('mark_spam')
                     ->label('Spam')
                     ->icon('heroicon-o-shield-exclamation')
                     ->color('gray')
-                    ->visible(fn () => auth()->user()?->can('MarkAsSpam:CmsComment'))
+                    ->visible(fn ($record) => ! $record->isSpam() && auth()->user()?->can('MarkAsSpam:CmsComment'))
                     ->requiresConfirmation()
                     ->action(fn ($record) => $record->markAsSpam()),
+
+                Action::make('not_spam')
+                    ->label('Not Spam')
+                    ->icon('heroicon-o-shield-check')
+                    ->color('warning')
+                    ->visible(fn ($record) => $record->isSpam() && auth()->user()?->can('MarkAsSpam:CmsComment'))
+                    ->requiresConfirmation()
+                    ->action(fn ($record) => $record->unmarkSpam()),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

@@ -141,9 +141,19 @@ class CmsComment extends Model
         return $this->update(['status' => 'rejected']);
     }
 
+    public function unreject(): bool
+    {
+        return $this->update(['status' => 'pending']);
+    }
+
     public function markAsSpam(): bool
     {
         return $this->update(['status' => 'spam']);
+    }
+
+    public function unmarkSpam(): bool
+    {
+        return $this->update(['status' => 'pending']);
     }
 
     // Status checks
@@ -156,6 +166,16 @@ class CmsComment extends Model
     public function isPending(): bool
     {
         return $this->status === 'pending';
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->status === 'rejected';
+    }
+
+    public function isSpam(): bool
+    {
+        return $this->status === 'spam';
     }
 
     public function isGuest(): bool
