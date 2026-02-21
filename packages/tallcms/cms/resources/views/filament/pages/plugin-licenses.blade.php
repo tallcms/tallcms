@@ -69,7 +69,7 @@
                                         icon="heroicon-o-shopping-cart"
                                         outlined
                                     >
-                                        Purchase
+                                        Purchase License
                                     </x-filament::button>
                                 @endif
                             </div>
