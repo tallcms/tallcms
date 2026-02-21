@@ -55,6 +55,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
         'App\\Models\\TallcmsMenuItem' => Models\TallcmsMenuItem::class,
         'App\\Models\\SiteSetting' => Models\SiteSetting::class,
         'App\\Models\\TallcmsContactSubmission' => Models\TallcmsContactSubmission::class,
+        'App\\Models\\CmsComment' => Models\CmsComment::class,
         'App\\Models\\CmsRevision' => Models\CmsRevision::class,
         'App\\Models\\CmsPreviewToken' => Models\CmsPreviewToken::class,
         'App\\Models\\TallcmsMedia' => Models\TallcmsMedia::class,
@@ -109,11 +110,14 @@ class TallCmsServiceProvider extends PackageServiceProvider
         'App\\Notifications\\ContentApprovedNotification' => Notifications\ContentApprovedNotification::class,
         'App\\Notifications\\ContentRejectedNotification' => Notifications\ContentRejectedNotification::class,
         'App\\Notifications\\ContentSubmittedForReviewNotification' => Notifications\ContentSubmittedForReviewNotification::class,
+        'App\\Notifications\\NewCommentNotification' => Notifications\NewCommentNotification::class,
+        'App\\Notifications\\CommentApprovedNotification' => Notifications\CommentApprovedNotification::class,
 
         // Enums
         'App\\Enums\\ContentStatus' => Enums\ContentStatus::class,
 
         // Controllers
+        'App\\Http\\Controllers\\CommentController' => Http\Controllers\CommentController::class,
         'App\\Http\\Controllers\\ContactFormController' => Http\Controllers\ContactFormController::class,
         'App\\Http\\Controllers\\PreviewController' => Http\Controllers\PreviewController::class,
 
@@ -196,6 +200,12 @@ class TallCmsServiceProvider extends PackageServiceProvider
         'App\\Filament\\Resources\\CmsPosts\\Schemas\\CmsPostForm' => Filament\Resources\CmsPosts\Schemas\CmsPostForm::class,
         'App\\Filament\\Resources\\CmsPosts\\Tables\\CmsPostsTable' => Filament\Resources\CmsPosts\Tables\CmsPostsTable::class,
 
+        // Filament Resources - CmsComments
+        'App\\Filament\\Resources\\CmsComments\\CmsCommentResource' => Filament\Resources\CmsComments\CmsCommentResource::class,
+        'App\\Filament\\Resources\\CmsComments\\Pages\\ListCmsComments' => Filament\Resources\CmsComments\Pages\ListCmsComments::class,
+        'App\\Filament\\Resources\\CmsComments\\Pages\\ViewCmsComment' => Filament\Resources\CmsComments\Pages\ViewCmsComment::class,
+        'App\\Filament\\Resources\\CmsComments\\Tables\\CmsCommentsTable' => Filament\Resources\CmsComments\Tables\CmsCommentsTable::class,
+
         // Filament Resources - TallcmsContactSubmissions
         'App\\Filament\\Resources\\TallcmsContactSubmissions\\TallcmsContactSubmissionResource' => Filament\Resources\TallcmsContactSubmissions\TallcmsContactSubmissionResource::class,
         'App\\Filament\\Resources\\TallcmsContactSubmissions\\Pages\\ListTallcmsContactSubmissions' => Filament\Resources\TallcmsContactSubmissions\Pages\ListTallcmsContactSubmissions::class,
@@ -226,6 +236,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
         'App\\Policies\\CmsPagePolicy' => Policies\CmsPagePolicy::class,
         'App\\Policies\\CmsPostPolicy' => Policies\CmsPostPolicy::class,
         'App\\Policies\\RolePolicy' => Policies\RolePolicy::class,
+        'App\\Policies\\CmsCommentPolicy' => Policies\CmsCommentPolicy::class,
         'App\\Policies\\TallcmsContactSubmissionPolicy' => Policies\TallcmsContactSubmissionPolicy::class,
         'App\\Policies\\TallcmsMediaPolicy' => Policies\TallcmsMediaPolicy::class,
         'App\\Policies\\TallcmsMenuPolicy' => Policies\TallcmsMenuPolicy::class,
@@ -329,7 +340,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
         parent::packageBooted();
 
         // Override version from composer.json (ensures correct version even with published config)
-        $composerJson = __DIR__ . '/../composer.json';
+        $composerJson = __DIR__.'/../composer.json';
         if (file_exists($composerJson)) {
             $data = json_decode(file_get_contents($composerJson), true);
             if (isset($data['version'])) {
@@ -667,6 +678,14 @@ class TallCmsServiceProvider extends PackageServiceProvider
             });
         }
 
+        // Comment submission route (needed for comment forms on posts)
+        if (config('tallcms.comments.enabled', true)) {
+            Route::middleware(['web'])->prefix($prefix)->group(function () {
+                Route::post('/api/tallcms/comments', [Http\Controllers\CommentController::class, 'submit'])
+                    ->name('tallcms.comments.submit');
+            });
+        }
+
         // Media download route (forces download instead of browser display)
         Route::middleware(['web'])->prefix($prefix)->group(function () {
             Route::get('/media/download/{media}', Http\Controllers\MediaDownloadController::class)
@@ -820,6 +839,9 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
             // Page templates & widgets
             '2026_02_01_000001_add_sidebar_widgets_to_tallcms_pages',
+
+            // Comments
+            '2026_02_21_000001_create_tallcms_comments_table',
         ];
     }
 

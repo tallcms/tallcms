@@ -34,7 +34,4 @@ if (window.Alpine) {
 
 // Native block components
 import './components/contact-form';
-
-// Future components will be added here:
-// import './components/image-gallery';
-// import './components/pricing-calculator';
+import './components/comments';

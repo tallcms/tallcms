@@ -21,6 +21,8 @@ class NotificationDispatcher
         \TallCms\Cms\Notifications\ContentApprovedNotification::class => 'App\\Notifications\\ContentApprovedNotification',
         \TallCms\Cms\Notifications\ContentRejectedNotification::class => 'App\\Notifications\\ContentRejectedNotification',
         \TallCms\Cms\Notifications\ContentSubmittedForReviewNotification::class => 'App\\Notifications\\ContentSubmittedForReviewNotification',
+        \TallCms\Cms\Notifications\NewCommentNotification::class => 'App\\Notifications\\NewCommentNotification',
+        \TallCms\Cms\Notifications\CommentApprovedNotification::class => 'App\\Notifications\\CommentApprovedNotification',
     ];
 
     /**
@@ -28,7 +30,6 @@ class NotificationDispatcher
      *
      * @param  Notifiable  $notifiable  The entity to notify
      * @param  object  $notification  The notification instance (package class)
-     * @return void
      */
     public static function send($notifiable, object $notification): void
     {

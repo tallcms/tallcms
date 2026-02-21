@@ -276,6 +276,19 @@ return [
                 'download_url' => 'https://anystack.sh/download/tallcms-pro-plugin',
                 'purchase_url' => 'https://checkout.anystack.sh/tallcms-pro-plugin',
             ],
+            'tallcms/mega-menu' => [
+                'name' => 'TallCMS Mega Menu',
+                'slug' => 'mega-menu',
+                'vendor' => 'tallcms',
+                'description' => 'Create stunning mega menus for your website with ease. Build rich, multi-column dropdown menus with images, icons, and custom layouts.',
+                'author' => 'TallCMS',
+                'homepage' => 'https://tallcms.com/mega-menu',
+                'icon' => 'heroicon-o-bars-3-bottom-left',
+                'category' => 'official',
+                'featured' => true,
+                'download_url' => 'https://anystack.sh/download/tallcms-mega-menu-plugin',
+                'purchase_url' => 'https://checkout.anystack.sh/tallcms-mega-menu-plugin',
+            ],
         ],
     ],
 
@@ -421,6 +434,27 @@ return [
 
         // Remember locale preference in session
         'remember_locale' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Comments
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for the blog post commenting system. Comments require
+    | admin approval before appearing publicly.
+    |
+    */
+    'comments' => [
+        'enabled' => env('TALLCMS_COMMENTS_ENABLED', true),
+        'moderation' => 'manual',           // all comments require approval
+        'max_depth' => 2,                   // top-level + 1 reply level (min 1)
+        'max_length' => 5000,               // max comment content length
+        'rate_limit' => 5,                  // max comments per IP per window
+        'rate_limit_decay' => 600,          // rate limit window in seconds
+        'notification_channels' => ['mail', 'database'],
+        'notify_on_approval' => true,       // email commenter when approved
+        'guest_comments' => true,           // allow non-authenticated comments
     ],
 
     /*

@@ -1,0 +1,49 @@
+@props(['post'])
+
+@php
+    $maxDepth = max(1, (int) config('tallcms.comments.max_depth', 2));
+
+    // Build eager-loading chain for nested approved replies
+    $eagerLoad = 'approvedReplies';
+    for ($i = 2; $i < $maxDepth; $i++) {
+        $eagerLoad .= '.approvedReplies';
+    }
+
+    $comments = $post->approvedComments()
+        ->topLevel()
+        ->with([$eagerLoad, 'user'])
+        ->orderBy('created_at', 'asc')
+        ->get();
+
+    $commentCount = $post->approvedComments()->count();
+    $guestCommentsAllowed = config('tallcms.comments.guest_comments', true);
+@endphp
+
+<section class="mt-12 border-t border-base-300 pt-8" id="comments">
+    <h2 class="text-2xl font-bold text-base-content mb-6">
+        {{ $commentCount === 0 ? 'Comments' : $commentCount . ' ' . \Illuminate\Support\Str::plural('Comment', $commentCount) }}
+    </h2>
+
+    {{-- Comment List --}}
+    @if($comments->isNotEmpty())
+        <div class="space-y-6 mb-8">
+            @foreach($comments as $comment)
+                @include('tallcms::components.comment-item', [
+                    'comment' => $comment,
+                    'depth' => 0,
+                    'maxDepth' => $maxDepth,
+                    'postId' => $post->id,
+                ])
+            @endforeach
+        </div>
+    @else
+        <p class="text-base-content/60 mb-8">No comments yet. Be the first to share your thoughts!</p>
+    @endif
+
+    {{-- Comment Form --}}
+    @include('tallcms::components.comment-form', [
+        'postId' => $post->id,
+        'parentId' => null,
+        'guestCommentsAllowed' => $guestCommentsAllowed,
+    ])
+</section>

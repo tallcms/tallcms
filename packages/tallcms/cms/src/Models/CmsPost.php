@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use TallCms\Cms\Casts\TranslatableArray;
@@ -98,6 +99,16 @@ class CmsPost extends Model
         $userModel = config('tallcms.plugin_mode.user_model', \App\Models\User::class);
 
         return $this->belongsTo($userModel, 'author_id');
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(CmsComment::class, 'post_id');
+    }
+
+    public function approvedComments(): HasMany
+    {
+        return $this->hasMany(CmsComment::class, 'post_id')->where('status', 'approved');
     }
 
     public function categories(): BelongsToMany

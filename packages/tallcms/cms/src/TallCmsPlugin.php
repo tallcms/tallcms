@@ -11,25 +11,26 @@ use Illuminate\Support\Facades\Log;
 use LaraZeus\SpatieTranslatable\SpatieTranslatablePlugin;
 use TallCms\Cms\Filament\Pages\ApiTokens;
 use TallCms\Cms\Filament\Pages\MenuItemsManager;
-use TallCms\Cms\Services\LocaleRegistry;
 use TallCms\Cms\Filament\Pages\PluginLicenses;
 use TallCms\Cms\Filament\Pages\PluginManager;
-use TallCms\Cms\Filament\Pages\WebhookManager;
 use TallCms\Cms\Filament\Pages\SiteSettings;
 use TallCms\Cms\Filament\Pages\SystemUpdates;
 use TallCms\Cms\Filament\Pages\ThemeManager;
 use TallCms\Cms\Filament\Pages\UpdateManual;
 use TallCms\Cms\Filament\Pages\UpdateProgress;
+use TallCms\Cms\Filament\Pages\WebhookManager;
 use TallCms\Cms\Filament\Resources\CmsCategories\CmsCategoryResource;
+use TallCms\Cms\Filament\Resources\CmsComments\CmsCommentResource;
 use TallCms\Cms\Filament\Resources\CmsPages\CmsPageResource;
 use TallCms\Cms\Filament\Resources\CmsPosts\CmsPostResource;
-use TallCms\Cms\Filament\Resources\TallcmsContactSubmissions\TallcmsContactSubmissionResource;
 use TallCms\Cms\Filament\Resources\MediaCollection\MediaCollectionResource;
+use TallCms\Cms\Filament\Resources\TallcmsContactSubmissions\TallcmsContactSubmissionResource;
 use TallCms\Cms\Filament\Resources\TallcmsMedia\TallcmsMediaResource;
 use TallCms\Cms\Filament\Resources\TallcmsMenus\TallcmsMenuResource;
 use TallCms\Cms\Filament\Resources\Users\UserResource;
 use TallCms\Cms\Filament\Widgets\MenuOverviewWidget;
 use TallCms\Cms\Filament\Widgets\PluginUpdatesWidget;
+use TallCms\Cms\Services\LocaleRegistry;
 
 class TallCmsPlugin implements Plugin
 {
@@ -38,6 +39,8 @@ class TallCmsPlugin implements Plugin
     protected bool $hasPages = true;
 
     protected bool $hasPosts = true;
+
+    protected bool $hasComments = true;
 
     protected bool $hasContactSubmissions = true;
 
@@ -308,6 +311,10 @@ class TallCmsPlugin implements Plugin
             $resources[] = CmsPostResource::class;
         }
 
+        if ($this->hasComments && config('tallcms.comments.enabled', true)) {
+            $resources[] = CmsCommentResource::class;
+        }
+
         if ($this->hasContactSubmissions) {
             $resources[] = TallcmsContactSubmissionResource::class;
         }
@@ -354,6 +361,16 @@ class TallCmsPlugin implements Plugin
     public function withoutPosts(): static
     {
         $this->hasPosts = false;
+
+        return $this;
+    }
+
+    /**
+     * Disable comments resource.
+     */
+    public function withoutComments(): static
+    {
+        $this->hasComments = false;
 
         return $this;
     }
