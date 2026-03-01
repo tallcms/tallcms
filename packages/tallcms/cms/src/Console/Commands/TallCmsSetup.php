@@ -46,7 +46,6 @@ class TallCmsSetup extends Command
      */
     public function handle()
     {
-        $this->displayHeader();
         $this->info('Setting up TallCMS...');
         $this->newLine();
 
