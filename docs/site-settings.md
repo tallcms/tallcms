@@ -126,7 +126,7 @@ Enable maintenance mode to show a 503 page to visitors while you work on your si
 ### Bypass Routes
 
 The following routes bypass maintenance mode:
-- Admin panel (`/admin/*`)
+- Admin panel (your panel path, e.g. `/admin/*`)
 - Installer (`/install/*`)
 
 ---

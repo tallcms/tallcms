@@ -112,6 +112,6 @@ class ContentSubmittedForReviewNotification extends Notification
             return route("filament.{$panelId}.resources.cms-pages.edit", $this->content);
         }
 
-        return url('/admin');
+        return tallcms_panel_url();
     }
 }

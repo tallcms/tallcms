@@ -62,13 +62,50 @@ if (! function_exists('tallcms_page_url')) {
     }
 }
 
+// Filament Panel Helper Functions
+
+if (! function_exists('tallcms_panel_url')) {
+    /**
+     * Get the full URL to the Filament admin panel, optionally with a sub-path.
+     *
+     * @param  string  $path  Optional sub-path to append (e.g., 'cms-pages/create')
+     * @return string The full URL to the panel
+     */
+    function tallcms_panel_url(string $path = ''): string
+    {
+        $panelPath = trim(config('tallcms.filament.panel_path', 'admin'), '/');
+        $path = trim($path, '/');
+
+        $fullPath = $panelPath !== '' ? '/'.$panelPath : '';
+        if ($path !== '') {
+            $fullPath .= '/'.$path;
+        }
+
+        return url($fullPath ?: '/');
+    }
+}
+
+if (! function_exists('tallcms_panel_route')) {
+    /**
+     * Build a Filament route name dynamically using the configured panel ID.
+     *
+     * @param  string  $suffix  The route suffix (e.g., 'pages.plugin-licenses')
+     * @param  mixed  $parameters  Optional route parameters
+     * @return string The resolved route URL
+     */
+    function tallcms_panel_route(string $suffix, mixed $parameters = []): string
+    {
+        $panelId = config('tallcms.filament.panel_id', 'admin');
+
+        return route("filament.{$panelId}.{$suffix}", $parameters);
+    }
+}
+
 // Theme Helper Functions
 
 if (! function_exists('theme')) {
     /**
      * Get the current active theme instance
-     *
-     * @return \TallCms\Cms\Contracts\ThemeInterface
      */
     function theme(): \TallCms\Cms\Contracts\ThemeInterface
     {
@@ -144,8 +181,6 @@ if (! function_exists('theme_padding_presets')) {
 if (! function_exists('theme_manager')) {
     /**
      * Get the theme manager instance
-     *
-     * @return \TallCms\Cms\Services\ThemeManager
      */
     function theme_manager(): \TallCms\Cms\Services\ThemeManager
     {
@@ -156,8 +191,6 @@ if (! function_exists('theme_manager')) {
 if (! function_exists('active_theme')) {
     /**
      * Get the active theme instance
-     *
-     * @return \TallCms\Cms\Models\Theme|null
      */
     function active_theme(): ?\TallCms\Cms\Models\Theme
     {
@@ -168,8 +201,6 @@ if (! function_exists('active_theme')) {
 if (! function_exists('daisyui_dark_preset')) {
     /**
      * Get the DaisyUI preset that represents the "dark" option
-     *
-     * @return string|null
      */
     function daisyui_dark_preset(): ?string
     {
@@ -192,8 +223,6 @@ if (! function_exists('daisyui_presets')) {
 if (! function_exists('supports_theme_controller')) {
     /**
      * Check if theme supports runtime theme switching
-     *
-     * @return bool
      */
     function supports_theme_controller(): bool
     {
@@ -324,7 +353,7 @@ if (! function_exists('isMenuItemActive')) {
         $itemPath = rtrim($itemPath, '/') ?: '/';
 
         // Normalize current path
-        $currentPath = '/' . ltrim($currentPath, '/');
+        $currentPath = '/'.ltrim($currentPath, '/');
         $currentPath = rtrim($currentPath, '/') ?: '/';
 
         // Exact match
@@ -436,10 +465,10 @@ if (! function_exists('render_menu_item')) {
     function render_menu_item(array $item, string $liClass = '', string $linkClass = ''): string
     {
         $hasChildren = ! empty($item['children']);
-        $liClass = trim($liClass . ($hasChildren ? ' has-children' : ''));
+        $liClass = trim($liClass.($hasChildren ? ' has-children' : ''));
 
         if ($item['css_class']) {
-            $liClass = trim($liClass . ' ' . $item['css_class']);
+            $liClass = trim($liClass.' '.$item['css_class']);
         }
 
         $html = "<li class=\"{$liClass}\">";
@@ -449,11 +478,11 @@ if (! function_exists('render_menu_item')) {
             $icon = $item['icon'] ? "<i class=\"{$item['icon']}\"></i> " : '';
 
             $html .= "<a href=\"{$item['url']}\" class=\"{$linkClass}\"{$target}>";
-            $html .= $icon . htmlspecialchars($item['label']);
+            $html .= $icon.htmlspecialchars($item['label']);
             $html .= '</a>';
         } else {
             // Header/separator items without links
-            $html .= "<span class=\"{$linkClass}\">" . htmlspecialchars($item['label']) . '</span>';
+            $html .= "<span class=\"{$linkClass}\">".htmlspecialchars($item['label']).'</span>';
         }
 
         if ($hasChildren) {
@@ -541,7 +570,7 @@ if (! function_exists('cms_post_url')) {
             ? ($post->getTranslation('slug', app()->getLocale(), false) ?? $post->slug)
             : $post->slug;
 
-        $slug = trim($parentSlug, '/') . '/' . $postSlug;
+        $slug = trim($parentSlug, '/').'/'.$postSlug;
 
         return tallcms_localized_url($slug);
     }
@@ -569,7 +598,7 @@ if (! function_exists('tallcms_slug_to_anchor')) {
      */
     function tallcms_slug_to_anchor(string $slug, int $pageId): string
     {
-        return str_replace('/', '-', $slug) . '-' . $pageId;
+        return str_replace('/', '-', $slug).'-'.$pageId;
     }
 }
 
@@ -640,20 +669,20 @@ if (! function_exists('tallcms_localized_url')) {
 
         // Get routes prefix for plugin mode
         $routesPrefixRaw = config('tallcms.plugin_mode.routes_prefix', '');
-        $routesPrefix = $routesPrefixRaw ? '/' . trim($routesPrefixRaw, '/') : '';
+        $routesPrefix = $routesPrefixRaw ? '/'.trim($routesPrefixRaw, '/') : '';
 
         // Normalize slug - remove leading/trailing slashes
         $slug = trim($slug, '/');
-        $baseSlug = $slug === '' ? '' : '/' . $slug;
+        $baseSlug = $slug === '' ? '' : '/'.$slug;
 
         // If i18n disabled, return simple URL with routes prefix
         if (! tallcms_i18n_config('enabled', false)) {
-            return $routesPrefix . ($baseSlug ?: '/');
+            return $routesPrefix.($baseSlug ?: '/');
         }
 
         // Strategy: 'none' - use query parameter ?lang=
         if ($urlStrategy === 'none') {
-            $baseUrl = $routesPrefix . ($baseSlug ?: '/');
+            $baseUrl = $routesPrefix.($baseSlug ?: '/');
             // Skip lang param for default locale if hideDefault enabled
             if ($hideDefault && $locale === $default) {
                 return $baseUrl;
@@ -661,18 +690,18 @@ if (! function_exists('tallcms_localized_url')) {
             // Append ?lang= with BCP-47 format
             $bcp47 = \TallCms\Cms\Services\LocaleRegistry::toBcp47($locale);
 
-            return $baseUrl . '?lang=' . $bcp47;
+            return $baseUrl.'?lang='.$bcp47;
         }
 
         // Strategy: 'prefix' - use path prefix
         $localePrefix = '';
         if (! $hideDefault || $locale !== $default) {
             // Convert internal format (es_mx) to BCP-47 (es-MX) for URL
-            $localePrefix = '/' . \TallCms\Cms\Services\LocaleRegistry::toBcp47($locale);
+            $localePrefix = '/'.\TallCms\Cms\Services\LocaleRegistry::toBcp47($locale);
         }
 
         // Build URL: routes_prefix + locale_prefix + slug
-        $url = $routesPrefix . $localePrefix . $baseSlug;
+        $url = $routesPrefix.$localePrefix.$baseSlug;
 
         return $url ?: '/';
     }
@@ -719,7 +748,7 @@ if (! function_exists('tallcms_resolve_custom_url')) {
 
             // Step 1: Check for routes_prefix at the start
             if ($routesPrefix) {
-                if (str_starts_with($pathWithoutSlash, $routesPrefix . '/')) {
+                if (str_starts_with($pathWithoutSlash, $routesPrefix.'/')) {
                     $hasRoutesPrefix = true;
                     $slugAfterPrefixes = substr($pathWithoutSlash, strlen($routesPrefix) + 1);
                 } elseif ($pathWithoutSlash === $routesPrefix) {
@@ -740,7 +769,7 @@ if (! function_exists('tallcms_resolve_custom_url')) {
 
                 foreach ($registry->getLocaleCodes() as $localeCode) {
                     $bcp47 = \TallCms\Cms\Services\LocaleRegistry::toBcp47($localeCode);
-                    if (str_starts_with($pathToCheck, $bcp47 . '/')) {
+                    if (str_starts_with($pathToCheck, $bcp47.'/')) {
                         $hasLocalePrefix = true;
                         $foundLocale = $localeCode;
                         $slugAfterPrefixes = substr($pathToCheck, strlen($bcp47) + 1);
@@ -776,6 +805,7 @@ if (! function_exists('tallcms_resolve_custom_url')) {
                 if ($hasRoutesPrefix || ! $needsRoutesPrefix) {
                     return $url;
                 }
+
                 // Missing routes_prefix, rebuild with correct prefix
                 return tallcms_localized_url($slugAfterPrefixes, $foundLocale);
             }
@@ -907,7 +937,7 @@ if (! function_exists('tallcms_search_url')) {
             if (! ($hideDefault && $currentLocale === $defaultLocale)) {
                 $bcp47 = \TallCms\Cms\Services\LocaleRegistry::toBcp47($currentLocale);
 
-                return $baseUrl . '?lang=' . $bcp47;
+                return $baseUrl.'?lang='.$bcp47;
             }
         }
 
@@ -941,7 +971,7 @@ if (! function_exists('tallcms_current_slug')) {
 
         // Strip routes_prefix if present
         $routesPrefix = trim(config('tallcms.plugin_mode.routes_prefix', ''), '/');
-        if ($routesPrefix && str_starts_with($path, $routesPrefix . '/')) {
+        if ($routesPrefix && str_starts_with($path, $routesPrefix.'/')) {
             $path = substr($path, strlen($routesPrefix) + 1);
         } elseif ($routesPrefix && $path === $routesPrefix) {
             return '';
@@ -952,7 +982,7 @@ if (! function_exists('tallcms_current_slug')) {
             $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
             foreach ($registry->getLocaleCodes() as $localeCode) {
                 $bcp47 = \TallCms\Cms\Services\LocaleRegistry::toBcp47($localeCode);
-                if (str_starts_with($path, $bcp47 . '/')) {
+                if (str_starts_with($path, $bcp47.'/')) {
                     $path = substr($path, strlen($bcp47) + 1);
                     break;
                 } elseif ($path === $bcp47) {
@@ -969,8 +999,8 @@ if (! function_exists('tallcms_locale_label')) {
     /**
      * Get the display label (native name) for a locale code.
      *
-     * @param string $localeCode The locale code (internal or BCP-47 format)
-     * @param bool $native Whether to return native name (true) or English label (false)
+     * @param  string  $localeCode  The locale code (internal or BCP-47 format)
+     * @param  bool  $native  Whether to return native name (true) or English label (false)
      * @return string The locale label, or the code itself if not found
      */
     function tallcms_locale_label(string $localeCode, bool $native = true): string

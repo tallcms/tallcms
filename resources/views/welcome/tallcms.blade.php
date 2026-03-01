@@ -39,7 +39,7 @@
                         {{-- Action Buttons --}}
                         <div class="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
                             <div class="rounded-md shadow">
-                                <a href="/admin" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700 md:py-4 md:text-lg md:px-10 transition-colors">
+                                <a href="{{ tallcms_panel_url() }}" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700 md:py-4 md:text-lg md:px-10 transition-colors">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -85,7 +85,7 @@
                         <p class="text-base text-gray-500 mb-4">
                             Start by creating your first page and setting it as your homepage.
                         </p>
-                        <a href="/admin/cms-pages/create" class="text-amber-600 hover:text-amber-500 font-medium">
+                        <a href="{{ tallcms_panel_url('cms-pages/create') }}" class="text-amber-600 hover:text-amber-500 font-medium">
                             Create Page →
                         </a>
                     </div>
@@ -99,7 +99,7 @@
                         <p class="text-base text-gray-500 mb-4">
                             Set up your site name, logo, and other important settings.
                         </p>
-                        <a href="/admin/site-settings" class="text-amber-600 hover:text-amber-500 font-medium">
+                        <a href="{{ tallcms_panel_url('site-settings') }}" class="text-amber-600 hover:text-amber-500 font-medium">
                             Site Settings →
                         </a>
                     </div>
@@ -113,7 +113,7 @@
                         <p class="text-base text-gray-500 mb-4">
                             Build your site's navigation menu to help visitors explore your content.
                         </p>
-                        <a href="/admin/tallcms-menus" class="text-amber-600 hover:text-amber-500 font-medium">
+                        <a href="{{ tallcms_panel_url('tallcms-menus') }}" class="text-amber-600 hover:text-amber-500 font-medium">
                             Create Menu →
                         </a>
                     </div>
@@ -188,7 +188,7 @@
             </h2>
             <div class="mt-8 flex lg:mt-0 lg:flex-shrink-0">
                 <div class="inline-flex rounded-md shadow">
-                    <a href="/admin" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-amber-600 bg-white hover:bg-amber-50 transition-colors">
+                    <a href="{{ tallcms_panel_url() }}" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-amber-600 bg-white hover:bg-amber-50 transition-colors">
                         Get started
                         <svg class="ml-2 -mr-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>

@@ -967,8 +967,10 @@ class PluginServiceProvider extends ServiceProvider
             return false;
         }
 
-        // Cannot be admin or api routes
-        if (str_starts_with($path, '/admin') || str_starts_with($path, '/api')) {
+        // Cannot be panel or api routes
+        $panelPath = trim(config('tallcms.filament.panel_path', 'admin'), '/');
+        $matchesPanel = $panelPath !== '' && preg_match('#^/'.preg_quote($panelPath, '#').'(/|$)#', $path);
+        if ($matchesPanel || str_starts_with($path, '/api')) {
             return false;
         }
 

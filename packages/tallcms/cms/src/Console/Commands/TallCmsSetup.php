@@ -11,6 +11,8 @@ use Spatie\Permission\Models\Role;
 
 class TallCmsSetup extends Command
 {
+    use Concerns\HasAsciiBanner;
+
     /**
      * The name and signature of the console command.
      *
@@ -44,6 +46,7 @@ class TallCmsSetup extends Command
      */
     public function handle()
     {
+        $this->displayHeader();
         $this->info('Setting up TallCMS...');
         $this->newLine();
 
@@ -119,7 +122,7 @@ class TallCmsSetup extends Command
         // First check tallcms config
         $configPanelPath = config('tallcms.filament.panel_path');
         if ($configPanelPath) {
-            return '/' . ltrim($configPanelPath, '/');
+            return '/'.ltrim($configPanelPath, '/');
         }
 
         // Try to get from Filament panels
@@ -129,7 +132,7 @@ class TallCmsSetup extends Command
                 $panel = reset($panels);
                 $path = $panel->getPath();
                 if ($path) {
-                    return '/' . ltrim($path, '/');
+                    return '/'.ltrim($path, '/');
                 }
             }
         } catch (\Throwable) {
@@ -143,7 +146,7 @@ class TallCmsSetup extends Command
             foreach ($files as $file) {
                 $content = file_get_contents($file);
                 if (preg_match('/->path\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/', $content, $matches)) {
-                    return '/' . ltrim($matches[1], '/');
+                    return '/'.ltrim($matches[1], '/');
                 }
             }
         }
@@ -157,8 +160,8 @@ class TallCmsSetup extends Command
             $userModel = $this->getUserModel();
 
             return Role::where('name', 'super_admin')
-                    ->where('guard_name', $this->guardName)
-                    ->exists() &&
+                ->where('guard_name', $this->guardName)
+                ->exists() &&
                    $userModel::role('super_admin')->exists();
         } catch (\Exception) {
             // Tables don't exist yet, so setup is not complete
@@ -435,6 +438,7 @@ class TallCmsSetup extends Command
     protected function isContentResource(string $permission): bool
     {
         $lower = strtolower($permission);
+
         return str_contains($lower, 'cmspage') ||
                str_contains($lower, 'cmspost') ||
                str_contains($lower, 'cmscategory') ||

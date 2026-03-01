@@ -247,7 +247,7 @@
                         @if($plugin['requiresLicense'])
                             <x-filament::button
                                 tag="a"
-                                href="{{ route('filament.admin.pages.plugin-licenses') }}?plugin={{ urlencode($plugin['licenseSlug']) }}"
+                                href="{{ tallcms_panel_route('pages.plugin-licenses') }}?plugin={{ urlencode($plugin['licenseSlug']) }}"
                                 color="gray"
                                 size="sm"
                                 outlined
@@ -367,7 +367,7 @@
                     @if($pluginDetails['requiresLicense'] ?? false)
                         <x-filament::button
                             tag="a"
-                            href="{{ route('filament.admin.pages.plugin-licenses') }}?plugin={{ urlencode($pluginDetails['licenseSlug']) }}"
+                            href="{{ tallcms_panel_route('pages.plugin-licenses') }}?plugin={{ urlencode($pluginDetails['licenseSlug']) }}"
                             color="gray"
                             size="sm"
                             outlined

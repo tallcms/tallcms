@@ -230,7 +230,7 @@ $this->loadRoutesFrom(__DIR__.'/../routes/frontend.php');
 | Group | Middleware | Prefix |
 |-------|------------|--------|
 | Frontend | `web` | (configurable) |
-| Admin | `web, auth` | `/admin` |
+| Admin | `web, auth` | `/{panel_path}` (default: `/admin`) |
 | API | `api` | `/api/tallcms` |
 
 ### Plugin Mode Routes

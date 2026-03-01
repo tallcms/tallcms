@@ -366,7 +366,7 @@ class PluginManager extends Page implements HasForms
                     ->actions([
                         \Filament\Actions\Action::make('manage_license')
                             ->label('Manage License')
-                            ->url(route('filament.admin.pages.plugin-licenses', ['plugin' => $pluginSlug])),
+                            ->url(tallcms_panel_route('pages.plugin-licenses', ['plugin' => $pluginSlug])),
                     ])
                     ->send();
             } else {

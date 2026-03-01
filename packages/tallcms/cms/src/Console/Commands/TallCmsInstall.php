@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Schema;
  */
 class TallCmsInstall extends Command
 {
+    use Concerns\HasAsciiBanner;
+
     /**
      * The name and signature of the console command.
      */
@@ -34,7 +36,7 @@ class TallCmsInstall extends Command
      */
     public function handle(): int
     {
-        $this->newLine();
+        $this->displayHeader();
         $this->components->info('Installing TallCMS...');
         $this->newLine();
 
@@ -148,6 +150,19 @@ class TallCmsInstall extends Command
             ];
         }
 
+        // Check 4: TallCmsPlugin registered in Filament panel
+        if (! $this->isTallCmsPluginRegistered()) {
+            $errors[] = [
+                'issue' => 'TallCmsPlugin is not registered in your Filament panel',
+                'fix' => "Add TallCmsPlugin to your panel provider:\n\n".
+                    "    use TallCms\\Cms\\TallCmsPlugin;\n\n".
+                    "    return \$panel\n".
+                    "        ->plugins([\n".
+                    "            TallCmsPlugin::make(),\n".
+                    '        ]);',
+            ];
+        }
+
         if (! empty($errors)) {
             $this->newLine();
             $this->components->error('Prerequisites not met. Please fix the following:');
@@ -213,6 +228,50 @@ class TallCmsInstall extends Command
                 $content = file_get_contents($file);
                 if (str_contains($content, 'extends PanelProvider') ||
                     str_contains($content, 'Filament\\Panel')) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if TallCmsPlugin is registered in a Filament panel.
+     *
+     * Uses runtime detection first (definitive when Filament is booted),
+     * then falls back to scanning panel provider files.
+     */
+    protected function isTallCmsPluginRegistered(): bool
+    {
+        // Runtime check — definitive when Filament is booted
+        try {
+            $panels = \Filament\Facades\Filament::getPanels();
+            foreach ($panels as $panel) {
+                if ($panel->hasPlugin('tallcms')) {
+                    return true;
+                }
+            }
+            // If Filament returned panels but none have the plugin, it's not registered
+            if (! empty($panels)) {
+                return false;
+            }
+        } catch (\Throwable) {
+            // Filament not fully booted, fall through to file-based check
+        }
+
+        // File-based fallback — scan panel provider files
+        $pattern = '/->plugin\s*\(\s*(\\\\?TallCms\\\\Cms\\\\)?TallCmsPlugin::make\s*\(/s';
+
+        $providerDirs = array_filter([
+            app_path('Providers/Filament'),
+            app_path('Providers'),
+        ], 'is_dir');
+
+        foreach ($providerDirs as $dir) {
+            foreach (glob($dir.'/*.php') as $file) {
+                $content = file_get_contents($file);
+                if (preg_match($pattern, $content)) {
                     return true;
                 }
             }
@@ -370,14 +429,11 @@ class TallCmsInstall extends Command
         $this->components->info('TallCMS installed successfully!');
         $this->newLine();
 
-        // Reminder to register plugin
-        $this->components->warn('Important: Make sure TallCmsPlugin is registered in your panel provider:');
-        $this->newLine();
-        $this->line('    <fg=yellow>use</> TallCms\\Cms\\TallCmsPlugin;');
-        $this->newLine();
-        $this->line('    <fg=yellow>return</> <fg=magenta>$panel</>');
-        $this->line('        ->plugin(TallCmsPlugin::make());');
-        $this->newLine();
+        // Short reminder when --skip-checks was used (plugin validation was skipped)
+        if ($this->option('skip-checks')) {
+            $this->components->warn('Reminder: Ensure TallCmsPlugin::make() is registered in your panel provider.');
+            $this->newLine();
+        }
 
         // Get the panel path dynamically
         $panelPath = $this->getFilamentPanelPath();

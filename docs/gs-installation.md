@@ -205,7 +205,7 @@ php artisan make:user
 
 After installation, you can:
 
-1. Access the admin panel at `/admin`
+1. Access the admin panel at your configured panel path (defaults to `/admin`)
 2. Create pages and posts in **Content**
 3. Configure site settings in **Settings**
 4. Customize your theme in **Appearance > Themes**
@@ -228,7 +228,7 @@ This registers:
 - `/` - Homepage (if a page is marked as homepage)
 - `/{slug}` - CMS pages by slug
 
-Routes automatically exclude common paths: `/admin`, `/api`, `/livewire`, `/storage`, etc.
+Routes automatically exclude common paths: your panel path (default `/admin`), `/api`, `/livewire`, `/storage`, etc.
 
 ### Homepage Conflict
 
@@ -576,7 +576,7 @@ Verify database credentials in installer form. Ensure database server is running
 Ensure `storage/` and `bootstrap/cache/` are writable. Run `chmod -R 775 storage bootstrap/cache`.
 
 **"Cannot access admin panel"**
-Complete the web installer first. Verify your user has an active role. Check `/admin` URL is correct.
+Complete the web installer first. Verify your user has an active role. Check your panel URL is correct (defaults to `/admin`).
 
 **"403 Forbidden"**
 Clear permission cache: `php artisan permission:cache-reset`. Verify user has appropriate role.

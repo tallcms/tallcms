@@ -39,7 +39,7 @@
                     <h3 class="text-lg font-semibold text-blue-900 ml-3">Access Admin Panel</h3>
                 </div>
                 <p class="text-blue-800 mb-4">Start managing your content through the admin interface</p>
-                <a href="/admin" 
+                <a href="{{ tallcms_panel_url() }}"
                    class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors inline-flex items-center">
                     Open Admin Panel
                     <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

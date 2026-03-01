@@ -52,7 +52,7 @@
 
                 <div class="mt-4">
                     <a
-                        href="{{ route('filament.admin.pages.plugin-licenses') }}"
+                        href="{{ tallcms_panel_route('pages.plugin-licenses') }}"
                         class="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
                     >
                         View Plugin Licenses &rarr;

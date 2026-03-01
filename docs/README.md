@@ -68,7 +68,7 @@ Rebuild assets: `npm run build`
 Run migrations: `php artisan migrate`
 
 **"Admin panel not accessible"**
-Complete installation first, then visit `/admin` with your admin credentials.
+Complete installation first, then visit your panel URL (defaults to `/admin`) with your admin credentials.
 
 ---
 

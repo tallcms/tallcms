@@ -200,7 +200,7 @@ TALLCMS_ROUTES_ENABLED=true
 ```
 
 This registers both `/` (homepage) and `/{slug}` routes for CMS pages.
-Routes automatically exclude common paths like `/admin`, `/api`, `/livewire`, `/storage`, etc.
+Routes automatically exclude common paths like your panel path (default `/admin`), `/api`, `/livewire`, `/storage`, etc.
 
 > ⚠️ **Warning:** When `TALLCMS_ROUTES_ENABLED=true` without a prefix, TallCMS
 > registers the `/` route. However, Laravel loads your app's `routes/web.php` after
