@@ -11,6 +11,11 @@ time: 10
 
 TallCMS can be installed in two ways: as a **standalone application** (full CMS) or as a **Filament plugin** (add to existing app).
 
+| Path | Best For |
+|------|----------|
+| **Standalone** | New projects — full CMS with themes, plugins, web installer, and auto-updates |
+| **Plugin** | Existing Laravel/Filament apps — add CMS features via Composer |
+
 ## System Requirements
 
 | Requirement | Version |
@@ -41,8 +46,6 @@ TallCMS can be installed in two ways: as a **standalone application** (full CMS)
 
 The standalone installation gives you a complete CMS with themes, plugins, web installer, and auto-updates.
 
-### Method 1: Composer Create-Project (Recommended)
-
 ```bash
 # Create new project
 composer create-project tallcms/tallcms my-site
@@ -59,43 +62,16 @@ php artisan serve
 
 Visit `http://localhost:8000/install` to complete the web installer.
 
-### Method 2: Manual Download
-
-1. Download the latest release from [tallcms.com](https://tallcms.com) or [GitHub Releases](https://github.com/tallcms/tallcms/releases)
-2. Extract the archive to your web server directory
-3. Set your web server's document root to the `public/` directory
-4. Visit your domain in a browser
-5. Follow the setup wizard
-
-### Method 3: Git Clone (For Contributors)
-
-```bash
-# Clone the repository
-git clone https://github.com/tallcms/tallcms.git
-cd tallcms
-
-# Install PHP dependencies
-composer install
-
-# Install frontend dependencies and build assets
-npm install && npm run build
-
-# Start development server with hot reload
-composer dev
-```
-
-Visit `http://localhost:8000/install` to complete setup.
-
 ### Web Installer
 
 The web installer guides you through:
 
-1. **System Check** - Verifies PHP version, extensions, and permissions
-2. **Database Setup** - Configure MySQL, MariaDB, or SQLite connection
-3. **Admin Account** - Create your administrator user
-4. **Site Settings** - Set site name, contact email, timezone
-5. **Mail Configuration** - SMTP, Amazon SES, or PHP Mail
-6. **Cloud Storage** (Optional) - S3-compatible storage setup
+1. **System Check** — Verifies PHP version, extensions, and permissions
+2. **Database Setup** — Configure MySQL, MariaDB, or SQLite connection
+3. **Admin Account** — Create your administrator user
+4. **Site Settings** — Set site name, contact email, timezone
+5. **Mail Configuration** — SMTP, Amazon SES, or PHP Mail
+6. **Cloud Storage** (Optional) — S3-compatible storage setup
 
 ### Manual Configuration (Alternative)
 
@@ -529,7 +505,7 @@ php artisan tallcms:update --dry-run
 php artisan tallcms:update
 
 # Update to specific version
-php artisan tallcms:update --target=2.5.0
+php artisan tallcms:update --target=3.2.0
 ```
 
 ### Plugin Mode
@@ -541,6 +517,39 @@ composer update tallcms/cms
 php artisan migrate
 php artisan view:clear
 ```
+
+---
+
+## Alternative Installation Methods
+
+These methods are available for standalone installations but are not the recommended approach.
+
+### Manual Download
+
+1. Download the latest release from [tallcms.com](https://tallcms.com) or [GitHub Releases](https://github.com/tallcms/tallcms/releases)
+2. Extract the archive to your web server directory
+3. Set your web server's document root to the `public/` directory
+4. Run `composer install && npm install && npm run build`
+5. Visit your domain in a browser and follow the setup wizard
+
+### Git Clone (For Contributors)
+
+```bash
+# Clone the repository
+git clone https://github.com/tallcms/tallcms.git
+cd tallcms
+
+# Install PHP dependencies
+composer install
+
+# Install frontend dependencies and build assets
+npm install && npm run build
+
+# Start development server with hot reload
+composer dev
+```
+
+Visit `http://localhost:8000/install` to complete setup.
 
 ---
 
