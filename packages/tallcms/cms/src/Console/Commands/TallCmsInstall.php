@@ -18,6 +18,17 @@ class TallCmsInstall extends Command
     use Concerns\HasAsciiBanner;
 
     /**
+     * Regex pattern to detect TallCmsPlugin registration in panel provider files.
+     *
+     * Matches:
+     * - ->plugin(TallCmsPlugin::make()
+     * - ->plugin(\TallCms\Cms\TallCmsPlugin::make()
+     * - ->plugins([TallCmsPlugin::make()])
+     * - ->plugins([\n    OtherPlugin::make(),\n    TallCmsPlugin::make(),\n])
+     */
+    public const PLUGIN_REGISTRATION_PATTERN = '/->plugins?\s*\(\s*(\[[\s\S]*?)?(\\\\?TallCms\\\\Cms\\\\)?TallCmsPlugin::make\s*\(/s';
+
+    /**
      * The name and signature of the console command.
      */
     protected $signature = 'tallcms:install
@@ -261,9 +272,6 @@ class TallCmsInstall extends Command
         }
 
         // File-based fallback — scan panel provider files
-        // Matches both ->plugin(TallCmsPlugin::make() and ->plugins([...TallCmsPlugin::make()...])
-        $pattern = '/->plugins?\s*\(\s*(\[[\s\S]*?)?(\\\\?TallCms\\\\Cms\\\\)?TallCmsPlugin::make\s*\(/s';
-
         $providerDirs = array_filter([
             app_path('Providers/Filament'),
             app_path('Providers'),
@@ -272,7 +280,7 @@ class TallCmsInstall extends Command
         foreach ($providerDirs as $dir) {
             foreach (glob($dir.'/*.php') as $file) {
                 $content = file_get_contents($file);
-                if (preg_match($pattern, $content)) {
+                if (preg_match(self::PLUGIN_REGISTRATION_PATTERN, $content)) {
                     return true;
                 }
             }
