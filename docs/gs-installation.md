@@ -52,7 +52,7 @@ Add CMS features to your existing Laravel/Filament application.
 composer require tallcms/cms
 ```
 
-This will install TallCMS and Filament 5.x as dependencies.
+This will install TallCMS and its dependencies. If Filament is not already installed, it will be pulled in automatically.
 
 ### Step 2: Set Up Filament Panel
 
