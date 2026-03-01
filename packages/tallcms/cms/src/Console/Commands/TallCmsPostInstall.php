@@ -18,21 +18,19 @@ class TallCmsPostInstall extends Command
 
     public function handle(): int
     {
-        $this->displayHeader();
-
-        $this->info('TallCMS installed successfully!');
-        $this->newLine();
-
         $dir = basename(getcwd());
-        $this->info('Next steps:');
-        $this->line("  1. cd {$dir}");
-        $this->line('  2. npm install && npm run build');
-        $this->line('  3. php artisan serve');
-        $this->line('  4. Visit <fg=cyan>http://localhost:8000/install</> to complete setup');
-        $this->newLine();
 
-        $this->line('  <fg=gray>Documentation: https://tallcms.com/docs</>');
-        $this->newLine();
+        echo PHP_EOL;
+        echo '  TallCMS installed successfully!'.PHP_EOL;
+        echo PHP_EOL;
+        echo '  Next steps:'.PHP_EOL;
+        echo "    1. cd {$dir}".PHP_EOL;
+        echo '    2. npm install && npm run build'.PHP_EOL;
+        echo '    3. php artisan serve'.PHP_EOL;
+        echo '    4. Visit http://localhost:8000/install to complete setup'.PHP_EOL;
+        echo PHP_EOL;
+        echo '  Documentation: https://tallcms.com/docs'.PHP_EOL;
+        echo PHP_EOL;
 
         return Command::SUCCESS;
     }
