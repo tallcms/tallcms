@@ -857,6 +857,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
             Console\Commands\MakeTallCmsBlock::class,
             Console\Commands\SearchIndex::class,
             Console\Commands\TallCmsInstall::class,
+            Console\Commands\TallCmsPostInstall::class,
             Console\Commands\TallCmsSetup::class,
 
             // Theme commands
