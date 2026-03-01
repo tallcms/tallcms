@@ -29,7 +29,18 @@ Add CMS features to your existing Filament application:
 composer require tallcms/cms
 ```
 
-Then register the plugin in your panel provider:
+Add the `HasRoles` trait to your `User` model:
+
+```php
+use Spatie\Permission\Traits\HasRoles;
+
+class User extends Authenticatable
+{
+    use HasFactory, HasRoles, Notifiable;
+}
+```
+
+Register the plugin in your panel provider:
 
 ```php
 use TallCms\Cms\TallCmsPlugin;
@@ -74,7 +85,7 @@ See the [Installation Guide](https://github.com/tallcms/tallcms/blob/main/docs/g
 
 - **PHP**: 8.2+
 - **Laravel**: 12.x
-- **Filament**: 4.x or 5.x
+- **Filament**: 5.x
 - **Database**: MySQL 8.0+, MariaDB 10.3+, or SQLite
 
 ## Documentation
