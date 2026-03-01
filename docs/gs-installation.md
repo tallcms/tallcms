@@ -17,7 +17,7 @@ TallCMS can be installed in two ways: as a **standalone application** (full CMS)
 |-------------|---------|
 | **PHP** | 8.2 or higher |
 | **Laravel** | 11.0 or 12.0 |
-| **Filament** | 4.0 |
+| **Filament** | 5.0 |
 | **Database** | MySQL 8.0+, MariaDB 10.3+, or SQLite |
 | **Web Server** | Apache 2.4+ or Nginx 1.18+ |
 | **Node.js** | 18.0+ (for asset compilation) |
