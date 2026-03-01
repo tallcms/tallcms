@@ -51,7 +51,6 @@ Welcome to TallCMS — a modern, block-based CMS built on Laravel and Filament.
 
 ## Quick Links
 
-- **Admin Panel**: `/admin`
 - **GitHub**: [tallcms/tallcms](https://github.com/tallcms/tallcms)
 - **Packagist**: [tallcms/cms](https://packagist.org/packages/tallcms/cms)
 
