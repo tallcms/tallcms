@@ -77,7 +77,6 @@ abstract class TestCase extends Orchestra
 
         // Configure for plugin mode by default in tests
         $app['config']->set('tallcms.mode', 'plugin');
-        $app['config']->set('tallcms.plugin_mode.themes_enabled', false);
         $app['config']->set('tallcms.plugin_mode.preview_routes_enabled', true);
         $app['config']->set('tallcms.plugin_mode.api_routes_enabled', true);
 
