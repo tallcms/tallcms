@@ -295,7 +295,7 @@ class TallCmsInstall extends Command
         if (file_exists($configPath) && ! $this->option('force')) {
             try {
                 $config = include $configPath;
-                $active = $config['active'] ?? 'default';
+                $active = is_array($config) ? ($config['active'] ?? 'default') : 'default';
             } catch (\Throwable) {
                 $this->components->warn('Could not read config/theme.php — re-activating TallDaisy.');
                 $active = 'default';
