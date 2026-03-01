@@ -40,6 +40,11 @@ class ViewNamespaceConsistencyTest extends TestCase
                 continue;
             }
 
+            // Skip code generation stubs (they emit user-namespace view calls)
+            if (str_contains($file->getPathname(), '/Console/Commands/')) {
+                continue;
+            }
+
             $content = file_get_contents($file->getPathname());
             $relativePath = str_replace(__DIR__ . '/../../', '', $file->getPathname());
 
