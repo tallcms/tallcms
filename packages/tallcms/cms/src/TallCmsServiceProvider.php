@@ -568,7 +568,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
             return;
         }
 
-        if (! config('tallcms.plugin_mode.themes_enabled', false)) {
+        if (! config('tallcms.plugin_mode.themes_enabled', true)) {
             return;
         }
 

@@ -120,7 +120,18 @@ This command will:
 - Check prerequisites (HasRoles trait, panel provider, etc.)
 - Publish and run migrations
 - Set up roles and permissions
+- Activate the TallDaisy theme (styled frontend out of the box)
 - Create your admin user interactively
+
+### Theme Configuration
+
+The installer automatically activates the **TallDaisy** theme, which provides daisyUI-powered styling for all frontend pages. If your frontend pages appear unstyled after installation:
+
+1. Verify `TALLCMS_THEMES_ENABLED` is not set to `false` in your `.env`
+2. Check that `public/themes/talldaisy/` exists (run `php artisan theme:list`)
+3. Re-run `php artisan tallcms:install --force` to re-activate the theme
+
+You can customize the active theme in the admin panel under **Appearance > Themes**.
 
 ### Selective Features
 

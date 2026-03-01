@@ -112,7 +112,7 @@ if (! function_exists('theme_text_presets')) {
     {
         // Graceful degradation for plugin mode without themes enabled
         if (! app()->bound('theme.manager') ||
-            ! config('tallcms.plugin_mode.themes_enabled', false)) {
+            ! config('tallcms.plugin_mode.themes_enabled', true)) {
             return [
                 'primary' => [
                     'heading' => '#111827',

@@ -27,7 +27,7 @@ class ThemeServiceProvider extends ServiceProvider
         }
 
         // In plugin mode, require explicit opt-in
-        return config('tallcms.plugin_mode.themes_enabled', false);
+        return config('tallcms.plugin_mode.themes_enabled', true);
     }
 
     /**
@@ -152,7 +152,7 @@ class ThemeServiceProvider extends ServiceProvider
 
         if (! file_exists($configPath)) {
             $defaultConfig = [
-                'active' => 'default',
+                'active' => 'talldaisy',
                 'themes_path' => base_path('themes'),
                 'cache_themes' => true,
                 'auto_discover' => true,

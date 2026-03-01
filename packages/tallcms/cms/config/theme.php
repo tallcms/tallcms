@@ -10,7 +10,7 @@ return [
     | and should not be manually edited unless necessary.
     |
     */
-    'active' => env('TALLCMS_THEME', 'default'),
+    'active' => env('TALLCMS_THEME', 'talldaisy'),
 
     /*
     |--------------------------------------------------------------------------
