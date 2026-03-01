@@ -261,7 +261,8 @@ class TallCmsInstall extends Command
         }
 
         // File-based fallback — scan panel provider files
-        $pattern = '/->plugin\s*\(\s*(\\\\?TallCms\\\\Cms\\\\)?TallCmsPlugin::make\s*\(/s';
+        // Matches both ->plugin(TallCmsPlugin::make() and ->plugins([...TallCmsPlugin::make()...])
+        $pattern = '/->plugins?\s*\(\s*(\[[\s\S]*?)?(\\\\?TallCms\\\\Cms\\\\)?TallCmsPlugin::make\s*\(/s';
 
         $providerDirs = array_filter([
             app_path('Providers/Filament'),

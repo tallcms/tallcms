@@ -5,7 +5,10 @@ namespace TallCms\Cms\Tests\Unit;
 use TallCms\Cms\Tests\TestCase;
 
 /**
- * Tests for tallcms_panel_url() and tallcms_panel_route() helper functions.
+ * Tests for tallcms_panel_url() helper function.
+ *
+ * Note: tallcms_panel_route() calls Laravel's route() which requires
+ * registered Filament panel routes — tested via PanelRouteHelperTest.
  */
 class PanelHelperTest extends TestCase
 {
