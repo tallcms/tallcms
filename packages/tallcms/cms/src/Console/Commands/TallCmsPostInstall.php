@@ -20,17 +20,15 @@ class TallCmsPostInstall extends Command
     {
         $this->displayHeader();
 
-        $this->components->info('TallCMS installed successfully!');
+        $this->info('TallCMS installed successfully!');
         $this->newLine();
 
         $dir = basename(getcwd());
-        $this->components->info('Next steps:');
-        $this->components->bulletList([
-            "cd {$dir}",
-            'npm install && npm run build',
-            'php artisan serve',
-            'Visit <fg=cyan>http://localhost:8000/install</> to complete setup',
-        ]);
+        $this->info('Next steps:');
+        $this->line("  1. cd {$dir}");
+        $this->line('  2. npm install && npm run build');
+        $this->line('  3. php artisan serve');
+        $this->line('  4. Visit <fg=cyan>http://localhost:8000/install</> to complete setup');
         $this->newLine();
 
         $this->line('  <fg=gray>Documentation: https://tallcms.com/docs</>');
