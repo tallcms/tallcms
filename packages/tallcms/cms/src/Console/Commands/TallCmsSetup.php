@@ -20,6 +20,7 @@ class TallCmsSetup extends Command
      */
     protected $signature = 'tallcms:setup
                             {--force : Force setup even if already configured}
+                            {--no-banner : Suppress the ASCII banner (used when called as sub-command)}
                             {--name= : Admin full name}
                             {--email= : Admin email address}
                             {--password= : Admin password (min 8 chars)}';
@@ -46,6 +47,9 @@ class TallCmsSetup extends Command
      */
     public function handle()
     {
+        if (! $this->option('no-banner')) {
+            $this->displayHeader();
+        }
         $this->info('Setting up TallCMS...');
         $this->newLine();
 

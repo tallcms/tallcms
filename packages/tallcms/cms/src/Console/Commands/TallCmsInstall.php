@@ -426,7 +426,10 @@ class TallCmsInstall extends Command
         $this->newLine();
 
         // Call tallcms:setup - it handles everything else
-        $this->call('tallcms:setup', ['--force' => $this->option('force')]);
+        $this->call('tallcms:setup', [
+            '--force' => $this->option('force'),
+            '--no-banner' => true,
+        ]);
     }
 
     /**
