@@ -253,8 +253,8 @@ Enhanced discovery:
 
 ## Filament Compatibility
 
-Requires Filament v4.x. Automatic version detection:
-- **Filament 4.x**: Full enhanced panel
+Requires Filament v5.x. Automatic version detection:
+- **Filament 5.x**: Full enhanced panel
 - **Other versions**: Standard Filament block panel
 
 ---

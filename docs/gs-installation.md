@@ -134,15 +134,13 @@ After installation, you can:
 
 Add CMS features to your existing Laravel/Filament application.
 
-> **Note:** TallCMS v2.x requires Filament 4.x (not Filament 5) because filament-shield doesn't yet have a Filament 5 compatible release.
-
 ### Step 1: Install the Package
 
 ```bash
 composer require tallcms/cms
 ```
 
-This will install TallCMS and Filament 4.x as dependencies.
+This will install TallCMS and Filament 5.x as dependencies.
 
 ### Step 2: Set Up Filament Panel
 
