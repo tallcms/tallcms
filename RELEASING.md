@@ -23,15 +23,29 @@ Ensure all changes are merged to `main` and tests pass.
 # Change: "version": "X.Y.Z"
 ```
 
-### 3. Commit Version Bump
+### 3. Sync Monorepo Lock File
+
+After updating the package version, update `composer.lock` so the standalone monorepo resolves the new version:
 
 ```bash
-git add packages/tallcms/cms/composer.json
+composer update tallcms/cms
+```
+
+Verify it picked up the new version:
+
+```bash
+composer show tallcms/cms | head -4
+```
+
+### 4. Commit Version Bump
+
+```bash
+git add packages/tallcms/cms/composer.json composer.lock
 git commit -m "Bump package version to X.Y.Z"
 git push origin main
 ```
 
-### 4. Create Release
+### 5. Create Release
 
 Use `gh release create` to create both the tag and GitHub Release in one step:
 
@@ -56,7 +70,7 @@ EOF
 )"
 ```
 
-### 5. Verify
+### 6. Verify
 
 After creating the release:
 
@@ -114,7 +128,8 @@ For significant releases, update `ROADMAP.md`:
 - [ ] All changes merged to `main`
 - [ ] Tests passing
 - [ ] `packages/tallcms/cms/composer.json` version updated
-- [ ] Version bump committed and pushed
+- [ ] `composer update tallcms/cms` run to sync `composer.lock`
+- [ ] Version bump committed and pushed (both `composer.json` and `composer.lock`)
 - [ ] `ROADMAP.md` updated (for significant releases)
 - [ ] Release created with `gh release create`
 - [ ] Packagist shows new version
