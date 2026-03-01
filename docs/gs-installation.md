@@ -13,8 +13,8 @@ TallCMS can be installed in two ways: as a **standalone application** (full CMS)
 
 | Path | Best For |
 |------|----------|
-| **Standalone** | New projects — full CMS with themes, plugins, web installer, and auto-updates |
 | **Plugin** | Existing Laravel/Filament apps — add CMS features via Composer |
+| **Standalone** | New projects — full CMS with themes, plugins, web installer, and auto-updates |
 
 ## System Requirements
 
@@ -39,70 +39,6 @@ TallCMS can be installed in two ways: as a **standalone application** (full CMS)
 - BCMath
 - Fileinfo
 - GD or Imagick
-
----
-
-## Standalone Installation
-
-The standalone installation gives you a complete CMS with themes, plugins, web installer, and auto-updates.
-
-```bash
-# Create new project
-composer create-project tallcms/tallcms my-site
-
-# Navigate to project
-cd my-site
-
-# Install frontend dependencies and build assets
-npm install && npm run build
-
-# Start development server
-php artisan serve
-```
-
-Visit `http://localhost:8000/install` to complete the web installer.
-
-### Web Installer
-
-The web installer guides you through:
-
-1. **System Check** — Verifies PHP version, extensions, and permissions
-2. **Database Setup** — Configure MySQL, MariaDB, or SQLite connection
-3. **Admin Account** — Create your administrator user
-4. **Site Settings** — Set site name, contact email, timezone
-5. **Mail Configuration** — SMTP, Amazon SES, or PHP Mail
-6. **Cloud Storage** (Optional) — S3-compatible storage setup
-
-### Manual Configuration (Alternative)
-
-If you prefer command-line setup instead of the web installer:
-
-```bash
-# Copy environment file
-cp .env.example .env
-
-# Generate application key
-php artisan key:generate
-
-# Configure your .env file with database credentials
-# Then run migrations
-php artisan migrate --force
-
-# Create storage symlink
-php artisan storage:link
-
-# Create admin user interactively
-php artisan make:user
-```
-
-### Post-Installation
-
-After installation, you can:
-
-1. Access the admin panel at `/admin`
-2. Create pages and posts in **Content**
-3. Configure site settings in **Settings**
-4. Customize your theme in **Appearance > Themes**
 
 ---
 
@@ -198,6 +134,70 @@ Disable components you don't need:
         ->withoutContactSubmissions()  // Disable contact form submissions
 )
 ```
+
+---
+
+## Standalone Installation
+
+The standalone installation gives you a complete CMS with themes, plugins, web installer, and auto-updates.
+
+```bash
+# Create new project
+composer create-project tallcms/tallcms my-site
+
+# Navigate to project
+cd my-site
+
+# Install frontend dependencies and build assets
+npm install && npm run build
+
+# Start development server
+php artisan serve
+```
+
+Visit `http://localhost:8000/install` to complete the web installer.
+
+### Web Installer
+
+The web installer guides you through:
+
+1. **System Check** — Verifies PHP version, extensions, and permissions
+2. **Database Setup** — Configure MySQL, MariaDB, or SQLite connection
+3. **Admin Account** — Create your administrator user
+4. **Site Settings** — Set site name, contact email, timezone
+5. **Mail Configuration** — SMTP, Amazon SES, or PHP Mail
+6. **Cloud Storage** (Optional) — S3-compatible storage setup
+
+### Manual Configuration (Alternative)
+
+If you prefer command-line setup instead of the web installer:
+
+```bash
+# Copy environment file
+cp .env.example .env
+
+# Generate application key
+php artisan key:generate
+
+# Configure your .env file with database credentials
+# Then run migrations
+php artisan migrate --force
+
+# Create storage symlink
+php artisan storage:link
+
+# Create admin user interactively
+php artisan make:user
+```
+
+### Post-Installation
+
+After installation, you can:
+
+1. Access the admin panel at `/admin`
+2. Create pages and posts in **Content**
+3. Configure site settings in **Settings**
+4. Customize your theme in **Appearance > Themes**
 
 ---
 
