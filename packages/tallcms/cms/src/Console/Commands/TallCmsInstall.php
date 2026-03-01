@@ -293,8 +293,13 @@ class TallCmsInstall extends Command
         // Skip if user has already customized their theme
         $configPath = config_path('theme.php');
         if (file_exists($configPath) && ! $this->option('force')) {
-            $config = include $configPath;
-            $active = $config['active'] ?? 'default';
+            try {
+                $config = include $configPath;
+                $active = $config['active'] ?? 'default';
+            } catch (\Throwable) {
+                $this->components->warn('Could not read config/theme.php — re-activating TallDaisy.');
+                $active = 'default';
+            }
             if ($active !== 'default' && $active !== 'talldaisy') {
                 $this->components->task('Theme activation', fn () => "keeping '{$active}'");
 

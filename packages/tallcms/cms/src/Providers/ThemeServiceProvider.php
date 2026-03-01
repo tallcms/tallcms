@@ -17,7 +17,7 @@ class ThemeServiceProvider extends ServiceProvider
     /**
      * Determine if theme system is enabled.
      * In standalone mode: always enabled
-     * In plugin mode: requires explicit opt-in via config
+     * In plugin mode: enabled by default; opt out via TALLCMS_THEMES_ENABLED=false
      */
     protected function isThemeSystemEnabled(): bool
     {
@@ -26,7 +26,7 @@ class ThemeServiceProvider extends ServiceProvider
             return true;
         }
 
-        // In plugin mode, require explicit opt-in
+        // In plugin mode, enabled by default — users can opt out
         return config('tallcms.plugin_mode.themes_enabled', true);
     }
 
