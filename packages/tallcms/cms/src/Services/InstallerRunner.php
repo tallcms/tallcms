@@ -119,6 +119,7 @@ class InstallerRunner
         try {
             $exitCode = Artisan::call('tallcms:setup', [
                 '--force' => true,
+                '--no-banner' => true,
                 '--name' => $adminConfig['name'] ?? null,
                 '--email' => $adminConfig['email'] ?? null,
                 '--password' => $adminConfig['password'] ?? null,
