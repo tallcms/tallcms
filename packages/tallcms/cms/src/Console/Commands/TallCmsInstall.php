@@ -503,11 +503,21 @@ class TallCmsInstall extends Command
             return '/'.ltrim($configPath, '/');
         }
 
-        // Try to get the default panel's path from Filament
+        // Runtime detection — Filament is booted by the time this runs
         try {
             $panels = \Filament\Facades\Filament::getPanels();
 
             if (! empty($panels)) {
+                // Prefer the panel that has TallCmsPlugin registered
+                foreach ($panels as $panel) {
+                    if ($panel->hasPlugin('tallcms')) {
+                        $path = $panel->getPath();
+
+                        return $path ? '/'.ltrim($path, '/') : '/';
+                    }
+                }
+
+                // Fall back to first panel
                 $panel = reset($panels);
                 $path = $panel->getPath();
 
@@ -516,32 +526,20 @@ class TallCmsInstall extends Command
                 }
             }
         } catch (\Throwable) {
-            // Filament might not be fully booted during CLI
+            // Filament not booted, fall through to file-based detection
         }
 
-        // Try to detect from panel provider files
-        $providerPath = app_path('Providers/Filament');
-        if (is_dir($providerPath)) {
-            $files = glob($providerPath.'/*.php');
-            foreach ($files as $file) {
+        // File-based fallback — look for ->path('...') in panel providers
+        $providerDirs = array_filter([
+            app_path('Providers/Filament'),
+            app_path('Providers'),
+        ], 'is_dir');
+
+        foreach ($providerDirs as $dir) {
+            foreach (glob($dir.'/*.php') as $file) {
                 $content = file_get_contents($file);
-                // Look for ->path('something') in the provider
                 if (preg_match('/->path\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/', $content, $matches)) {
                     return '/'.$matches[1];
-                }
-            }
-        }
-
-        // Check app/Providers for any Filament panel providers
-        $appProvidersPath = app_path('Providers');
-        if (is_dir($appProvidersPath)) {
-            foreach (glob($appProvidersPath.'/*.php') as $file) {
-                $content = file_get_contents($file);
-                if (str_contains($content, 'extends PanelProvider') ||
-                    str_contains($content, 'Filament\\Panel')) {
-                    if (preg_match('/->path\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/', $content, $matches)) {
-                        return '/'.$matches[1];
-                    }
                 }
             }
         }
