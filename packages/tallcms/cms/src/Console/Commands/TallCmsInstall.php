@@ -70,10 +70,13 @@ class TallCmsInstall extends Command
         // Step 5: Publish assets (needed for frontend routes)
         $this->publishAssets();
 
-        // Step 6: Publish Filament assets (required for admin panel CSS)
+        // Step 6: Activate TallDaisy theme
+        $this->configureTheme();
+
+        // Step 7: Publish Filament assets (required for admin panel CSS)
         $this->publishFilamentAssets();
 
-        // Step 7: Run tallcms:setup for roles and permissions
+        // Step 8: Run tallcms:setup for roles and permissions
         if (! $this->option('skip-setup')) {
             $this->runSetup();
         }
@@ -123,7 +126,7 @@ class TallCmsInstall extends Command
                     "    class User extends Authenticatable\n".
                     "    {\n".
                     "        use HasFactory, HasRoles, Notifiable;\n".
-                    "    }",
+                    '    }',
             ];
         }
 
@@ -133,7 +136,7 @@ class TallCmsInstall extends Command
                 'issue' => 'No Filament panel provider found',
                 'fix' => "Install and configure Filament first:\n\n".
                     "    composer require filament/filament:\"^4.0\"\n".
-                    "    php artisan filament:install --panels",
+                    '    php artisan filament:install --panels',
             ];
         }
 
@@ -151,9 +154,9 @@ class TallCmsInstall extends Command
             $this->newLine();
 
             foreach ($errors as $index => $error) {
-                $this->line("  <fg=red>".($index + 1).". {$error['issue']}</>");
+                $this->line('  <fg=red>'.($index + 1).". {$error['issue']}</>");
                 $this->newLine();
-                $this->line("     <fg=gray>Fix:</>");
+                $this->line('     <fg=gray>Fix:</>');
                 foreach (explode("\n", $error['fix']) as $line) {
                     $this->line("     <fg=green>{$line}</>");
                 }
@@ -276,6 +279,51 @@ class TallCmsInstall extends Command
     }
 
     /**
+     * Activate the TallDaisy theme for styled frontend out of the box.
+     */
+    protected function configureTheme(): void
+    {
+        // Respect explicit theme opt-out
+        if (! config('tallcms.plugin_mode.themes_enabled', true)) {
+            $this->components->task('Theme activation', fn () => 'skipped (themes disabled)');
+
+            return;
+        }
+
+        // Skip if user has already customized their theme
+        $configPath = config_path('theme.php');
+        if (file_exists($configPath) && ! $this->option('force')) {
+            try {
+                $config = include $configPath;
+                $active = is_array($config) ? ($config['active'] ?? 'default') : 'default';
+            } catch (\Throwable) {
+                $this->components->warn('Could not read config/theme.php — re-activating TallDaisy.');
+                $active = 'default';
+            }
+            if ($active !== 'default' && $active !== 'talldaisy') {
+                $this->components->task('Theme activation', fn () => "keeping '{$active}'");
+
+                return;
+            }
+        }
+
+        $this->components->task('Activating TallDaisy theme', function () {
+            $themeManager = app(\TallCms\Cms\Services\ThemeManager::class);
+            $result = $themeManager->setActiveTheme('talldaisy');
+
+            if (! $result) {
+                $this->components->warn(
+                    'Could not activate TallDaisy theme. Frontend styling may be missing.'
+                );
+                $this->line('  Try: <fg=yellow>php artisan theme:list</> to see available themes');
+                $this->line('  Check: <fg=yellow>public/themes/talldaisy/</> exists');
+            }
+
+            return $result;
+        });
+    }
+
+    /**
      * Publish Filament assets (required for admin panel CSS).
      * This creates symlinks/copies for all Filament package assets including TallCMS admin CSS.
      */
@@ -340,6 +388,7 @@ class TallCmsInstall extends Command
             "Visit <fg=cyan>{$panelPath}</> to access the admin panel",
             'Create your first page in <fg=cyan>CMS > Pages</>',
             'Configure menus in <fg=cyan>CMS > Menus</>',
+            'TallDaisy theme is active — customize in <fg=cyan>Appearance > Themes</>',
         ]);
         $this->newLine();
 
@@ -363,7 +412,7 @@ class TallCmsInstall extends Command
         $this->newLine();
 
         // Star the repo prompt
-        if ($this->confirm('All done! Would you like to show some love by starring the TallCMS repo?', false)) {
+        if ($this->confirm('All done! Would you like to show some love by starring the TallCMS repo?', true) && $this->input->isInteractive()) {
             $repoUrl = 'https://github.com/tallcms/tallcms';
 
             if (PHP_OS_FAMILY === 'Darwin') {

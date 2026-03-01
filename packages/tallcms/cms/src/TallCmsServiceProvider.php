@@ -521,7 +521,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
      */
     protected function registerLivewireComponents(): void
     {
-        if (class_exists(\Livewire\Livewire::class)) {
+        if (class_exists(\Livewire\Livewire::class) && $this->app->bound('livewire')) {
             // Register with the exact names Livewire generates from class names
             \Livewire\Livewire::component('tall-cms.cms.livewire.revision-history', Livewire\RevisionHistory::class);
             \Livewire\Livewire::component('tall-cms.cms.livewire.cms-page-renderer', Livewire\CmsPageRenderer::class);
@@ -568,7 +568,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
             return;
         }
 
-        if (! config('tallcms.plugin_mode.themes_enabled', false)) {
+        if (! config('tallcms.plugin_mode.themes_enabled', true)) {
             return;
         }
 
