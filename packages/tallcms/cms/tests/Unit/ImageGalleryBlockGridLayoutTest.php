@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use TallCms\Cms\Filament\Blocks\ImageGalleryBlock;
 use TallCms\Cms\Tests\TestCase;
 
-class ImageGalleryBlockSingleLayoutTest extends TestCase
+class ImageGalleryBlockGridLayoutTest extends TestCase
 {
     protected function getPackageProviders($app): array
     {
