@@ -356,6 +356,9 @@ class TallCmsSetup extends Command
             // Preview link generation
             'GeneratePreviewLink:CmsPage' => 'Generate shareable preview links for pages',
             'GeneratePreviewLink:CmsPost' => 'Generate shareable preview links for posts',
+
+            // Code injection
+            'Manage:CodeInjection' => 'Manage code injection settings (analytics, scripts)',
         ];
 
         foreach ($customPermissions as $name => $description) {
@@ -466,6 +469,16 @@ class TallCmsSetup extends Command
 
         // Allow site settings page
         if (str_contains($lower, 'sitesettings')) {
+            return true;
+        }
+
+        // Allow SEO settings page
+        if (str_contains($lower, 'seosettings')) {
+            return true;
+        }
+
+        // Allow code injection page
+        if (str_contains($lower, 'codeinjection')) {
             return true;
         }
 

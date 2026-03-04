@@ -34,8 +34,10 @@
     @themeVite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
     <style>[x-cloak] { display: none !important; }</style>
+    <x-tallcms::code-injection zone="head" />
 </head>
 <body class="min-h-screen bg-base-100 text-base-content">
+    <x-tallcms::code-injection zone="body_start" />
     <!-- Header -->
     @if(function_exists('mega_menu_header_active') && mega_menu_header_active('header'))
         {{-- Mega Menu Full Header --}}
@@ -104,5 +106,6 @@
     </footer>
 
     @livewireScripts
+    <x-tallcms::code-injection zone="body_end" />
 </body>
 </html>

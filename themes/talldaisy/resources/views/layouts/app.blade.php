@@ -83,8 +83,10 @@
             transition: opacity 0.1s ease;
         }
     </style>
+    <x-tallcms::code-injection zone="head" />
 </head>
 <body class="min-h-screen bg-base-100 text-base-content">
+    <x-tallcms::code-injection zone="body_start" />
     <!-- Navigation Progress Bar -->
     <div class="navigation-progress" id="nav-progress"></div>
     @if(supports_theme_controller())
@@ -360,5 +362,6 @@
         });
     </script>
     @livewireScripts
+    <x-tallcms::code-injection zone="body_end" />
 </body>
 </html>

@@ -87,6 +87,7 @@ Permissions follow the pattern: `{Action}:{Resource}`
 | `User` | Users | User accounts |
 | `Role` | Roles | Role management |
 | `SiteSettings` | Settings | Site configuration |
+| `Manage:CodeInjection` | Code Injection | Analytics, tracking scripts, chat widgets |
 | `TallcmsContactSubmission` | Contact | Form submissions |
 
 ### Standalone Features

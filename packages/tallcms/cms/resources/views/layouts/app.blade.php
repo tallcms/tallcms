@@ -66,8 +66,10 @@
         [x-cloak] { display: none !important; }
         html { scroll-behavior: smooth; }
     </style>
+    <x-tallcms::code-injection zone="head" />
 </head>
 <body class="font-inter antialiased bg-white">
+    <x-tallcms::code-injection zone="body_start" />
     <div class="min-h-screen">
         @if(!($minimalChrome ?? false))
         <!-- Navigation -->
@@ -302,5 +304,6 @@
             document.documentElement.setAttribute('data-theme', theme);
         });
     </script>
+    <x-tallcms::code-injection zone="body_end" />
 </body>
 </html>
