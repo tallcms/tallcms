@@ -2,70 +2,131 @@
 
 namespace TallCms\Cms\Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
+use TallCms\Cms\Models\SiteSetting;
+use TallCms\Cms\Tests\TestCase;
 use TallCms\Cms\View\Components\CodeInjection;
 
 class CodeInjectionComponentTest extends TestCase
 {
-    public function test_zone_to_key_mapping_head(): void
+    protected function defineDatabaseMigrations(): void
     {
-        // Verify the component maps zone names to SiteSetting keys correctly
-        // We test the mapping logic by inspecting constructor behavior with reflection
-        $component = $this->createPartialMock(CodeInjection::class, []);
+        parent::defineDatabaseMigrations();
 
-        // Use reflection to check the allowed zones constant
-        $reflection = new \ReflectionClass(CodeInjection::class);
-        $constant = $reflection->getConstant('ALLOWED_ZONES');
-
-        $this->assertContains('head', $constant);
-        $this->assertContains('body_start', $constant);
-        $this->assertContains('body_end', $constant);
+        Schema::create('tallcms_site_settings', function (Blueprint $table) {
+            $table->id();
+            $table->string('key')->unique();
+            $table->text('value')->nullable();
+            $table->string('type')->default('text');
+            $table->string('group')->default('general');
+            $table->text('description')->nullable();
+            $table->timestamps();
+            $table->index(['key', 'group']);
+        });
     }
 
-    public function test_zone_to_key_mapping_produces_correct_keys(): void
+    protected function setUp(): void
     {
-        // The component maps zone to "code_{$zone}"
-        $expectedMappings = [
+        parent::setUp();
+        Cache::flush();
+    }
+
+    public function test_renders_head_code_from_site_setting(): void
+    {
+        SiteSetting::set('code_head', '<script>console.log("head")</script>', 'text', 'code-injection');
+        Cache::flush();
+
+        $component = new CodeInjection(zone: 'head');
+        $rendered = $this->renderComponent($component);
+
+        $this->assertStringContainsString('<script>console.log("head")</script>', $rendered);
+    }
+
+    public function test_renders_body_start_code_from_site_setting(): void
+    {
+        SiteSetting::set('code_body_start', '<!-- GTM noscript -->', 'text', 'code-injection');
+        Cache::flush();
+
+        $component = new CodeInjection(zone: 'body_start');
+        $rendered = $this->renderComponent($component);
+
+        $this->assertStringContainsString('<!-- GTM noscript -->', $rendered);
+    }
+
+    public function test_renders_body_end_code_from_site_setting(): void
+    {
+        SiteSetting::set('code_body_end', '<script src="chat.js"></script>', 'text', 'code-injection');
+        Cache::flush();
+
+        $component = new CodeInjection(zone: 'body_end');
+        $rendered = $this->renderComponent($component);
+
+        $this->assertStringContainsString('<script src="chat.js"></script>', $rendered);
+    }
+
+    public function test_renders_empty_when_setting_is_blank(): void
+    {
+        SiteSetting::set('code_head', '', 'text', 'code-injection');
+        Cache::flush();
+
+        $component = new CodeInjection(zone: 'head');
+
+        $this->assertFalse($component->shouldRender());
+    }
+
+    public function test_renders_empty_when_setting_does_not_exist(): void
+    {
+        $component = new CodeInjection(zone: 'head');
+
+        $this->assertFalse($component->shouldRender());
+    }
+
+    public function test_invalid_zone_renders_empty(): void
+    {
+        $component = new CodeInjection(zone: 'footer');
+
+        $this->assertEquals('', $component->code);
+        $this->assertFalse($component->shouldRender());
+    }
+
+    public function test_zone_to_key_mapping(): void
+    {
+        $mappings = [
             'head' => 'code_head',
             'body_start' => 'code_body_start',
             'body_end' => 'code_body_end',
         ];
 
-        foreach ($expectedMappings as $zone => $expectedKey) {
-            $this->assertEquals($expectedKey, "code_{$zone}");
+        foreach ($mappings as $zone => $expectedKey) {
+            $uniqueValue = "<!-- test-{$zone} -->";
+            SiteSetting::set($expectedKey, $uniqueValue, 'text', 'code-injection');
+            Cache::flush();
+
+            $component = new CodeInjection(zone: $zone);
+            $this->assertEquals($uniqueValue, $component->code, "Zone '{$zone}' should read from key '{$expectedKey}'");
         }
     }
 
-    public function test_invalid_zone_is_not_in_allowed_list(): void
+    public function test_each_zone_reads_its_own_setting(): void
     {
-        $reflection = new \ReflectionClass(CodeInjection::class);
-        $constant = $reflection->getConstant('ALLOWED_ZONES');
+        SiteSetting::set('code_head', 'HEAD_CODE', 'text', 'code-injection');
+        SiteSetting::set('code_body_start', 'BODY_START_CODE', 'text', 'code-injection');
+        SiteSetting::set('code_body_end', 'BODY_END_CODE', 'text', 'code-injection');
+        Cache::flush();
 
-        $this->assertNotContains('footer', $constant);
-        $this->assertNotContains('sidebar', $constant);
-        $this->assertNotContains('', $constant);
+        $head = new CodeInjection(zone: 'head');
+        $bodyStart = new CodeInjection(zone: 'body_start');
+        $bodyEnd = new CodeInjection(zone: 'body_end');
+
+        $this->assertEquals('HEAD_CODE', $head->code);
+        $this->assertEquals('BODY_START_CODE', $bodyStart->code);
+        $this->assertEquals('BODY_END_CODE', $bodyEnd->code);
     }
 
-    public function test_allowed_zones_has_exactly_three_entries(): void
+    private function renderComponent(CodeInjection $component): string
     {
-        $reflection = new \ReflectionClass(CodeInjection::class);
-        $constant = $reflection->getConstant('ALLOWED_ZONES');
-
-        $this->assertCount(3, $constant);
-    }
-
-    public function test_component_renders_correct_view(): void
-    {
-        // Verify the render method references the correct view path
-        $reflection = new \ReflectionClass(CodeInjection::class);
-        $method = $reflection->getMethod('render');
-
-        // The method should exist
-        $this->assertTrue($reflection->hasMethod('render'));
-    }
-
-    public function test_component_extends_illuminate_component(): void
-    {
-        $this->assertTrue(is_subclass_of(CodeInjection::class, \Illuminate\View\Component::class));
+        return $component->render()->with($component->data())->render();
     }
 }

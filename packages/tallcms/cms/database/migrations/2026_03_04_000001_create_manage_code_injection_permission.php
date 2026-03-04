@@ -1,18 +1,26 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        $guardName = config('tallcms.auth.guard', 'web');
         $permissionClass = 'Spatie\\Permission\\Models\\Permission';
         $roleClass = 'Spatie\\Permission\\Models\\Role';
 
         if (! class_exists($permissionClass) || ! class_exists($roleClass)) {
             return;
         }
+
+        // Skip if permissions table hasn't been created yet (e.g. fresh install runs these in order)
+        $tableName = config('permission.table_names.permissions', 'permissions');
+        if (! Schema::hasTable($tableName)) {
+            return;
+        }
+
+        $guardName = config('tallcms.auth.guard', 'web');
 
         $permission = $permissionClass::firstOrCreate([
             'name' => 'Manage:CodeInjection',
@@ -38,6 +46,15 @@ return new class extends Migration
             return;
         }
 
-        $permissionClass::where('name', 'Manage:CodeInjection')->delete();
+        $tableName = config('permission.table_names.permissions', 'permissions');
+        if (! Schema::hasTable($tableName)) {
+            return;
+        }
+
+        $guardName = config('tallcms.auth.guard', 'web');
+
+        $permissionClass::where('name', 'Manage:CodeInjection')
+            ->where('guard_name', $guardName)
+            ->delete();
     }
 };
