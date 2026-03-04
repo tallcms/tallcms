@@ -136,7 +136,7 @@ class ImageGalleryBlock extends RichContentCustomBlock
                                     ->disk(\cms_media_disk())
                                     ->visibility(\cms_media_visibility())
                                     ->maxFiles(12)
-                                    ->reorderable(fn (Get $get): bool => $get('layout') !== 'single')
+                                    ->reorderable()
                                     ->imageEditor()
                                     ->imageEditorAspectRatios([
                                         null,
@@ -146,15 +146,7 @@ class ImageGalleryBlock extends RichContentCustomBlock
                                     ])
                                     ->requiredIf('source', 'manual')
                                     ->visible(fn (Get $get): bool => $get('source') !== 'collection')
-                                    ->helperText(fn (Get $get): string => $get('layout') === 'single'
-                                        ? 'Recommended: 1200×800px or larger. Max 5MB. Formats: JPEG, PNG, WebP.'
-                                        : 'Recommended: 1200×800px or larger. Up to 12 images, max 5MB each. Formats: JPEG, PNG, WebP. Drag to reorder.'),
-
-                                TextInput::make('caption')
-                                    ->label('Image Caption')
-                                    ->maxLength(500)
-                                    ->placeholder('Caption for the image (optional)')
-                                    ->visible(fn (Get $get): bool => $get('source') !== 'collection' && $get('layout') === 'single'),
+                                    ->helperText('Recommended: 1200×800px or larger. Up to 12 images, max 5MB each. Formats: JPEG, PNG, WebP. Drag to reorder.'),
                             ]),
 
                         Tab::make('Layout')
@@ -162,15 +154,14 @@ class ImageGalleryBlock extends RichContentCustomBlock
                             ->schema([
                                 Select::make('layout')
                                     ->options([
-                                        'single' => 'Single Image (Full View)',
+                                        'grid-1' => 'Grid (1 column)',
                                         'grid-2' => 'Grid (2 columns)',
                                         'grid-3' => 'Grid (3 columns)',
                                         'grid-4' => 'Grid (4 columns)',
                                         'masonry' => 'Masonry layout',
                                         'carousel' => 'Carousel/Slider',
                                     ])
-                                    ->default('grid-3')
-                                    ->live(),
+                                    ->default('grid-3'),
 
                                 Select::make('image_size')
                                     ->label('Image Size')
@@ -180,8 +171,7 @@ class ImageGalleryBlock extends RichContentCustomBlock
                                         'large' => 'Large (400px)',
                                         'full' => 'Full width',
                                     ])
-                                    ->default('medium')
-                                    ->hidden(fn (Get $get): bool => $get('layout') === 'single'),
+                                    ->default('medium'),
 
                                 Section::make('Appearance')
                                     ->schema([
@@ -224,13 +214,13 @@ class ImageGalleryBlock extends RichContentCustomBlock
                                     ->helperText('Animate images sequentially instead of all at once')
                                     ->default(false)
                                     ->live()
-                                    ->visible(fn (Get $get): bool => static::hasPro() && $get('layout') !== 'single'),
+                                    ->visible(fn (): bool => static::hasPro()),
 
                                 Select::make('animation_stagger_delay')
                                     ->label('Stagger Delay')
                                     ->options(static::getStaggerDelayOptions())
                                     ->default('100')
-                                    ->visible(fn (Get $get): bool => static::hasPro() && $get('animation_stagger') === true && $get('layout') !== 'single'),
+                                    ->visible(fn (Get $get): bool => static::hasPro() && $get('animation_stagger') === true),
                             ])
                             ->columns(2),
                     ]),
@@ -275,7 +265,6 @@ class ImageGalleryBlock extends RichContentCustomBlock
             'animation_type' => $animConfig['animation_type'],
             'animation_duration' => $animConfig['animation_duration'],
             'animation_stagger' => $animConfig['animation_stagger'],
-            'caption' => $config['caption'] ?? '',
             'animation_stagger_delay' => $animConfig['animation_stagger_delay'],
         ])->render();
     }

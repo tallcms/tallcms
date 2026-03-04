@@ -22,7 +22,6 @@ class ImageGalleryBlockSingleLayoutTest extends TestCase
     {
         parent::setUp();
 
-        // Fake the public disk used by cms_media_disk()
         Storage::fake('public');
     }
 
@@ -42,7 +41,6 @@ class ImageGalleryBlockSingleLayoutTest extends TestCase
         preg_match("/items:\s*JSON\.parse\('(.+?)'\)/", $html, $matches);
         $this->assertNotEmpty($matches, 'Lightbox items data should be present');
 
-        // Decode unicode escapes (\u0022 → ")
         $jsonString = json_decode('"'.$matches[1].'"');
 
         $items = json_decode($jsonString, true);
@@ -51,14 +49,13 @@ class ImageGalleryBlockSingleLayoutTest extends TestCase
         return $items;
     }
 
-    protected function renderSingleLayout(array $overrides = []): string
+    protected function renderLayout(string $layout, array $overrides = []): string
     {
         $config = array_merge([
             'source' => 'manual',
-            'layout' => 'single',
+            'layout' => $layout,
             'images' => [$this->createFakeImage('cms/galleries/test-image.jpg')],
             'title' => '',
-            'caption' => '',
             'image_size' => 'medium',
             'background' => 'bg-base-100',
             'padding' => 'py-16',
@@ -72,67 +69,47 @@ class ImageGalleryBlockSingleLayoutTest extends TestCase
         return ImageGalleryBlock::toHtml($config, []);
     }
 
-    public function test_single_layout_contains_single_container_class(): void
+    public function test_grid1_renders_with_grid_cols_1_class(): void
     {
-        $html = $this->renderSingleLayout();
+        $html = $this->renderLayout('grid-1');
 
-        $this->assertStringContainsString('image-gallery-single', $html);
+        $this->assertStringContainsString('grid-cols-1', $html);
+        $this->assertStringContainsString('grid', $html);
     }
 
-    public function test_single_layout_does_not_contain_grid_classes(): void
+    public function test_grid1_does_not_contain_multi_column_classes(): void
     {
-        $html = $this->renderSingleLayout();
+        $html = $this->renderLayout('grid-1');
 
-        $this->assertStringNotContainsString('grid-cols-', $html);
-        $this->assertStringNotContainsString('columns-1', $html);
-        $this->assertStringNotContainsString('snap-x', $html);
+        $this->assertStringNotContainsString('md:grid-cols-2', $html);
+        $this->assertStringNotContainsString('lg:grid-cols-3', $html);
+        $this->assertStringNotContainsString('lg:grid-cols-4', $html);
     }
 
-    public function test_single_layout_lightbox_has_exactly_one_item(): void
-    {
-        $html = $this->renderSingleLayout();
-
-        $items = $this->extractLightboxItems($html);
-        $this->assertCount(1, $items, 'Single layout lightbox should contain exactly 1 item');
-    }
-
-    public function test_single_layout_includes_caption(): void
-    {
-        $html = $this->renderSingleLayout([
-            'caption' => 'A beautiful sunset photo',
-        ]);
-
-        $this->assertStringContainsString('A beautiful sunset photo', $html);
-    }
-
-    public function test_single_layout_renders_only_first_image_when_multiple_provided(): void
+    public function test_grid1_renders_all_images(): void
     {
         $images = [
             $this->createFakeImage('cms/galleries/image1.jpg'),
             $this->createFakeImage('cms/galleries/image2.jpg'),
             $this->createFakeImage('cms/galleries/image3.jpg'),
-            $this->createFakeImage('cms/galleries/image4.jpg'),
         ];
 
-        $html = $this->renderSingleLayout(['images' => $images]);
+        $html = $this->renderLayout('grid-1', ['images' => $images]);
 
-        // Should contain the first image
-        $this->assertStringContainsString(Storage::disk('public')->url('cms/galleries/image1.jpg'), $html);
-
-        // Lightbox should still have only 1 item (hard clamp)
         $items = $this->extractLightboxItems($html);
-        $this->assertCount(1, $items, 'Hard clamp should limit to 1 item even with multiple images');
+        $this->assertCount(3, $items, 'Grid-1 should render all images, not clamp to 1');
     }
 
-    public function test_single_layout_hides_lightbox_nav_buttons(): void
+    public function test_grid1_uses_same_renderer_as_other_grids(): void
     {
-        $html = $this->renderSingleLayout();
+        $html = $this->renderLayout('grid-1');
 
-        // Prev/next buttons should have x-show="items.length > 1"
-        $this->assertStringContainsString('x-show="items.length > 1"', $html);
+        // Should use the grid renderer (contains "grid" class wrapper), not masonry or carousel
+        $this->assertStringNotContainsString('columns-1 md:columns-2', $html);
+        $this->assertStringNotContainsString('snap-x', $html);
     }
 
-    public function test_grid_layout_still_works_normally(): void
+    public function test_grid3_layout_unchanged(): void
     {
         $images = [
             $this->createFakeImage('cms/galleries/img1.jpg'),
@@ -140,29 +117,18 @@ class ImageGalleryBlockSingleLayoutTest extends TestCase
             $this->createFakeImage('cms/galleries/img3.jpg'),
         ];
 
-        $config = [
-            'source' => 'manual',
-            'layout' => 'grid-3',
-            'images' => $images,
-            'title' => '',
-            'caption' => '',
-            'image_size' => 'medium',
-            'background' => 'bg-base-100',
-            'padding' => 'py-16',
-            'first_section' => false,
-            'animation_type' => '',
-            'animation_duration' => 'anim-duration-700',
-            'animation_stagger' => false,
-            'animation_stagger_delay' => '100',
-        ];
+        $html = $this->renderLayout('grid-3', ['images' => $images]);
 
-        $html = ImageGalleryBlock::toHtml($config, []);
+        $this->assertStringContainsString('lg:grid-cols-3', $html);
 
-        $this->assertStringContainsString('grid-cols-', $html);
-        $this->assertStringNotContainsString('image-gallery-single', $html);
-
-        // Lightbox should have all 3 items
         $items = $this->extractLightboxItems($html);
         $this->assertCount(3, $items);
+    }
+
+    public function test_lightbox_nav_hidden_for_single_item(): void
+    {
+        $html = $this->renderLayout('grid-1');
+
+        $this->assertStringContainsString('x-show="items.length > 1"', $html);
     }
 }
