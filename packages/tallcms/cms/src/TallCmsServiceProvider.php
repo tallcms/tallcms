@@ -243,6 +243,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
         'App\\Policies\\UserPolicy' => Policies\UserPolicy::class,
 
         // Filament Pages
+        'App\\Filament\\Pages\\CodeInjection' => Filament\Pages\CodeInjection::class,
         'App\\Filament\\Pages\\MenuItemsManager' => Filament\Pages\MenuItemsManager::class,
         'App\\Filament\\Pages\\PluginLicenses' => Filament\Pages\PluginLicenses::class,
         'App\\Filament\\Pages\\PluginManager' => Filament\Pages\PluginManager::class,
@@ -331,9 +332,11 @@ class TallCmsServiceProvider extends PackageServiceProvider
     {
         $existing = config('filament-shield.custom_permissions', []);
 
+        // Source of truth for CMS permissions at runtime — also listed in TallCmsSetup and standalone Shield config
         $cmsPermissions = [
             'Approve:CmsPage',
             'Approve:CmsPost',
+            'Manage:CodeInjection',
             'SubmitForReview:CmsPage',
             'SubmitForReview:CmsPost',
             'ViewRevisions:CmsPage',

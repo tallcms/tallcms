@@ -247,6 +247,7 @@ return [
     'custom_permissions' => [
         'Approve:CmsPage',
         'Approve:CmsPost',
+        'Manage:CodeInjection',
         'SubmitForReview:CmsPage',
         'SubmitForReview:CmsPost',
         'ViewRevisions:CmsPage',

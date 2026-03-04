@@ -10,6 +10,7 @@ use Filament\Panel;
 use Illuminate\Support\Facades\Log;
 use LaraZeus\SpatieTranslatable\SpatieTranslatablePlugin;
 use TallCms\Cms\Filament\Pages\ApiTokens;
+use TallCms\Cms\Filament\Pages\CodeInjection;
 use TallCms\Cms\Filament\Pages\MenuItemsManager;
 use TallCms\Cms\Filament\Pages\PluginLicenses;
 use TallCms\Cms\Filament\Pages\PluginManager;
@@ -51,6 +52,8 @@ class TallCmsPlugin implements Plugin
     protected bool $hasUsers = true;
 
     protected bool $hasSiteSettings = true;
+
+    protected bool $hasCodeInjection = true;
 
     protected bool $hasPluginManager = true;
 
@@ -197,6 +200,10 @@ class TallCmsPlugin implements Plugin
 
         if ($this->hasSiteSettings) {
             $pages[] = SiteSettings::class;
+        }
+
+        if ($this->hasCodeInjection) {
+            $pages[] = CodeInjection::class;
         }
 
         // MenuItemsManager is always included when menus are enabled
@@ -414,6 +421,16 @@ class TallCmsPlugin implements Plugin
     public function withoutUsers(): static
     {
         $this->hasUsers = false;
+
+        return $this;
+    }
+
+    /**
+     * Disable code injection page.
+     */
+    public function withoutCodeInjection(): static
+    {
+        $this->hasCodeInjection = false;
 
         return $this;
     }
