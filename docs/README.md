@@ -26,6 +26,7 @@ Welcome to TallCMS — a modern, block-based CMS built on Laravel and Filament.
 | [Menus](menus) | Full navigation guide |
 | [Mega Menu](mega-menu) | Advanced navigation with badges, CTAs, templates |
 | [Site Settings](site-settings) | Logo, contact info, SPA mode |
+| [Code Injection](code-injection) | Analytics, tracking scripts, chat widgets |
 
 ### Building Themes & Plugins
 
