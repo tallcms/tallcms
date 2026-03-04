@@ -60,6 +60,17 @@
         ])->values()->all();
     }
 
+    // Single layout: hard-clamp to 1 item
+    if (($layout ?? 'grid-3') === 'single') {
+        $galleryItems = array_slice($galleryItems, 0, 1);
+        // Inject manual caption into item data for single layout
+        if ($source === 'manual' && !empty($caption ?? '')) {
+            if (isset($galleryItems[0])) {
+                $galleryItems[0]['caption'] = $caption;
+            }
+        }
+    }
+
     // Get data for lightbox
     $lightboxData = collect($galleryItems)->map(fn($item) => [
         'url' => $item['url'],
@@ -124,7 +135,52 @@
             </x-tallcms::animation-wrapper>
         @endif
 
-        @if(($layout ?? 'grid-3') === 'masonry')
+        @if(($layout ?? 'grid-3') === 'single')
+            @if(!empty($galleryItems))
+                @php $item = $galleryItems[0]; @endphp
+                <div class="image-gallery-single">
+                    <x-tallcms::animation-wrapper
+                        :animation="$animationType"
+                        :duration="$animationDuration"
+                        :use-parent="true"
+                    >
+                        <figure class="text-center">
+                            @if(($item['type'] ?? 'image') === 'video')
+                                <div class="relative cursor-pointer group" @click="open(0)">
+                                    <video
+                                        src="{{ $item['url'] }}"
+                                        class="w-full h-auto rounded-lg shadow-md group-hover:shadow-lg transition-shadow mx-auto"
+                                        muted
+                                        preload="metadata"
+                                    ></video>
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <div class="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center group-hover:bg-black/70 transition-colors">
+                                            <x-heroicon-s-play class="w-8 h-8 text-white ml-1" />
+                                        </div>
+                                    </div>
+                                </div>
+                            @else
+                                <picture>
+                                    @if(!empty($item['webp']))
+                                        <source srcset="{{ $item['webp'] }}" type="image/webp">
+                                    @endif
+                                    <img
+                                        src="{{ $item['url'] }}"
+                                        alt="{{ $item['alt'] ?: 'Gallery image' }}"
+                                        class="w-full h-auto rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer mx-auto"
+                                        loading="lazy"
+                                        @click="open(0)"
+                                    >
+                                </picture>
+                            @endif
+                            @if(!empty($item['caption']))
+                                <figcaption class="mt-2 text-sm text-base-content/70 text-center">{{ $item['caption'] }}</figcaption>
+                            @endif
+                        </figure>
+                    </x-tallcms::animation-wrapper>
+                </div>
+            @endif
+        @elseif(($layout ?? 'grid-3') === 'masonry')
             <div class="{{ $gridClass }} gap-4">
                 @foreach($galleryItems as $index => $item)
                     @php $itemDelay = $animationStagger ? ($staggerDelay * ($index + 1)) : 0; @endphp
@@ -309,6 +365,7 @@
 
             {{-- Previous Button --}}
             <button
+                x-show="items.length > 1"
                 @click="prev()"
                 class="btn btn-circle btn-ghost text-white absolute left-4 top-1/2 -translate-y-1/2"
             >
@@ -317,6 +374,7 @@
 
             {{-- Next Button --}}
             <button
+                x-show="items.length > 1"
                 @click="next()"
                 class="btn btn-circle btn-ghost text-white absolute right-4 top-1/2 -translate-y-1/2"
             >
