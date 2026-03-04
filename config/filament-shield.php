@@ -23,7 +23,7 @@ return [
             'pages' => true,
             'widgets' => true,
             'resources' => true,
-            'custom_permissions' => false,
+            'custom_permissions' => true,
         ],
     ],
 
@@ -67,7 +67,7 @@ return [
     'super_admin' => [
         'enabled' => true,
         'name' => 'super_admin',
-        'define_via_gate' => false,
+        'define_via_gate' => true,
         'intercept_gate' => 'before',
     ],
 
@@ -244,7 +244,18 @@ return [
     |
     */
 
-    'custom_permissions' => [],
+    'custom_permissions' => [
+        'Approve:CmsPage',
+        'Approve:CmsPost',
+        'SubmitForReview:CmsPage',
+        'SubmitForReview:CmsPost',
+        'ViewRevisions:CmsPage',
+        'ViewRevisions:CmsPost',
+        'RestoreRevisions:CmsPage',
+        'RestoreRevisions:CmsPost',
+        'GeneratePreviewLink:CmsPage',
+        'GeneratePreviewLink:CmsPost',
+    ],
 
     /*
     |--------------------------------------------------------------------------

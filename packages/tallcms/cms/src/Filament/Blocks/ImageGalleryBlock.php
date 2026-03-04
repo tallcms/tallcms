@@ -154,6 +154,7 @@ class ImageGalleryBlock extends RichContentCustomBlock
                             ->schema([
                                 Select::make('layout')
                                     ->options([
+                                        'grid-1' => 'Grid (1 column)',
                                         'grid-2' => 'Grid (2 columns)',
                                         'grid-3' => 'Grid (3 columns)',
                                         'grid-4' => 'Grid (4 columns)',

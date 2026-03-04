@@ -3,6 +3,7 @@
     use Illuminate\Support\Facades\Storage;
 
     $layoutClasses = [
+        'grid-1' => 'grid-cols-1',
         'grid-2' => 'grid-cols-1 md:grid-cols-2',
         'grid-3' => 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
         'grid-4' => 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
@@ -309,6 +310,7 @@
 
             {{-- Previous Button --}}
             <button
+                x-show="items.length > 1"
                 @click="prev()"
                 class="btn btn-circle btn-ghost text-white absolute left-4 top-1/2 -translate-y-1/2"
             >
@@ -317,6 +319,7 @@
 
             {{-- Next Button --}}
             <button
+                x-show="items.length > 1"
                 @click="next()"
                 class="btn btn-circle btn-ghost text-white absolute right-4 top-1/2 -translate-y-1/2"
             >
