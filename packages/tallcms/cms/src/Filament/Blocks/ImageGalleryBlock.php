@@ -135,7 +135,7 @@ class ImageGalleryBlock extends RichContentCustomBlock
                                     ->directory('cms/galleries')
                                     ->disk(\cms_media_disk())
                                     ->visibility(\cms_media_visibility())
-                                    ->maxFiles(fn (Get $get): int => $get('layout') === 'single' ? 1 : 12)
+                                    ->maxFiles(12)
                                     ->reorderable(fn (Get $get): bool => $get('layout') !== 'single')
                                     ->imageEditor()
                                     ->imageEditorAspectRatios([
