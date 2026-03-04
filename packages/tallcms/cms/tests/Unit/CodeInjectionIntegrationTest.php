@@ -115,59 +115,86 @@ class CodeInjectionIntegrationTest extends TestCase
         $this->app->make(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 
-    // --- Layout placement tests ---
+    // --- Layout placement tests (package + all bundled themes) ---
 
-    public function test_head_zone_is_inside_head_tag(): void
+    /**
+     * Returns every layout that must contain code-injection zones:
+     * the core package layout and all bundled theme layouts.
+     */
+    private function getAllLayoutPaths(): array
     {
-        $layout = file_get_contents($this->layoutPath);
+        $projectRoot = dirname(__DIR__, 5); // tests/Unit -> tests -> cms -> tallcms -> packages -> project root
 
-        $headOpenPos = strpos($layout, '<head');
-        $headClosePos = strpos($layout, '</head>');
-        $zonePos = strpos($layout, 'zone="head"');
+        $layouts = [
+            'package' => $this->layoutPath,
+        ];
 
-        $this->assertNotFalse($headOpenPos, 'Layout must contain <head> tag');
-        $this->assertNotFalse($headClosePos, 'Layout must contain </head> tag');
-        $this->assertNotFalse($zonePos, 'Layout must contain code-injection zone="head"');
-        $this->assertGreaterThan($headOpenPos, $zonePos, 'Head zone must appear after <head>');
-        $this->assertLessThan($headClosePos, $zonePos, 'Head zone must appear before </head>');
+        $themesDir = $projectRoot . '/themes';
+        if (is_dir($themesDir)) {
+            foreach (glob($themesDir . '/*/resources/views/layouts/app.blade.php') as $themeLayout) {
+                $themeName = basename(dirname($themeLayout, 4));
+                $layouts["theme:{$themeName}"] = $themeLayout;
+            }
+        }
+
+        return $layouts;
     }
 
-    public function test_body_start_zone_is_after_body_open_tag(): void
+    public function test_all_layouts_have_head_zone_inside_head_tag(): void
     {
-        $layout = file_get_contents($this->layoutPath);
+        foreach ($this->getAllLayoutPaths() as $label => $path) {
+            $layout = file_get_contents($path);
 
-        $bodyOpenPos = strpos($layout, '<body');
-        $bodyStartZonePos = strpos($layout, 'zone="body_start"');
-        $bodyEndZonePos = strpos($layout, 'zone="body_end"');
+            $headOpenPos = strpos($layout, '<head');
+            $headClosePos = strpos($layout, '</head>');
+            $zonePos = strpos($layout, 'zone="head"');
 
-        $this->assertNotFalse($bodyOpenPos, 'Layout must contain <body> tag');
-        $this->assertNotFalse($bodyStartZonePos, 'Layout must contain code-injection zone="body_start"');
-        $this->assertGreaterThan($bodyOpenPos, $bodyStartZonePos, 'body_start zone must appear after <body>');
-        $this->assertLessThan($bodyEndZonePos, $bodyStartZonePos, 'body_start zone must appear before body_end zone');
+            $this->assertNotFalse($zonePos, "[{$label}] Missing code-injection zone=\"head\"");
+            $this->assertGreaterThan($headOpenPos, $zonePos, "[{$label}] Head zone must appear after <head>");
+            $this->assertLessThan($headClosePos, $zonePos, "[{$label}] Head zone must appear before </head>");
+        }
     }
 
-    public function test_body_end_zone_is_before_body_close_tag(): void
+    public function test_all_layouts_have_body_start_zone_after_body_tag(): void
     {
-        $layout = file_get_contents($this->layoutPath);
+        foreach ($this->getAllLayoutPaths() as $label => $path) {
+            $layout = file_get_contents($path);
 
-        $bodyClosePos = strpos($layout, '</body>');
-        $bodyEndZonePos = strpos($layout, 'zone="body_end"');
+            $bodyOpenPos = strpos($layout, '<body');
+            $bodyStartZonePos = strpos($layout, 'zone="body_start"');
+            $bodyEndZonePos = strpos($layout, 'zone="body_end"');
 
-        $this->assertNotFalse($bodyClosePos, 'Layout must contain </body> tag');
-        $this->assertNotFalse($bodyEndZonePos, 'Layout must contain code-injection zone="body_end"');
-        $this->assertLessThan($bodyClosePos, $bodyEndZonePos, 'body_end zone must appear before </body>');
+            $this->assertNotFalse($bodyStartZonePos, "[{$label}] Missing code-injection zone=\"body_start\"");
+            $this->assertGreaterThan($bodyOpenPos, $bodyStartZonePos, "[{$label}] body_start zone must appear after <body>");
+            $this->assertLessThan($bodyEndZonePos, $bodyStartZonePos, "[{$label}] body_start zone must appear before body_end zone");
+        }
     }
 
-    public function test_zones_are_in_correct_relative_order(): void
+    public function test_all_layouts_have_body_end_zone_before_body_close(): void
     {
-        $layout = file_get_contents($this->layoutPath);
+        foreach ($this->getAllLayoutPaths() as $label => $path) {
+            $layout = file_get_contents($path);
 
-        $headZonePos = strpos($layout, 'zone="head"');
-        $bodyStartZonePos = strpos($layout, 'zone="body_start"');
-        $bodyEndZonePos = strpos($layout, 'zone="body_end"');
+            $bodyClosePos = strpos($layout, '</body>');
+            $bodyEndZonePos = strpos($layout, 'zone="body_end"');
 
-        $this->assertLessThan($bodyStartZonePos, $headZonePos, 'Head zone must come before body_start zone');
-        $this->assertLessThan($bodyEndZonePos, $bodyStartZonePos, 'body_start zone must come before body_end zone');
+            $this->assertNotFalse($bodyEndZonePos, "[{$label}] Missing code-injection zone=\"body_end\"");
+            $this->assertLessThan($bodyClosePos, $bodyEndZonePos, "[{$label}] body_end zone must appear before </body>");
+        }
+    }
+
+    public function test_all_layouts_have_zones_in_correct_order(): void
+    {
+        foreach ($this->getAllLayoutPaths() as $label => $path) {
+            $layout = file_get_contents($path);
+
+            $headZonePos = strpos($layout, 'zone="head"');
+            $bodyStartZonePos = strpos($layout, 'zone="body_start"');
+            $bodyEndZonePos = strpos($layout, 'zone="body_end"');
+
+            $this->assertLessThan($bodyStartZonePos, $headZonePos, "[{$label}] Head zone must come before body_start zone");
+            $this->assertLessThan($bodyEndZonePos, $bodyStartZonePos, "[{$label}] body_start zone must come before body_end zone");
+        }
     }
 
     // --- Frontend-only rendering tests ---
