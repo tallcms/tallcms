@@ -316,6 +316,40 @@ class TallCmsServiceProvider extends PackageServiceProvider
         $this->app->singleton(Services\WebhookDispatcher::class);
         $this->app->singleton(Services\WebhookUrlValidator::class);
         $this->app->singleton(Validation\TokenAbilityValidator::class);
+
+        // Register custom CMS permissions with Filament Shield so they
+        // appear in the role editor UI and aren't wiped on role save
+        $this->mergeShieldCustomPermissions();
+    }
+
+    /**
+     * Merge CMS workflow permissions into Shield's custom_permissions config.
+     * This ensures they appear in Shield's role editor UI alongside
+     * auto-generated resource permissions, preventing accidental removal.
+     */
+    protected function mergeShieldCustomPermissions(): void
+    {
+        $existing = config('filament-shield.custom_permissions', []);
+
+        $cmsPermissions = [
+            'Approve:CmsPage',
+            'Approve:CmsPost',
+            'SubmitForReview:CmsPage',
+            'SubmitForReview:CmsPost',
+            'ViewRevisions:CmsPage',
+            'ViewRevisions:CmsPost',
+            'RestoreRevisions:CmsPage',
+            'RestoreRevisions:CmsPost',
+            'GeneratePreviewLink:CmsPage',
+            'GeneratePreviewLink:CmsPost',
+        ];
+
+        config(['filament-shield.custom_permissions' => array_values(array_unique(array_merge($existing, $cmsPermissions)))]);
+
+        // Ensure the custom permissions tab is visible
+        if (! config('filament-shield.shield_resource.tabs.custom_permissions', false)) {
+            config(['filament-shield.shield_resource.tabs.custom_permissions' => true]);
+        }
     }
 
     /**
