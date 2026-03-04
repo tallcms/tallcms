@@ -146,7 +146,9 @@ class ImageGalleryBlock extends RichContentCustomBlock
                                     ])
                                     ->requiredIf('source', 'manual')
                                     ->visible(fn (Get $get): bool => $get('source') !== 'collection')
-                                    ->helperText('Recommended: 1200×800px or larger. Up to 12 images, max 5MB each. Formats: JPEG, PNG, WebP. Drag to reorder.'),
+                                    ->helperText(fn (Get $get): string => $get('layout') === 'single'
+                                        ? 'Recommended: 1200×800px or larger. Max 5MB. Formats: JPEG, PNG, WebP.'
+                                        : 'Recommended: 1200×800px or larger. Up to 12 images, max 5MB each. Formats: JPEG, PNG, WebP. Drag to reorder.'),
 
                                 TextInput::make('caption')
                                     ->label('Image Caption')
