@@ -14,6 +14,7 @@ use TallCms\Cms\Filament\Pages\CodeInjection;
 use TallCms\Cms\Filament\Pages\MenuItemsManager;
 use TallCms\Cms\Filament\Pages\PluginLicenses;
 use TallCms\Cms\Filament\Pages\PluginManager;
+use TallCms\Cms\Filament\Pages\SeoSettings;
 use TallCms\Cms\Filament\Pages\SiteSettings;
 use TallCms\Cms\Filament\Pages\SystemUpdates;
 use TallCms\Cms\Filament\Pages\ThemeManager;
@@ -200,6 +201,7 @@ class TallCmsPlugin implements Plugin
 
         if ($this->hasSiteSettings) {
             $pages[] = SiteSettings::class;
+            $pages[] = SeoSettings::class;
         }
 
         if ($this->hasCodeInjection) {

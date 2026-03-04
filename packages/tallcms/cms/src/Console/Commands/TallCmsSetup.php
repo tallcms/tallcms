@@ -472,6 +472,11 @@ class TallCmsSetup extends Command
             return true;
         }
 
+        // Allow SEO settings page
+        if (str_contains($lower, 'seosettings')) {
+            return true;
+        }
+
         // Allow code injection page
         if (str_contains($lower, 'codeinjection')) {
             return true;
