@@ -101,7 +101,7 @@
             class="{{ $textColorClass }} {{ ($layout ?? 'centered') === 'centered' ? 'max-w-5xl mx-auto' : 'flex-1' }} {{ ($layout ?? 'centered') !== 'centered' ? ($text_alignment ?? 'text-left') : '' }}"
         >
             @if($heading ?? null)
-                <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight mb-6 drop-shadow-lg">
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight mb-6" style="text-shadow: 0 4px 8px rgba(0,0,0,0.25)">
                     {!! $processedHeading !!}
                 </h1>
             @endif
