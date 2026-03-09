@@ -41,7 +41,7 @@
         "intervention/image": "^3.0",
         "lara-zeus/spatie-translatable": "^1.0 || ^2.0",   
         "spatie/laravel-package-tools": "^1.16",
-        "bezhansalleh/filament-shield": "^5.0",
+        "bezhansalleh/filament-shield": "^4.0",
         "spatie/laravel-permission": "^6.0",
         "ezyang/htmlpurifier": "^4.19",
         "paragonie/sodium_compat": "^2.0",
