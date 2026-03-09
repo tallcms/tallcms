@@ -36,13 +36,33 @@ Key features:
 
 All uploaded files are automatically optimized in the background.
 
-### From Content Editor
+### From the Rich Editor
 
-When editing a page or post:
+When editing a page or post in the rich editor, you have two options for adding images:
 
-1. Add a block that accepts images (Hero, Gallery, etc.)
-2. Click the image upload field
-3. Choose **Upload** to add a new file, or select from existing media
+**Attach a new file:**
+
+1. Click the **paperclip** icon in the toolbar
+2. Select a file from your computer
+3. Add alt text and click **Submit**
+
+The file is automatically saved to the Media Library.
+
+**Insert from Media Library:**
+
+1. Click the **photo** icon in the toolbar (next to the paperclip)
+2. Browse or search the list of existing images
+3. Click a row to select it — alt text pre-fills from the media record
+4. Edit the alt text if needed and click **Submit**
+
+The image is inserted inline with a reference to the Media Library record, so it stays in sync if you update the media later.
+
+### From Block Fields
+
+When editing a block that accepts images (Hero, Gallery, etc.):
+
+1. Click the image upload field
+2. Upload a new file or select from existing media
 
 ### Supported File Types
 

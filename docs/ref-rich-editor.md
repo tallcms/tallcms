@@ -15,6 +15,8 @@ The CMS Rich Editor is an enhanced version of Filament's `RichEditor` component 
 - **Search**: Instant client-side filtering by block name, description, and keywords
 - **Categories**: Blocks organized into collapsible panels
 - **Icons**: Each block displays its icon
+- **Media Library Browser**: Insert existing images without re-uploading
+- **Auto Media Saving**: Attached files are saved to the Media Library
 - **Dark Mode**: Full support via Filament-native styling
 - **Backwards Compatible**: Works with existing blocks and plugin blocks
 
@@ -186,6 +188,48 @@ public static function getCategories(): array
 
 ---
 
+## Media Library Integration
+
+The editor integrates with the [Media Library](media) via two features:
+
+### Insert from Media Library
+
+Click the **photo** icon in the toolbar to open a searchable browser of existing images. Select an image, optionally edit the alt text, and insert it directly into the editor.
+
+- Images are inserted with a reference to the Media Library record ID
+- Alt text pre-fills from the media record but can be overridden
+- The browser shows the 100 most recent images with client-side search
+
+### File Attachments Saved to Media Library
+
+When you attach a file using the **paperclip** icon, the file is automatically saved as a Media Library record:
+
+- Alt text is inferred from the filename (e.g., `team-photo.jpg` → "Team Photo")
+- Image optimization runs in the background
+- The image node stores the media record ID, so URLs resolve from the Media Library at render time
+
+### Architecture
+
+The integration is implemented as a Filament `RichContentPlugin`:
+
+```
+src/Filament/Forms/Components/
+├── Actions/
+│   └── InsertMediaAction.php         # Modal action for browsing media
+├── Plugins/
+│   └── MediaLibraryPlugin.php        # Registers toolbar button and action
+├── CmsRichEditor.php                 # Registers plugin, adds toolbar button
+└── MediaLibraryFileAttachmentProvider.php  # Saves attachments as media records
+```
+
+| Class | Role |
+|-------|------|
+| `MediaLibraryPlugin` | Implements `RichContentPlugin`, provides the `insertMedia` tool and action |
+| `InsertMediaAction` | Filament `Action` with modal schema, queries `TallcmsMedia`, runs `insertContent` editor command |
+| `MediaLibraryFileAttachmentProvider` | Saves uploaded files as `TallcmsMedia` records, resolves media IDs to URLs |
+
+---
+
 ## Using CmsRichEditor
 
 The `CmsRichEditor` is automatically used in page and post forms. For custom resources:
@@ -212,7 +256,12 @@ packages/tallcms/cms/
 │   │   │       └── HasBlockMetadata.php
 │   │   └── Forms/
 │   │       └── Components/
-│   │           └── CmsRichEditor.php
+│   │           ├── Actions/
+│   │           │   └── InsertMediaAction.php
+│   │           ├── Plugins/
+│   │           │   └── MediaLibraryPlugin.php
+│   │           ├── CmsRichEditor.php
+│   │           └── MediaLibraryFileAttachmentProvider.php
 │   └── Services/
 │       ├── BlockCategoryRegistry.php
 │       └── CustomBlockDiscoveryService.php
@@ -221,7 +270,8 @@ packages/tallcms/cms/
         └── filament/
             └── forms/
                 └── components/
-                    └── cms-rich-editor.blade.php
+                    ├── cms-rich-editor.blade.php
+                    └── media-library-picker.blade.php
 ```
 
 ---
@@ -231,9 +281,10 @@ packages/tallcms/cms/
 ### CmsRichEditor
 
 Extends Filament's `RichEditor`:
-- `getGroupedBlocks()` - Returns blocks by category
-- `getBlockCategories()` - Returns category definitions
-- `isFilamentCompatible()` - Version check for fallback
+- `getGroupedBlocks()` — Returns blocks by category
+- `getBlockCategories()` — Returns category definitions
+- `getDefaultToolbarButtons()` — Adds `insertMedia` after `attachFiles`
+- `isFilamentCompatible()` — Version check for fallback
 
 ### BlockCategoryRegistry
 
