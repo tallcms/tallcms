@@ -72,7 +72,7 @@ class MediaLibraryFileAttachmentProvider implements FileAttachmentProvider
         ]);
 
         // Dispatch optimization job for images when enabled
-        if ($isImage && config('tallcms.media.optimization_enabled', true)) {
+        if ($isImage && config('tallcms.media.optimization.enabled', true)) {
             OptimizeMediaJob::dispatch($media);
         }
 
@@ -90,14 +90,18 @@ class MediaLibraryFileAttachmentProvider implements FileAttachmentProvider
 
         // String path (legacy) — try cms_media_disk first, then Filament default disk
         if (is_string($file) && $file !== '') {
-            $cmsDisk = cms_media_disk();
-            if (Storage::disk($cmsDisk)->exists($file)) {
-                return Storage::disk($cmsDisk)->url($file);
-            }
+            try {
+                $cmsDisk = cms_media_disk();
+                if (Storage::disk($cmsDisk)->exists($file)) {
+                    return Storage::disk($cmsDisk)->url($file);
+                }
 
-            $filamentDisk = config('filament.default_filesystem_disk');
-            if ($filamentDisk && $filamentDisk !== $cmsDisk && Storage::disk($filamentDisk)->exists($file)) {
-                return Storage::disk($filamentDisk)->url($file);
+                $filamentDisk = config('filament.default_filesystem_disk');
+                if ($filamentDisk && $filamentDisk !== $cmsDisk && Storage::disk($filamentDisk)->exists($file)) {
+                    return Storage::disk($filamentDisk)->url($file);
+                }
+            } catch (\Throwable) {
+                // Storage connectivity issues (S3 timeout, etc.) — fall through to null
             }
         }
 

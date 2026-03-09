@@ -60,7 +60,7 @@ class MediaLibraryFileAttachmentProviderTest extends TestCase
     {
         Storage::fake('public');
         Bus::fake();
-        config(['tallcms.media.optimization_enabled' => false]);
+        config(['tallcms.media.optimization.enabled' => false]);
 
         $file = $this->mockTemporaryUploadedFile('photo.png', 'image/png');
 
