@@ -68,10 +68,8 @@
                 || str_contains($contentStr, "data-type='customBlock'");
 
             if ($needsBlockRendering) {
-                // Use RichContentRenderer for Tiptap JSON or HTML with blocks
-                $postContent = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($content)
-                    ->customBlocks(\TallCms\Cms\Services\CustomBlockDiscoveryService::getBlocksArray())
-                    ->toUnsafeHtml();
+                // Use model's renderRichContentUnsafe to include media library provider
+                $postContent = $post->renderRichContentUnsafe('content');
             } else {
                 // Raw HTML - output directly
                 $postContent = is_string($content) ? $content : '';

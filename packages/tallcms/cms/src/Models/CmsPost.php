@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace TallCms\Cms\Models;
 
+use Filament\Forms\Components\RichEditor\Models\Concerns\InteractsWithRichContent;
+use Filament\Forms\Components\RichEditor\Models\Contracts\HasRichContent;
+use Filament\Forms\Components\RichEditor\RichContentRenderer;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,13 +15,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use TallCms\Cms\Casts\TranslatableArray;
+use TallCms\Cms\Filament\Forms\Components\MediaLibraryFileAttachmentProvider;
 use TallCms\Cms\Models\Concerns\HasPreviewTokens;
 use TallCms\Cms\Models\Concerns\HasPublishingWorkflow;
 use TallCms\Cms\Models\Concerns\HasRevisions;
 use TallCms\Cms\Models\Concerns\HasSearchableContent;
 use TallCms\Cms\Models\Concerns\HasTranslatableContent;
+use TallCms\Cms\Services\CustomBlockDiscoveryService;
 
-class CmsPost extends Model
+class CmsPost extends Model implements HasRichContent
 {
     use HasFactory;
     use HasPreviewTokens;
@@ -26,6 +31,7 @@ class CmsPost extends Model
     use HasRevisions;
     use HasSearchableContent;
     use HasTranslatableContent;
+    use InteractsWithRichContent;
     use SoftDeletes;
 
     protected $table = 'tallcms_posts';
@@ -73,6 +79,35 @@ class CmsPost extends Model
         'approved_at' => 'datetime',
         'submitted_at' => 'datetime',
     ];
+
+    protected function setUpRichContent(): void
+    {
+        $this->registerRichContent('content')
+            ->fileAttachmentProvider(MediaLibraryFileAttachmentProvider::make())
+            ->customBlocks(CustomBlockDiscoveryService::getBlocksArray());
+    }
+
+    public function renderRichContentUnsafe(string $attribute): string
+    {
+        $content = $this->getAttribute($attribute);
+
+        if (blank($content)) {
+            return '';
+        }
+
+        $attr = $this->getRichContentAttribute($attribute);
+
+        if (! $attr) {
+            throw new \RuntimeException(
+                "No rich content attribute registered for '{$attribute}'."
+            );
+        }
+
+        return RichContentRenderer::make($content)
+            ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
+            ->fileAttachmentProvider($attr->getFileAttachmentProvider())
+            ->toUnsafeHtml();
+    }
 
     protected static function boot()
     {

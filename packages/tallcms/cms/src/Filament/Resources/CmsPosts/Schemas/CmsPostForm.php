@@ -104,7 +104,6 @@ class CmsPostForm
 
                                 CmsRichEditor::make('content')
                                     ->columnSpanFull()
-                                    ->fileAttachmentsDirectory('cms/posts/attachments')
                                     ->activePanel('customBlocks')
                                     ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
                                     ->extraInputAttributes([

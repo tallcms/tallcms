@@ -99,7 +99,6 @@ class CmsPageForm
                                     ]),
                                 CmsRichEditor::make('content')
                                     ->columnSpanFull()
-                                    ->fileAttachmentsDirectory('cms/attachments')
                                     ->activePanel('customBlocks')
                                     ->mergeTags([
                                         'site_name',
