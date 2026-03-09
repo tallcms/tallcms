@@ -19,7 +19,7 @@ class InsertMediaAction
     {
         return Action::make('insertMedia')
             ->modalHeading('Insert from Media Library')
-            ->modalWidth(Width::FiveExtraLarge)
+            ->modalWidth(Width::FourExtraLarge)
             ->schema(fn (): array => [
                 View::make('tallcms::filament.forms.components.media-library-picker')
                     ->viewData(fn () => [
