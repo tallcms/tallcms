@@ -47,7 +47,7 @@ class InsertMediaAction
                             'attrs' => [
                                 'id' => $media->id,
                                 'src' => $media->url,
-                                'alt' => $data['alt'] ?? $media->alt_text ?? '',
+                                'alt' => filled($data['alt'] ?? null) ? $data['alt'] : ($media->alt_text ?? ''),
                             ],
                         ]]),
                     ],

@@ -24,9 +24,7 @@
         select(item) {
             this.selectedId = item.id;
             $set('selected_media_id', item.id);
-            if (item.alt_text) {
-                $set('alt', item.alt_text);
-            }
+            $set('alt', item.alt_text ?? '');
         },
     }"
 >
