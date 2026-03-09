@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TallCms\Cms\Filament\Forms\Components;
 
 use Filament\Forms\Components\RichEditor;
+use TallCms\Cms\Filament\Forms\Components\Plugins\MediaLibraryPlugin;
 use TallCms\Cms\Services\BlockCategoryRegistry;
 use TallCms\Cms\Services\CustomBlockDiscoveryService;
 
@@ -27,10 +28,26 @@ class CmsRichEditor extends RichEditor
     {
         parent::setUp();
 
+        $this->plugins([MediaLibraryPlugin::make()]);
+
         // Use enhanced view for Filament v4.x/v5.x
         if (static::isFilamentCompatible()) {
             $this->view = 'tallcms::filament.forms.components.cms-rich-editor';
         }
+    }
+
+    public function getDefaultToolbarButtons(): array
+    {
+        $buttons = parent::getDefaultToolbarButtons();
+
+        return array_map(function ($group) {
+            if (is_array($group) && in_array('attachFiles', $group)) {
+                $pos = array_search('attachFiles', $group);
+                array_splice($group, $pos + 1, 0, ['insertMedia']);
+            }
+
+            return $group;
+        }, $buttons);
     }
 
     /**
