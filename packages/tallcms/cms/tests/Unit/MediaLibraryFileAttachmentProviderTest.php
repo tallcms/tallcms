@@ -44,6 +44,19 @@ class MediaLibraryFileAttachmentProviderTest extends TestCase
         $this->assertEquals('Test Image', $media->alt_text);
     }
 
+    public function test_save_skips_alt_text_for_hash_filenames(): void
+    {
+        Storage::fake('public');
+        Bus::fake();
+
+        $file = $this->mockTemporaryUploadedFile('559945921-4f8b4e82-d949-42cd-ac69-52c234e8d977.png', 'image/png');
+
+        $id = $this->provider->saveUploadedFileAttachment($file);
+
+        $media = TallcmsMedia::find($id);
+        $this->assertNull($media->alt_text);
+    }
+
     public function test_save_dispatches_optimization_job(): void
     {
         Storage::fake('public');
@@ -121,6 +134,16 @@ class MediaLibraryFileAttachmentProviderTest extends TestCase
         $this->assertNull($url);
     }
 
+    public function test_get_url_returns_null_when_storage_throws(): void
+    {
+        Storage::shouldReceive('disk')
+            ->andThrow(new \RuntimeException('S3 connection timeout'));
+
+        $url = $this->provider->getFileAttachmentUrl('cms/attachments/some-file.jpg');
+
+        $this->assertNull($url);
+    }
+
     public function test_cleanup_is_noop(): void
     {
         Storage::fake('public');
@@ -147,6 +170,81 @@ class MediaLibraryFileAttachmentProviderTest extends TestCase
     public function test_default_visibility(): void
     {
         $this->assertEquals('public', $this->provider->getDefaultFileAttachmentVisibility());
+    }
+
+    public function test_sync_alt_text_from_content(): void
+    {
+        Storage::fake('public');
+
+        $media = TallcmsMedia::create([
+            'name' => 'test',
+            'file_name' => 'test.jpg',
+            'mime_type' => 'image/jpeg',
+            'path' => 'cms/test.jpg',
+            'disk' => 'public',
+            'size' => 1024,
+            'alt_text' => null,
+        ]);
+
+        $content = [
+            'type' => 'doc',
+            'content' => [
+                [
+                    'type' => 'image',
+                    'attrs' => [
+                        'id' => $media->id,
+                        'src' => 'http://example.com/test.jpg',
+                        'alt' => 'A beautiful sunset',
+                    ],
+                ],
+            ],
+        ];
+
+        MediaLibraryFileAttachmentProvider::syncAltTextFromContent($content);
+
+        $this->assertEquals('A beautiful sunset', $media->fresh()->alt_text);
+    }
+
+    public function test_sync_alt_text_from_html_content(): void
+    {
+        Storage::fake('public');
+
+        $media = TallcmsMedia::create([
+            'name' => 'test',
+            'file_name' => 'test.jpg',
+            'mime_type' => 'image/jpeg',
+            'path' => 'cms/test.jpg',
+            'disk' => 'public',
+            'size' => 1024,
+            'alt_text' => 'Auto Generated Name',
+        ]);
+
+        $html = '<p>Some text</p><img src="http://example.com/test.jpg" alt="User provided alt" data-id="'.$media->id.'">';
+
+        MediaLibraryFileAttachmentProvider::syncAltTextFromContent($html);
+
+        $this->assertEquals('User provided alt', $media->fresh()->alt_text);
+    }
+
+    public function test_sync_alt_text_skips_non_numeric_ids(): void
+    {
+        $content = [
+            'type' => 'doc',
+            'content' => [
+                [
+                    'type' => 'image',
+                    'attrs' => [
+                        'id' => 'some-uuid-string',
+                        'src' => 'http://example.com/test.jpg',
+                        'alt' => 'Should not cause errors',
+                    ],
+                ],
+            ],
+        ];
+
+        // Should not throw
+        MediaLibraryFileAttachmentProvider::syncAltTextFromContent($content);
+        $this->assertTrue(true);
     }
 
     /**

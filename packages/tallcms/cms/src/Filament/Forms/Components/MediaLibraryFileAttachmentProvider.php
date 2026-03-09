@@ -57,8 +57,10 @@ class MediaLibraryFileAttachmentProvider implements FileAttachmentProvider
             }
         }
 
-        // Auto-generate alt text from filename
-        $altText = $isImage ? Str::headline(pathinfo($originalName, PATHINFO_FILENAME)) : null;
+        // Auto-generate alt text from filename, but skip hash/UUID-style names
+        $baseName = pathinfo($originalName, PATHINFO_FILENAME);
+        $looksLikeHash = preg_match('/^[0-9a-f\-]{16,}$/i', $baseName);
+        $altText = ($isImage && ! $looksLikeHash) ? Str::headline($baseName) : null;
 
         $media = TallcmsMedia::create([
             'name' => pathinfo($originalName, PATHINFO_FILENAME),
@@ -116,6 +118,86 @@ class MediaLibraryFileAttachmentProvider implements FileAttachmentProvider
     public function cleanUpFileAttachments(array $exceptIds): void
     {
         // Intentionally empty — future: tallcms:cleanup-orphaned-media command
+    }
+
+    /**
+     * Sync alt text from TipTap image nodes to TallcmsMedia records.
+     *
+     * Filament's FileAttachmentProvider contract doesn't pass alt text during upload,
+     * so we walk the saved content and update media records with user-provided alt text.
+     */
+    public static function syncAltTextFromContent(mixed $content): void
+    {
+        if (blank($content)) {
+            return;
+        }
+
+        $updates = [];
+
+        if (is_string($content)) {
+            // Try JSON first (TipTap document)
+            $decoded = json_decode($content, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                static::collectImageAltTextFromTipTap($decoded, $updates);
+            } else {
+                // HTML content — extract alt and data-id from img tags
+                static::collectImageAltTextFromHtml($content, $updates);
+            }
+        } elseif (is_array($content)) {
+            static::collectImageAltTextFromTipTap($content, $updates);
+        }
+
+        foreach ($updates as $id => $alt) {
+            TallcmsMedia::where('id', $id)->update(['alt_text' => $alt]);
+        }
+    }
+
+    /**
+     * Recursively walk TipTap nodes and collect image alt text keyed by media ID.
+     */
+    protected static function collectImageAltTextFromTipTap(array $node, array &$updates): void
+    {
+        if (($node['type'] ?? null) === 'image') {
+            $id = $node['attrs']['id'] ?? null;
+            $alt = $node['attrs']['alt'] ?? null;
+
+            if (is_numeric($id) && filled($alt)) {
+                $updates[(int) $id] = $alt;
+            }
+        }
+
+        foreach ($node['content'] ?? [] as $child) {
+            if (is_array($child)) {
+                static::collectImageAltTextFromTipTap($child, $updates);
+            }
+        }
+    }
+
+    /**
+     * Extract alt text and media IDs from HTML img tags.
+     */
+    protected static function collectImageAltTextFromHtml(string $html, array &$updates): void
+    {
+        // Match <img> tags with both data-id and alt attributes (in any order)
+        if (! preg_match_all('/<img\s[^>]*>/i', $html, $matches)) {
+            return;
+        }
+
+        foreach ($matches[0] as $imgTag) {
+            $id = null;
+            $alt = null;
+
+            if (preg_match('/data-id=["\'](\d+)["\']/', $imgTag, $m)) {
+                $id = (int) $m[1];
+            }
+            if (preg_match('/\balt=["\']([^"\']*)["\']/', $imgTag, $m)) {
+                $alt = $m[1];
+            }
+
+            if ($id && filled($alt)) {
+                $updates[$id] = html_entity_decode($alt, ENT_QUOTES, 'UTF-8');
+            }
+        }
     }
 
     public function getDefaultFileAttachmentVisibility(): ?string

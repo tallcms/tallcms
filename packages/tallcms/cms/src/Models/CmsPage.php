@@ -138,6 +138,10 @@ class CmsPage extends Model implements HasRichContent
                 static::where('id', '!=', $page->id)->update(['is_homepage' => false]);
             }
         });
+
+        static::saved(function ($page) {
+            MediaLibraryFileAttachmentProvider::syncAltTextFromContent($page->content);
+        });
     }
 
     public function parent(): BelongsTo

@@ -127,6 +127,10 @@ class CmsPost extends Model implements HasRichContent
                 $post->slug = $post->generateUniqueSlug($post->title);
             }
         });
+
+        static::saved(function ($post) {
+            MediaLibraryFileAttachmentProvider::syncAltTextFromContent($post->content);
+        });
     }
 
     public function author(): BelongsTo
