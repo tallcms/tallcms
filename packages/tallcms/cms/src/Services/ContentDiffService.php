@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TallCms\Cms\Services;
 
 use Filament\Forms\Components\RichEditor\RichContentRenderer;
+use TallCms\Cms\Filament\Forms\Components\MediaLibraryFileAttachmentProvider;
 
 class ContentDiffService
 {
@@ -56,6 +57,7 @@ class ContentDiffService
         try {
             $html = RichContentRenderer::make($decoded)
                 ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
+                ->fileAttachmentProvider(MediaLibraryFileAttachmentProvider::make())
                 ->toHtml();
 
             // If renderer returns empty but content exists, fall back to readable format

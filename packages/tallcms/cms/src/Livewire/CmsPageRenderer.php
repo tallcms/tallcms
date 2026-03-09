@@ -4,18 +4,16 @@ declare(strict_types=1);
 
 namespace TallCms\Cms\Livewire;
 
-use Filament\Forms\Components\RichEditor\RichContentRenderer;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use TallCms\Cms\Models\CmsPage;
 use TallCms\Cms\Models\CmsPost;
 use TallCms\Cms\Models\SiteSetting;
-use TallCms\Cms\Services\CustomBlockDiscoveryService;
 use TallCms\Cms\Services\LocaleRegistry;
 use TallCms\Cms\Services\MergeTagService;
 use TallCms\Cms\Services\SeoService;
 use TallCms\Cms\Services\TemplateRegistry;
-use Illuminate\Support\Str;
 
 class CmsPageRenderer extends Component
 {
@@ -425,9 +423,7 @@ class CmsPageRenderer extends Component
         // Share page content width with blocks so they can inherit it
         View::share('cmsPageContentWidth', $this->page->content_width ?? 'standard');
 
-        $renderedContent = RichContentRenderer::make($this->page->content)
-            ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
-            ->toUnsafeHtml();
+        $renderedContent = $this->page->renderRichContentUnsafe('content');
 
         // Add heading IDs for TOC support
         $renderedContent = $this->addHeadingIds($renderedContent);
@@ -448,9 +444,7 @@ class CmsPageRenderer extends Component
         $previousWidth = View::shared('cmsPageContentWidth');
         View::share('cmsPageContentWidth', $page->content_width ?? 'standard');
 
-        $rendered = RichContentRenderer::make($page->content)
-            ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
-            ->toUnsafeHtml();
+        $rendered = $page->renderRichContentUnsafe('content');
 
         // Add heading IDs for SPA mode TOC support
         $rendered = $this->addHeadingIds($rendered);

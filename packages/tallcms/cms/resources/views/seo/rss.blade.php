@@ -20,9 +20,7 @@
                 // Get description - use excerpt, or render content and extract plain text
                 $description = $post->excerpt;
                 if (empty($description) && $post->content) {
-                    $rendered = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($post->content)
-                        ->customBlocks(\TallCms\Cms\Services\CustomBlockDiscoveryService::getBlocksArray())
-                        ->toUnsafeHtml();
+                    $rendered = $post->renderRichContentUnsafe('content');
                     $description = Str::limit(strip_tags($rendered), 300);
                 }
             @endphp
@@ -44,9 +42,7 @@
 
                 @if($includeFullContent && $post->content)
                     @php
-                        $renderedContent = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($post->content)
-                            ->customBlocks(\TallCms\Cms\Services\CustomBlockDiscoveryService::getBlocksArray())
-                            ->toUnsafeHtml();
+                        $renderedContent = $post->renderRichContentUnsafe('content');
                     @endphp
                     <content:encoded><![CDATA[{!! $renderedContent !!}]]></content:encoded>
                 @endif

@@ -1,8 +1,6 @@
 @php
-    use App\Services\CustomBlockDiscoveryService;
     use App\Services\MergeTagService;
     use App\Services\HtmlSanitizerService;
-    use Filament\Forms\Components\RichEditor\RichContentRenderer;
     use Illuminate\Support\Facades\Storage;
     use Illuminate\Support\Facades\View;
 
@@ -25,9 +23,7 @@
     // Render post content blocks
     $renderedContent = '';
     if (!empty($post->content)) {
-        $renderedContent = RichContentRenderer::make($post->content)
-            ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
-            ->toUnsafeHtml();
+        $renderedContent = $post->renderRichContentUnsafe('content');
         $renderedContent = MergeTagService::replaceTags($renderedContent, $post);
 
         // Strip first heading if it matches the post title (avoid duplicate title display)

@@ -131,10 +131,11 @@ class PreviewController extends Controller
         }
 
         // At this point content should be a string (JSON or HTML)
-        // Render rich content with auto-discovered custom blocks (same as CmsPageRenderer)
+        // Render rich content with auto-discovered custom blocks and media library provider
         // Use toUnsafeHtml() to preserve Alpine.js attributes (x-data, x-model, etc.)
         $renderedContent = RichContentRenderer::make($content)
             ->customBlocks(CustomBlockDiscoveryService::getBlocksArray())
+            ->fileAttachmentProvider(\TallCms\Cms\Filament\Forms\Components\MediaLibraryFileAttachmentProvider::make())
             ->toUnsafeHtml();
 
         // Process merge tags in the rendered content
