@@ -66,13 +66,13 @@
         <div class="relative z-10 h-full flex flex-col {{ $justifyClass }} {{ $itemsClass }} {{ $textAlign }} px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
             <div class="max-w-4xl {{ $textAlign === 'text-center' ? 'mx-auto' : ($textAlign === 'text-right' ? 'ml-auto' : '') }}">
                 @if(!empty($heading))
-                    <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 drop-shadow-lg">
+                    <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4" style="text-shadow: 0 4px 8px rgba(0,0,0,0.25)">
                         {{ $heading }}
                     </h2>
                 @endif
 
                 @if(!empty($subheading))
-                    <p class="text-lg sm:text-xl text-white/90 mb-8 max-w-2xl {{ $textAlign === 'text-center' ? 'mx-auto' : '' }} drop-shadow">
+                    <p class="text-lg sm:text-xl text-white/90 mb-8 max-w-2xl {{ $textAlign === 'text-center' ? 'mx-auto' : '' }}" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3)">
                         {{ $subheading }}
                     </p>
                 @endif
