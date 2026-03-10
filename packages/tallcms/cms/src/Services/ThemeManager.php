@@ -814,6 +814,35 @@ class ThemeManager
     }
 
     /**
+     * Get the script tag for the shared TallCMS core runtime JS.
+     *
+     * Resolves from the root Vite dev server (hot) or production manifest.
+     */
+    public function getCoreJsTag(): string
+    {
+        $entrypoint = 'resources/js/tallcms-core.js';
+        $hotFile = public_path('hot');
+
+        // Dev server
+        if (file_exists($hotFile)) {
+            $devUrl = rtrim(trim(file_get_contents($hotFile)), '/');
+
+            return '<script type="module" src="'.$devUrl.'/'.$entrypoint.'"></script>';
+        }
+
+        // Production manifest
+        $manifestPath = public_path('build/manifest.json');
+        if (file_exists($manifestPath)) {
+            $manifest = json_decode(file_get_contents($manifestPath), true);
+            if (isset($manifest[$entrypoint])) {
+                return '<script type="module" src="'.asset('build/'.$manifest[$entrypoint]['file']).'"></script>';
+            }
+        }
+
+        return '';
+    }
+
+    /**
      * Get theme Vite assets from manifest with intelligent inheritance and dev-server support
      */
     public function getThemeViteAssets(array $entrypoints): array

@@ -396,6 +396,13 @@ class HeroBlock extends RichContentCustomBlock
                                             ->default("Thanks! We'll be in touch.")
                                             ->maxLength(500),
 
+                                        Select::make('form_redirect_page_id')
+                                            ->label('Redirect After Submission')
+                                            ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
+                                            ->searchable()
+                                            ->placeholder('Stay on page (show success message)')
+                                            ->helperText('Optionally redirect to a page after successful submission'),
+
                                         Select::make('form_button_style')
                                             ->label('Submit Button Style')
                                             ->options(static::getButtonVariantOptions())
@@ -539,6 +546,7 @@ class HeroBlock extends RichContentCustomBlock
             'form_submit_text' => $config['form_submit_text'] ?? 'Get Started',
             'form_success_message' => $config['form_success_message'] ?? "Thanks! We'll be in touch.",
             'form_button_style' => $config['form_button_style'] ?? 'btn-primary',
+            'form_redirect_page_id' => $config['form_redirect_page_id'] ?? null,
             'form_card_style' => $config['form_card_style'] ?? 'bg-base-100 shadow-2xl',
             'anchor_id' => static::getAnchorId($config, $config['heading'] ?? null),
             'css_classes' => static::getCssClasses($config),

@@ -115,6 +115,12 @@ class ThemeServiceProvider extends ServiceProvider
                      endforeach; ?>";
         });
 
+        // @tallcmsCoreJs directive — loads the shared CMS runtime (Alpine components, plugins)
+        // from the root Vite build so themes don't need to bundle it themselves.
+        Blade::directive('tallcmsCoreJs', function () {
+            return "<?php echo app(\TallCms\Cms\Services\ThemeManager::class)->getCoreJsTag(); ?>";
+        });
+
         // @theme directive to get current theme info
         Blade::directive('theme', function ($property = null) {
             if ($property) {

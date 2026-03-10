@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-apMH2f_c.css",
+    "file": "assets/app-BdiGMVgR.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -9,7 +9,7 @@
     ]
   },
   "resources/css/filament/admin/preview.css": {
-    "file": "assets/preview-B41QH8FS.css",
+    "file": "assets/preview-AcQfa1dQ.css",
     "src": "resources/css/filament/admin/preview.css",
     "isEntry": true,
     "name": "preview",
@@ -18,7 +18,7 @@
     ]
   },
   "resources/css/filament/admin/theme.css": {
-    "file": "assets/theme-DEwq-6p-.css",
+    "file": "assets/theme-14_ZnEZ4.css",
     "src": "resources/css/filament/admin/theme.css",
     "isEntry": true,
     "name": "theme",
@@ -27,9 +27,18 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-Cifu29lg.js",
+    "file": "assets/app-DysPdBAA.js",
     "name": "app",
     "src": "resources/js/app.js",
+    "isEntry": true,
+    "imports": [
+      "resources/js/tallcms-core.js"
+    ]
+  },
+  "resources/js/tallcms-core.js": {
+    "file": "assets/tallcms-core-CBUEYiED.js",
+    "name": "tallcms-core",
+    "src": "resources/js/tallcms-core.js",
     "isEntry": true
   }
 }

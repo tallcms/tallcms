@@ -1,16 +1,13 @@
 /**
  * TallCMS Core Alpine.js Components
  *
- * This file exports all native Alpine components required by TallCMS blocks.
- * Themes should import this file to ensure all native blocks function correctly.
- *
- * Usage in theme's app.js:
- *   import '../../../../resources/js/tallcms';
+ * Native Alpine components and plugins required by CMS blocks.
+ * Loaded globally via resources/js/tallcms-core.js and the @tallcmsCoreJs
+ * Blade directive. Themes do NOT need to import this — it ships as a
+ * shared runtime asset built from the root Vite config.
  *
  * Note: Alpine.js is provided by Livewire. Plugins are exposed on window
  * and registered via an inline script before @livewireScripts in the layout.
- *
- * @version 1.0.0
  */
 
 import intersect from '@alpinejs/intersect';
