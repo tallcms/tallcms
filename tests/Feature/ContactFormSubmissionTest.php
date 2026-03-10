@@ -362,4 +362,41 @@ class ContactFormSubmissionTest extends TestCase
 
         $this->assertArrayNotHasKey('redirect_url', $response->json());
     }
+
+    public function test_hero_form_config_includes_redirect_page_id_in_signed_payload(): void
+    {
+        $page = CmsPage::create([
+            'title' => 'Thank You',
+            'slug' => 'thank-you',
+            'status' => 'published',
+            'content' => [],
+            'published_at' => now(),
+        ]);
+
+        // Simulate the formConfig built by the hero blade view
+        $formConfig = [
+            'fields' => $this->getDefaultConfig()['fields'],
+            'submit_button_text' => 'Get Started',
+            'success_message' => "Thanks! We'll be in touch.",
+            'button_style' => 'btn-primary',
+            'redirect_page_id' => $page->id,
+        ];
+
+        $pageUrl = 'http://localhost';
+        $signature = \TallCms\Cms\Http\Controllers\ContactFormController::signConfig($formConfig, $pageUrl);
+
+        $this->postJson(route('tallcms.contact.submit'), [
+            'name' => 'Jane Doe',
+            'email' => 'jane@example.com',
+            'message' => 'Hero form test',
+            '_config' => $formConfig,
+            '_signature' => $signature,
+            '_pageUrl' => $pageUrl,
+        ])
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'redirect_url' => '/thank-you',
+            ]);
+    }
 }
