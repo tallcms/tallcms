@@ -7,6 +7,7 @@ use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
+use TallCms\Cms\Models\CmsPage;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
@@ -176,6 +177,13 @@ class ContactFormBlock extends RichContentCustomBlock
                                             ->default('Thank you for your message! We\'ll be in touch soon.')
                                             ->maxLength(500)
                                             ->helperText('Shown after successful form submission'),
+
+                                        Select::make('redirect_page_id')
+                                            ->label('Redirect After Submission')
+                                            ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
+                                            ->searchable()
+                                            ->placeholder('Stay on page (show success message)')
+                                            ->helperText('Optionally redirect to a page after successful submission'),
                                     ])
                                     ->collapsible(),
                             ]),
@@ -244,6 +252,7 @@ class ContactFormBlock extends RichContentCustomBlock
             'background' => 'bg-base-100',
             'padding' => 'py-16',
             'first_section' => false,
+            'redirect_page_id' => null,
         ], $config, ['fields' => $fields]);
     }
 

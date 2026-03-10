@@ -5,11 +5,13 @@ namespace Tests\Feature;
 use App\Livewire\ContactForm;
 use App\Mail\ContactFormAdminNotification;
 use App\Mail\ContactFormAutoReply;
+use App\Models\CmsPage;
 use App\Models\TallcmsContactSubmission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Livewire;
+use TallCms\Cms\Filament\Blocks\ContactFormBlock;
 use Tests\TestCase;
 
 class ContactFormSubmissionTest extends TestCase
@@ -278,5 +280,52 @@ class ContactFormSubmissionTest extends TestCase
 
         $this->assertEquals(1, TallcmsContactSubmission::unread()->count());
         $this->assertEquals(2, TallcmsContactSubmission::recent()->count());
+    }
+
+    public function test_redirect_url_included_in_rendered_block_when_page_selected(): void
+    {
+        $page = CmsPage::create([
+            'title' => 'Thank You',
+            'slug' => 'thank-you',
+            'status' => 'published',
+            'content' => [],
+            'published_at' => now(),
+        ]);
+
+        $config = array_merge($this->getDefaultConfig(), [
+            'redirect_page_id' => $page->id,
+        ]);
+
+        $html = ContactFormBlock::toHtml($config, []);
+
+        $this->assertStringContainsString('"redirectUrl":', $html);
+        $this->assertStringContainsString('thank-you', $html);
+    }
+
+    public function test_redirect_url_is_null_when_no_page_selected(): void
+    {
+        $config = $this->getDefaultConfig();
+
+        $html = ContactFormBlock::toHtml($config, []);
+
+        $this->assertStringContainsString('"redirectUrl":null', $html);
+    }
+
+    public function test_redirect_url_is_null_for_unpublished_page(): void
+    {
+        $page = CmsPage::create([
+            'title' => 'Draft Page',
+            'slug' => 'draft-page',
+            'status' => 'draft',
+            'content' => [],
+        ]);
+
+        $config = array_merge($this->getDefaultConfig(), [
+            'redirect_page_id' => $page->id,
+        ]);
+
+        $html = ContactFormBlock::toHtml($config, []);
+
+        $this->assertStringContainsString('"redirectUrl":null', $html);
     }
 }

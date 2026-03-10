@@ -14,6 +14,8 @@ function registerContactForm() {
         formError: '',
         submitted: false,
         submitting: false,
+        redirectUrl: null,
+        redirecting: false,
 
         // Config (populated from data attributes)
         config: null,
@@ -42,6 +44,7 @@ function registerContactForm() {
             this.successMessage = this.config.successMessage || 'Thank you for your message!';
             this.signature = this.config.signature || '';
             this.pageUrl = this.config.pageUrl || '';
+            this.redirectUrl = this.config.redirectUrl || null;
 
             // Initialize form data with empty values for each field
             this.formData = (this.config.fieldNames || []).reduce(
@@ -97,6 +100,11 @@ function registerContactForm() {
                 }
 
                 if (response.ok) {
+                    if (this.redirectUrl) {
+                        this.redirecting = true;
+                        window.location.href = this.redirectUrl;
+                        return;
+                    }
                     this.submitted = true;
                 } else if (response.status === 422) {
                     this.errors = data.errors || {};
@@ -111,7 +119,9 @@ function registerContactForm() {
                 console.error('Contact form submission error:', error);
                 this.formError = 'A network error occurred. Please check your connection and try again.';
             } finally {
-                this.submitting = false;
+                if (!this.redirecting) {
+                    this.submitting = false;
+                }
             }
         },
 
