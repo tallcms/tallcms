@@ -10,18 +10,6 @@
     $animationType = $animation_type ?? '';
     $animationDuration = $animation_duration ?? 'anim-duration-700';
 
-    // Resolve redirect URL if configured
-    $redirectUrl = null;
-    if (!empty($config['redirect_page_id'])) {
-        $redirectUrl = \TallCms\Cms\Services\BlockLinkResolver::resolveButtonUrl([
-            'redirect_link_type' => 'page',
-            'redirect_page_id' => $config['redirect_page_id'],
-        ], 'redirect');
-        if ($redirectUrl === '#') {
-            $redirectUrl = null;
-        }
-    }
-
     // Generate signature for security
     $pageUrl = request()->url();
     $signature = \TallCms\Cms\Http\Controllers\ContactFormController::signConfig($config, $pageUrl);
@@ -34,7 +22,6 @@
         'signature' => $signature,
         'pageUrl' => $pageUrl,
         'fieldNames' => array_column($fields, 'name'),
-        'redirectUrl' => $redirectUrl,
     ];
 @endphp
 

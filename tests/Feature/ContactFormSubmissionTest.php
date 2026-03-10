@@ -11,7 +11,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Livewire;
-use TallCms\Cms\Filament\Blocks\ContactFormBlock;
 use Tests\TestCase;
 
 class ContactFormSubmissionTest extends TestCase
@@ -282,7 +281,7 @@ class ContactFormSubmissionTest extends TestCase
         $this->assertEquals(2, TallcmsContactSubmission::recent()->count());
     }
 
-    public function test_redirect_url_included_in_rendered_block_when_page_selected(): void
+    public function test_api_submission_returns_redirect_url_when_page_configured(): void
     {
         $page = CmsPage::create([
             'title' => 'Thank You',
@@ -296,22 +295,45 @@ class ContactFormSubmissionTest extends TestCase
             'redirect_page_id' => $page->id,
         ]);
 
-        $html = ContactFormBlock::toHtml($config, []);
+        $pageUrl = 'http://localhost/contact';
+        $signature = \TallCms\Cms\Http\Controllers\ContactFormController::signConfig($config, $pageUrl);
 
-        $this->assertStringContainsString('"redirectUrl":', $html);
-        $this->assertStringContainsString('thank-you', $html);
+        $this->postJson(route('tallcms.contact.submit'), [
+            'name' => 'John Doe',
+            'email' => 'john@example.com',
+            'message' => 'Test message',
+            '_config' => $config,
+            '_signature' => $signature,
+            '_pageUrl' => $pageUrl,
+        ])
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'redirect_url' => '/thank-you',
+            ]);
     }
 
-    public function test_redirect_url_is_null_when_no_page_selected(): void
+    public function test_api_submission_has_no_redirect_url_when_not_configured(): void
     {
         $config = $this->getDefaultConfig();
+        $pageUrl = 'http://localhost/contact';
+        $signature = \TallCms\Cms\Http\Controllers\ContactFormController::signConfig($config, $pageUrl);
 
-        $html = ContactFormBlock::toHtml($config, []);
+        $response = $this->postJson(route('tallcms.contact.submit'), [
+            'name' => 'John Doe',
+            'email' => 'john@example.com',
+            'message' => 'Test message',
+            '_config' => $config,
+            '_signature' => $signature,
+            '_pageUrl' => $pageUrl,
+        ])
+            ->assertOk()
+            ->assertJson(['success' => true]);
 
-        $this->assertStringContainsString('"redirectUrl":null', $html);
+        $this->assertArrayNotHasKey('redirect_url', $response->json());
     }
 
-    public function test_redirect_url_is_null_for_unpublished_page(): void
+    public function test_api_submission_has_no_redirect_url_for_unpublished_page(): void
     {
         $page = CmsPage::create([
             'title' => 'Draft Page',
@@ -324,8 +346,20 @@ class ContactFormSubmissionTest extends TestCase
             'redirect_page_id' => $page->id,
         ]);
 
-        $html = ContactFormBlock::toHtml($config, []);
+        $pageUrl = 'http://localhost/contact';
+        $signature = \TallCms\Cms\Http\Controllers\ContactFormController::signConfig($config, $pageUrl);
 
-        $this->assertStringContainsString('"redirectUrl":null', $html);
+        $response = $this->postJson(route('tallcms.contact.submit'), [
+            'name' => 'John Doe',
+            'email' => 'john@example.com',
+            'message' => 'Test message',
+            '_config' => $config,
+            '_signature' => $signature,
+            '_pageUrl' => $pageUrl,
+        ])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        $this->assertArrayNotHasKey('redirect_url', $response->json());
     }
 }

@@ -15,6 +15,7 @@ use Illuminate\Validation\Rule;
 use TallCms\Cms\Mail\ContactFormAdminNotification;
 use TallCms\Cms\Mail\ContactFormAutoReply;
 use TallCms\Cms\Models\TallcmsContactSubmission;
+use TallCms\Cms\Services\BlockLinkResolver;
 
 class ContactFormController extends Controller
 {
@@ -185,7 +186,21 @@ class ContactFormController extends Controller
             Mail::to($submitterEmail)->queue(new ContactFormAutoReply($submission));
         }
 
-        return response()->json(['success' => true]);
+        // Resolve redirect URL if configured
+        $response = ['success' => true];
+
+        if (! empty($config['redirect_page_id'])) {
+            $redirectUrl = BlockLinkResolver::resolveButtonUrl([
+                'redirect_link_type' => 'page',
+                'redirect_page_id' => $config['redirect_page_id'],
+            ], 'redirect');
+
+            if ($redirectUrl !== '#') {
+                $response['redirect_url'] = $redirectUrl;
+            }
+        }
+
+        return response()->json($response);
     }
 
     /**

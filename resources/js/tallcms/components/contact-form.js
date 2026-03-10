@@ -14,7 +14,6 @@ function registerContactForm() {
         formError: '',
         submitted: false,
         submitting: false,
-        redirectUrl: null,
         redirecting: false,
 
         // Config (populated from data attributes)
@@ -44,8 +43,6 @@ function registerContactForm() {
             this.successMessage = this.config.successMessage || 'Thank you for your message!';
             this.signature = this.config.signature || '';
             this.pageUrl = this.config.pageUrl || '';
-            this.redirectUrl = this.config.redirectUrl || null;
-
             // Initialize form data with empty values for each field
             this.formData = (this.config.fieldNames || []).reduce(
                 (acc, name) => ({ ...acc, [name]: '' }),
@@ -100,9 +97,9 @@ function registerContactForm() {
                 }
 
                 if (response.ok) {
-                    if (this.redirectUrl) {
+                    if (data.redirect_url) {
                         this.redirecting = true;
-                        window.location.href = this.redirectUrl;
+                        window.location.href = data.redirect_url;
                         return;
                     }
                     this.submitted = true;
