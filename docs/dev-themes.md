@@ -145,12 +145,24 @@ Use daisyUI component classes and semantic colors:
 ### Asset Management
 
 ```blade
-{{-- Compiled assets --}}
+{{-- CMS core runtime (contact-form, comments, Alpine plugins) --}}
+@tallcmsCoreJs
+
+{{-- Theme-specific compiled assets (CSS + theme-only JS) --}}
 @themeVite(['resources/css/app.css', 'resources/js/app.js'])
 
 {{-- Static assets --}}
 <img src="@themeAsset('images/logo.png')" alt="Logo">
 ```
+
+#### Core vs Theme JS
+
+CMS block components (contact-form, comments, Alpine plugins) are loaded **once** from the root Vite build via `@tallcmsCoreJs`. Theme `app.js` is for **theme-specific behavior only** and must **not** import `resources/js/tallcms`.
+
+This separation means:
+- Core JS changes ship to all themes immediately with a single `npm run build` at the project root — no theme rebuilds needed.
+- Theme JS stays small and focused on theme-specific functionality.
+- Guard tests (`tests/Unit/ThemeCoreJsGuardTest.php`) enforce this boundary in CI.
 
 ## Theme CSS Configuration
 
@@ -273,8 +285,9 @@ $assetUrl = theme_asset('images/logo.png');
 ### Blade Directives
 
 ```blade
-@themeVite(['resources/css/app.css'])
-@themeAsset('images/logo.png')
+@tallcmsCoreJs                                    {{-- Shared CMS runtime (Alpine components, plugins) --}}
+@themeVite(['resources/css/app.css'])               {{-- Theme CSS/JS assets --}}
+@themeAsset('images/logo.png')                      {{-- Static theme asset URL --}}
 ```
 
 ---

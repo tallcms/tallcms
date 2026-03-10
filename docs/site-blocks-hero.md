@@ -31,6 +31,27 @@ The Hero block creates impactful, attention-grabbing sections at the top of your
 | **Secondary Button** | Optional second CTA |
 | **Text Alignment** | Left, center, or right |
 | **Min Height** | Section height (small, medium, large, full-screen) |
+| **Layout** | Centered, Figure Left/Right, or **With Form** |
+
+---
+
+## With Form Layout
+
+The **With Form** layout places an inline contact form card alongside the hero content — ideal for lead capture on landing pages.
+
+Form-specific settings appear when this layout is selected:
+
+| Field | Description |
+|-------|-------------|
+| **Form Card Title** | Heading on the form card |
+| **Form Fields** | Configurable fields (same as Contact Form block) |
+| **Submit Button Text** | Button label |
+| **Success Message** | Message after submission |
+| **Redirect After Submission** | Optionally redirect to a CMS page instead of showing the success message |
+| **Button Style** | Submit button variant |
+| **Card Style** | Form card appearance |
+
+The form uses the same server-side submission, validation, and redirect logic as the standalone Contact Form block.
 
 ---
 
