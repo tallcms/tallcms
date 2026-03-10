@@ -110,6 +110,7 @@ Resources are organized with separate Form, Table, and Pages classes under `src/
 Vite entry points (see `vite.config.js`):
 - `resources/css/app.css` — Tailwind + daisyUI frontend styles
 - `resources/js/app.js` — Alpine.js
+- `resources/js/tallcms-core.js` — Shared CMS runtime (contact-form, comments, Alpine plugins). Loaded via `@tallcmsCoreJs` directive. Themes must NOT bundle this — it ships once from root.
 - `resources/css/filament/admin/theme.css` — Filament admin theme
 - `resources/css/filament/admin/preview.css` — Block preview styles
 
