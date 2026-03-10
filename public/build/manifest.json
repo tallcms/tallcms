@@ -27,9 +27,18 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-zoeHclQ5.js",
+    "file": "assets/app-DysPdBAA.js",
     "name": "app",
     "src": "resources/js/app.js",
+    "isEntry": true,
+    "imports": [
+      "resources/js/tallcms-core.js"
+    ]
+  },
+  "resources/js/tallcms-core.js": {
+    "file": "assets/tallcms-core-CBUEYiED.js",
+    "name": "tallcms-core",
+    "src": "resources/js/tallcms-core.js",
     "isEntry": true
   }
 }

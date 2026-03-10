@@ -523,9 +523,8 @@ CSS;
     {
         $appJs = <<<'JS'
 // Theme JavaScript
-
-// TallCMS Core Components - Required for native blocks
-import '../../../../resources/js/tallcms';
+// Core CMS components (contact-form, comments, etc.) are loaded globally
+// via @tallcmsCoreJs in the layout — no need to import them here.
 
 // Theme-specific functionality here
 JS;
@@ -635,6 +634,8 @@ GITIGNORE;
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
 
+    <!-- CMS Core Runtime (shared Alpine components) -->
+    @tallcmsCoreJs
     <!-- Theme Assets -->
     @themeVite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles

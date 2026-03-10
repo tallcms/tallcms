@@ -8,6 +8,7 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.js',
+                'resources/js/tallcms-core.js',
                 'resources/css/filament/admin/theme.css',
                 'resources/css/filament/admin/preview.css',
             ],
