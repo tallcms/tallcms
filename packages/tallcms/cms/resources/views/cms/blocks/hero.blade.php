@@ -180,6 +180,7 @@
                                 'submit_button_text' => $formSubmitText,
                                 'success_message' => $form_success_message ?? 'Thanks! We\'ll be in touch.',
                                 'button_style' => $formButtonStyle,
+                                'redirect_page_id' => $form_redirect_page_id ?? null,
                             ];
                             $pageUrl = request()->url();
                             $signature = \TallCms\Cms\Http\Controllers\ContactFormController::signConfig($formConfig, $pageUrl);
