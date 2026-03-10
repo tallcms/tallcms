@@ -835,7 +835,7 @@ class ThemeManager
         if (file_exists($manifestPath)) {
             $manifest = json_decode(file_get_contents($manifestPath), true);
             if (isset($manifest[$entrypoint])) {
-                return '<script type="module" src="/build/'.$manifest[$entrypoint]['file'].'"></script>';
+                return '<script type="module" src="'.asset('build/'.$manifest[$entrypoint]['file']).'"></script>';
             }
         }
 
