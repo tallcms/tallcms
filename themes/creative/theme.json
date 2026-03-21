@@ -9,10 +9,12 @@
     },
     "supports": {
         "dark_mode": false,
-        "theme_controller": false
+        "theme_controller": false,
+        "responsive": true,
+        "animations": true
     },
     "screenshots": {
-        "primary": "screenshot.png"
+        "primary": null
     },
     "build": {
         "entries": [

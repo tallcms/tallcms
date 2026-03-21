@@ -15,7 +15,6 @@
 /node_modules
 /vendor
 themes/*/node_modules
-themes/*/public/build
 /public/build
 /public/hot
 /public/storage

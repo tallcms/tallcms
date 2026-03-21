@@ -178,6 +178,9 @@ class ThemePreviewMiddleware
         // Get theme hierarchy (child -> parent chain)
         $hierarchy = $theme->getHierarchy();
 
+        // Remove old theme paths from the tallcms namespace hints
+        $this->clearTallcmsThemeHints($themesBasePath);
+
         // Prepend theme view paths in reverse hierarchy order (parent first, child last)
         // This ensures child theme views take precedence
         foreach (array_reverse($hierarchy) as $hierarchyTheme) {
@@ -187,11 +190,38 @@ class ThemePreviewMiddleware
 
                 // Also register view namespace for explicit theme loading (theme.{slug}::*)
                 $this->registerThemeNamespace($hierarchyTheme);
+
+                // Override tallcms:: namespace so tallcms::layouts.app resolves to preview theme
+                View::prependNamespace('tallcms', $viewPath);
             }
         }
 
         // Flush the view cache to ensure fresh resolution
         View::flushFinderCache();
+    }
+
+    /**
+     * Remove theme-directory paths from the tallcms namespace hints
+     * so the preview theme's views take precedence for tallcms::* views
+     */
+    protected function clearTallcmsThemeHints(string $themesBasePath): void
+    {
+        $viewFinder = View::getFinder();
+        $reflection = new \ReflectionClass($viewFinder);
+
+        if ($reflection->hasProperty('hints')) {
+            $hintsProperty = $reflection->getProperty('hints');
+            $hintsProperty->setAccessible(true);
+            $hints = $hintsProperty->getValue($viewFinder);
+
+            if (isset($hints['tallcms'])) {
+                $hints['tallcms'] = array_values(array_filter(
+                    $hints['tallcms'],
+                    fn ($path) => ! str_starts_with($path, $themesBasePath)
+                ));
+                $hintsProperty->setValue($viewFinder, $hints);
+            }
+        }
     }
 
     /**

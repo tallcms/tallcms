@@ -129,6 +129,39 @@ class Theme
 
         // Store daisyUI configuration
         $this->extras['daisyui'] = $data['daisyui'] ?? [];
+
+        // Store license fields
+        $this->extras['license_required'] = (bool) ($data['license_required'] ?? false);
+        $this->extras['license_slug'] = $data['license_slug'] ?? null;
+        $this->extras['purchase_url'] = $data['purchase_url'] ?? null;
+    }
+
+    // =========================================================================
+    // License Methods
+    // =========================================================================
+
+    /**
+     * Check if theme requires a license
+     */
+    public function requiresLicense(): bool
+    {
+        return $this->extras['license_required'] ?? false;
+    }
+
+    /**
+     * Get the license slug for this theme
+     */
+    public function getLicenseSlug(): string
+    {
+        return $this->extras['license_slug'] ?? "tallcms/theme-{$this->slug}";
+    }
+
+    /**
+     * Get the purchase URL for this theme
+     */
+    public function getPurchaseUrl(): ?string
+    {
+        return $this->extras['purchase_url'] ?? null;
     }
 
     // =========================================================================

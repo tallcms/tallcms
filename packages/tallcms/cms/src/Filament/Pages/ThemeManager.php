@@ -2,13 +2,11 @@
 
 namespace TallCms\Cms\Filament\Pages;
 
-use TallCms\Cms\Services\ThemeManager as ThemeManagerService;
-use TallCms\Cms\Services\ThemeValidator;
-use TallCms\Cms\Models\Theme;
 use BackedEnum;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
@@ -18,6 +16,11 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Url;
+use TallCms\Cms\Models\Theme;
+use TallCms\Cms\Services\PluginLicenseService;
+use TallCms\Cms\Services\ThemeManager as ThemeManagerService;
+use TallCms\Cms\Services\ThemeValidator;
 
 class ThemeManager extends Page implements HasForms
 {
@@ -50,6 +53,24 @@ class ThemeManager extends Page implements HasForms
     public ?string $selectedTheme = null;
 
     public ?array $themeDetails = null;
+
+    #[Url]
+    public string $search = '';
+
+    public bool $filterDarkMode = false;
+
+    public bool $filterThemeController = false;
+
+    public bool $filterResponsive = false;
+
+    public bool $filterAnimations = false;
+
+    public array $licenseStatuses = [];
+
+    public function mount(): void
+    {
+        $this->refreshLicenseStatuses();
+    }
 
     /**
      * Get the theme manager service
@@ -88,9 +109,81 @@ class ThemeManager extends Page implements HasForms
                 'isPrebuilt' => $theme->isPrebuilt(),
                 'meetsRequirements' => $theme->meetsRequirements(),
                 'unmetRequirements' => $theme->getUnmetRequirements(),
+                'daisyuiPreset' => $theme->getDaisyUIPreset(),
+                'daisyuiColors' => $this->getPresetColors($theme),
+                'hasDarkMode' => $theme->supports('dark_mode'),
+                'hasThemeController' => $theme->supportsThemeController(),
+                'hasResponsive' => $theme->supports('responsive'),
+                'hasAnimations' => $theme->supports('animations'),
+                'requiresLicense' => $theme->requiresLicense(),
+                'licenseSlug' => $theme->getLicenseSlug(),
+                'licenseStatus' => $theme->requiresLicense()
+                    ? ($this->licenseStatuses[$theme->getLicenseSlug()] ?? null)
+                    : null,
+                'purchaseUrl' => $theme->getPurchaseUrl(),
             ])
             ->sortByDesc('isActive')
             ->values();
+    }
+
+    /**
+     * Get themes filtered by search and feature toggles
+     */
+    #[Computed]
+    public function filteredThemes(): Collection
+    {
+        $themes = $this->themes;
+
+        if (! empty($this->search)) {
+            $search = strtolower(trim($this->search));
+            $themes = $themes->filter(fn ($t) => str_contains(strtolower($t['name']), $search)
+                || str_contains(strtolower($t['description'] ?? ''), $search)
+                || str_contains(strtolower($t['author']), $search)
+                || str_contains(strtolower($t['daisyuiPreset'] ?? ''), $search)
+            );
+        }
+
+        if ($this->filterDarkMode) {
+            $themes = $themes->where('hasDarkMode', true);
+        }
+        if ($this->filterThemeController) {
+            $themes = $themes->where('hasThemeController', true);
+        }
+        if ($this->filterResponsive) {
+            $themes = $themes->where('hasResponsive', true);
+        }
+        if ($this->filterAnimations) {
+            $themes = $themes->where('hasAnimations', true);
+        }
+
+        return $themes;
+    }
+
+    /**
+     * Get daisyUI preset colors for a theme
+     */
+    protected function getPresetColors(Theme $theme): array
+    {
+        $customColors = $theme->getDaisyUIColors();
+        if (! empty($customColors)) {
+            return $customColors;
+        }
+
+        $preset = $theme->getDaisyUIPreset();
+        if ($preset) {
+            return Theme::DAISYUI_PRESET_COLORS[$preset] ?? [];
+        }
+
+        return [];
+    }
+
+    /**
+     * Clear cached theme computed properties
+     */
+    protected function clearThemeCache(): void
+    {
+        unset($this->themes);
+        unset($this->filteredThemes);
     }
 
     /**
@@ -167,7 +260,7 @@ class ThemeManager extends Page implements HasForms
                 ->send();
 
             // Clear the computed property cache so themes list re-evaluates
-            unset($this->themes);
+            $this->clearThemeCache();
         } else {
             Notification::make()
                 ->title('Activation failed')
@@ -202,7 +295,7 @@ class ThemeManager extends Page implements HasForms
                 ->send();
 
             // Clear the computed property cache so themes list re-evaluates
-            unset($this->themes);
+            $this->clearThemeCache();
         } else {
             Notification::make()
                 ->title('Rollback failed')
@@ -305,6 +398,12 @@ class ThemeManager extends Page implements HasForms
             'unmetRequirements' => $theme->getUnmetRequirements(),
             'screenshot' => $theme->getScreenshotUrl(),
             'gallery' => $theme->getGalleryScreenshots(),
+            'requiresLicense' => $theme->requiresLicense(),
+            'licenseSlug' => $theme->getLicenseSlug(),
+            'licenseStatus' => $theme->requiresLicense()
+                ? ($this->licenseStatuses[$theme->getLicenseSlug()] ?? null)
+                : null,
+            'purchaseUrl' => $theme->getPurchaseUrl(),
         ];
 
         $this->dispatch('open-modal', id: 'theme-details-modal');
@@ -333,7 +432,7 @@ class ThemeManager extends Page implements HasForms
             ->send();
 
         // Clear the computed property cache so themes list re-evaluates
-        unset($this->themes);
+        $this->clearThemeCache();
     }
 
     /**
@@ -386,7 +485,152 @@ class ThemeManager extends Page implements HasForms
                 $this->closeThemeDetails();
 
                 // Refresh the theme list
-                unset($this->themes);
+                $this->clearThemeCache();
+            });
+    }
+
+    // =========================================================================
+    // License Methods
+    // =========================================================================
+
+    /**
+     * Refresh all license statuses for themes that require licenses
+     */
+    protected function refreshLicenseStatuses(): void
+    {
+        $licenseService = app(PluginLicenseService::class);
+        $this->licenseStatuses = [];
+
+        $themes = $this->getThemeManager()->getAvailableThemes();
+
+        foreach ($themes as $theme) {
+            if ($theme->requiresLicense()) {
+                $slug = $theme->getLicenseSlug();
+                $status = $licenseService->getStatus($slug);
+
+                // Merge purchase_url from theme.json as fallback
+                if (empty($status['purchase_url']) && $theme->getPurchaseUrl()) {
+                    $status['purchase_url'] = $theme->getPurchaseUrl();
+                }
+
+                $this->licenseStatuses[$slug] = $status;
+            }
+        }
+    }
+
+    /**
+     * Refresh a single theme's license status
+     */
+    public function refreshLicenseStatus(string $licenseSlug): void
+    {
+        $licenseService = app(PluginLicenseService::class);
+
+        $licenseService->clearCache($licenseSlug);
+        $licenseService->isValid($licenseSlug);
+
+        $this->refreshLicenseState();
+
+        Notification::make()
+            ->title('Status Refreshed')
+            ->body('License status has been refreshed from the server.')
+            ->success()
+            ->send();
+    }
+
+    /**
+     * Refresh license data and clear theme caches
+     */
+    protected function refreshLicenseState(): void
+    {
+        $this->refreshLicenseStatuses();
+        $this->clearThemeCache();
+
+        // Refresh open details modal if showing a licensable theme
+        if ($this->themeDetails && ($this->themeDetails['requiresLicense'] ?? false)) {
+            $this->showThemeDetails($this->themeDetails['slug']);
+        }
+    }
+
+    /**
+     * Activate a theme license
+     */
+    public function activateLicenseAction(): Action
+    {
+        return Action::make('activateLicense')
+            ->label('Activate License')
+            ->icon('heroicon-o-key')
+            ->color('primary')
+            ->modalHeading(fn (array $arguments) => "Activate License — {$arguments['name']}")
+            ->modalDescription('Enter your license key from your purchase email.')
+            ->form([
+                TextInput::make('license_key')
+                    ->label('License Key')
+                    ->placeholder('XXXX-XXXX-XXXX-XXXX')
+                    ->required(),
+            ])
+            ->action(function (array $data, array $arguments) {
+                $result = app(PluginLicenseService::class)->activate(
+                    $arguments['licenseSlug'],
+                    $data['license_key']
+                );
+
+                if ($result['valid']) {
+                    Notification::make()
+                        ->title('License Activated')
+                        ->body('The license has been successfully activated!')
+                        ->success()
+                        ->send();
+                } else {
+                    if ($result['status'] === 'not_supported') {
+                        Notification::make()
+                            ->title('Theme Not Supported')
+                            ->body('This theme does not support license activation.')
+                            ->warning()
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->title('Activation Failed')
+                            ->body($result['message'])
+                            ->danger()
+                            ->send();
+                    }
+                }
+
+                $this->refreshLicenseState();
+            });
+    }
+
+    /**
+     * Deactivate a theme license
+     */
+    public function deactivateLicenseAction(): Action
+    {
+        return Action::make('deactivateLicense')
+            ->label('Deactivate')
+            ->icon('heroicon-o-x-circle')
+            ->color('danger')
+            ->requiresConfirmation()
+            ->modalHeading(fn (array $arguments) => "Deactivate License — {$arguments['name']}")
+            ->modalDescription('Are you sure you want to deactivate this license? The theme may lose access to updates and premium features.')
+            ->modalSubmitActionLabel('Yes, Deactivate')
+            ->action(function (array $arguments) {
+                $result = app(PluginLicenseService::class)->deactivate($arguments['licenseSlug']);
+
+                if ($result['success']) {
+                    Notification::make()
+                        ->title('License Deactivated')
+                        ->body('The license has been deactivated from this site.')
+                        ->success()
+                        ->send();
+                } else {
+                    Notification::make()
+                        ->title('Deactivation Notice')
+                        ->body($result['message'])
+                        ->warning()
+                        ->send();
+                }
+
+                $this->refreshLicenseState();
             });
     }
 
@@ -406,6 +650,29 @@ class ThemeManager extends Page implements HasForms
                 ->modalDescription(fn () => "Are you sure you want to rollback to the previous theme ({$this->getRollbackSlug()})?")
                 ->modalSubmitActionLabel('Yes, Rollback')
                 ->action(fn () => $this->rollbackTheme()),
+
+            Action::make('refreshAllLicenses')
+                ->label('Refresh Licenses')
+                ->icon('heroicon-o-key')
+                ->color('gray')
+                ->action(function () {
+                    $licenseService = app(PluginLicenseService::class);
+                    $licenseService->clearCache();
+
+                    foreach ($this->licenseStatuses as $licenseSlug => $status) {
+                        if ($status['has_license']) {
+                            $licenseService->isValid($licenseSlug);
+                        }
+                    }
+
+                    $this->refreshLicenseState();
+
+                    Notification::make()
+                        ->title('All Statuses Refreshed')
+                        ->success()
+                        ->send();
+                })
+                ->visible(fn () => collect($this->licenseStatuses)->contains('has_license', true)),
 
             Action::make('refresh')
                 ->label('Refresh')
