@@ -609,8 +609,15 @@ GITIGNORE;
 
         return <<<BLADE
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ daisyui_default_preset() }}">
 <head>
+    <script>
+        // Apply saved theme immediately (localStorage overrides server default)
+        (function() {
+            var s = localStorage.getItem('theme');
+            if (s) document.documentElement.setAttribute('data-theme', s);
+        })();
+    </script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 

@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
+use TallCms\Cms\Models\SiteSetting;
 use TallCms\Cms\Models\Theme;
 use TallCms\Cms\Services\PluginLicenseService;
 use TallCms\Cms\Services\ThemeManager as ThemeManagerService;
@@ -123,6 +124,7 @@ class ThemeManager extends Page implements HasForms
                 'licenseStatus' => $theme->requiresLicense()
                     ? ($this->licenseStatuses[$theme->getLicenseSlug()] ?? null)
                     : null,
+                'presets' => $theme->getDaisyUIPresets(),
                 'tags' => $theme->getTags(),
                 'purchaseUrl' => $theme->getPurchaseUrl(),
             ])
@@ -196,7 +198,13 @@ class ThemeManager extends Page implements HasForms
     #[Computed]
     public function activeTheme(): ?array
     {
-        return $this->themes->firstWhere('isActive', true);
+        $theme = $this->themes->firstWhere('isActive', true);
+
+        if ($theme) {
+            $theme['defaultPreset'] = daisyui_default_preset();
+        }
+
+        return $theme;
     }
 
     protected function clearThemeCache(): void
@@ -273,6 +281,9 @@ class ThemeManager extends Page implements HasForms
 
         // Activate theme with rollback support
         if ($this->getThemeManager()->activateWithRollback($slug)) {
+            // Clear stored default preset — new theme uses its own default
+            SiteSetting::set('theme_default_preset', '', 'text', 'theme');
+
             Notification::make()
                 ->title('Theme activated')
                 ->body("'{$theme->name}' is now active.")
@@ -374,6 +385,39 @@ class ThemeManager extends Page implements HasForms
             ->body("Preview of '{$theme->name}' opened in new tab.")
             ->info()
             ->send();
+    }
+
+    /**
+     * Change the default daisyUI preset for the active theme
+     */
+    public function changeDefaultPreset(string $preset): void
+    {
+        $activeTheme = $this->getThemeManager()->getActiveTheme();
+
+        if (! $activeTheme->supportsThemeController()) {
+            return;
+        }
+
+        $availablePresets = $activeTheme->getDaisyUIPresets();
+        if (! in_array($preset, $availablePresets)) {
+            Notification::make()
+                ->title('Invalid preset')
+                ->body("The preset '{$preset}' is not available for this theme.")
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        SiteSetting::set('theme_default_preset', $preset, 'text', 'theme', 'Default daisyUI preset for the active theme');
+
+        Notification::make()
+            ->title('Default preset updated')
+            ->body("Default preset changed to '".ucfirst($preset)."'.")
+            ->success()
+            ->send();
+
+        $this->clearThemeCache();
     }
 
     /**

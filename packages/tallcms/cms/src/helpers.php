@@ -220,6 +220,30 @@ if (! function_exists('daisyui_presets')) {
     }
 }
 
+if (! function_exists('daisyui_default_preset')) {
+    /**
+     * Get the admin-configured default daisyUI preset for the active theme
+     *
+     * Validates the stored value against the active theme's available presets.
+     * Falls back to the theme.json default if stored value is invalid or missing.
+     */
+    function daisyui_default_preset(): string
+    {
+        $theme = active_theme();
+        $fallback = $theme?->getDaisyUIPreset() ?? 'light';
+
+        $stored = \TallCms\Cms\Models\SiteSetting::get('theme_default_preset');
+        if ($stored && $stored !== '') {
+            $available = $theme?->getDaisyUIPresets() ?? [];
+            if (in_array($stored, $available, true)) {
+                return $stored;
+            }
+        }
+
+        return $fallback;
+    }
+}
+
 if (! function_exists('supports_theme_controller')) {
     /**
      * Check if theme supports runtime theme switching

@@ -1,14 +1,13 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ daisyui_default_preset() }}">
 <head>
     <script>
         // Apply saved theme immediately to prevent flash of wrong theme
+        // Server renders the admin-configured default; only localStorage overrides it
         (function() {
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme) {
                 document.documentElement.setAttribute('data-theme', savedTheme);
-            } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                document.documentElement.setAttribute('data-theme', 'dark');
             }
         })();
     </script>
@@ -306,8 +305,7 @@
 
             function initThemeButtons() {
                 const savedTheme = localStorage.getItem('theme') ||
-                                  document.documentElement.getAttribute('data-theme') ||
-                                  'light';
+                                  document.documentElement.getAttribute('data-theme');
                 document.querySelectorAll('.theme-btn').forEach(btn => {
                     btn.classList.toggle('btn-active', btn.dataset.themeValue === savedTheme);
                     // Remove existing listener to avoid duplicates after navigation
@@ -346,8 +344,8 @@
                 if (main) {
                     main.classList.remove('page-transitioning');
                 }
-                // Re-apply saved theme
-                const savedTheme = localStorage.getItem('theme') || 'light';
+                // Re-apply saved theme (falls back to server-rendered default)
+                const savedTheme = localStorage.getItem('theme') || document.documentElement.getAttribute('data-theme');
                 document.documentElement.setAttribute('data-theme', savedTheme);
                 initThemeButtons();
             });
