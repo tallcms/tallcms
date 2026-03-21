@@ -609,11 +609,16 @@ GITIGNORE;
 
         return <<<BLADE
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ daisyui_default_preset() }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ daisyui_default_preset() }}" data-default-theme="{{ daisyui_default_preset() }}">
 <head>
     <script>
-        // Apply saved theme immediately (localStorage overrides server default)
+        // Apply saved theme; reset localStorage when admin changes the default
         (function() {
+            var d = document.documentElement.getAttribute('data-default-theme');
+            if (localStorage.getItem('theme-default') !== d) {
+                localStorage.removeItem('theme');
+                localStorage.setItem('theme-default', d);
+            }
             var s = localStorage.getItem('theme');
             if (s) document.documentElement.setAttribute('data-theme', s);
         })();

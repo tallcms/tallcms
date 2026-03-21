@@ -1,11 +1,18 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ daisyui_default_preset() }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ daisyui_default_preset() }}" data-default-theme="{{ daisyui_default_preset() }}">
 <head>
     <script>
         // Apply saved theme immediately to prevent flash of wrong theme
-        // Server renders the admin-configured default; only localStorage overrides it
+        // When admin changes the default preset, localStorage is cleared so the new default wins
         (function() {
-            const savedTheme = localStorage.getItem('theme');
+            var serverDefault = document.documentElement.getAttribute('data-default-theme');
+            var storedDefault = localStorage.getItem('theme-default');
+            if (storedDefault !== serverDefault) {
+                // Admin changed the default — clear visitor's override
+                localStorage.removeItem('theme');
+                localStorage.setItem('theme-default', serverDefault);
+            }
+            var savedTheme = localStorage.getItem('theme');
             if (savedTheme) {
                 document.documentElement.setAttribute('data-theme', savedTheme);
             }
@@ -304,8 +311,7 @@
             }
 
             function initThemeButtons() {
-                const savedTheme = localStorage.getItem('theme') ||
-                                  document.documentElement.getAttribute('data-theme');
+                const savedTheme = document.documentElement.getAttribute('data-theme');
                 document.querySelectorAll('.theme-btn').forEach(btn => {
                     btn.classList.toggle('btn-active', btn.dataset.themeValue === savedTheme);
                     // Remove existing listener to avoid duplicates after navigation
@@ -344,9 +350,11 @@
                 if (main) {
                     main.classList.remove('page-transitioning');
                 }
-                // Re-apply saved theme (falls back to server-rendered default)
-                const savedTheme = localStorage.getItem('theme') || document.documentElement.getAttribute('data-theme');
-                document.documentElement.setAttribute('data-theme', savedTheme);
+                // Re-apply theme: localStorage override or current data-theme (already set by boot script)
+                var savedTheme = localStorage.getItem('theme');
+                if (savedTheme) {
+                    document.documentElement.setAttribute('data-theme', savedTheme);
+                }
                 initThemeButtons();
             });
         })();
