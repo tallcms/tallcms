@@ -6,6 +6,7 @@ use BackedEnum;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
@@ -71,10 +72,52 @@ class PluginManager extends Page implements HasForms
         return $count > 0 ? "{$count} update(s) available" : null;
     }
 
+    public array $licenseStatuses = [];
+
+    public ?string $autoActivatePlugin = null;
+
+    public ?string $autoActivateName = null;
+
     public function mount(): void
     {
         // Trigger automatic update check (rate-limited internally)
         app(PluginLicenseService::class)->checkForUpdatesAutomatically();
+
+        $this->refreshLicenseStatuses();
+
+        // Handle ?plugin= query param for auto-opening activation modal
+        // Only auto-open if the plugin doesn't already have a valid license
+        $requestedPlugin = request()->query('plugin');
+        if ($requestedPlugin) {
+            $plugin = $this->getPluginManager()->getInstalledPlugins()
+                ->first(fn (Plugin $p) => $p->getLicenseSlug() === $requestedPlugin);
+            if ($plugin && $plugin->requiresLicense()) {
+                $status = $this->licenseStatuses[$requestedPlugin] ?? null;
+                $alreadyValid = $status && ($status['has_license'] ?? false) && ($status['is_valid'] ?? false);
+                if (! $alreadyValid) {
+                    $this->autoActivatePlugin = $requestedPlugin;
+                    $this->autoActivateName = $plugin->name;
+                }
+            }
+        }
+    }
+
+    /**
+     * Auto-mount the activation modal (called via wire:init)
+     */
+    public function mountAutoActivate(): void
+    {
+        if ($this->autoActivatePlugin) {
+            $slug = $this->autoActivatePlugin;
+            $name = $this->autoActivateName;
+            // Clear immediately so re-renders don't retrigger
+            $this->autoActivatePlugin = null;
+            $this->autoActivateName = null;
+            $this->mountAction('activateLicense', [
+                'pluginSlug' => $slug,
+                'name' => $name,
+            ]);
+        }
     }
 
     #[Url]
@@ -123,6 +166,53 @@ class PluginManager extends Page implements HasForms
     }
 
     /**
+     * Refresh license statuses for all plugins
+     */
+    protected function refreshLicenseStatuses(): void
+    {
+        $this->licenseStatuses = app(PluginLicenseService::class)->getAllStatuses();
+    }
+
+    /**
+     * Refresh license-related UI state without touching update cache
+     */
+    protected function refreshLicenseState(): void
+    {
+        $this->refreshLicenseStatuses();
+
+        // Clear computed plugin lists so licenseStatus data is refreshed
+        unset($this->plugins);
+        unset($this->filteredPlugins);
+
+        // Refresh open details modal if showing a licensable plugin
+        if ($this->pluginDetails && ($this->pluginDetails['requiresLicense'] ?? false)) {
+            $this->showPluginDetails($this->pluginDetails['vendor'], $this->pluginDetails['slug']);
+        }
+    }
+
+    /**
+     * Refresh all plugin state after license changes that affect update eligibility
+     * (activate/deactivate — not simple status refreshes)
+     */
+    protected function refreshPluginState(): void
+    {
+        $this->refreshLicenseStatuses();
+
+        // Clear update cache — license changes can affect update eligibility
+        app(PluginLicenseService::class)->clearUpdateCache();
+        $this->availableUpdates = null;
+
+        // Clear computed plugin lists
+        unset($this->plugins);
+        unset($this->filteredPlugins);
+
+        // Refresh open details modal if showing a licensable plugin
+        if ($this->pluginDetails && ($this->pluginDetails['requiresLicense'] ?? false)) {
+            $this->showPluginDetails($this->pluginDetails['vendor'], $this->pluginDetails['slug']);
+        }
+    }
+
+    /**
      * Get all installed plugins with metadata
      */
     #[Computed]
@@ -151,6 +241,9 @@ class PluginManager extends Page implements HasForms
                 'updateInfo' => $availableUpdates[$plugin->getLicenseSlug()] ?? null,
                 'requiresLicense' => $plugin->requiresLicense(),
                 'licenseSlug' => $plugin->getLicenseSlug(),
+                'licenseStatus' => $plugin->requiresLicense()
+                    ? ($this->licenseStatuses[$plugin->getLicenseSlug()] ?? null)
+                    : null,
             ])
             ->values();
     }
@@ -246,6 +339,10 @@ class PluginManager extends Page implements HasForms
             'backups' => $backups,
             'requiresLicense' => $plugin->requiresLicense(),
             'licenseSlug' => $plugin->getLicenseSlug(),
+            'licenseStatus' => $plugin->requiresLicense()
+                ? ($this->licenseStatuses[$plugin->getLicenseSlug()] ?? null)
+                : null,
+            'hasPendingMigrations' => $this->getMigrator()->hasPendingMigrations($plugin),
             'hasUpdate' => isset($availableUpdates[$plugin->getLicenseSlug()]),
             'updateInfo' => $availableUpdates[$plugin->getLicenseSlug()] ?? null,
         ];
@@ -366,7 +463,7 @@ class PluginManager extends Page implements HasForms
                     ->actions([
                         \Filament\Actions\Action::make('manage_license')
                             ->label('Manage License')
-                            ->url(tallcms_panel_route('pages.plugin-licenses', ['plugin' => $pluginSlug])),
+                            ->url(static::getUrl(['plugin' => $pluginSlug])),
                     ])
                     ->send();
             } else {
@@ -488,6 +585,178 @@ class PluginManager extends Page implements HasForms
     }
 
     /**
+     * Refresh a single plugin's license status
+     */
+    public function refreshLicenseStatus(string $pluginSlug): void
+    {
+        $licenseService = app(PluginLicenseService::class);
+
+        // Force revalidation by clearing cache and checking validity
+        $licenseService->clearCache($pluginSlug);
+        $licenseService->isValid($pluginSlug);
+
+        $this->refreshLicenseState();
+
+        Notification::make()
+            ->title('Status Refreshed')
+            ->body('License status has been refreshed from the server.')
+            ->success()
+            ->send();
+    }
+
+    /**
+     * Check for updates for a single plugin
+     */
+    public function checkForUpdates(string $pluginSlug): void
+    {
+        $licenseService = app(PluginLicenseService::class);
+        $result = $licenseService->checkForUpdates($pluginSlug);
+
+        if (! $result['success']) {
+            if ($result['purchase_url'] ?? null) {
+                Notification::make()
+                    ->title('License Required')
+                    ->body($result['message'])
+                    ->warning()
+                    ->actions([
+                        \Filament\Actions\Action::make('purchase')
+                            ->label('Purchase License')
+                            ->url($result['purchase_url'])
+                            ->openUrlInNewTab(),
+                    ])
+                    ->send();
+            } else {
+                Notification::make()
+                    ->title('Update Check Failed')
+                    ->body($result['message'])
+                    ->danger()
+                    ->send();
+            }
+
+            return;
+        }
+
+        // Surgically update the cached update list for this plugin
+        $checkInterval = config('tallcms.plugins.license.update_check_interval', 86400);
+        $updates = \Illuminate\Support\Facades\Cache::get('plugin_available_updates', []);
+
+        if ($result['update_available'] ?? false) {
+            $updates[$pluginSlug] = [
+                'plugin_name' => $result['plugin_name'] ?? $pluginSlug,
+                'current_version' => $result['current_version'] ?? '0.0.0',
+                'latest_version' => $result['latest_version'],
+                'download_url' => $result['download_url'] ?? null,
+                'changelog_url' => $result['changelog_url'] ?? null,
+            ];
+
+            Notification::make()
+                ->title('Update Available!')
+                ->body("Version {$result['latest_version']} is available. You have {$result['current_version']}.")
+                ->success()
+                ->send();
+        } else {
+            // Remove stale entry if plugin is now up to date
+            unset($updates[$pluginSlug]);
+
+            Notification::make()
+                ->title('Up to Date')
+                ->body("You have the latest version ({$result['current_version']}).")
+                ->success()
+                ->send();
+        }
+
+        \Illuminate\Support\Facades\Cache::put('plugin_available_updates', $updates, $checkInterval);
+
+        // Reset in-memory state so computed properties re-read the updated cache
+        $this->availableUpdates = null;
+        unset($this->plugins);
+        unset($this->filteredPlugins);
+    }
+
+    /**
+     * Activate license action with modal form
+     */
+    public function activateLicenseAction(): Action
+    {
+        return Action::make('activateLicense')
+            ->label('Activate License')
+            ->icon('heroicon-o-key')
+            ->color('primary')
+            ->modalHeading(fn (array $arguments) => "Activate License — {$arguments['name']}")
+            ->modalDescription('Enter your license key from your purchase email.')
+            ->form([
+                TextInput::make('license_key')
+                    ->label('License Key')
+                    ->placeholder('XXXX-XXXX-XXXX-XXXX')
+                    ->required(),
+            ])
+            ->action(function (array $data, array $arguments) {
+                $result = app(PluginLicenseService::class)->activate(
+                    $arguments['pluginSlug'],
+                    $data['license_key']
+                );
+
+                if ($result['valid']) {
+                    Notification::make()
+                        ->title('License Activated')
+                        ->body('The license has been successfully activated!')
+                        ->success()
+                        ->send();
+                } else {
+                    if ($result['status'] === 'not_supported') {
+                        Notification::make()
+                            ->title('Plugin Not Supported')
+                            ->body('This plugin does not support license activation.')
+                            ->warning()
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->title('Activation Failed')
+                            ->body($result['message'])
+                            ->danger()
+                            ->send();
+                    }
+                }
+
+                $this->refreshPluginState();
+            });
+    }
+
+    /**
+     * Deactivate license action with confirmation modal
+     */
+    public function deactivateLicenseAction(): Action
+    {
+        return Action::make('deactivateLicense')
+            ->label('Deactivate')
+            ->icon('heroicon-o-x-circle')
+            ->color('danger')
+            ->requiresConfirmation()
+            ->modalHeading(fn (array $arguments) => "Deactivate License — {$arguments['name']}")
+            ->modalDescription('Are you sure you want to deactivate this license? The plugin may lose access to updates and premium features.')
+            ->modalSubmitActionLabel('Yes, Deactivate')
+            ->action(function (array $arguments) {
+                $result = app(PluginLicenseService::class)->deactivate($arguments['pluginSlug']);
+
+                if ($result['success']) {
+                    Notification::make()
+                        ->title('License Deactivated')
+                        ->body('The license has been deactivated from this site.')
+                        ->success()
+                        ->send();
+                } else {
+                    Notification::make()
+                        ->title('Deactivation Notice')
+                        ->body($result['message'])
+                        ->warning()
+                        ->send();
+                }
+
+                $this->refreshPluginState();
+            });
+    }
+
+    /**
      * Apply update action with confirmation modal
      */
     public function applyUpdateAction(): Action
@@ -585,6 +854,29 @@ class PluginManager extends Page implements HasForms
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('refreshAllLicenses')
+                ->label('Refresh Licenses')
+                ->icon('heroicon-o-key')
+                ->color('gray')
+                ->action(function () {
+                    $licenseService = app(PluginLicenseService::class);
+                    $licenseService->clearCache();
+
+                    foreach ($this->licenseStatuses as $pluginSlug => $status) {
+                        if ($status['has_license']) {
+                            $licenseService->isValid($pluginSlug);
+                        }
+                    }
+
+                    $this->refreshLicenseState();
+
+                    Notification::make()
+                        ->title('All Statuses Refreshed')
+                        ->success()
+                        ->send();
+                })
+                ->visible(fn () => collect($this->licenseStatuses)->contains('has_license', true)),
+
             Action::make('checkUpdates')
                 ->label('Check for Updates')
                 ->icon('heroicon-o-arrow-path')

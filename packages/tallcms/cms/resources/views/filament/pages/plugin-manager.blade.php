@@ -1,4 +1,8 @@
 <x-filament-panels::page>
+    @if($this->autoActivatePlugin)
+        <div wire:init="mountAutoActivate"></div>
+    @endif
+
     {{-- Updates Available Summary --}}
     @php $pluginsWithUpdates = $this->plugins->filter(fn($p) => $p['hasUpdate']); @endphp
     @if($pluginsWithUpdates->isNotEmpty())
@@ -165,6 +169,11 @@
                                     Update: v{{ $plugin['updateInfo']['latest_version'] }}
                                 </x-filament::badge>
                             @endif
+                            @if($plugin['licenseStatus'])
+                                <x-filament::badge :color="$plugin['licenseStatus']['status_color']" size="sm">
+                                    {{ $plugin['licenseStatus']['status_label'] }}
+                                </x-filament::badge>
+                            @endif
                             <span class="text-xs text-gray-500 dark:text-gray-400">
                                 {{ $plugin['fullSlug'] }}
                             </span>
@@ -207,6 +216,14 @@
                             @endforeach
                         </div>
 
+                        {{-- License Details --}}
+                        @if($plugin['licenseStatus']['has_license'] ?? false)
+                            <div class="mt-2 flex flex-wrap gap-4 text-xs text-gray-500">
+                                <span>Key: {{ $plugin['licenseStatus']['license_key'] }}</span>
+                                <span>Expires: {{ $plugin['licenseStatus']['expires_at'] ?? 'Never' }}</span>
+                            </div>
+                        @endif
+
                         {{-- Warnings --}}
                         @if(!$plugin['meetsRequirements'])
                             <div class="mt-2 flex items-center gap-1.5 text-danger-600 dark:text-danger-400">
@@ -245,16 +262,79 @@
                         @endif
 
                         @if($plugin['requiresLicense'])
-                            <x-filament::button
-                                tag="a"
-                                href="{{ tallcms_panel_route('pages.plugin-licenses') }}?plugin={{ urlencode($plugin['licenseSlug']) }}"
-                                color="gray"
-                                size="sm"
-                                outlined
-                                icon="heroicon-o-key"
-                            >
-                                License
-                            </x-filament::button>
+                            @if($plugin['licenseStatus']['has_license'] ?? false)
+                                @if($plugin['licenseStatus']['is_valid'] ?? false)
+                                    <x-filament::button
+                                        wire:click="checkForUpdates('{{ $plugin['licenseSlug'] }}')"
+                                        color="gray"
+                                        size="sm"
+                                        outlined
+                                        icon="heroicon-o-sparkles"
+                                    >
+                                        Check Updates
+                                    </x-filament::button>
+                                    <x-filament::button
+                                        wire:click="refreshLicenseStatus('{{ $plugin['licenseSlug'] }}')"
+                                        color="gray"
+                                        size="sm"
+                                        outlined
+                                        icon="heroicon-o-arrow-path"
+                                    >
+                                        Refresh License
+                                    </x-filament::button>
+                                    <x-filament::button
+                                        wire:click="mountAction('deactivateLicense', { pluginSlug: '{{ $plugin['licenseSlug'] }}', name: '{{ addslashes($plugin['name']) }}' })"
+                                        color="danger"
+                                        size="sm"
+                                        outlined
+                                        icon="heroicon-o-x-circle"
+                                    >
+                                        Deactivate
+                                    </x-filament::button>
+                                @else
+                                    {{-- Has license but invalid/expired --}}
+                                    <x-filament::button
+                                        wire:click="mountAction('activateLicense', { pluginSlug: '{{ $plugin['licenseSlug'] }}', name: '{{ addslashes($plugin['name']) }}' })"
+                                        color="primary"
+                                        size="sm"
+                                        icon="heroicon-o-key"
+                                    >
+                                        Activate
+                                    </x-filament::button>
+                                    <x-filament::button
+                                        wire:click="refreshLicenseStatus('{{ $plugin['licenseSlug'] }}')"
+                                        color="gray"
+                                        size="sm"
+                                        outlined
+                                        icon="heroicon-o-arrow-path"
+                                    >
+                                        Refresh
+                                    </x-filament::button>
+                                @endif
+                            @else
+                                {{-- No license at all --}}
+                                <x-filament::button
+                                    wire:click="mountAction('activateLicense', { pluginSlug: '{{ $plugin['licenseSlug'] }}', name: '{{ addslashes($plugin['name']) }}' })"
+                                    color="primary"
+                                    size="sm"
+                                    icon="heroicon-o-key"
+                                >
+                                    Activate
+                                </x-filament::button>
+                                @if($plugin['licenseStatus']['purchase_url'] ?? null)
+                                    <x-filament::button
+                                        tag="a"
+                                        href="{{ $plugin['licenseStatus']['purchase_url'] }}"
+                                        target="_blank"
+                                        color="gray"
+                                        size="sm"
+                                        outlined
+                                        icon="heroicon-o-shopping-cart"
+                                    >
+                                        Purchase
+                                    </x-filament::button>
+                                @endif
+                            @endif
                         @endif
 
                         <x-filament::button
@@ -365,16 +445,44 @@
                         </x-filament::button>
                     @endif
                     @if($pluginDetails['requiresLicense'] ?? false)
-                        <x-filament::button
-                            tag="a"
-                            href="{{ tallcms_panel_route('pages.plugin-licenses') }}?plugin={{ urlencode($pluginDetails['licenseSlug']) }}"
-                            color="gray"
-                            size="sm"
-                            outlined
-                            icon="heroicon-o-key"
-                        >
-                            Manage License
-                        </x-filament::button>
+                        @if(($pluginDetails['licenseStatus']['has_license'] ?? false) && ($pluginDetails['licenseStatus']['is_valid'] ?? false))
+                            <x-filament::button
+                                wire:click="checkForUpdates('{{ $pluginDetails['licenseSlug'] }}')"
+                                color="gray"
+                                size="sm"
+                                outlined
+                                icon="heroicon-o-sparkles"
+                            >
+                                Check Updates
+                            </x-filament::button>
+                            <x-filament::button
+                                wire:click="refreshLicenseStatus('{{ $pluginDetails['licenseSlug'] }}')"
+                                color="gray"
+                                size="sm"
+                                outlined
+                                icon="heroicon-o-arrow-path"
+                            >
+                                Refresh License
+                            </x-filament::button>
+                            <x-filament::button
+                                wire:click="mountAction('deactivateLicense', { pluginSlug: '{{ $pluginDetails['licenseSlug'] }}', name: '{{ addslashes($pluginDetails['name']) }}' })"
+                                color="danger"
+                                size="sm"
+                                outlined
+                                icon="heroicon-o-x-circle"
+                            >
+                                Deactivate
+                            </x-filament::button>
+                        @else
+                            <x-filament::button
+                                wire:click="mountAction('activateLicense', { pluginSlug: '{{ $pluginDetails['licenseSlug'] }}', name: '{{ addslashes($pluginDetails['name']) }}' })"
+                                color="primary"
+                                size="sm"
+                                icon="heroicon-o-key"
+                            >
+                                Activate License
+                            </x-filament::button>
+                        @endif
                     @endif
                     <x-filament::button
                         wire:click="mountAction('uninstall', { vendor: '{{ $pluginDetails['vendor'] }}', slug: '{{ $pluginDetails['slug'] }}', name: '{{ addslashes($pluginDetails['name']) }}' })"
@@ -397,6 +505,50 @@
                                 <li>{{ $requirement }}</li>
                             @endforeach
                         </ul>
+                    </x-filament::section>
+                @endif
+
+                {{-- License Information --}}
+                @if($pluginDetails['licenseStatus']['has_license'] ?? false)
+                    <x-filament::section compact>
+                        <x-slot name="heading">
+                            <div class="flex items-center gap-2">
+                                License
+                                <x-filament::badge :color="$pluginDetails['licenseStatus']['status_color']" size="sm">
+                                    {{ $pluginDetails['licenseStatus']['status_label'] }}
+                                </x-filament::badge>
+                            </div>
+                        </x-slot>
+                        <dl class="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                            <div>
+                                <dt class="text-gray-500 dark:text-gray-400">License Key</dt>
+                                <dd class="font-mono">{{ $pluginDetails['licenseStatus']['license_key'] }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-gray-500 dark:text-gray-400">Domain</dt>
+                                <dd>{{ $pluginDetails['licenseStatus']['domain'] ?? 'N/A' }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-gray-500 dark:text-gray-400">Activated</dt>
+                                <dd>{{ $pluginDetails['licenseStatus']['activated_at'] ?? 'N/A' }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-gray-500 dark:text-gray-400">Expires</dt>
+                                <dd>{{ $pluginDetails['licenseStatus']['expires_at'] ?? 'Never' }}</dd>
+                            </div>
+                        </dl>
+                        <p class="mt-2 text-xs text-gray-400">
+                            Last validated: {{ $pluginDetails['licenseStatus']['last_validated'] ?? 'Never' }}
+                        </p>
+                    </x-filament::section>
+                @elseif($pluginDetails['requiresLicense'] ?? false)
+                    <x-filament::section compact class="!bg-warning-50 dark:!bg-warning-950 !border-warning-200 dark:!border-warning-800">
+                        <x-slot name="heading">
+                            <span class="text-warning-700 dark:text-warning-300">License Required</span>
+                        </x-slot>
+                        <p class="text-sm text-warning-600 dark:text-warning-400">
+                            This plugin requires a license for updates and premium features.
+                        </p>
                     </x-filament::section>
                 @endif
 
