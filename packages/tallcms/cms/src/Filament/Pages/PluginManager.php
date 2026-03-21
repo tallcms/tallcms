@@ -782,11 +782,31 @@ class PluginManager extends Page implements HasForms
             ->color('danger')
             ->requiresConfirmation()
             ->modalHeading('Uninstall Plugin')
-            ->modalDescription(fn (array $arguments) => "Are you sure you want to uninstall '{$arguments['name']}'? This will rollback all migrations and remove the plugin files. This action cannot be undone.")
+            ->modalDescription(function (array $arguments) {
+                $message = "Are you sure you want to uninstall '{$arguments['name']}'? This will rollback all migrations and remove the plugin files. This action cannot be undone.";
+
+                $plugin = $this->getPluginManager()->find($arguments['vendor'], $arguments['slug']);
+                if ($plugin && $plugin->requiresLicense()) {
+                    $status = $this->licenseStatuses[$plugin->getLicenseSlug()] ?? null;
+                    if ($status && ($status['has_license'] ?? false) && ($status['is_valid'] ?? false)) {
+                        $message .= "\n\n⚠️ This plugin has an active license. Uninstalling will NOT deactivate the license — it will remain allocated to this domain. Consider deactivating the license first to free the activation slot.";
+                    }
+                }
+
+                return $message;
+            })
             ->modalSubmitActionLabel('Yes, Uninstall')
             ->action(function (array $arguments) {
                 $vendor = $arguments['vendor'];
                 $slug = $arguments['slug'];
+
+                // Check if plugin has an active license before uninstalling
+                $plugin = $this->getPluginManager()->find($vendor, $slug);
+                $hadActiveLicense = false;
+                if ($plugin && $plugin->requiresLicense()) {
+                    $status = $this->licenseStatuses[$plugin->getLicenseSlug()] ?? null;
+                    $hadActiveLicense = $status && ($status['has_license'] ?? false) && ($status['is_valid'] ?? false);
+                }
 
                 $result = $this->getPluginManager()->uninstall($vendor, $slug);
 
@@ -796,6 +816,15 @@ class PluginManager extends Page implements HasForms
                         ->body("'{$arguments['name']}' has been removed.")
                         ->success()
                         ->send();
+
+                    if ($hadActiveLicense) {
+                        Notification::make()
+                            ->title('License still active')
+                            ->body("The license for '{$arguments['name']}' is still allocated to this domain. You can deactivate it from your license provider to free the activation slot.")
+                            ->warning()
+                            ->persistent()
+                            ->send();
+                    }
 
                     $this->closePluginDetails();
                     unset($this->plugins);
