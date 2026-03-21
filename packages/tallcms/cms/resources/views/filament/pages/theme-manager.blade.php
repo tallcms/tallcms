@@ -95,7 +95,7 @@
 
                 {{-- Default Preset Selector --}}
                 @if($active['hasThemeController'] && !empty($active['presets']))
-                    <div class="hidden sm:flex items-center gap-2 shrink-0">
+                    <div class="flex items-center gap-2 shrink-0">
                         <span class="text-xs text-gray-500 dark:text-gray-400">Default:</span>
                         <x-filament::input.wrapper class="!w-auto">
                             <x-filament::input.select
