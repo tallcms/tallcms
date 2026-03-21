@@ -636,12 +636,18 @@ class PluginManager extends Page implements HasForms
             return;
         }
 
+        // Surgically update the cached update list for this plugin
+        $checkInterval = config('tallcms.plugins.license.update_check_interval', 86400);
+        $updates = \Illuminate\Support\Facades\Cache::get('plugin_available_updates', []);
+
         if ($result['update_available'] ?? false) {
-            // Refresh update cache so badges appear
-            $licenseService->clearUpdateCache();
-            $this->availableUpdates = null;
-            unset($this->plugins);
-            unset($this->filteredPlugins);
+            $updates[$pluginSlug] = [
+                'plugin_name' => $result['plugin_name'] ?? $pluginSlug,
+                'current_version' => $result['current_version'] ?? '0.0.0',
+                'latest_version' => $result['latest_version'],
+                'download_url' => $result['download_url'] ?? null,
+                'changelog_url' => $result['changelog_url'] ?? null,
+            ];
 
             Notification::make()
                 ->title('Update Available!')
@@ -649,12 +655,22 @@ class PluginManager extends Page implements HasForms
                 ->success()
                 ->send();
         } else {
+            // Remove stale entry if plugin is now up to date
+            unset($updates[$pluginSlug]);
+
             Notification::make()
                 ->title('Up to Date')
                 ->body("You have the latest version ({$result['current_version']}).")
                 ->success()
                 ->send();
         }
+
+        \Illuminate\Support\Facades\Cache::put('plugin_available_updates', $updates, $checkInterval);
+
+        // Reset in-memory state so computed properties re-read the updated cache
+        $this->availableUpdates = null;
+        unset($this->plugins);
+        unset($this->filteredPlugins);
     }
 
     /**
