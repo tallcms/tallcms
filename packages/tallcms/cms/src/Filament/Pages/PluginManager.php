@@ -86,13 +86,18 @@ class PluginManager extends Page implements HasForms
         $this->refreshLicenseStatuses();
 
         // Handle ?plugin= query param for auto-opening activation modal
+        // Only auto-open if the plugin doesn't already have a valid license
         $requestedPlugin = request()->query('plugin');
         if ($requestedPlugin) {
             $plugin = $this->getPluginManager()->getInstalledPlugins()
                 ->first(fn (Plugin $p) => $p->getLicenseSlug() === $requestedPlugin);
             if ($plugin && $plugin->requiresLicense()) {
-                $this->autoActivatePlugin = $requestedPlugin;
-                $this->autoActivateName = $plugin->name;
+                $status = $this->licenseStatuses[$requestedPlugin] ?? null;
+                $alreadyValid = $status && ($status['has_license'] ?? false) && ($status['is_valid'] ?? false);
+                if (! $alreadyValid) {
+                    $this->autoActivatePlugin = $requestedPlugin;
+                    $this->autoActivateName = $plugin->name;
+                }
             }
         }
     }
@@ -169,7 +174,25 @@ class PluginManager extends Page implements HasForms
     }
 
     /**
-     * Refresh all plugin state after license changes
+     * Refresh license-related UI state without touching update cache
+     */
+    protected function refreshLicenseState(): void
+    {
+        $this->refreshLicenseStatuses();
+
+        // Clear computed plugin lists so licenseStatus data is refreshed
+        unset($this->plugins);
+        unset($this->filteredPlugins);
+
+        // Refresh open details modal if showing a licensable plugin
+        if ($this->pluginDetails && ($this->pluginDetails['requiresLicense'] ?? false)) {
+            $this->showPluginDetails($this->pluginDetails['vendor'], $this->pluginDetails['slug']);
+        }
+    }
+
+    /**
+     * Refresh all plugin state after license changes that affect update eligibility
+     * (activate/deactivate — not simple status refreshes)
      */
     protected function refreshPluginState(): void
     {
@@ -572,13 +595,66 @@ class PluginManager extends Page implements HasForms
         $licenseService->clearCache($pluginSlug);
         $licenseService->isValid($pluginSlug);
 
-        $this->refreshPluginState();
+        $this->refreshLicenseState();
 
         Notification::make()
             ->title('Status Refreshed')
             ->body('License status has been refreshed from the server.')
             ->success()
             ->send();
+    }
+
+    /**
+     * Check for updates for a single plugin
+     */
+    public function checkForUpdates(string $pluginSlug): void
+    {
+        $licenseService = app(PluginLicenseService::class);
+        $result = $licenseService->checkForUpdates($pluginSlug);
+
+        if (! $result['success']) {
+            if ($result['purchase_url'] ?? null) {
+                Notification::make()
+                    ->title('License Required')
+                    ->body($result['message'])
+                    ->warning()
+                    ->actions([
+                        \Filament\Actions\Action::make('purchase')
+                            ->label('Purchase License')
+                            ->url($result['purchase_url'])
+                            ->openUrlInNewTab(),
+                    ])
+                    ->send();
+            } else {
+                Notification::make()
+                    ->title('Update Check Failed')
+                    ->body($result['message'])
+                    ->danger()
+                    ->send();
+            }
+
+            return;
+        }
+
+        if ($result['update_available'] ?? false) {
+            // Refresh update cache so badges appear
+            $licenseService->clearUpdateCache();
+            $this->availableUpdates = null;
+            unset($this->plugins);
+            unset($this->filteredPlugins);
+
+            Notification::make()
+                ->title('Update Available!')
+                ->body("Version {$result['latest_version']} is available. You have {$result['current_version']}.")
+                ->success()
+                ->send();
+        } else {
+            Notification::make()
+                ->title('Up to Date')
+                ->body("You have the latest version ({$result['current_version']}).")
+                ->success()
+                ->send();
+        }
     }
 
     /**
@@ -776,7 +852,7 @@ class PluginManager extends Page implements HasForms
                         }
                     }
 
-                    $this->refreshPluginState();
+                    $this->refreshLicenseState();
 
                     Notification::make()
                         ->title('All Statuses Refreshed')

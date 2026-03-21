@@ -265,6 +265,15 @@
                             @if($plugin['licenseStatus']['has_license'] ?? false)
                                 @if($plugin['licenseStatus']['is_valid'] ?? false)
                                     <x-filament::button
+                                        wire:click="checkForUpdates('{{ $plugin['licenseSlug'] }}')"
+                                        color="gray"
+                                        size="sm"
+                                        outlined
+                                        icon="heroicon-o-sparkles"
+                                    >
+                                        Check Updates
+                                    </x-filament::button>
+                                    <x-filament::button
                                         wire:click="refreshLicenseStatus('{{ $plugin['licenseSlug'] }}')"
                                         color="gray"
                                         size="sm"
@@ -437,6 +446,15 @@
                     @endif
                     @if($pluginDetails['requiresLicense'] ?? false)
                         @if(($pluginDetails['licenseStatus']['has_license'] ?? false) && ($pluginDetails['licenseStatus']['is_valid'] ?? false))
+                            <x-filament::button
+                                wire:click="checkForUpdates('{{ $pluginDetails['licenseSlug'] }}')"
+                                color="gray"
+                                size="sm"
+                                outlined
+                                icon="heroicon-o-sparkles"
+                            >
+                                Check Updates
+                            </x-filament::button>
                             <x-filament::button
                                 wire:click="refreshLicenseStatus('{{ $pluginDetails['licenseSlug'] }}')"
                                 color="gray"
