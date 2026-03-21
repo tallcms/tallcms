@@ -281,7 +281,7 @@
                         <h5 class="font-semibold text-gray-900 mb-4">Contact</h5>
                         <div class="space-y-3 text-sm text-gray-600">
                             <p>{{ \TallCms\Cms\Models\SiteSetting::get('contact_email', config('tallcms.contact_email', 'hello@' . parse_url(config('app.url'), PHP_URL_HOST))) }}</p>
-                            <p>Built with TallCMS</p>
+                            <x-tallcms::powered-by />
                         </div>
                     </div>
                 </div>

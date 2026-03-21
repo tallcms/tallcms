@@ -257,6 +257,7 @@
 
                 <aside>
                     <p>&copy; {{ date('Y') }} {{ \TallCms\Cms\Models\SiteSetting::get('site_name', config('app.name')) }}. All rights reserved.</p>
+                    <x-tallcms::powered-by />
                 </aside>
             </footer>
     @if(supports_theme_controller())

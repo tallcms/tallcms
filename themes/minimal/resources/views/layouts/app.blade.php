@@ -104,6 +104,7 @@
         </nav>
         <aside>
             <p>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+            <x-tallcms::powered-by />
         </aside>
     </footer>
 

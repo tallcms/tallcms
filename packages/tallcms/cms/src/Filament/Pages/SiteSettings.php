@@ -70,6 +70,7 @@ class SiteSettings extends Page implements HasForms
             // Branding settings
             'logo' => SiteSetting::get('logo'),
             'favicon' => SiteSetting::get('favicon'),
+            'show_powered_by' => SiteSetting::get('show_powered_by', true),
 
             // System settings
             'maintenance_mode' => SiteSetting::get('maintenance_mode', false),
@@ -219,6 +220,12 @@ class SiteSettings extends Page implements HasForms
                         ->acceptedFileTypes(['image/x-icon', 'image/png'])
                         ->helperText('Upload favicon (.ico or .png, 16x16 or 32x32 pixels)')
                         ->nullable(),
+
+                    Toggle::make('show_powered_by')
+                        ->label('Show "Powered by TallCMS" Badge')
+                        ->helperText('Displays a small badge in the site footer.')
+                        ->default(true)
+                        ->columnSpanFull(),
                 ])
                 ->columns(2),
 
@@ -296,7 +303,7 @@ class SiteSettings extends Page implements HasForms
             if ($value !== null) {
                 $type = match ($key) {
                     'logo', 'favicon' => 'file',
-                    'maintenance_mode', 'i18n_enabled', 'hide_default_locale' => 'boolean',
+                    'maintenance_mode', 'i18n_enabled', 'hide_default_locale', 'show_powered_by' => 'boolean',
                     default => 'text',
                 };
 
@@ -305,7 +312,7 @@ class SiteSettings extends Page implements HasForms
                     'contact_email', 'contact_phone', 'company_name', 'company_address' => 'contact',
                     'social_facebook', 'social_twitter', 'social_linkedin', 'social_instagram',
                     'social_youtube', 'social_tiktok', 'newsletter_signup_url' => 'social',
-                    'logo', 'favicon' => 'branding',
+                    'logo', 'favicon', 'show_powered_by' => 'branding',
                     'maintenance_mode', 'maintenance_message' => 'maintenance',
                     'i18n_enabled', 'default_locale', 'hide_default_locale' => 'i18n',
                     default => 'general',
