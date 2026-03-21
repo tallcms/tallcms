@@ -8,6 +8,7 @@
         "preset": "autumn",
         "prefersDark": "black"
     },
+    "tags": ["blog", "editorial"],
     "supports": {
         "dark_mode": true,
         "theme_controller": false,

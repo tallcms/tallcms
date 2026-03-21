@@ -33,12 +33,10 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            // preview.css loads daisyUI for block previews.
             // The renderHook below syncs Filament's dark mode with DaisyUI's data-theme attribute.
-            ->viteTheme([
-                'resources/css/filament/admin/theme.css',
-                'resources/css/filament/admin/preview.css',
-            ])
+            // Note: preview.css (daisyUI for block previews) is loaded per-page via CmsRichEditor,
+            // NOT globally here — daisyUI's base styles conflict with Filament's dark mode.
+            ->viteTheme('resources/css/filament/admin/theme.css')
             // Sync Filament's dark mode class with DaisyUI's data-theme attribute
             ->renderHook(
                 PanelsRenderHook::HEAD_END,

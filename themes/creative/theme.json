@@ -7,6 +7,7 @@
     "daisyui": {
         "preset": "synthwave"
     },
+    "tags": ["portfolio", "agency"],
     "supports": {
         "dark_mode": false,
         "theme_controller": false,

@@ -9,6 +9,7 @@
         "prefersDark": "dark",
         "presets": "all"
     },
+    "tags": ["starter", "multi-purpose"],
     "supports": {
         "dark_mode": true,
         "theme_controller": true,

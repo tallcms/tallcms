@@ -22,6 +22,11 @@
     Last synced with: Filament Forms v4.x (January 2026)
     Modified section: Lines ~180-295 (customBlocks panel)
 --}}
+{{-- Load daisyUI preview styles only on pages with the CMS editor --}}
+@pushOnce('styles')
+    @vite('resources/css/filament/admin/preview.css')
+@endPushOnce
+
 @php
     $customBlocks = $getCustomBlocks();
     $extraAttributeBag = $getExtraAttributeBag();
@@ -245,7 +250,7 @@
                                     }"
                                 >
                                     {{-- Search Input --}}
-                                    <div class="fi-cms-block-search flex items-center gap-2 border-b border-gray-200 px-3 py-2 dark:border-white/10">
+                                    <div class="fi-cms-block-search flex items-center gap-2 border-b px-3 py-2">
                                         <div class="shrink-0 text-gray-400 dark:text-gray-500">
                                             {!! \Filament\Support\generate_icon_html('heroicon-m-magnifying-glass', 'h-4 w-4')->toHtml() !!}
                                         </div>
@@ -266,7 +271,7 @@
                                                     <button
                                                         type="button"
                                                         x-on:click="toggleCategory(category)"
-                                                        class="fi-cms-block-category-heading sticky top-0 z-10 flex w-full items-center justify-between gap-2 bg-gray-50 px-3 py-2 text-start text-xs font-semibold uppercase tracking-wider text-gray-600 transition-colors hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800"
+                                                        class="fi-cms-block-category-heading sticky top-0 z-10 flex w-full items-center justify-between gap-2 px-3 py-2 text-start text-xs font-semibold uppercase tracking-wider transition-colors"
                                                     >
                                                         <span x-text="categories[category]?.label ?? 'Other'"></span>
                                                         <span class="transition-transform duration-200" :class="{ 'rotate-180': isExpanded(category) }">

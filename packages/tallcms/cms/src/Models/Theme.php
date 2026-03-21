@@ -134,6 +134,17 @@ class Theme
         $this->extras['license_required'] = (bool) ($data['license_required'] ?? false);
         $this->extras['license_slug'] = $data['license_slug'] ?? null;
         $this->extras['purchase_url'] = $data['purchase_url'] ?? null;
+
+        // Store tags
+        $this->extras['tags'] = $data['tags'] ?? [];
+    }
+
+    /**
+     * Get theme tags
+     */
+    public function getTags(): array
+    {
+        return $this->extras['tags'] ?? [];
     }
 
     // =========================================================================

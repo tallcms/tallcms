@@ -8,6 +8,7 @@
         "preset": "lofi",
         "prefersDark": "nord"
     },
+    "tags": ["starter", "minimal"],
     "supports": {
         "dark_mode": true,
         "theme_controller": false,

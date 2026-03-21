@@ -65,6 +65,9 @@ class ThemeManager extends Page implements HasForms
 
     public bool $filterAnimations = false;
 
+    #[Url]
+    public string $sort = 'active';
+
     public array $licenseStatuses = [];
 
     public function mount(): void
@@ -120,9 +123,9 @@ class ThemeManager extends Page implements HasForms
                 'licenseStatus' => $theme->requiresLicense()
                     ? ($this->licenseStatuses[$theme->getLicenseSlug()] ?? null)
                     : null,
+                'tags' => $theme->getTags(),
                 'purchaseUrl' => $theme->getPurchaseUrl(),
             ])
-            ->sortByDesc('isActive')
             ->values();
     }
 
@@ -140,6 +143,7 @@ class ThemeManager extends Page implements HasForms
                 || str_contains(strtolower($t['description'] ?? ''), $search)
                 || str_contains(strtolower($t['author']), $search)
                 || str_contains(strtolower($t['daisyuiPreset'] ?? ''), $search)
+                || collect($t['tags'] ?? [])->contains(fn ($tag) => str_contains(strtolower($tag), $search))
             );
         }
 
@@ -156,7 +160,13 @@ class ThemeManager extends Page implements HasForms
             $themes = $themes->where('hasAnimations', true);
         }
 
-        return $themes;
+        $themes = $themes->sortBy(fn ($t) => match ($this->sort) {
+            'name' => [0, $t['name']],
+            'preset' => [$t['daisyuiPreset'], $t['isActive'] ? 0 : 1, $t['name']],
+            default => [$t['isActive'] ? 0 : 1, $t['name']],
+        });
+
+        return $themes->values();
     }
 
     /**
@@ -180,10 +190,20 @@ class ThemeManager extends Page implements HasForms
     /**
      * Clear cached theme computed properties
      */
+    /**
+     * Get the currently active theme data
+     */
+    #[Computed]
+    public function activeTheme(): ?array
+    {
+        return $this->themes->firstWhere('isActive', true);
+    }
+
     protected function clearThemeCache(): void
     {
         unset($this->themes);
         unset($this->filteredThemes);
+        unset($this->activeTheme);
     }
 
     /**
@@ -403,6 +423,11 @@ class ThemeManager extends Page implements HasForms
             'licenseStatus' => $theme->requiresLicense()
                 ? ($this->licenseStatuses[$theme->getLicenseSlug()] ?? null)
                 : null,
+            'tags' => $theme->getTags(),
+            'hasDarkMode' => $theme->supports('dark_mode'),
+            'hasThemeController' => $theme->supportsThemeController(),
+            'hasResponsive' => $theme->supports('responsive'),
+            'hasAnimations' => $theme->supports('animations'),
             'purchaseUrl' => $theme->getPurchaseUrl(),
         ];
 

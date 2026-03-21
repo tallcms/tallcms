@@ -8,6 +8,7 @@
         "preset": "corporate",
         "prefersDark": "business"
     },
+    "tags": ["business", "professional"],
     "supports": {
         "dark_mode": true,
         "theme_controller": false,

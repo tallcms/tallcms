@@ -285,6 +285,8 @@ class MakeTheme extends Command
             'author' => $themeInfo['author'],
         ];
 
+        $config['tags'] = [];
+
         // Custom daisyUI theme
         if ($themeInfo['mode'] === 'custom') {
             $themeName = $themeInfo['customColors']['name'] ?? $themeInfo['slug'];
@@ -295,6 +297,8 @@ class MakeTheme extends Command
             $config['supports'] = [
                 'dark_mode' => false,
                 'theme_controller' => false,
+                'responsive' => true,
+                'animations' => true,
             ];
         } else {
             // DaisyUI theme
@@ -315,6 +319,8 @@ class MakeTheme extends Command
             $config['supports'] = [
                 'dark_mode' => $themeInfo['prefersDark'] !== null,
                 'theme_controller' => $themeInfo['allPresets'],
+                'responsive' => true,
+                'animations' => true,
             ];
         }
 

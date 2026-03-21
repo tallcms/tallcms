@@ -1,32 +1,129 @@
 <x-filament-panels::page>
-    {{-- Search & Filter Bar --}}
+    {{-- Search & Sort Bar --}}
     <div class="mb-4 space-y-3">
-        <x-filament::input.wrapper>
-            <x-filament::input
-                wire:model.live.debounce.300ms="search"
-                type="search"
-                placeholder="Search themes by name, description, author, or preset..."
-            />
-        </x-filament::input.wrapper>
+        <div class="flex flex-col sm:flex-row gap-3">
+            <div class="flex-1">
+                <x-filament::input.wrapper>
+                    <x-filament::input
+                        wire:model.live.debounce.300ms="search"
+                        type="search"
+                        placeholder="Search themes by name, description, author, preset, or tag..."
+                    />
+                </x-filament::input.wrapper>
+            </div>
+            <div class="sm:shrink-0">
+                <x-filament::input.wrapper>
+                    <x-filament::input.select wire:model.live="sort">
+                        <option value="active">Active First</option>
+                        <option value="name">Name A&ndash;Z</option>
+                        <option value="preset">Group by Preset</option>
+                    </x-filament::input.select>
+                </x-filament::input.wrapper>
+            </div>
+        </div>
 
-        <div class="flex flex-wrap gap-3">
-            @foreach([
-                'filterDarkMode' => 'Dark Mode',
-                'filterThemeController' => 'Theme Controller',
-                'filterResponsive' => 'Responsive',
-                'filterAnimations' => 'Animations',
-            ] as $prop => $label)
-                <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
-                    <input
-                        type="checkbox"
-                        wire:model.live="{{ $prop }}"
-                        class="rounded border-gray-300 text-primary-600 shadow-sm focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700"
-                    >
-                    <span class="text-sm text-gray-700 dark:text-gray-300">{{ $label }}</span>
-                </label>
+        {{-- Filter Chips --}}
+        <div class="flex flex-wrap gap-2">
+            @php
+                $chips = [
+                    ['prop' => 'filterDarkMode', 'label' => 'Dark Mode', 'icon' => 'heroicon-o-moon', 'active' => $filterDarkMode],
+                    ['prop' => 'filterThemeController', 'label' => 'Theme Controller', 'icon' => 'heroicon-o-swatch', 'active' => $filterThemeController],
+                    ['prop' => 'filterResponsive', 'label' => 'Responsive', 'icon' => 'heroicon-o-device-phone-mobile', 'active' => $filterResponsive],
+                    ['prop' => 'filterAnimations', 'label' => 'Animations', 'icon' => 'heroicon-o-sparkles', 'active' => $filterAnimations],
+                ];
+            @endphp
+            @foreach($chips as $chip)
+                <button
+                    wire:click="$toggle('{{ $chip['prop'] }}')"
+                    type="button"
+                    @class([
+                        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border shadow-sm transition-colors cursor-pointer select-none',
+                        'bg-primary-50 text-primary-700 border-primary-300 hover:bg-primary-100 dark:bg-primary-500/15 dark:text-primary-300 dark:border-primary-400/40 dark:hover:bg-primary-500/25' => $chip['active'],
+                        'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-200 dark:border-white/10 dark:hover:bg-gray-800' => !$chip['active'],
+                    ])
+                >
+                    @if($chip['active'])
+                        <x-heroicon-s-x-mark class="w-3.5 h-3.5" />
+                    @else
+                        <x-dynamic-component :component="$chip['icon']" class="w-3.5 h-3.5" />
+                    @endif
+                    {{ $chip['label'] }}
+                </button>
             @endforeach
         </div>
     </div>
+
+    {{-- Active Theme Summary Panel --}}
+    @if($this->activeTheme)
+        @php $active = $this->activeTheme; @endphp
+        <x-filament::section compact class="mb-6">
+            <div class="flex items-center gap-4">
+                {{-- Color strip mini --}}
+                @if(!empty($active['daisyuiColors']))
+                    <div class="flex h-6 w-24 rounded overflow-hidden shrink-0">
+                        @foreach($active['daisyuiColors'] as $color)
+                            <div class="grow shrink basis-0" style="background: {{ $color }};"></div>
+                        @endforeach
+                    </div>
+                @endif
+
+                {{-- Theme info --}}
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                    <span class="font-semibold text-gray-950 dark:text-white truncate">{{ $active['name'] }}</span>
+                    <x-filament::badge color="success" size="sm">Active</x-filament::badge>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">v{{ $active['version'] }}</span>
+                    @if($active['daisyuiPreset'])
+                        <x-filament::badge color="info" size="sm">{{ ucfirst($active['daisyuiPreset']) }}</x-filament::badge>
+                    @endif
+                </div>
+
+                {{-- Feature indicators --}}
+                <div class="hidden sm:flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 shrink-0">
+                    @if($active['hasDarkMode'])
+                        <span class="inline-flex items-center gap-1">
+                            <x-heroicon-o-moon class="w-3.5 h-3.5" />
+                            Dark Mode
+                        </span>
+                    @endif
+                    @if($active['hasThemeController'])
+                        <span class="inline-flex items-center gap-1">
+                            <x-heroicon-o-swatch class="w-3.5 h-3.5" />
+                            Theme Controller
+                        </span>
+                    @endif
+                </div>
+
+                {{-- Quick links --}}
+                <div class="flex items-center gap-2 shrink-0">
+                    <x-filament::button
+                        tag="a"
+                        href="{{ url('/') }}"
+                        target="_blank"
+                        color="gray"
+                        size="xs"
+                        icon="heroicon-o-arrow-top-right-on-square"
+                    >
+                        Visit Site
+                    </x-filament::button>
+                    <x-filament::button
+                        wire:click="previewTheme('{{ $active['slug'] }}')"
+                        color="gray"
+                        size="xs"
+                        outlined
+                    >
+                        Preview
+                    </x-filament::button>
+                </div>
+
+                {{-- Rollback info --}}
+                @if($this->canRollback())
+                    <span class="text-xs text-gray-400 dark:text-gray-500 shrink-0">
+                        Rollback: {{ $this->getRollbackSlug() }}
+                    </span>
+                @endif
+            </div>
+        </x-filament::section>
+    @endif
 
     {{-- Theme Gallery Grid --}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -178,23 +275,65 @@
                         @endif
                     </div>
 
+                    {{-- Tag Badges --}}
+                    @if(!empty($theme['tags']))
+                        <div class="flex flex-wrap gap-1">
+                            @foreach($theme['tags'] as $tag)
+                                <x-filament::badge color="primary" size="sm" class="!bg-primary-50 !text-primary-600 !ring-primary-200 dark:!bg-primary-500/10 dark:!text-primary-400 dark:!ring-primary-500/20">
+                                    {{ ucfirst($tag) }}
+                                </x-filament::badge>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    {{-- Readiness Status --}}
+                    <div class="text-xs">
+                        @if($theme['isActive'])
+                            <span class="inline-flex items-center gap-1 text-primary-600 dark:text-primary-400">
+                                <x-heroicon-s-check-circle class="w-3.5 h-3.5" />
+                                Active theme
+                            </span>
+                        @elseif($theme['requiresLicense'] && !($theme['licenseStatus']['is_valid'] ?? false))
+                            <span class="inline-flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
+                                <x-heroicon-s-key class="w-3.5 h-3.5" />
+                                License required
+                            </span>
+                        @elseif(!$theme['meetsRequirements'])
+                            <span class="inline-flex items-center gap-1 text-red-600 dark:text-red-400">
+                                <x-heroicon-s-exclamation-triangle class="w-3.5 h-3.5" />
+                                Missing requirements
+                            </span>
+                        @elseif(!$theme['isBuilt'] && $theme['isPrebuilt'])
+                            <span class="inline-flex items-center gap-1 text-orange-600 dark:text-orange-400">
+                                <x-heroicon-s-wrench class="w-3.5 h-3.5" />
+                                Needs build
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1 text-green-600 dark:text-green-400">
+                                <x-heroicon-s-check-circle class="w-3.5 h-3.5" />
+                                Ready to activate
+                            </span>
+                        @endif
+                    </div>
+
                     {{-- Actions --}}
                     <div class="flex flex-wrap items-center gap-1.5 mt-auto pt-1">
                         @unless($theme['isActive'])
                             <x-filament::button
-                                wire:click="activateTheme('{{ $theme['slug'] }}')"
-                                size="xs"
-                                :disabled="!$theme['meetsRequirements']"
-                            >
-                                Activate
-                            </x-filament::button>
-
-                            <x-filament::button
                                 wire:click="previewTheme('{{ $theme['slug'] }}')"
-                                color="gray"
                                 size="xs"
                             >
                                 Preview
+                            </x-filament::button>
+
+                            <x-filament::button
+                                wire:click="activateTheme('{{ $theme['slug'] }}')"
+                                color="gray"
+                                size="xs"
+                                outlined
+                                :disabled="!$theme['meetsRequirements']"
+                            >
+                                Activate
                             </x-filament::button>
                         @else
                             <span class="text-xs text-primary-600 dark:text-primary-400 font-medium">
@@ -289,14 +428,36 @@
             @else
                 <h3 class="text-base font-semibold text-gray-950 dark:text-white">No themes match your search</h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Try adjusting your search or filters.</p>
-                <x-filament::button
-                    wire:click="$set('search', '')"
-                    color="gray"
-                    size="sm"
-                    class="mt-3"
-                >
-                    Clear Search
-                </x-filament::button>
+                <div class="flex gap-2 mt-3">
+                    @if($search)
+                        <x-filament::button
+                            wire:click="$set('search', '')"
+                            color="gray"
+                            size="sm"
+                        >
+                            Clear Search
+                        </x-filament::button>
+                    @endif
+                    @if($filterDarkMode || $filterThemeController || $filterResponsive || $filterAnimations)
+                        <x-filament::button
+                            wire:click="$set('filterDarkMode', false); $set('filterThemeController', false); $set('filterResponsive', false); $set('filterAnimations', false)"
+                            color="gray"
+                            size="sm"
+                        >
+                            Clear Filters
+                        </x-filament::button>
+                    @endif
+                    @if($search || $filterDarkMode || $filterThemeController || $filterResponsive || $filterAnimations || $sort !== 'active')
+                        <x-filament::button
+                            wire:click="$set('search', ''); $set('filterDarkMode', false); $set('filterThemeController', false); $set('filterResponsive', false); $set('filterAnimations', false); $set('sort', 'active')"
+                            color="primary"
+                            size="sm"
+                            outlined
+                        >
+                            Reset All
+                        </x-filament::button>
+                    @endif
+                </div>
             @endif
         </div>
     @endif
@@ -344,7 +505,7 @@
                                 <button
                                     @click="mainImage = originalImage"
                                     class="shrink-0 w-16 h-10 rounded overflow-hidden ring-2 transition-all"
-                                    :class="mainImage === originalImage ? 'ring-primary-500' : 'ring-transparent hover:ring-gray-300'"
+                                    :class="mainImage === originalImage ? 'ring-primary-500' : 'ring-transparent hover:ring-gray-300 dark:hover:ring-gray-600'"
                                 >
                                     <img :src="originalImage" alt="Primary" class="w-full h-full object-cover">
                                 </button>
@@ -352,7 +513,7 @@
                                     <button
                                         @click="mainImage = img"
                                         class="shrink-0 w-16 h-10 rounded overflow-hidden ring-2 transition-all"
-                                        :class="mainImage === img ? 'ring-primary-500' : 'ring-transparent hover:ring-gray-300'"
+                                        :class="mainImage === img ? 'ring-primary-500' : 'ring-transparent hover:ring-gray-300 dark:hover:ring-gray-600'"
                                     >
                                         <img :src="img" :alt="'Gallery ' + (idx + 1)" class="w-full h-full object-cover">
                                     </button>
@@ -361,6 +522,71 @@
                         </template>
                     </div>
                 @endif
+
+                {{-- At a Glance --}}
+                <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
+                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">At a Glance</h4>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="flex items-center gap-2">
+                            <x-heroicon-o-tag class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" />
+                            <div>
+                                <div class="text-[10px] text-gray-400 dark:text-gray-500 uppercase">Version</div>
+                                <div class="text-gray-900 dark:text-white font-medium">{{ $themeDetails['version'] }}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <x-heroicon-o-user class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" />
+                            <div>
+                                <div class="text-[10px] text-gray-400 dark:text-gray-500 uppercase">Author</div>
+                                <div class="text-gray-900 dark:text-white font-medium truncate">
+                                    @if($themeDetails['authorUrl'])
+                                        <a href="{{ $themeDetails['authorUrl'] }}" target="_blank" class="text-primary-600 dark:text-primary-400 hover:underline">{{ $themeDetails['author'] }}</a>
+                                    @else
+                                        {{ $themeDetails['author'] }}
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <x-heroicon-o-swatch class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" />
+                            <div>
+                                <div class="text-[10px] text-gray-400 dark:text-gray-500 uppercase">Preset</div>
+                                <div class="text-gray-900 dark:text-white font-medium">{{ ucfirst($themeDetails['daisyui']['preset'] ?? 'N/A') }}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <x-heroicon-o-moon class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" />
+                            <div>
+                                <div class="text-[10px] text-gray-400 dark:text-gray-500 uppercase">Dark Mode</div>
+                                <div class="text-gray-900 dark:text-white font-medium">{{ ($themeDetails['hasDarkMode'] ?? false) ? 'Yes' : 'No' }}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <x-heroicon-o-device-phone-mobile class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" />
+                            <div>
+                                <div class="text-[10px] text-gray-400 dark:text-gray-500 uppercase">Responsive</div>
+                                <div class="text-gray-900 dark:text-white font-medium">{{ ($themeDetails['hasResponsive'] ?? false) ? 'Yes' : 'No' }}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <x-heroicon-o-wrench class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" />
+                            <div>
+                                <div class="text-[10px] text-gray-400 dark:text-gray-500 uppercase">Built</div>
+                                <div class="text-gray-900 dark:text-white font-medium">{{ $themeDetails['isBuilt'] ? 'Yes' : 'No' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    {{-- Tags --}}
+                    @if(!empty($themeDetails['tags']))
+                        <div class="flex flex-wrap gap-1 mt-3 pt-3 border-t border-gray-200 dark:border-white/10">
+                            @foreach($themeDetails['tags'] as $tag)
+                                <x-filament::badge color="primary" size="sm" class="!bg-primary-50 !text-primary-600 !ring-primary-200 dark:!bg-primary-500/10 dark:!text-primary-400 dark:!ring-primary-500/20">
+                                    {{ ucfirst($tag) }}
+                                </x-filament::badge>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
 
                 {{-- Description --}}
                 <p class="text-gray-600 dark:text-gray-400">
@@ -371,18 +597,19 @@
                 <div class="flex flex-wrap gap-2">
                     @unless($themeDetails['isActive'])
                         <x-filament::button
-                            wire:click="activateTheme('{{ $themeDetails['slug'] }}')"
-                            :disabled="!$themeDetails['meetsRequirements']"
-                            size="sm"
-                        >
-                            Activate Theme
-                        </x-filament::button>
-                        <x-filament::button
                             wire:click="previewTheme('{{ $themeDetails['slug'] }}')"
-                            color="gray"
                             size="sm"
                         >
                             Preview
+                        </x-filament::button>
+                        <x-filament::button
+                            wire:click="activateTheme('{{ $themeDetails['slug'] }}')"
+                            color="gray"
+                            size="sm"
+                            outlined
+                            :disabled="!$themeDetails['meetsRequirements']"
+                        >
+                            Activate Theme
                         </x-filament::button>
                         <x-filament::button
                             wire:click="mountAction('delete', { slug: '{{ $themeDetails['slug'] }}', name: '{{ addslashes($themeDetails['name']) }}' })"
@@ -452,22 +679,22 @@
                         <dl class="grid grid-cols-2 gap-x-4 gap-y-1.5">
                             <div>
                                 <dt class="text-gray-500 dark:text-gray-400">License Key</dt>
-                                <dd class="font-mono">{{ $themeDetails['licenseStatus']['license_key'] }}</dd>
+                                <dd class="font-mono text-gray-900 dark:text-white">{{ $themeDetails['licenseStatus']['license_key'] }}</dd>
                             </div>
                             <div>
                                 <dt class="text-gray-500 dark:text-gray-400">Domain</dt>
-                                <dd>{{ $themeDetails['licenseStatus']['domain'] ?? 'N/A' }}</dd>
+                                <dd class="text-gray-900 dark:text-white">{{ $themeDetails['licenseStatus']['domain'] ?? 'N/A' }}</dd>
                             </div>
                             <div>
                                 <dt class="text-gray-500 dark:text-gray-400">Activated</dt>
-                                <dd>{{ $themeDetails['licenseStatus']['activated_at'] ?? 'N/A' }}</dd>
+                                <dd class="text-gray-900 dark:text-white">{{ $themeDetails['licenseStatus']['activated_at'] ?? 'N/A' }}</dd>
                             </div>
                             <div>
                                 <dt class="text-gray-500 dark:text-gray-400">Expires</dt>
-                                <dd>{{ $themeDetails['licenseStatus']['expires_at'] ?? 'Never' }}</dd>
+                                <dd class="text-gray-900 dark:text-white">{{ $themeDetails['licenseStatus']['expires_at'] ?? 'Never' }}</dd>
                             </div>
                         </dl>
-                        <p class="mt-2 text-xs text-gray-400">
+                        <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">
                             Last validated: {{ $themeDetails['licenseStatus']['last_validated'] ?? 'Never' }}
                         </p>
                     </x-filament::section>
@@ -573,7 +800,7 @@
                             <dt class="text-gray-500 dark:text-gray-400">Author</dt>
                             <dd class="text-gray-900 dark:text-white">
                                 @if($themeDetails['authorUrl'])
-                                    <a href="{{ $themeDetails['authorUrl'] }}" target="_blank" class="text-primary-600 hover:underline">
+                                    <a href="{{ $themeDetails['authorUrl'] }}" target="_blank" class="text-primary-600 dark:text-primary-400 hover:underline">
                                         {{ $themeDetails['author'] }}
                                     </a>
                                 @else
@@ -634,7 +861,7 @@
                             target="_blank"
                             class="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 whitespace-nowrap"
                         >
-                            Homepage →
+                            Homepage &rarr;
                         </a>
                     @endif
                 </div>

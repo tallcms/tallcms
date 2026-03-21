@@ -8,6 +8,7 @@
         "preset": "candy",
         "custom": true
     },
+    "tags": ["playful", "landing-page"],
     "supports": {
         "dark_mode": false,
         "theme_controller": false,

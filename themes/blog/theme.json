@@ -8,6 +8,7 @@
         "preset": "autumn",
         "prefersDark": "coffee"
     },
+    "tags": ["blog", "personal"],
     "supports": {
         "dark_mode": true,
         "theme_controller": false,

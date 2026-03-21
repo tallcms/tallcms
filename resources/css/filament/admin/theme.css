@@ -9,7 +9,11 @@
 
 /* Filament admin component sources */
 @source '../../../../app/Filament/**/*';
+@source '../../../../app/Livewire/**/*';
 @source '../../../../resources/views/filament/**/*';
+@source '../../../../resources/views/livewire/**/*';
+@source '../../../../packages/tallcms/cms/src/Filament/**/*';
+@source '../../../../packages/tallcms/cms/resources/views/filament/**/*';
 
 /**
  * RichEditor Sticky Blocks Panel
@@ -30,5 +34,31 @@
         max-height: 100vh;
         overflow-y: auto;
         align-self: flex-start;
+    }
+}
+
+/**
+ * CMS Block Panel - Dark Mode Safe Styles
+ *
+ * Uses Filament's --gray-* CSS variables instead of Tailwind utilities
+ * because preview.css loads daisyUI on editor pages, which overrides
+ * Tailwind's --color-gray-* variables and breaks dark mode.
+ */
+.fi-cms-block-category-heading {
+    background-color: var(--gray-50);
+    color: var(--gray-600);
+
+    &:hover {
+        background-color: var(--gray-100);
+    }
+}
+
+.fi-cms-block-search {
+    border-color: var(--gray-200);
+}
+
+:where(.dark, .dark *) {
+    & .fi-cms-block-search {
+        border-color: color-mix(in oklab, var(--color-white) 10%, transparent);
     }
 }
