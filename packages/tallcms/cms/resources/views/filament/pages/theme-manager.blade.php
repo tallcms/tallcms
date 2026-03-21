@@ -57,62 +57,66 @@
     @if($this->activeTheme)
         @php $active = $this->activeTheme; @endphp
         <x-filament::section compact class="mb-6">
-            <div class="flex items-center gap-4">
-                {{-- Color strip mini --}}
-                @if(!empty($active['daisyuiColors']))
-                    <div class="flex h-6 w-24 rounded overflow-hidden shrink-0">
-                        @foreach($active['daisyuiColors'] as $color)
-                            <div class="grow shrink basis-0" style="background: {{ $color }};"></div>
-                        @endforeach
-                    </div>
-                @endif
-
-                {{-- Theme info --}}
-                <div class="flex items-center gap-2 flex-1 min-w-0">
-                    <span class="font-semibold text-gray-950 dark:text-white truncate">{{ $active['name'] }}</span>
-                    <x-filament::badge color="success" size="sm">Active</x-filament::badge>
-                    <span class="text-xs text-gray-400 dark:text-gray-500">v{{ $active['version'] }}</span>
-                    @if($active['daisyuiPreset'])
-                        <x-filament::badge color="info" size="sm">{{ ucfirst($active['daisyuiPreset']) }}</x-filament::badge>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                {{-- Top row: color strip + theme info --}}
+                <div class="flex items-center gap-3 flex-1 min-w-0">
+                    {{-- Color strip mini --}}
+                    @if(!empty($active['daisyuiColors']))
+                        <div class="flex h-6 w-24 rounded overflow-hidden shrink-0">
+                            @foreach($active['daisyuiColors'] as $color)
+                                <div class="grow shrink basis-0" style="background: {{ $color }};"></div>
+                            @endforeach
+                        </div>
                     @endif
+
+                    {{-- Theme info --}}
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="font-semibold text-gray-950 dark:text-white truncate">{{ $active['name'] }}</span>
+                        <x-filament::badge color="success" size="sm">Active</x-filament::badge>
+                        <span class="text-xs text-gray-400 dark:text-gray-500">v{{ $active['version'] }}</span>
+                        @if($active['daisyuiPreset'])
+                            <x-filament::badge color="info" size="sm">{{ ucfirst($active['daisyuiPreset']) }}</x-filament::badge>
+                        @endif
+                    </div>
+
+                    {{-- Feature indicators --}}
+                    <div class="hidden lg:flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 shrink-0">
+                        @if($active['hasDarkMode'])
+                            <span class="inline-flex items-center gap-1">
+                                <x-heroicon-o-moon class="w-3.5 h-3.5" />
+                                Dark Mode
+                            </span>
+                        @endif
+                        @if($active['hasThemeController'])
+                            <span class="inline-flex items-center gap-1">
+                                <x-heroicon-o-swatch class="w-3.5 h-3.5" />
+                                Theme Controller
+                            </span>
+                        @endif
+                    </div>
                 </div>
 
-                {{-- Feature indicators --}}
-                <div class="hidden sm:flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 shrink-0">
-                    @if($active['hasDarkMode'])
-                        <span class="inline-flex items-center gap-1">
-                            <x-heroicon-o-moon class="w-3.5 h-3.5" />
-                            Dark Mode
-                        </span>
+                {{-- Bottom row on mobile: controls --}}
+                <div class="flex flex-wrap items-center gap-2">
+                    {{-- Default Preset Selector --}}
+                    @if($active['hasThemeController'] && !empty($active['presets']))
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Default:</span>
+                            <x-filament::input.wrapper class="!w-auto">
+                                <x-filament::input.select
+                                    wire:change="changeDefaultPreset($event.target.value)"
+                                >
+                                    @foreach($active['presets'] as $preset)
+                                        <option value="{{ $preset }}" @selected($preset === $active['defaultPreset'])>
+                                            {{ ucfirst($preset) }}
+                                        </option>
+                                    @endforeach
+                                </x-filament::input.select>
+                            </x-filament::input.wrapper>
+                        </div>
                     @endif
-                    @if($active['hasThemeController'])
-                        <span class="inline-flex items-center gap-1">
-                            <x-heroicon-o-swatch class="w-3.5 h-3.5" />
-                            Theme Controller
-                        </span>
-                    @endif
-                </div>
 
-                {{-- Default Preset Selector --}}
-                @if($active['hasThemeController'] && !empty($active['presets']))
-                    <div class="flex items-center gap-2 shrink-0">
-                        <span class="text-xs text-gray-500 dark:text-gray-400">Default:</span>
-                        <x-filament::input.wrapper class="!w-auto">
-                            <x-filament::input.select
-                                wire:change="changeDefaultPreset($event.target.value)"
-                            >
-                                @foreach($active['presets'] as $preset)
-                                    <option value="{{ $preset }}" @selected($preset === $active['defaultPreset'])>
-                                        {{ ucfirst($preset) }}
-                                    </option>
-                                @endforeach
-                            </x-filament::input.select>
-                        </x-filament::input.wrapper>
-                    </div>
-                @endif
-
-                {{-- Quick links --}}
-                <div class="flex items-center gap-2 shrink-0">
+                    {{-- Quick links --}}
                     <x-filament::button
                         tag="a"
                         href="{{ url('/') }}"
@@ -131,14 +135,14 @@
                     >
                         Preview
                     </x-filament::button>
-                </div>
 
-                {{-- Rollback info --}}
-                @if($this->canRollback())
-                    <span class="text-xs text-gray-400 dark:text-gray-500 shrink-0">
-                        Rollback: {{ $this->getRollbackSlug() }}
-                    </span>
-                @endif
+                    {{-- Rollback info --}}
+                    @if($this->canRollback())
+                        <span class="text-xs text-gray-400 dark:text-gray-500">
+                            Rollback: {{ $this->getRollbackSlug() }}
+                        </span>
+                    @endif
+                </div>
             </div>
         </x-filament::section>
     @endif
