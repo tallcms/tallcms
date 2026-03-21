@@ -52,10 +52,10 @@
 
                 <div class="mt-4">
                     <a
-                        href="{{ tallcms_panel_route('pages.plugin-licenses') }}"
+                        href="{{ tallcms_panel_route('pages.plugin-manager') }}"
                         class="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
                     >
-                        View Plugin Licenses &rarr;
+                        Manage Plugins &rarr;
                     </a>
                 </div>
             </div>
