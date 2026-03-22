@@ -3,26 +3,44 @@
 @php
     $maxDepth = min(max((int) ($settings['max_depth'] ?? 3), 2), 4);
 
-    // Check if the page has Posts blocks — if so, use posts-by-category mode
+    // Check if the page has any Posts block (filtered or unfiltered)
     $groupedPosts = [];
-    $hasPostsBlock = false;
-    if ($page) {
-        $categoryIds = $page->getPostsBlockCategoryIds();
-        if (!empty($categoryIds)) {
-            $hasPostsBlock = true;
-            $parentSlug = ($page->slug === '/') ? '' : $page->slug;
+    $postsBlockConfig = ($page) ? $page->getPostsBlockConfig() : [];
 
+    if (!empty($postsBlockConfig)) {
+        $parentSlug = ($page->slug === '/') ? '' : $page->slug;
+        $categoryIds = $postsBlockConfig['categories'] ?? [];
+
+        if (!empty($categoryIds)) {
+            // Filtered: group posts by their configured categories
             $categories = \TallCms\Cms\Models\CmsCategory::whereIn('id', $categoryIds)
                 ->get()
                 ->sortBy(fn ($c) => array_search($c->id, $categoryIds))
                 ->values();
 
+            // Also collect categories from additional Posts blocks
+            $allCategoryIds = $page->getPostsBlockCategoryIds();
+            if (count($allCategoryIds) > count($categoryIds)) {
+                $categories = \TallCms\Cms\Models\CmsCategory::whereIn('id', $allCategoryIds)
+                    ->get()
+                    ->sortBy(fn ($c) => array_search($c->id, $allCategoryIds))
+                    ->values();
+            }
+
             foreach ($categories as $category) {
-                $posts = \TallCms\Cms\Models\CmsPost::query()
+                $query = \TallCms\Cms\Models\CmsPost::query()
                     ->published()
-                    ->whereHas('categories', fn ($q) => $q->where('tallcms_categories.id', $category->id))
-                    ->orderBy('published_at', 'asc')
-                    ->get();
+                    ->whereHas('categories', fn ($q) => $q->where('tallcms_categories.id', $category->id));
+
+                // Mirror sort from block config
+                match ($postsBlockConfig['sort_by'] ?? 'newest') {
+                    'oldest' => $query->orderBy('published_at', 'asc'),
+                    'title_asc' => $query->orderByRaw('LOWER(title) ASC'),
+                    'title_desc' => $query->orderByRaw('LOWER(title) DESC'),
+                    default => $query->orderBy('published_at', 'desc'),
+                };
+
+                $posts = $query->get();
 
                 if ($posts->isNotEmpty()) {
                     $groupedPosts[] = [
@@ -31,12 +49,49 @@
                     ];
                 }
             }
+        } else {
+            // Unfiltered: show all published posts in a single group
+            $query = \TallCms\Cms\Models\CmsPost::query()->published();
+
+            if ($postsBlockConfig['featured_only'] ?? false) {
+                $query->featured();
+            }
+
+            $sortBy = $postsBlockConfig['sort_by'] ?? 'newest';
+            $pinnedPosts = $postsBlockConfig['pinned_posts'] ?? [];
+
+            if ($sortBy === 'manual' && !empty($pinnedPosts)) {
+                $manualQuery = \TallCms\Cms\Models\CmsPost::query()->published();
+                if ($postsBlockConfig['featured_only'] ?? false) {
+                    $manualQuery->featured();
+                }
+                $posts = $manualQuery->whereIn('id', $pinnedPosts)->get()
+                    ->sortBy(fn ($p) => array_search($p->id, $pinnedPosts))->values();
+            } else {
+                match ($sortBy) {
+                    'oldest' => $query->orderBy('published_at', 'asc'),
+                    'title_asc' => $query->orderByRaw('LOWER(title) ASC'),
+                    'title_desc' => $query->orderByRaw('LOWER(title) DESC'),
+                    default => $query->orderBy('published_at', 'desc'),
+                };
+
+                $offset = (int) ($postsBlockConfig['offset'] ?? 0);
+                $count = (int) ($postsBlockConfig['posts_count'] ?? 50);
+                $posts = $query->skip($offset)->take($count)->get();
+            }
+
+            if ($posts->isNotEmpty()) {
+                $groupedPosts[] = [
+                    'category' => null,
+                    'posts' => $posts,
+                ];
+            }
         }
     }
 
-    // Heading mode: only for pages without Posts blocks
+    // Heading mode: fallback for pages without Posts blocks OR when posts are empty
     $headings = [];
-    if (!$hasPostsBlock) {
+    if (empty($groupedPosts)) {
         preg_match_all('/<h([2-' . $maxDepth . '])[^>]*id="([^"]+)"[^>]*>(.*?)<\/h\1>/is', $renderedContent, $headings, PREG_SET_ORDER);
     }
 
@@ -60,7 +115,9 @@
         <div class="space-y-5">
             @foreach($groupedPosts as $group)
                 <div>
-                    <p class="text-[11px] font-bold uppercase tracking-widest text-base-content/40 mb-2">{{ $group['category']->name }}</p>
+                    @if($group['category'])
+                        <p class="text-[11px] font-bold uppercase tracking-widest text-base-content/40 mb-2">{{ $group['category']->name }}</p>
+                    @endif
                     <ul class="space-y-0.5">
                         @foreach($group['posts'] as $post)
                             @php
