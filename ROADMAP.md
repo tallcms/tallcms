@@ -20,6 +20,7 @@ This roadmap outlines our vision for TallCMS development. We're committed to bui
 - [v2.11 - Page Templates & Widgets](#v211---page-templates--widgets) ✅
 - [v3.0 - Filament 5 & Livewire 4](#v30---filament-5--livewire-4) ✅
 - [v3.1/3.2 - Comments & Plugin Config](#v3132---comments--plugin-config) ✅
+- [v3.6 - Theme Manager UX](#v36---theme-manager-ux-overhaul) ✅
 - [v3.3 - Marketplace](#v33---marketplace-integration) 📋
 - [Future Considerations](#future-considerations)
 - [How to Contribute](#how-to-contribute)
@@ -392,7 +393,7 @@ Focus: Full REST API for headless CMS usage and third-party integrations.
 
 ### Developer Tools (Remaining)
 - [x] CLI tool for scaffolding themes (php artisan make:theme)
-- [ ] CLI tool for scaffolding plugins
+- [x] CLI tool for scaffolding plugins (php artisan make:plugin)
 - [x] Plugin development documentation
 - [x] Theme development guide
 - [ ] Local development improvements
@@ -575,6 +576,39 @@ The following items from the original v3.1 roadmap are deferred to a future rele
 
 ---
 
+## v3.6 - Theme Manager UX Overhaul
+
+**Status: ✅ Released (v3.6.0)**
+
+Focus: Theme management confidence, speed, and delight.
+
+### Theme Manager
+- [x] 3-column grid with search, sort, and feature filter chips
+- [x] Active theme summary panel with quick links
+- [x] Tag system for themes (search by tag, tag badges on cards)
+- [x] Readiness status indicators (Active / Ready / Needs build / License required)
+- [x] Preview-first button hierarchy
+- [x] "At a Glance" section in theme details modal
+- [x] Admin default preset selector for multi-preset themes
+- [x] Responsive layout (mobile-safe summary panel and toolbar)
+
+### Dark Mode
+- [x] Fixed daisyUI preview.css overriding Filament dark mode (scoped to editor pages only)
+- [x] CMS block panel styles using Filament CSS variables
+- [x] Dark mode variants for all theme manager elements
+
+### Footer Badge
+- [x] "Powered by TallCMS" shared Blade component (`<x-tallcms::powered-by />`)
+- [x] Toggle via Site Settings → Branding (defaults to shown)
+- [x] Added to all shipped themes and MakeTheme scaffold
+
+### Theme Scaffold
+- [x] Tags and full supports flags (responsive, animations) in generated theme.json
+- [x] `data-theme` with `daisyui_default_preset()` helper
+- [x] localStorage preset sync with admin default detection
+
+---
+
 ## v3.3 - Marketplace Integration
 
 Focus: Connect to the official TallCMS marketplace for plugins and themes.
@@ -673,6 +707,7 @@ We welcome community input on our roadmap:
 | v2.11 | ✅ Released | Templates | Page templates, sidebar widgets, TOC, self-updater improvements |
 | v3.0 | ✅ Released | Framework | Filament 5, Livewire 4, enhanced block panel, CLI docs |
 | v3.2 | ✅ Released | Community | Native comments system, plugin config consolidation |
+| v3.6 | ✅ Released | Themes | Theme manager UX overhaul, preset selector, powered-by badge, dark mode fixes |
 | v3.3 | 📋 Planned | Ecosystem | Marketplace integration |
 | Pro | 🔄 Ongoing | Premium | Advanced blocks, Analytics, AI Content, Translation |
 
@@ -686,4 +721,4 @@ We welcome community input on our roadmap:
 
 ---
 
-*Last updated: February 21, 2026 — v3.2.0 Comments System & Plugin Config released*
+*Last updated: March 22, 2026 — v3.6.0 Theme Manager UX Overhaul released*
