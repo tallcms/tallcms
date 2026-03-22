@@ -1,4 +1,4 @@
-@props(['post', 'config' => [], 'parentSlug' => ''])
+@props(['post', 'config' => [], 'parentSlug' => '', 'embedded' => false])
 
 @php
     use Illuminate\Support\Facades\View;
@@ -22,7 +22,7 @@
     View::share('cmsPageContentWidth', 'prose');
 @endphp
 
-<div class="max-w-4xl mx-auto px-4 py-16">
+<div class="{{ $embedded ? '' : 'max-w-4xl mx-auto px-4 py-16' }}">
     <article>
         <header class="mb-8">
             <h1 class="text-4xl font-bold text-base-content mb-4">{{ $post->title }}</h1>
