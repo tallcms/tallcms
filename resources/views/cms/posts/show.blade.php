@@ -11,6 +11,7 @@
     $showAuthor = $config['show_author'] ?? false;
     $showImage = $config['show_image'] ?? true;
     $showCategories = $config['show_categories'] ?? true;
+    $embedded = $embedded ?? false;
 
 
     // Save previous cmsPageSlug to restore after rendering (avoid global bleed)
@@ -49,8 +50,8 @@
     @endif
 
     {{-- Post Header --}}
-    <header class="post-detail__header w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 {{ $post->featured_image ? '-mt-24 relative z-10' : 'pt-12 sm:pt-16' }}">
-        <div class="max-w-4xl mx-auto {{ $post->featured_image ? 'bg-base-100 rounded-t-2xl shadow-lg p-6 sm:p-10' : '' }}">
+    <header class="post-detail__header {{ $embedded ? '' : 'w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16' }} {{ $post->featured_image ? '-mt-24 relative z-10' : ($embedded ? 'pt-4' : 'pt-12 sm:pt-16') }}">
+        <div class="{{ $embedded ? '' : 'max-w-4xl mx-auto' }} {{ $post->featured_image ? 'bg-base-100 rounded-t-2xl shadow-lg p-6 sm:p-10' : '' }}">
             {{-- Categories --}}
             @if($showCategories && $post->categories->isNotEmpty())
                 <div class="post-detail__categories flex flex-wrap gap-2 mb-4">
@@ -118,8 +119,8 @@
     </header>
 
     {{-- Post Content --}}
-    <div class="post-detail__content w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-8 sm:py-12">
-        <div class="max-w-4xl mx-auto">
+    <div class="post-detail__content {{ $embedded ? 'py-6' : 'w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-8 sm:py-12' }}">
+        <div class="{{ $embedded ? '' : 'max-w-4xl mx-auto' }}">
             @if($renderedContent)
                 <div class="prose prose-lg max-w-none text-base-content">
                     {!! $renderedContent !!}
@@ -134,16 +135,16 @@
 
     {{-- Comments --}}
     @if(config('tallcms.comments.enabled', true) && ($config['show_comments'] ?? true) && $post->isPublished())
-        <div class="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-            <div class="max-w-4xl mx-auto">
+        <div class="{{ $embedded ? '' : 'w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16' }}">
+            <div class="{{ $embedded ? '' : 'max-w-4xl mx-auto' }}">
                 <x-tallcms::comments :post="$post" />
             </div>
         </div>
     @endif
 
     {{-- Back Link --}}
-    <footer class="post-detail__footer w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-12">
-        <div class="max-w-4xl mx-auto">
+    <footer class="post-detail__footer {{ $embedded ? 'py-6' : 'w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-12' }}">
+        <div class="{{ $embedded ? '' : 'max-w-4xl mx-auto' }}">
             <a
                 href="{{ tallcms_localized_url($parentSlug ?? '') }}"
                 class="link link-primary inline-flex items-center gap-2 text-sm font-medium"
