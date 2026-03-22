@@ -648,6 +648,11 @@ GITIGNORE;
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    <!-- Favicon -->
+    @if(\$favicon = \\TallCms\\Cms\\Models\\SiteSetting::get('favicon'))
+        <link rel="icon" href="{{ Storage::disk(cms_media_disk())->url(\$favicon) }}">
+    @endif
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
@@ -685,7 +690,11 @@ GITIGNORE;
                     </ul>
                 </div>
                 <!-- Logo -->
+                @php \$logo = \\TallCms\\Cms\\Models\\SiteSetting::get('logo'); @endphp
                 <a href="{{ tallcms_home_url() }}" class="btn btn-ghost text-xl font-bold">
+                    @if(\$logo)
+                        <img src="{{ Storage::disk(cms_media_disk())->url(\$logo) }}" alt="{{ config('app.name') }}" class="h-8 w-auto">
+                    @endif
                     {{ config('app.name') }}
                 </a>
             </div>
