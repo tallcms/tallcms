@@ -3,14 +3,13 @@
 @php
     $maxDepth = min(max((int) ($settings['max_depth'] ?? 3), 2), 4);
 
-    // Primary: extract headings with IDs from rendered content
-    preg_match_all('/<h([2-' . $maxDepth . '])[^>]*id="([^"]+)"[^>]*>(.*?)<\/h\1>/is', $renderedContent, $headings, PREG_SET_ORDER);
-
-    // Fallback: if no headings, build a posts-by-category TOC from parent page's Posts blocks
+    // Check if the page has Posts blocks — if so, use posts-by-category mode
     $groupedPosts = [];
-    if (count($headings) === 0 && $page) {
+    $hasPostsBlock = false;
+    if ($page) {
         $categoryIds = $page->getPostsBlockCategoryIds();
         if (!empty($categoryIds)) {
+            $hasPostsBlock = true;
             $parentSlug = ($page->slug === '/') ? '' : $page->slug;
 
             $categories = \TallCms\Cms\Models\CmsCategory::whereIn('id', $categoryIds)
@@ -35,6 +34,15 @@
         }
     }
 
+    // Heading mode: only for pages without Posts blocks
+    $headings = [];
+    if (!$hasPostsBlock) {
+        preg_match_all('/<h([2-' . $maxDepth . '])[^>]*id="([^"]+)"[^>]*>(.*?)<\/h\1>/is', $renderedContent, $headings, PREG_SET_ORDER);
+    }
+
+    // Current path for active state detection
+    $currentPath = '/' . ltrim(request()->path(), '/');
+
     // Static indentation map to avoid Tailwind purging issues
     $indentClasses = [
         '2' => '',
@@ -43,31 +51,17 @@
     ];
 @endphp
 
-@if(count($headings) > 0)
-    {{-- Heading anchor mode --}}
-    <nav class="bg-base-100 rounded-lg p-4 shadow-sm sticky top-24" aria-label="Table of contents">
-        <h3 class="text-lg font-semibold mb-4">On This Page</h3>
-        <ul class="space-y-2 text-sm">
-            @foreach($headings as $heading)
-                <li class="{{ $indentClasses[$heading[1]] ?? '' }}">
-                    <a href="#{{ $heading[2] }}" class="link link-hover text-base-content/70 hover:text-base-content transition-colors">
-                        {{ strip_tags($heading[3]) }}
-                    </a>
-                </li>
-            @endforeach
-        </ul>
-    </nav>
-@elseif(!empty($groupedPosts))
-    {{-- Posts by category mode (post detail pages) --}}
+@if(!empty($groupedPosts))
+    {{-- Posts by category mode --}}
     <nav class="bg-base-100 rounded-lg p-4 shadow-sm sticky top-24" aria-label="Table of contents">
         <h3 class="text-lg font-semibold mb-4">
-            <a href="{{ tallcms_localized_url($parentSlug) }}" class="link link-hover">{{ $page->title }}</a>
+            <a href="{{ tallcms_localized_url($parentSlug) }}" class="hover:text-primary transition-colors">{{ $page->title }}</a>
         </h3>
-        <div class="space-y-4">
+        <div class="space-y-5">
             @foreach($groupedPosts as $group)
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-base-content/50 mb-1">{{ $group['category']->name }}</p>
-                    <ul class="space-y-1 text-sm">
+                    <p class="text-[11px] font-bold uppercase tracking-widest text-base-content/40 mb-2">{{ $group['category']->name }}</p>
+                    <ul class="space-y-0.5">
                         @foreach($group['posts'] as $post)
                             @php
                                 $postSlug = tallcms_i18n_enabled()
@@ -75,9 +69,17 @@
                                     : $post->slug;
                                 $fullSlug = empty($parentSlug) ? $postSlug : $parentSlug . '/' . $postSlug;
                                 $postUrl = tallcms_localized_url($fullSlug);
+                                $isActive = $currentPath === '/' . ltrim($postUrl, '/');
                             @endphp
                             <li>
-                                <a href="{{ $postUrl }}" class="link link-hover text-base-content/70 hover:text-base-content transition-colors">
+                                <a
+                                    href="{{ $postUrl }}"
+                                    @class([
+                                        'block rounded-lg px-3 py-1.5 text-sm transition-colors',
+                                        'bg-primary/10 text-primary font-medium' => $isActive,
+                                        'text-base-content/70 hover:text-base-content hover:bg-base-200/50' => !$isActive,
+                                    ])
+                                >
                                     {{ $post->title }}
                                 </a>
                             </li>
@@ -86,5 +88,19 @@
                 </div>
             @endforeach
         </div>
+    </nav>
+@elseif(count($headings) > 0)
+    {{-- Heading anchor mode (pages without Posts blocks) --}}
+    <nav class="bg-base-100 rounded-lg p-4 shadow-sm sticky top-24" aria-label="Table of contents">
+        <h3 class="text-lg font-semibold mb-4">On This Page</h3>
+        <ul class="space-y-0.5">
+            @foreach($headings as $heading)
+                <li class="{{ $indentClasses[$heading[1]] ?? '' }}">
+                    <a href="#{{ $heading[2] }}" class="block rounded-lg px-3 py-1.5 text-sm text-base-content/70 hover:text-base-content hover:bg-base-200/50 transition-colors">
+                        {{ strip_tags($heading[3]) }}
+                    </a>
+                </li>
+            @endforeach
+        </ul>
     </nav>
 @endif
