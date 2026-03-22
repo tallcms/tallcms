@@ -340,6 +340,68 @@ class CmsPage extends Model implements HasRichContent
     }
 
     /**
+     * Get all unique category IDs referenced by Posts blocks on this page.
+     */
+    public function getPostsBlockCategoryIds(): array
+    {
+        if (empty($this->content)) {
+            return [];
+        }
+
+        $content = $this->content;
+        $configs = [];
+
+        if (is_string($content)) {
+            $decoded = json_decode($content, true);
+            if (is_array($decoded)) {
+                static::collectAllPostsBlockConfigs($decoded, $configs);
+            } else {
+                // HTML format: find all Posts block configs
+                preg_match_all('/data-(?:type=["\']customBlock["\'][^>]*)?data-id=["\']posts["\'][^>]*data-config=["\']([^"\']+)["\']/', $content, $matches);
+                if (empty($matches[1])) {
+                    preg_match_all('/data-config=["\']([^"\']+)["\'][^>]*data-id=["\']posts["\']/', $content, $matches);
+                }
+                foreach ($matches[1] ?? [] as $configJson) {
+                    $config = json_decode(html_entity_decode($configJson, ENT_QUOTES, 'UTF-8'), true);
+                    if (is_array($config)) {
+                        $configs[] = $config;
+                    }
+                }
+            }
+        } elseif (is_array($content)) {
+            static::collectAllPostsBlockConfigs($content, $configs);
+        }
+
+        $categoryIds = [];
+        foreach ($configs as $config) {
+            foreach ($config['categories'] ?? [] as $id) {
+                $categoryIds[] = (int) $id;
+            }
+        }
+
+        return array_unique($categoryIds);
+    }
+
+    /**
+     * Recursively collect all Posts block configs from Tiptap JSON content.
+     */
+    protected static function collectAllPostsBlockConfigs(array $content, array &$configs): void
+    {
+        if (isset($content['type']) && $content['type'] === 'customBlock' &&
+            isset($content['attrs']['id']) && $content['attrs']['id'] === 'posts') {
+            $configs[] = $content['attrs']['config'] ?? [];
+
+            return;
+        }
+
+        foreach ($content as $value) {
+            if (is_array($value)) {
+                static::collectAllPostsBlockConfigs($value, $configs);
+            }
+        }
+    }
+
+    /**
      * Extract posts block config from HTML content with data attributes.
      */
     public static function extractPostsBlockConfigFromHtml(string $html): array
