@@ -10,14 +10,19 @@
         </a>
     </div>
 @elseif($renderedContent === 'POST_DETAIL')
-    {{-- Render post detail within the parent page's template (inherits sidebar/widgets) --}}
-    @include($templateView ?? 'tallcms::templates.default', [
-        'page' => $page,
-        'renderedContent' => view('tallcms::partials.post-detail', ['post' => $post, 'config' => $postsBlockConfig, 'parentSlug' => $parentSlug, 'embedded' => true])->render(),
-        'allPages' => [],
-        'sidebarWidgets' => $sidebarWidgets ?? [],
-        'templateConfig' => $templateConfig ?? [],
-    ])
+    @if($templateConfig['has_sidebar'] ?? false)
+        {{-- Template has sidebar: embed post detail to inherit sidebar/widgets --}}
+        @include($templateView, [
+            'page' => $page,
+            'renderedContent' => view('tallcms::partials.post-detail', ['post' => $post, 'config' => $postsBlockConfig, 'parentSlug' => $parentSlug, 'embedded' => true])->render(),
+            'allPages' => [],
+            'sidebarWidgets' => $sidebarWidgets ?? [],
+            'templateConfig' => $templateConfig ?? [],
+        ])
+    @else
+        {{-- No sidebar: render standalone post detail --}}
+        @include('tallcms::partials.post-detail', ['post' => $post, 'config' => $postsBlockConfig, 'parentSlug' => $parentSlug])
+    @endif
 @else
     {{-- Include dynamic template --}}
     @include($templateView ?? 'tallcms::templates.default', [
