@@ -2,38 +2,16 @@
 
 namespace TallCms\Cms\Tests\Unit;
 
-use ReflectionMethod;
-use TallCms\Cms\Livewire\CmsPageRenderer;
+use TallCms\Cms\Models\CmsPage;
 use TallCms\Cms\Tests\TestCase;
 
 /**
  * Tests for PostsBlock config extraction from page content.
  *
- * The CmsPageRenderer extracts PostsBlock configuration to pass display
- * settings (show_author, show_date, etc.) to the post detail view.
- * Content can be stored in either Tiptap JSON or HTML format.
+ * Both JSON and HTML extraction live on CmsPage model for reuse by widgets.
  */
 class PostsBlockConfigExtractionTest extends TestCase
 {
-    protected CmsPageRenderer $renderer;
-
-    protected ReflectionMethod $extractFromHtml;
-
-    protected ReflectionMethod $extractFromJson;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->renderer = new CmsPageRenderer;
-
-        // Make protected methods accessible for testing
-        $this->extractFromHtml = new ReflectionMethod(CmsPageRenderer::class, 'extractPostsBlockConfigFromHtml');
-        $this->extractFromHtml->setAccessible(true);
-
-        $this->extractFromJson = new ReflectionMethod(CmsPageRenderer::class, 'extractPostsBlockConfig');
-        $this->extractFromJson->setAccessible(true);
-    }
 
     // -------------------------------------------------------------------------
     // HTML Format: Standard attribute order
@@ -43,7 +21,7 @@ class PostsBlockConfigExtractionTest extends TestCase
     {
         $html = '<div data-type="customBlock" data-id="posts" data-config="{&quot;show_author&quot;:false,&quot;show_date&quot;:true}"></div>';
 
-        $config = $this->extractFromHtml->invoke($this->renderer, $html);
+        $config = CmsPage::extractPostsBlockConfigFromHtml($html);
 
         $this->assertIsArray($config);
         $this->assertFalse($config['show_author']);
@@ -58,7 +36,7 @@ class PostsBlockConfigExtractionTest extends TestCase
     {
         $html = '<div data-id="posts" data-type="customBlock" data-config="{&quot;show_author&quot;:false}"></div>';
 
-        $config = $this->extractFromHtml->invoke($this->renderer, $html);
+        $config = CmsPage::extractPostsBlockConfigFromHtml($html);
 
         $this->assertIsArray($config);
         $this->assertFalse($config['show_author']);
@@ -68,7 +46,7 @@ class PostsBlockConfigExtractionTest extends TestCase
     {
         $html = '<div data-config="{&quot;show_author&quot;:true,&quot;layout&quot;:&quot;grid&quot;}" data-type="customBlock" data-id="posts"></div>';
 
-        $config = $this->extractFromHtml->invoke($this->renderer, $html);
+        $config = CmsPage::extractPostsBlockConfigFromHtml($html);
 
         $this->assertIsArray($config);
         $this->assertTrue($config['show_author']);
@@ -79,7 +57,7 @@ class PostsBlockConfigExtractionTest extends TestCase
     {
         $html = '<div data-config="{&quot;show_excerpt&quot;:false}" data-id="posts" data-type="customBlock"></div>';
 
-        $config = $this->extractFromHtml->invoke($this->renderer, $html);
+        $config = CmsPage::extractPostsBlockConfigFromHtml($html);
 
         $this->assertIsArray($config);
         $this->assertFalse($config['show_excerpt']);
@@ -94,7 +72,7 @@ class PostsBlockConfigExtractionTest extends TestCase
         // Single quotes on attributes with HTML-encoded JSON inside
         $html = "<div data-type='customBlock' data-id='posts' data-config='{&quot;show_author&quot;:false}'></div>";
 
-        $config = $this->extractFromHtml->invoke($this->renderer, $html);
+        $config = CmsPage::extractPostsBlockConfigFromHtml($html);
 
         $this->assertIsArray($config);
         $this->assertFalse($config['show_author']);
@@ -104,7 +82,7 @@ class PostsBlockConfigExtractionTest extends TestCase
     {
         $html = '<div data-type="customBlock" data-id=\'posts\' data-config="{&quot;show_date&quot;:false}"></div>';
 
-        $config = $this->extractFromHtml->invoke($this->renderer, $html);
+        $config = CmsPage::extractPostsBlockConfigFromHtml($html);
 
         $this->assertIsArray($config);
         $this->assertFalse($config['show_date']);
@@ -118,7 +96,7 @@ class PostsBlockConfigExtractionTest extends TestCase
     {
         $html = '<div data-type="customBlock" data-id="posts" data-config="{&quot;show_author&quot;:false,&quot;empty_message&quot;:&quot;No posts yet!&quot;}"></div>';
 
-        $config = $this->extractFromHtml->invoke($this->renderer, $html);
+        $config = CmsPage::extractPostsBlockConfigFromHtml($html);
 
         $this->assertIsArray($config);
         $this->assertFalse($config['show_author']);
@@ -130,7 +108,7 @@ class PostsBlockConfigExtractionTest extends TestCase
         // Numeric HTML entities (&#34; for quotes)
         $html = '<div data-type="customBlock" data-id="posts" data-config="{&#34;show_author&#34;:true,&#34;columns&#34;:3}"></div>';
 
-        $config = $this->extractFromHtml->invoke($this->renderer, $html);
+        $config = CmsPage::extractPostsBlockConfigFromHtml($html);
 
         $this->assertIsArray($config);
         $this->assertTrue($config['show_author']);
@@ -145,7 +123,7 @@ class PostsBlockConfigExtractionTest extends TestCase
     {
         $html = '<div data-type="customBlock" data-config="{&quot;layout&quot;:&quot;grid&quot;,&quot;columns&quot;:3,&quot;per_page&quot;:9,&quot;show_date&quot;:false,&quot;block_uuid&quot;:&quot;52a2a230-8361-40bd-bba7-0d8a0770fc25&quot;,&quot;show_image&quot;:true,&quot;show_author&quot;:false,&quot;show_excerpt&quot;:true,&quot;empty_message&quot;:&quot;No blog posts yet. Check back soon!&quot;,&quot;show_read_more&quot;:true,&quot;show_categories&quot;:true,&quot;enable_pagination&quot;:true}" data-id="posts"></div>';
 
-        $config = $this->extractFromHtml->invoke($this->renderer, $html);
+        $config = CmsPage::extractPostsBlockConfigFromHtml($html);
 
         $this->assertIsArray($config);
         $this->assertEquals('grid', $config['layout']);
@@ -165,7 +143,7 @@ class PostsBlockConfigExtractionTest extends TestCase
     {
         $html = '<div data-type="customBlock" data-config="{&quot;show_author&quot;:false}"></div>';
 
-        $config = $this->extractFromHtml->invoke($this->renderer, $html);
+        $config = CmsPage::extractPostsBlockConfigFromHtml($html);
 
         $this->assertIsArray($config);
         $this->assertEmpty($config);
@@ -175,7 +153,7 @@ class PostsBlockConfigExtractionTest extends TestCase
     {
         $html = '<div data-type="customBlock" data-id="hero" data-config="{&quot;heading&quot;:&quot;Hello&quot;}"></div>';
 
-        $config = $this->extractFromHtml->invoke($this->renderer, $html);
+        $config = CmsPage::extractPostsBlockConfigFromHtml($html);
 
         $this->assertIsArray($config);
         $this->assertEmpty($config);
@@ -185,7 +163,7 @@ class PostsBlockConfigExtractionTest extends TestCase
     {
         $html = '<div data-type="customBlock" data-id="posts"></div>';
 
-        $config = $this->extractFromHtml->invoke($this->renderer, $html);
+        $config = CmsPage::extractPostsBlockConfigFromHtml($html);
 
         $this->assertIsArray($config);
         $this->assertEmpty($config);
@@ -195,7 +173,7 @@ class PostsBlockConfigExtractionTest extends TestCase
     {
         $html = '<div data-type="customBlock" data-id="posts" data-config="not valid json"></div>';
 
-        $config = $this->extractFromHtml->invoke($this->renderer, $html);
+        $config = CmsPage::extractPostsBlockConfigFromHtml($html);
 
         $this->assertIsArray($config);
         $this->assertEmpty($config);
@@ -203,7 +181,7 @@ class PostsBlockConfigExtractionTest extends TestCase
 
     public function test_returns_empty_for_empty_html(): void
     {
-        $config = $this->extractFromHtml->invoke($this->renderer, '');
+        $config = CmsPage::extractPostsBlockConfigFromHtml('');
 
         $this->assertIsArray($config);
         $this->assertEmpty($config);
@@ -211,7 +189,7 @@ class PostsBlockConfigExtractionTest extends TestCase
 
     public function test_returns_empty_for_plain_text(): void
     {
-        $config = $this->extractFromHtml->invoke($this->renderer, 'Just some plain text content');
+        $config = CmsPage::extractPostsBlockConfigFromHtml('Just some plain text content');
 
         $this->assertIsArray($config);
         $this->assertEmpty($config);
@@ -229,7 +207,7 @@ class PostsBlockConfigExtractionTest extends TestCase
             <div data-type="customBlock" data-id="cta" data-config="{&quot;title&quot;:&quot;Contact Us&quot;}"></div>
         ';
 
-        $config = $this->extractFromHtml->invoke($this->renderer, $html);
+        $config = CmsPage::extractPostsBlockConfigFromHtml($html);
 
         $this->assertIsArray($config);
         $this->assertFalse($config['show_author']);
@@ -259,7 +237,7 @@ class PostsBlockConfigExtractionTest extends TestCase
             ],
         ];
 
-        $config = $this->extractFromJson->invoke($this->renderer, $content);
+        $config = CmsPage::extractPostsBlockConfigFromArray($content);
 
         $this->assertIsArray($config);
         $this->assertFalse($config['show_author']);
@@ -289,7 +267,7 @@ class PostsBlockConfigExtractionTest extends TestCase
             ],
         ];
 
-        $config = $this->extractFromJson->invoke($this->renderer, $content);
+        $config = CmsPage::extractPostsBlockConfigFromArray($content);
 
         $this->assertIsArray($config);
         $this->assertTrue($config['show_author']);
@@ -311,7 +289,7 @@ class PostsBlockConfigExtractionTest extends TestCase
             ],
         ];
 
-        $config = $this->extractFromJson->invoke($this->renderer, $content);
+        $config = CmsPage::extractPostsBlockConfigFromArray($content);
 
         $this->assertIsArray($config);
         $this->assertEmpty($config);
@@ -319,7 +297,7 @@ class PostsBlockConfigExtractionTest extends TestCase
 
     public function test_returns_empty_for_empty_json_array(): void
     {
-        $config = $this->extractFromJson->invoke($this->renderer, []);
+        $config = CmsPage::extractPostsBlockConfigFromArray([]);
 
         $this->assertIsArray($config);
         $this->assertEmpty($config);

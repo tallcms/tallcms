@@ -244,78 +244,11 @@ class CmsPageRenderer extends Component
 
     /**
      * Extract PostsBlock config from page content.
-     * Used to pass display settings to the post detail view.
-     * Handles both Tiptap JSON format and HTML format with data attributes.
+     * Delegates to CmsPage model which handles both JSON and HTML formats.
      */
     protected function getPostsBlockConfig(CmsPage $page): array
     {
-        if (empty($page->content)) {
-            return [];
-        }
-
-        $content = $page->content;
-
-        // Handle string content (could be JSON or HTML)
-        if (is_string($content)) {
-            // Try JSON format first (Tiptap)
-            $decoded = json_decode($content, true);
-            if (is_array($decoded)) {
-                return $this->extractPostsBlockConfig($decoded);
-            }
-
-            // Fall back to HTML format with data attributes
-            return $this->extractPostsBlockConfigFromHtml($content);
-        }
-
-        // Already an array (decoded JSON)
-        if (is_array($content)) {
-            return $this->extractPostsBlockConfig($content);
-        }
-
-        return [];
-    }
-
-    /**
-     * Recursively extract posts block config from Tiptap JSON content structure.
-     */
-    protected function extractPostsBlockConfig(array $content): array
-    {
-        // Check if this is a customBlock with id=posts
-        if (isset($content['type']) && $content['type'] === 'customBlock' &&
-            isset($content['attrs']['id']) && $content['attrs']['id'] === 'posts') {
-            return $content['attrs']['config'] ?? [];
-        }
-
-        // Search nested arrays
-        foreach ($content as $value) {
-            if (is_array($value)) {
-                $config = $this->extractPostsBlockConfig($value);
-                if (! empty($config)) {
-                    return $config;
-                }
-            }
-        }
-
-        return [];
-    }
-
-    /**
-     * Extract posts block config from HTML content with data attributes.
-     */
-    protected function extractPostsBlockConfigFromHtml(string $html): array
-    {
-        // Look for data-type="customBlock" data-id="posts" data-config="..."
-        if (preg_match('/data-type=["\']customBlock["\'][^>]*data-id=["\']posts["\'][^>]*data-config=["\']([^"\']+)["\']/', $html, $matches) ||
-            preg_match('/data-id=["\']posts["\'][^>]*data-type=["\']customBlock["\'][^>]*data-config=["\']([^"\']+)["\']/', $html, $matches) ||
-            preg_match('/data-config=["\']([^"\']+)["\'][^>]*data-type=["\']customBlock["\'][^>]*data-id=["\']posts["\']/', $html, $matches) ||
-            preg_match('/data-config=["\']([^"\']+)["\'][^>]*data-id=["\']posts["\']/', $html, $matches)) {
-            $configJson = html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8');
-            $config = json_decode($configJson, true);
-
-            return is_array($config) ? $config : [];
-        }
-
-        return [];
+        return $page->getPostsBlockConfig();
     }
 
     /**

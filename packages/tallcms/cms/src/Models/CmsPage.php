@@ -309,6 +309,77 @@ class CmsPage extends Model implements HasRichContent
     }
 
     /**
+     * Extract Posts block configuration from the page content.
+     * Returns the config array of the first Posts block found, or empty array.
+     * Handles both Tiptap JSON format and HTML format with data attributes.
+     */
+    public function getPostsBlockConfig(): array
+    {
+        if (empty($this->content)) {
+            return [];
+        }
+
+        $content = $this->content;
+
+        if (is_string($content)) {
+            // Try JSON format first (Tiptap)
+            $decoded = json_decode($content, true);
+            if (is_array($decoded)) {
+                return static::extractPostsBlockConfigFromArray($decoded);
+            }
+
+            // Fall back to HTML format with data attributes
+            return static::extractPostsBlockConfigFromHtml($content);
+        }
+
+        if (is_array($content)) {
+            return static::extractPostsBlockConfigFromArray($content);
+        }
+
+        return [];
+    }
+
+    /**
+     * Extract posts block config from HTML content with data attributes.
+     */
+    public static function extractPostsBlockConfigFromHtml(string $html): array
+    {
+        if (preg_match('/data-type=["\']customBlock["\'][^>]*data-id=["\']posts["\'][^>]*data-config=["\']([^"\']+)["\']/', $html, $matches) ||
+            preg_match('/data-id=["\']posts["\'][^>]*data-type=["\']customBlock["\'][^>]*data-config=["\']([^"\']+)["\']/', $html, $matches) ||
+            preg_match('/data-config=["\']([^"\']+)["\'][^>]*data-type=["\']customBlock["\'][^>]*data-id=["\']posts["\']/', $html, $matches) ||
+            preg_match('/data-config=["\']([^"\']+)["\'][^>]*data-id=["\']posts["\']/', $html, $matches)) {
+            $configJson = html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8');
+            $config = json_decode($configJson, true);
+
+            return is_array($config) ? $config : [];
+        }
+
+        return [];
+    }
+
+    /**
+     * Recursively extract posts block config from Tiptap JSON content.
+     */
+    public static function extractPostsBlockConfigFromArray(array $content): array
+    {
+        if (isset($content['type']) && $content['type'] === 'customBlock' &&
+            isset($content['attrs']['id']) && $content['attrs']['id'] === 'posts') {
+            return $content['attrs']['config'] ?? [];
+        }
+
+        foreach ($content as $value) {
+            if (is_array($value)) {
+                $config = static::extractPostsBlockConfigFromArray($value);
+                if (! empty($config)) {
+                    return $config;
+                }
+            }
+        }
+
+        return [];
+    }
+
+    /**
      * Get the CSS class for the page's content width setting.
      */
     public function getContentWidthClass(): string
