@@ -5,7 +5,7 @@
     {{-- Render post detail within the parent page's template (inherits sidebar/widgets) --}}
     @include($templateView ?? 'tallcms::templates.default', [
         'page' => $page,
-        'renderedContent' => view('cms.posts.show', [
+        'renderedContent' => view('tallcms::partials.post-detail', [
             'post' => $post,
             'config' => $postsBlockConfig ?? [],
             'parentSlug' => $parentSlug,
