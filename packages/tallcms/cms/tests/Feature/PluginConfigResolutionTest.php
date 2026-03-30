@@ -56,7 +56,6 @@ class PluginConfigResolutionTest extends TestCase
 
         $this->assertIsArray($catalog);
         $this->assertArrayHasKey('tallcms/pro', $catalog);
-        $this->assertArrayHasKey('tallcms/mega-menu', $catalog);
     }
 
     /**

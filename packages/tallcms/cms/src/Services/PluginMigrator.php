@@ -63,6 +63,22 @@ class PluginMigrator
                     'batch' => $batch,
                 ]);
             } catch (\Throwable $e) {
+                // Handle "table already exists" gracefully — record the migration
+                // so it won't be retried. This happens when a plugin is reinstalled
+                // and tables were left behind from a previous installation.
+                if ($e instanceof \Illuminate\Database\QueryException
+                    && (str_contains($e->getMessage(), 'already exists') || str_contains($e->getMessage(), 'Duplicate column'))) {
+                    $this->repository->log($plugin->vendor, $plugin->slug, $migrationName, $batch);
+                    $ranMigrations[] = $migrationName;
+
+                    Log::info("Plugin migration skipped (table already exists): {$migrationName}", [
+                        'plugin' => $plugin->getFullSlug(),
+                        'batch' => $batch,
+                    ]);
+
+                    continue;
+                }
+
                 $errors[] = "Migration {$migrationName} failed: ".$e->getMessage();
 
                 Log::error("Plugin migration failed: {$migrationName}", [
