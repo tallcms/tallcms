@@ -20,6 +20,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use TallCms\Cms\Models\Plugin;
 use TallCms\Cms\Models\PluginLicense;
+use TallCms\Cms\Services\MarketplaceCatalogService;
 use TallCms\Cms\Services\PluginLicenseService;
 use TallCms\Cms\Services\PluginManager as PluginManagerService;
 use TallCms\Cms\Services\PluginMigrator;
@@ -122,6 +123,10 @@ class PluginManager extends Page implements HasForms
 
     #[Url]
     public string $search = '';
+
+    public int $pluginPage = 1;
+
+    public int $pluginsPerPage = 12;
 
     public ?string $selectedPlugin = null;
 
@@ -270,17 +275,55 @@ class PluginManager extends Page implements HasForms
     }
 
     /**
+     * Get paginated plugins for the current page
+     */
+    #[Computed]
+    public function paginatedPlugins(): Collection
+    {
+        return $this->filteredPlugins
+            ->slice(($this->pluginPage - 1) * $this->pluginsPerPage, $this->pluginsPerPage)
+            ->values();
+    }
+
+    /**
+     * Get total number of plugin pages
+     */
+    #[Computed]
+    public function pluginPageCount(): int
+    {
+        return (int) ceil($this->filteredPlugins->count() / $this->pluginsPerPage);
+    }
+
+    /**
+     * Navigate to a plugin page
+     */
+    public function goToPluginPage(int $page): void
+    {
+        $this->pluginPage = max(1, min($page, $this->pluginPageCount));
+    }
+
+    /**
+     * Reset plugin pagination when search changes
+     */
+    public function updatedSearch(): void
+    {
+        $this->pluginPage = 1;
+    }
+
+    /**
      * Get available plugins from catalog (excluding installed ones)
      */
     #[Computed]
     public function availablePlugins(): Collection
     {
-        $catalog = config('tallcms.plugins.catalog', []);
+        $catalog = app(MarketplaceCatalogService::class)->getPlugins();
         $installedSlugs = $this->plugins->pluck('fullSlug')->toArray();
 
         return collect($catalog)
-            ->filter(fn ($plugin, $slug) => ! in_array($slug, $installedSlugs))
-            ->map(fn ($plugin, $slug) => array_merge($plugin, ['fullSlug' => $slug]))
+            ->filter(fn ($plugin) => ! in_array($plugin['full_slug'], $installedSlugs))
+            ->sortByDesc('featured')
+            ->take(4)
+            ->map(fn ($plugin) => array_merge($plugin, ['fullSlug' => $plugin['full_slug']]))
             ->values();
     }
 
@@ -913,6 +956,7 @@ class PluginManager extends Page implements HasForms
                 ->action(function () {
                     $licenseService = app(PluginLicenseService::class);
                     $licenseService->clearUpdateCache();
+                    app(MarketplaceCatalogService::class)->clearCache();
 
                     // Use checkAllForUpdates() to get detailed results including failures
                     $results = $licenseService->checkAllForUpdates();

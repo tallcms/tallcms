@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use TallCms\Cms\Models\Plugin;
 use TallCms\Cms\Services\LicenseProxyClient;
+use TallCms\Cms\Services\MarketplaceCatalogService;
 use TallCms\Cms\Services\PluginLicenseService;
 use TallCms\Cms\Services\PluginManager;
 use TallCms\Cms\Services\PluginMigrationRepository;
@@ -75,6 +76,9 @@ class PluginServiceProvider extends ServiceProvider
     {
         // Register PluginMigrationRepository as singleton
         $this->app->singleton(PluginMigrationRepository::class);
+
+        // Register MarketplaceCatalogService as singleton
+        $this->app->singleton(MarketplaceCatalogService::class);
 
         // Register PluginManager as singleton
         $this->app->singleton(PluginManager::class, function ($app) {

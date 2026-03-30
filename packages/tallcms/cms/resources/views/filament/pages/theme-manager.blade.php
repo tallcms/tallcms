@@ -1,4 +1,79 @@
 <x-filament-panels::page>
+    {{-- From the Marketplace --}}
+    @if($this->availableMarketplaceThemes->isNotEmpty())
+        <x-filament::section>
+            <x-slot name="heading">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <x-heroicon-o-sparkles class="w-5 h-5 text-primary-500" />
+                        From the Marketplace
+                    </div>
+                    @if(config('tallcms.plugins.marketplace_url'))
+                        <a href="{{ config('tallcms.plugins.marketplace_url') }}" target="_blank" class="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400">
+                            Browse Marketplace &rarr;
+                        </a>
+                    @endif
+                </div>
+            </x-slot>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                @foreach($this->availableMarketplaceThemes as $theme)
+                    <x-filament::section class="!p-0 overflow-hidden relative">
+                        @if($theme['featured'] ?? false)
+                            <x-filament::badge color="primary" class="absolute top-2 right-2 z-10">
+                                Featured
+                            </x-filament::badge>
+                        @endif
+
+                        @if($theme['screenshot_url'] ?? null)
+                            <div class="bg-gray-100 dark:bg-white/5">
+                                <img src="{{ $theme['screenshot_url'] }}" alt="{{ $theme['name'] }}" class="w-full aspect-video object-cover" loading="lazy" />
+                            </div>
+                        @else
+                            <div class="bg-gray-50 dark:bg-white/5 flex items-center justify-center py-6">
+                                <x-heroicon-o-paint-brush class="w-8 h-8 text-gray-300 dark:text-gray-600" />
+                            </div>
+                        @endif
+
+                        <div class="p-3">
+                            <h3 class="text-sm font-semibold truncate">{{ $theme['name'] }}</h3>
+                            <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                                {{ $theme['description'] }}
+                            </p>
+
+                            <div class="mt-3 flex items-center gap-1.5">
+                                @if($theme['purchase_url'] ?? null)
+                                    <x-filament::button
+                                        tag="a"
+                                        href="{{ $theme['purchase_url'] }}"
+                                        target="_blank"
+                                        size="xs"
+                                        icon="heroicon-o-shopping-cart"
+                                    >
+                                        Purchase
+                                    </x-filament::button>
+                                @endif
+                                @if($theme['download_url'] ?? null)
+                                    <x-filament::button
+                                        tag="a"
+                                        href="{{ $theme['download_url'] }}"
+                                        target="_blank"
+                                        color="{{ ($theme['purchase_url'] ?? null) ? 'gray' : 'primary' }}"
+                                        size="xs"
+                                        icon="heroicon-o-arrow-down-tray"
+                                        :outlined="(bool) ($theme['purchase_url'] ?? null)"
+                                    >
+                                        Download
+                                    </x-filament::button>
+                                @endif
+                            </div>
+                        </div>
+                    </x-filament::section>
+                @endforeach
+            </div>
+        </x-filament::section>
+    @endif
+
     {{-- Search & Sort Bar --}}
     <div class="mb-4 space-y-3">
         <div class="flex flex-col sm:flex-row gap-3">
@@ -149,7 +224,7 @@
 
     {{-- Theme Gallery Grid --}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        @foreach($this->filteredThemes as $theme)
+        @foreach($this->paginatedThemes as $theme)
             <x-filament::section
                 :class="$theme['isActive'] ? 'ring-3 ring-primary-500 bg-primary-50/50 dark:bg-primary-900/10' : ''"
                 class="!p-0 overflow-hidden h-full"
@@ -435,6 +510,45 @@
             </x-filament::section>
         @endforeach
     </div>
+
+    {{-- Theme Pagination --}}
+    @if($this->themePageCount > 1)
+        <div class="flex items-center justify-between mt-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                Showing {{ ($this->themePage - 1) * $this->themesPerPage + 1 }}–{{ min($this->themePage * $this->themesPerPage, $this->filteredThemes->count()) }} of {{ $this->filteredThemes->count() }} themes
+            </p>
+            <div class="flex items-center gap-1">
+                <x-filament::button
+                    wire:click="goToThemePage({{ $this->themePage - 1 }})"
+                    color="gray"
+                    size="sm"
+                    outlined
+                    :disabled="$this->themePage <= 1"
+                >
+                    Previous
+                </x-filament::button>
+                @for($i = 1; $i <= $this->themePageCount; $i++)
+                    <x-filament::button
+                        wire:click="goToThemePage({{ $i }})"
+                        :color="$i === $this->themePage ? 'primary' : 'gray'"
+                        size="sm"
+                        :outlined="$i !== $this->themePage"
+                    >
+                        {{ $i }}
+                    </x-filament::button>
+                @endfor
+                <x-filament::button
+                    wire:click="goToThemePage({{ $this->themePage + 1 }})"
+                    color="gray"
+                    size="sm"
+                    outlined
+                    :disabled="$this->themePage >= $this->themePageCount"
+                >
+                    Next
+                </x-filament::button>
+            </div>
+        </div>
+    @endif
 
     {{-- Empty State --}}
     @if($this->filteredThemes->isEmpty())
