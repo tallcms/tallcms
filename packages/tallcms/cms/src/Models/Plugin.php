@@ -191,16 +191,22 @@ class Plugin
 
     /**
      * Check if plugin requires license activation via the TallCMS license proxy.
-     * This is determined by the marketplace catalog, not plugin.json.
-     * The marketplace's requires_license flag is the source of truth —
-     * it's set by the TallCMS team for official plugins only.
+     * Primary source: marketplace catalog (managed by TallCMS team).
+     * Fallback: plugin.json's license_required for official plugins only,
+     * so an API outage doesn't make paid plugins lose their activation UI.
      */
     public function requiresLicense(): bool
     {
         $catalogItem = app(\TallCms\Cms\Services\MarketplaceCatalogService::class)
             ->findBySlug($this->getFullSlug());
 
-        return (bool) ($catalogItem['requires_license'] ?? false);
+        if ($catalogItem !== null) {
+            return (bool) ($catalogItem['requires_license'] ?? false);
+        }
+
+        // Catalog unreachable or plugin not in catalog —
+        // fall back to plugin.json for official plugins only
+        return $this->licenseRequired && $this->vendor === 'tallcms';
     }
 
     /**
