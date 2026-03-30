@@ -39,89 +39,79 @@
         </x-filament::section>
     @endif
 
-    {{-- Available Plugins (not installed) --}}
+    {{-- From the Marketplace --}}
     @if($this->availablePlugins->isNotEmpty())
         <x-filament::section>
             <x-slot name="heading">
-                <div class="flex items-center gap-2">
-                    <x-heroicon-o-sparkles class="w-5 h-5 text-primary-500" />
-                    Available Plugins
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <x-heroicon-o-sparkles class="w-5 h-5 text-primary-500" />
+                        From the Marketplace
+                    </div>
+                    @if(config('tallcms.plugins.marketplace_url'))
+                        <a href="{{ config('tallcms.plugins.marketplace_url') }}" target="_blank" class="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400">
+                            Browse Marketplace &rarr;
+                        </a>
+                    @endif
                 </div>
             </x-slot>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 @foreach($this->availablePlugins as $plugin)
-                    <x-filament::section class="!p-4 relative">
-                        {{-- Featured badge --}}
+                    <x-filament::section class="!p-0 overflow-hidden relative">
                         @if($plugin['featured'] ?? false)
-                            <x-filament::badge color="primary" class="absolute top-2 right-2">
+                            <x-filament::badge color="primary" class="absolute top-2 right-2 z-10">
                                 Featured
                             </x-filament::badge>
                         @endif
 
-                        <div class="flex items-start gap-3">
-                            {{-- Icon --}}
-                            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-100 dark:bg-white/5 flex items-center justify-center">
+                        {{-- Screenshot or Icon --}}
+                        @if($plugin['screenshot_url'] ?? null)
+                            <div class="bg-gray-100 dark:bg-white/5">
+                                <img src="{{ $plugin['screenshot_url'] }}" alt="{{ $plugin['name'] }}" class="w-full aspect-video object-cover" loading="lazy" />
+                            </div>
+                        @else
+                            <div class="bg-gray-50 dark:bg-white/5 flex items-center justify-center py-6">
                                 @if($plugin['icon'] ?? null)
-                                    <x-dynamic-component :component="$plugin['icon']" class="w-5 h-5 text-primary-500" />
+                                    <x-dynamic-component :component="$plugin['icon']" class="w-8 h-8 text-primary-500" />
                                 @else
-                                    <x-heroicon-o-puzzle-piece class="w-5 h-5 text-primary-500" />
+                                    <x-heroicon-o-puzzle-piece class="w-8 h-8 text-gray-300 dark:text-gray-600" />
                                 @endif
                             </div>
+                        @endif
 
-                            {{-- Info --}}
-                            <div class="flex-1 min-w-0">
-                                <h3 class="text-base font-semibold">
-                                    {{ $plugin['name'] }}
-                                </h3>
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                                    {{ $plugin['description'] }}
-                                </p>
-                                <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                                    by {{ $plugin['author'] }}
-                                </p>
+                        <div class="p-3">
+                            <h3 class="text-sm font-semibold truncate">{{ $plugin['name'] }}</h3>
+                            <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                                {{ $plugin['description'] }}
+                            </p>
+
+                            <div class="mt-3 flex items-center gap-1.5">
+                                @if($plugin['purchase_url'] ?? null)
+                                    <x-filament::button
+                                        tag="a"
+                                        href="{{ $plugin['purchase_url'] }}"
+                                        target="_blank"
+                                        size="xs"
+                                        icon="heroicon-o-shopping-cart"
+                                    >
+                                        Purchase
+                                    </x-filament::button>
+                                @endif
+                                @if($plugin['download_url'] ?? null)
+                                    <x-filament::button
+                                        tag="a"
+                                        href="{{ $plugin['download_url'] }}"
+                                        target="_blank"
+                                        color="{{ ($plugin['purchase_url'] ?? null) ? 'gray' : 'primary' }}"
+                                        size="xs"
+                                        icon="heroicon-o-arrow-down-tray"
+                                        :outlined="(bool) ($plugin['purchase_url'] ?? null)"
+                                    >
+                                        Download
+                                    </x-filament::button>
+                                @endif
                             </div>
-                        </div>
-
-                        {{-- Actions --}}
-                        <div class="mt-4 flex items-center gap-2 flex-wrap">
-                            @if($plugin['download_url'] ?? null)
-                                <x-filament::button
-                                    tag="a"
-                                    href="{{ $plugin['download_url'] }}"
-                                    target="_blank"
-                                    color="primary"
-                                    size="sm"
-                                    icon="heroicon-o-arrow-down-tray"
-                                >
-                                    Download
-                                </x-filament::button>
-                            @endif
-                            @if($plugin['purchase_url'] ?? null)
-                                <x-filament::button
-                                    tag="a"
-                                    href="{{ $plugin['purchase_url'] }}"
-                                    target="_blank"
-                                    color="gray"
-                                    size="sm"
-                                    icon="heroicon-o-shopping-cart"
-                                    outlined
-                                >
-                                    Purchase License
-                                </x-filament::button>
-                            @endif
-                            @if($plugin['homepage'] ?? null)
-                                <x-filament::button
-                                    tag="a"
-                                    href="{{ $plugin['homepage'] }}"
-                                    target="_blank"
-                                    color="gray"
-                                    size="sm"
-                                    outlined
-                                >
-                                    Learn More
-                                </x-filament::button>
-                            @endif
                         </div>
                     </x-filament::section>
                 @endforeach
@@ -152,7 +142,7 @@
 
     {{-- Plugin List --}}
     <div class="space-y-3">
-        @forelse($this->filteredPlugins as $plugin)
+        @forelse($this->paginatedPlugins as $plugin)
             <x-filament::section class="!p-4">
                 <div class="flex items-start justify-between gap-4">
                     {{-- Plugin Info --}}
@@ -380,6 +370,45 @@
             @endif
         @endforelse
     </div>
+
+    {{-- Plugin Pagination --}}
+    @if($this->pluginPageCount > 1)
+        <div class="flex items-center justify-between mt-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                Showing {{ ($this->pluginPage - 1) * $this->pluginsPerPage + 1 }}–{{ min($this->pluginPage * $this->pluginsPerPage, $this->filteredPlugins->count()) }} of {{ $this->filteredPlugins->count() }} plugins
+            </p>
+            <div class="flex items-center gap-1">
+                <x-filament::button
+                    wire:click="goToPluginPage({{ $this->pluginPage - 1 }})"
+                    color="gray"
+                    size="sm"
+                    outlined
+                    :disabled="$this->pluginPage <= 1"
+                >
+                    Previous
+                </x-filament::button>
+                @for($i = 1; $i <= $this->pluginPageCount; $i++)
+                    <x-filament::button
+                        wire:click="goToPluginPage({{ $i }})"
+                        :color="$i === $this->pluginPage ? 'primary' : 'gray'"
+                        size="sm"
+                        :outlined="$i !== $this->pluginPage"
+                    >
+                        {{ $i }}
+                    </x-filament::button>
+                @endfor
+                <x-filament::button
+                    wire:click="goToPluginPage({{ $this->pluginPage + 1 }})"
+                    color="gray"
+                    size="sm"
+                    outlined
+                    :disabled="$this->pluginPage >= $this->pluginPageCount"
+                >
+                    Next
+                </x-filament::button>
+            </div>
+        </div>
+    @endif
 
     {{-- Empty State --}}
     @if($this->plugins->isEmpty())

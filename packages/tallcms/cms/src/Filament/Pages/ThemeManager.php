@@ -19,6 +19,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use TallCms\Cms\Models\SiteSetting;
 use TallCms\Cms\Models\Theme;
+use TallCms\Cms\Services\MarketplaceCatalogService;
 use TallCms\Cms\Services\PluginLicenseService;
 use TallCms\Cms\Services\ThemeManager as ThemeManagerService;
 use TallCms\Cms\Services\ThemeValidator;
@@ -57,6 +58,10 @@ class ThemeManager extends Page implements HasForms
 
     #[Url]
     public string $search = '';
+
+    public int $themePage = 1;
+
+    public int $themesPerPage = 12;
 
     public bool $filterDarkMode = false;
 
@@ -169,6 +174,85 @@ class ThemeManager extends Page implements HasForms
         });
 
         return $themes->values();
+    }
+
+    /**
+     * Get paginated themes for the current page
+     */
+    #[Computed]
+    public function paginatedThemes(): Collection
+    {
+        return $this->filteredThemes
+            ->slice(($this->themePage - 1) * $this->themesPerPage, $this->themesPerPage)
+            ->values();
+    }
+
+    /**
+     * Get total number of theme pages
+     */
+    #[Computed]
+    public function themePageCount(): int
+    {
+        return (int) ceil($this->filteredThemes->count() / $this->themesPerPage);
+    }
+
+    /**
+     * Navigate to a theme page
+     */
+    public function goToThemePage(int $page): void
+    {
+        $this->themePage = max(1, min($page, $this->themePageCount));
+    }
+
+    /**
+     * Reset theme pagination when search or filters change
+     */
+    public function updatedSearch(): void
+    {
+        $this->themePage = 1;
+    }
+
+    public function updatedFilterDarkMode(): void
+    {
+        $this->themePage = 1;
+    }
+
+    public function updatedFilterThemeController(): void
+    {
+        $this->themePage = 1;
+    }
+
+    public function updatedFilterResponsive(): void
+    {
+        $this->themePage = 1;
+    }
+
+    public function updatedFilterAnimations(): void
+    {
+        $this->themePage = 1;
+    }
+
+    /**
+     * Get available themes from the remote marketplace catalog
+     */
+    #[Computed]
+    public function availableMarketplaceThemes(): Collection
+    {
+        $catalog = app(MarketplaceCatalogService::class)->getThemes();
+
+        // Use licenseSlug as the canonical identifier for installed themes.
+        // Theme::getLicenseSlug() defaults to "tallcms/theme-{slug}".
+        // Marketplace theme entries must use the same convention.
+        $installedSlugs = $this->themes
+            ->pluck('licenseSlug')
+            ->filter()
+            ->toArray();
+
+        return collect($catalog)
+            ->filter(fn ($theme) => ! in_array($theme['full_slug'], $installedSlugs))
+            ->sortByDesc('featured')
+            ->take(4)
+            ->values();
     }
 
     /**

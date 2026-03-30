@@ -50,12 +50,12 @@ class PluginConfigResolutionTest extends TestCase
         $this->assertArrayHasKey('tallcms/mega-menu', $downloadUrls);
     }
 
-    public function test_plugin_catalog_resolves_from_tallcms_namespace(): void
+    public function test_plugin_catalog_url_resolves_from_tallcms_namespace(): void
     {
-        $catalog = config('tallcms.plugins.catalog');
+        $catalogUrl = config('tallcms.plugins.catalog_url');
 
-        $this->assertIsArray($catalog);
-        $this->assertArrayHasKey('tallcms/pro', $catalog);
+        $this->assertSame('https://tallcms.com/marketplace-api/v1/catalog', $catalogUrl);
+        $this->assertSame(3600, config('tallcms.plugins.catalog_cache_ttl'));
     }
 
     /**

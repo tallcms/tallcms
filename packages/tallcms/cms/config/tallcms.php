@@ -275,36 +275,14 @@ return [
             ],
         ],
 
-        // Official plugin catalog (shown in Plugin Manager)
-        'catalog' => [
-            'tallcms/pro' => [
-                'name' => 'TallCMS Pro',
-                'slug' => 'pro',
-                'vendor' => 'tallcms',
-                'description' => 'Advanced blocks, analytics, and integrations for TallCMS.',
-                'author' => 'TallCMS',
-                'homepage' => 'https://tallcms.com/pro',
-                'icon' => 'heroicon-o-sparkles',
-                'category' => 'official',
-                'featured' => true,
-                'download_url' => 'https://anystack.sh/download/tallcms-pro-plugin',
-                'purchase_url' => 'https://checkout.anystack.sh/tallcms-pro-plugin',
-            ],
-            // tallcms/mega-menu temporarily removed from catalog — not stable yet
-            // 'tallcms/mega-menu' => [
-            //     'name' => 'TallCMS Mega Menu',
-            //     'slug' => 'mega-menu',
-            //     'vendor' => 'tallcms',
-            //     'description' => 'Create stunning mega menus for your website with ease.',
-            //     'author' => 'TallCMS',
-            //     'homepage' => 'https://tallcms.com/mega-menu',
-            //     'icon' => 'heroicon-o-bars-3-bottom-left',
-            //     'category' => 'official',
-            //     'featured' => true,
-            //     'download_url' => 'https://anystack.sh/download/tallcms-mega-menu-plugin',
-            //     'purchase_url' => 'https://checkout.anystack.sh/tallcms-mega-menu-plugin',
-            // ],
-        ],
+        // Remote marketplace catalog API URL
+        'catalog_url' => env('TALLCMS_CATALOG_URL', 'https://tallcms.com/marketplace-api/v1/catalog'),
+
+        // Marketplace page URL (human-facing, for "Browse Marketplace" links)
+        'marketplace_url' => env('TALLCMS_MARKETPLACE_URL', 'https://tallcms.com/marketplace'),
+
+        // How long to cache the remote catalog locally (seconds)
+        'catalog_cache_ttl' => env('TALLCMS_CATALOG_CACHE_TTL', 3600),
     ],
 
     /*

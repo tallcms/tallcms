@@ -95,7 +95,8 @@ class ConfigSchemaTest extends TestCase
             'cache_enabled',
             'auto_migrate',
             'license',
-            'catalog',
+            'catalog_url',
+            'catalog_cache_ttl',
         ];
 
         foreach ($requiredKeys as $key) {
@@ -153,28 +154,13 @@ class ConfigSchemaTest extends TestCase
         }
     }
 
-    public function test_plugin_catalog_entries_have_required_fields(): void
+    public function test_plugin_catalog_url_has_valid_default(): void
     {
-        $catalog = config('tallcms.plugins.catalog', []);
+        $catalogUrl = config('tallcms.plugins.catalog_url');
 
-        foreach ($catalog as $slug => $plugin) {
-            $requiredFields = [
-                'name',
-                'slug',
-                'vendor',
-                'description',
-                'author',
-                'download_url', // This was the missing field that caused issues!
-            ];
-
-            foreach ($requiredFields as $field) {
-                $this->assertArrayHasKey(
-                    $field,
-                    $plugin,
-                    "Plugin catalog entry [{$slug}] must have '{$field}' field"
-                );
-            }
-        }
+        $this->assertIsString($catalogUrl);
+        $this->assertStringStartsWith('https://', $catalogUrl);
+        $this->assertSame(3600, config('tallcms.plugins.catalog_cache_ttl'));
     }
 
     public function test_plugin_license_config_has_required_fields(): void

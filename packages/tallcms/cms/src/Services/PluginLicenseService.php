@@ -276,8 +276,8 @@ class PluginLicenseService
                 'status_label' => 'No License',
                 'status_color' => 'gray',
                 'message' => 'Enter your license key to activate this plugin',
-                'purchase_url' => config("tallcms.plugins.license.purchase_urls.{$pluginSlug}"),
-                'download_url' => config("tallcms.plugins.license.download_urls.{$pluginSlug}"),
+                'purchase_url' => app(MarketplaceCatalogService::class)->getPurchaseUrl($pluginSlug),
+                'download_url' => app(MarketplaceCatalogService::class)->getDownloadUrl($pluginSlug),
             ];
         }
 
@@ -306,8 +306,8 @@ class PluginLicenseService
             'last_validated' => $license->last_validated_at?->diffForHumans(),
             'message' => $message,
             'is_in_grace_period' => $inRenewalGrace,
-            'purchase_url' => config("tallcms.plugins.license.purchase_urls.{$pluginSlug}"),
-            'download_url' => config("tallcms.plugins.license.download_urls.{$pluginSlug}"),
+            'purchase_url' => app(MarketplaceCatalogService::class)->getPurchaseUrl($pluginSlug),
+            'download_url' => app(MarketplaceCatalogService::class)->getDownloadUrl($pluginSlug),
         ];
     }
 
@@ -461,7 +461,7 @@ class PluginLicenseService
     public function checkForUpdates(string $pluginSlug): array
     {
         $license = PluginLicense::findByPluginSlug($pluginSlug);
-        $purchaseUrl = config("tallcms.plugins.license.purchase_urls.{$pluginSlug}");
+        $purchaseUrl = app(MarketplaceCatalogService::class)->getPurchaseUrl($pluginSlug);
 
         if (! $license) {
             return [
