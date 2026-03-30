@@ -21,7 +21,7 @@ class MarketplaceCatalogServiceTest extends TestCase
     protected function fakeApiResponse(array $items = []): void
     {
         Http::fake([
-            '*/api/v1/marketplace*' => Http::response([
+            '*/marketplace-api/v1/catalog*' => Http::response([
                 'items' => $items,
                 'version' => '2',
             ], 200),
@@ -150,7 +150,7 @@ class MarketplaceCatalogServiceTest extends TestCase
     public function test_returns_empty_array_when_api_unreachable(): void
     {
         Http::fake([
-            '*/api/v1/marketplace*' => Http::response(null, 500),
+            '*/marketplace-api/v1/catalog*' => Http::response(null, 500),
         ]);
 
         $result = $this->service->getPlugins();
@@ -162,7 +162,7 @@ class MarketplaceCatalogServiceTest extends TestCase
     public function test_returns_empty_array_when_api_times_out(): void
     {
         Http::fake([
-            '*/api/v1/marketplace*' => fn () => throw new \Illuminate\Http\Client\ConnectionException('Connection timed out'),
+            '*/marketplace-api/v1/catalog*' => fn () => throw new \Illuminate\Http\Client\ConnectionException('Connection timed out'),
         ]);
 
         $result = $this->service->getPlugins();
