@@ -16,7 +16,9 @@ prerequisites:
 
 ## How It Works
 
-TallCMS has a built-in license activation system for **official** plugins and themes (those published by TallCMS). This system uses a license proxy hosted on tallcms.com that communicates with an upstream license provider.
+TallCMS has a built-in license activation system for **official plugins** (those published by TallCMS with `vendor: tallcms`). This system uses a license proxy hosted on tallcms.com that communicates with an upstream license provider.
+
+Official **themes** use a different model — their downloads are gated by the license provider (Anystack), so no post-install activation is needed. Theme licensing is handled at purchase/download time, not within the CMS.
 
 **If you're a 3rd party developer, the built-in activation system is not available to you.** You'll need to implement your own licensing within your plugin's service provider. This guide explains both paths.
 
@@ -192,7 +194,7 @@ Submit your plugin or theme for review at tallcms.com. Once approved, it appears
 | Field | Effect on CMS |
 |-------|---------------|
 | `is_paid` | Informational — shown in marketplace UI |
-| `requires_license` | **Only for official plugins.** Controls whether the CMS shows the built-in activation UI. Set to `false` for 3rd party plugins. |
+| `requires_license` | **Only affects official plugins.** When `true`, the CMS shows the built-in license activation UI in the Plugin Manager for plugins with `vendor: tallcms`. Has no effect on themes or 3rd party plugins — set to `false` for those. |
 | `download_url` | "Download" button target |
 | `purchase_url` | "Purchase" button target |
 
@@ -214,7 +216,7 @@ These fields in your `plugin.json` are relevant to licensing:
 | Field | Description |
 |-------|-------------|
 | `vendor` | Your vendor name. Only `tallcms` vendor plugins use the built-in license proxy. |
-| `license_required` | Set to `true` if your plugin requires licensing. For official plugins, this is a fallback when the marketplace API is unreachable. For 3rd party plugins, this field is informational — the CMS does not act on it. |
+| `license_required` | Set to `true` if your plugin requires licensing. For official plugins (`vendor: tallcms`), this serves as a **fallback only when the marketplace catalog is unreachable** — the catalog is the primary source of truth. For 3rd party plugins, the CMS does not act on this field; implement your own licensing instead. |
 
 ---
 
