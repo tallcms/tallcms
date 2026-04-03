@@ -15,7 +15,13 @@ class SiteScope implements Scope
     {
         $resolver = app(CurrentSiteResolver::class);
 
-        // Only filter when site is resolved
+        // Lazily resolve if middleware hasn't run yet.
+        // Filament admin uses its own middleware stack (not the 'web' group),
+        // so ResolveSiteMiddleware may not have executed.
+        if (! $resolver->isResolved() && app()->runningInConsole() === false) {
+            $resolver->resolve(request());
+        }
+
         if (! $resolver->isResolved()) {
             return;
         }
