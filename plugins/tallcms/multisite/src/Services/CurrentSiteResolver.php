@@ -35,9 +35,12 @@ class CurrentSiteResolver
 
         $this->resolved = true;
 
-        // Admin panel: use session-based site selection
+        // Admin context: use session-based site selection.
+        // Detect admin context by panel path OR presence of admin session state
+        // (Livewire update requests go to /livewire/update, not /admin/*)
         $panelPath = config('tallcms.filament.panel_path', 'admin');
-        if ($request->is("{$panelPath}*") || $request->is("{$panelPath}")) {
+        $hasAdminSession = session()->has('multisite_admin_site_id');
+        if ($hasAdminSession || $request->is("{$panelPath}*") || $request->is("{$panelPath}")) {
             $this->resolveForAdmin();
 
             return;
