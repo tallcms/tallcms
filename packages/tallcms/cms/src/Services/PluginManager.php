@@ -51,10 +51,15 @@ class PluginManager
 
         if ($this->isCacheEnabled()) {
             $cached = Cache::get($this->getCacheKey());
-            if ($cached !== null) {
+            if ($cached instanceof Collection) {
                 $this->discoveredPlugins = $this->pruneMissingPlugins($cached);
 
                 return $this->discoveredPlugins;
+            }
+
+            // Cached value is corrupted (__PHP_Incomplete_Class) or wrong type — discard it
+            if ($cached !== null) {
+                Cache::forget($this->getCacheKey());
             }
         }
 

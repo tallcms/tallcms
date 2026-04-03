@@ -299,6 +299,13 @@ class ThemeManager
                 return $this->discoverThemes();
             });
 
+            // Guard against corrupted cache (__PHP_Incomplete_Class from serialization issues)
+            if (! $cachedThemes instanceof Collection) {
+                Cache::forget(self::CACHE_KEY);
+
+                return $this->discoverThemes();
+            }
+
             // Prune missing directories to prevent phantom themes
             return $this->pruneMissingThemes($cachedThemes);
         }
