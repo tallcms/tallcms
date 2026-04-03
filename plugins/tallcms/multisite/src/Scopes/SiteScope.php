@@ -18,9 +18,8 @@ class SiteScope implements Scope
         // Lazily resolve if middleware hasn't run yet.
         // Filament admin uses its own middleware stack (not the 'web' group),
         // so ResolveSiteMiddleware may not have executed.
-        // Uses resolveLazy() to avoid abort(404) in ambiguous contexts.
         if (! $resolver->isResolved() && app()->runningInConsole() === false) {
-            $resolver->resolveLazy(request());
+            $resolver->resolve(request());
         }
 
         if (! $resolver->isResolved()) {

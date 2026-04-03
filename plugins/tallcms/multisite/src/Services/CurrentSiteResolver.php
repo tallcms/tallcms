@@ -25,12 +25,6 @@ class CurrentSiteResolver
     protected bool $allSitesMode = false;
 
     /**
-     * Whether resolution was triggered lazily by SiteScope (not by middleware).
-     * When true, we skip abort(404) since the request context may be ambiguous.
-     */
-    protected bool $lazyResolved = false;
-
-    /**
      * Resolve the current site from the request.
      */
     public function resolve(Request $request): void
@@ -91,16 +85,8 @@ class CurrentSiteResolver
         $host = $request->getHost();
         $this->resolvedSite = Site::findByDomain($host);
 
-        if ($this->resolvedSite) {
-            return;
-        }
-
-        // No site matches this domain.
-        // Only abort on actual frontend page requests, not during query scoping
-        // (the scope calls resolve() lazily — aborting there would kill admin requests)
-        if (! $this->lazyResolved) {
-            abort(404);
-        }
+        // If no site matches, resolvedSite stays null.
+        // The middleware handles the 404 for frontend page requests.
     }
 
     /**
@@ -148,21 +134,10 @@ class CurrentSiteResolver
     /**
      * Reset resolver state (useful for testing).
      */
-    /**
-     * Resolve lazily (called by SiteScope when middleware hasn't run).
-     * Skips abort(404) since the request context may be ambiguous.
-     */
-    public function resolveLazy(Request $request): void
-    {
-        $this->lazyResolved = true;
-        $this->resolve($request);
-    }
-
     public function reset(): void
     {
         $this->resolvedSite = null;
         $this->resolved = false;
         $this->allSitesMode = false;
-        $this->lazyResolved = false;
     }
 }

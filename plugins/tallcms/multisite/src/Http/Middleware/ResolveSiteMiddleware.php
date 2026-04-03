@@ -24,6 +24,18 @@ class ResolveSiteMiddleware
         $site = $this->resolver->get();
 
         if (! $site) {
+            // No site matched this domain.
+            // 404 only for frontend page routes — not plugin routes, API, etc.
+            $panelPath = config('tallcms.filament.panel_path', 'admin');
+            $isFrontendRoute = ! $request->is("{$panelPath}*")
+                && ! $request->is('_plugins/*')
+                && ! $request->is('api/*')
+                && ! $request->is('livewire/*');
+
+            if ($isFrontendRoute) {
+                abort(404);
+            }
+
             return $next($request);
         }
 
