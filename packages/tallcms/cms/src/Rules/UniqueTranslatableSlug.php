@@ -64,17 +64,19 @@ class UniqueTranslatableSlug implements ValidationRule
         }
 
         // Scope uniqueness to current site when multisite is active.
-        // Uses the same context-aware pattern as SiteSetting::resolveCurrentSiteId():
-        // admin context reads session, frontend reads resolver.
+        // Livewire update requests use the 'web' middleware group, NOT the
+        // Filament panel middleware, so tallcms.admin_context attribute may
+        // not be set. Check session first (covers admin), then resolver (frontend).
         $siteId = null;
-        $isAdminContext = request()?->attributes->get('tallcms.admin_context', false);
 
-        if ($isAdminContext) {
-            $sessionValue = session('multisite_admin_site_id');
-            if ($sessionValue && $sessionValue !== '__all_sites__' && is_numeric($sessionValue)) {
-                $siteId = (int) $sessionValue;
-            }
-        } elseif (app()->bound('tallcms.multisite.resolver')) {
+        // Tier 1: Admin session (always available during Filament/Livewire requests)
+        $sessionValue = session('multisite_admin_site_id');
+        if ($sessionValue && $sessionValue !== '__all_sites__' && is_numeric($sessionValue)) {
+            $siteId = (int) $sessionValue;
+        }
+
+        // Tier 2: Resolver (frontend domain-based)
+        if (! $siteId && app()->bound('tallcms.multisite.resolver')) {
             try {
                 $resolver = app('tallcms.multisite.resolver');
                 if ($resolver->isResolved() && $resolver->id()) {
