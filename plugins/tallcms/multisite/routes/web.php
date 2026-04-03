@@ -11,4 +11,4 @@ Route::post('/switch-site', function (Request $request) {
     $resolver->setAdminSite($siteId ? (int) $siteId : null);
 
     return redirect()->back();
-})->middleware('web')->name('multisite.switch-site');
+})->middleware(['web', 'auth'])->name('multisite.switch-site');

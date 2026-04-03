@@ -6,7 +6,7 @@
         >
             <x-heroicon-m-globe-alt class="h-4 w-4 text-gray-400" />
             <span class="flex-1 truncate text-left">
-                {{ $currentSite?->name ?? 'All Sites' }}
+                {{ $allSitesMode ? 'All Sites' : ($currentSite?->name ?? 'Select Site') }}
             </span>
             <x-heroicon-m-chevron-up-down class="h-4 w-4 text-gray-400" />
         </button>
@@ -25,8 +25,8 @@
                     type="submit"
                     @class([
                         'flex w-full items-center gap-2 px-3 py-2 text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700',
-                        'font-semibold text-primary-600 dark:text-primary-400' => !$currentSite,
-                        'text-gray-600 dark:text-gray-400' => $currentSite,
+                        'font-semibold text-primary-600 dark:text-primary-400' => $allSitesMode,
+                        'text-gray-600 dark:text-gray-400' => !$allSitesMode,
                     ])
                 >
                     <x-heroicon-m-squares-2x2 class="h-4 w-4" />
@@ -45,8 +45,8 @@
                         type="submit"
                         @class([
                             'flex w-full items-center gap-2 px-3 py-2 text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700',
-                            'font-semibold text-primary-600 dark:text-primary-400' => $currentSite?->id === $site->id,
-                            'text-gray-600 dark:text-gray-400' => $currentSite?->id !== $site->id,
+                            'font-semibold text-primary-600 dark:text-primary-400' => !$allSitesMode && $currentSite?->id === $site->id,
+                            'text-gray-600 dark:text-gray-400' => $allSitesMode || $currentSite?->id !== $site->id,
                         ])
                     >
                         <x-heroicon-m-globe-alt class="h-4 w-4" />

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tallcms\Multisite\Filament\Resources\SiteResource;
 
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use TallCms\Cms\Services\LocaleRegistry;
 use TallCms\Cms\Services\ThemeManager;

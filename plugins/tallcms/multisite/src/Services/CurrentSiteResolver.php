@@ -9,9 +9,20 @@ use Tallcms\Multisite\Models\Site;
 
 class CurrentSiteResolver
 {
+    /**
+     * Session sentinel meaning "admin explicitly chose All Sites".
+     * Distinguishes from null (no selection yet → fall back to default).
+     */
+    public const ALL_SITES_SENTINEL = '__all_sites__';
+
     protected ?Site $resolvedSite = null;
 
     protected bool $resolved = false;
+
+    /**
+     * Whether the admin explicitly selected "All Sites" mode.
+     */
+    protected bool $allSitesMode = false;
 
     /**
      * Resolve the current site from the request.
@@ -38,14 +49,31 @@ class CurrentSiteResolver
 
     protected function resolveForAdmin(): void
     {
-        $siteId = session('multisite_admin_site_id');
+        $sessionValue = session('multisite_admin_site_id');
 
-        if ($siteId) {
-            $this->resolvedSite = Site::where('id', $siteId)->where('is_active', true)->first();
+        // Explicit "All Sites" selection
+        if ($sessionValue === self::ALL_SITES_SENTINEL) {
+            $this->allSitesMode = true;
+            $this->resolvedSite = null;
+
+            return;
         }
 
-        // Fall back to default site for admin
+        // Specific site selected
+        if ($sessionValue) {
+            $this->resolvedSite = Site::where('id', $sessionValue)->where('is_active', true)->first();
+        }
+
+        // Fall back to default site for admin (first visit, no selection yet)
         $this->resolvedSite ??= Site::getDefault();
+    }
+
+    /**
+     * Whether the admin is in "All Sites" mode.
+     */
+    public function isAllSitesMode(): bool
+    {
+        return $this->allSitesMode;
     }
 
     protected function resolveForFrontend(Request $request): void
@@ -94,15 +122,19 @@ class CurrentSiteResolver
 
     /**
      * Set the admin site (called by site switcher).
+     * Pass null for "All Sites" mode.
      */
     public function setAdminSite(?int $siteId): void
     {
-        session(['multisite_admin_site_id' => $siteId]);
-
-        if ($siteId) {
-            $this->resolvedSite = Site::find($siteId);
-        } else {
+        if ($siteId === null) {
+            // Explicit "All Sites" selection
+            session(['multisite_admin_site_id' => self::ALL_SITES_SENTINEL]);
+            $this->allSitesMode = true;
             $this->resolvedSite = null;
+        } else {
+            session(['multisite_admin_site_id' => $siteId]);
+            $this->allSitesMode = false;
+            $this->resolvedSite = Site::find($siteId);
         }
     }
 

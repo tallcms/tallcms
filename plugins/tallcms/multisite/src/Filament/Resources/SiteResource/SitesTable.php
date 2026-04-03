@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tallcms\Multisite\Filament\Resources\SiteResource;
 
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
