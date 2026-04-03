@@ -63,16 +63,30 @@ class UniqueTranslatableSlug implements ValidationRule
             $query->where('id', '!=', $this->ignoreId);
         }
 
-        // Scope uniqueness to current site when multisite is active
-        if (app()->bound('tallcms.multisite.resolver')) {
+        // Scope uniqueness to current site when multisite is active.
+        // Uses the same context-aware pattern as SiteSetting::resolveCurrentSiteId():
+        // admin context reads session, frontend reads resolver.
+        $siteId = null;
+        $isAdminContext = request()?->attributes->get('tallcms.admin_context', false);
+
+        if ($isAdminContext) {
+            $sessionValue = session('multisite_admin_site_id');
+            if ($sessionValue && $sessionValue !== '__all_sites__' && is_numeric($sessionValue)) {
+                $siteId = (int) $sessionValue;
+            }
+        } elseif (app()->bound('tallcms.multisite.resolver')) {
             try {
                 $resolver = app('tallcms.multisite.resolver');
                 if ($resolver->isResolved() && $resolver->id()) {
-                    $query->where('site_id', $resolver->id());
+                    $siteId = $resolver->id();
                 }
             } catch (\Throwable) {
-                // Multisite not functional — check globally
+                // Multisite not functional
             }
+        }
+
+        if ($siteId) {
+            $query->where('site_id', $siteId);
         }
 
         if ($query->exists()) {
