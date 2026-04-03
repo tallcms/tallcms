@@ -9,7 +9,6 @@ use Filament\Panel;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\Blade;
 use TallCms\Cms\Services\PluginLicenseService;
-use Tallcms\Multisite\Filament\Pages\SiteSettingsPage;
 use Tallcms\Multisite\Filament\Resources\SiteResource\SiteResource;
 use Tallcms\Multisite\Models\Site;
 use Tallcms\Multisite\Services\CurrentSiteResolver;
@@ -30,10 +29,6 @@ class MultisitePlugin implements Plugin
 
         $panel->resources([
             SiteResource::class,
-        ]);
-
-        $panel->pages([
-            SiteSettingsPage::class,
         ]);
 
         $panel->renderHook(
