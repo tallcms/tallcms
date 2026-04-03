@@ -166,7 +166,7 @@ npm install && npm run build
 php artisan serve
 ```
 
-Visit `http://localhost:8000/install` to complete the web installer.
+Visit `http://localhost:8000/install` to complete the web installer. After setup, your admin panel is at `http://localhost:8000/admin`.
 
 ### Web Installer
 
@@ -203,12 +203,21 @@ php artisan make:user
 
 ### Post-Installation
 
-After installation, you can:
+After installation, access the admin panel at:
 
-1. Access the admin panel at your configured panel path (defaults to `/admin`)
-2. Create pages and posts in **Content**
-3. Configure site settings in **Settings**
+```
+https://yourdomain.com/admin
+```
+
+Log in with the admin credentials you created during setup. From here you can:
+
+1. Create pages and posts in **Content > Pages** and **Content > Posts**
+2. Set up navigation menus in **Content > Menus**
+3. Configure site settings in **Settings > Site Settings**
 4. Customize your theme in **Appearance > Themes**
+5. Manage roles and permissions in **Settings > Shield**
+
+> **Tip:** The default admin path is `/admin`. If you changed the panel path during setup, use that instead.
 
 ---
 
@@ -560,7 +569,7 @@ npm install && npm run build
 composer dev
 ```
 
-Visit `http://localhost:8000/install` to complete setup.
+Visit `http://localhost:8000/install` to complete setup. After installation, the admin panel is at `http://localhost:8000/admin`.
 
 ---
 
@@ -576,7 +585,7 @@ Verify database credentials in installer form. Ensure database server is running
 Ensure `storage/` and `bootstrap/cache/` are writable. Run `chmod -R 775 storage bootstrap/cache`.
 
 **"Cannot access admin panel"**
-Complete the web installer first. Verify your user has an active role. Check your panel URL is correct (defaults to `/admin`).
+The admin panel is at `/admin` (e.g., `https://yourdomain.com/admin`). Complete the web installer first if you haven't already. Verify your user has an active role. If you changed the panel path in `AdminPanelProvider.php`, use that path instead.
 
 **"403 Forbidden"**
 Clear permission cache: `php artisan permission:cache-reset`. Verify user has appropriate role.
