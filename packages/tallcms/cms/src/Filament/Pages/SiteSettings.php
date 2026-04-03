@@ -457,10 +457,23 @@ class SiteSettings extends Page implements HasForms
         }
     }
 
+    /**
+     * Compare a submitted value with a global value, accounting for type.
+     */
+    protected function valuesMatch(mixed $submitted, mixed $global, string $type): bool
+    {
+        if ($type === 'boolean') {
+            return (bool) $submitted === (bool) $global;
+        }
+
+        return (string) ($submitted ?? '') === (string) ($global ?? '');
+    }
+
     public function save(): void
     {
         $data = $this->form->getState();
         $isMultisite = $this->getMultisiteContext() !== null;
+        $overriddenKeys = $isMultisite ? $this->getOverriddenKeys() : [];
 
         foreach ($data as $key => $value) {
             $type = match ($key) {
@@ -480,12 +493,32 @@ class SiteSettings extends Page implements HasForms
                 default => 'general',
             };
 
-            // In multisite context: save null/empty as explicit blank overrides
-            // for text fields. For file fields, null means "unchanged" not "blank".
-            // In global context: skip null values (original behavior).
-            $isFileField = $type === 'file';
-            if ($value !== null || ($isMultisite && ! $isFileField)) {
+            if ($isMultisite) {
+                $isFileField = $type === 'file';
+
+                // File fields: null means "unchanged", skip entirely
+                if ($isFileField && $value === null) {
+                    continue;
+                }
+
+                // Only create/update overrides when:
+                // - Field already has an existing override (update it)
+                // - OR submitted value differs from global (new override)
+                // Untouched fields matching global are skipped (treated as inheritance).
+                $hasExistingOverride = in_array($key, $overriddenKeys);
+                if (! $hasExistingOverride) {
+                    $globalValue = SiteSetting::getGlobal($key);
+                    if ($this->valuesMatch($value, $globalValue, $type)) {
+                        continue; // Matches global, no override needed
+                    }
+                }
+
                 SiteSetting::set($key, $value ?? '', $type, $group);
+            } else {
+                // Global context: original behavior — skip null values
+                if ($value !== null) {
+                    SiteSetting::set($key, $value, $type, $group);
+                }
             }
         }
 

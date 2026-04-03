@@ -82,7 +82,17 @@ class MultisiteTest extends TestCase
     }
 
     /**
-     * Set up admin context for a specific site.
+     * Set up admin context for SiteSetting operations (session + request attribute).
+     */
+    protected function setAdminSettingsContext(int $siteId): void
+    {
+        session(['multisite_admin_site_id' => $siteId]);
+        request()->attributes->set('tallcms.admin_context', true);
+        Cache::flush();
+    }
+
+    /**
+     * Set up admin context for a specific site (full resolver + session + attribute).
      */
     protected function setAdminSite(?int $siteId): void
     {
@@ -247,16 +257,14 @@ class MultisiteTest extends TestCase
     {
         SiteSetting::setGlobal('site_name', 'Global Name', 'text', 'general');
 
-        session(['multisite_admin_site_id' => $this->siteB->id]);
-        Cache::flush();
+        $this->setAdminSettingsContext($this->siteB->id);
         SiteSetting::set('site_name', 'Site B Name', 'text', 'general');
 
         $this->assertEquals('Site B Name', SiteSetting::get('site_name'));
         $this->assertEquals('Global Name', SiteSetting::getGlobal('site_name'));
 
         // Switch to site A — should get global (no override)
-        session(['multisite_admin_site_id' => $this->siteA->id]);
-        Cache::flush();
+        $this->setAdminSettingsContext($this->siteA->id);
         $this->assertEquals('Global Name', SiteSetting::get('site_name'));
     }
 
@@ -264,8 +272,7 @@ class MultisiteTest extends TestCase
     {
         SiteSetting::setGlobal('i18n_enabled', '1', 'boolean', 'i18n');
 
-        session(['multisite_admin_site_id' => $this->siteB->id]);
-        Cache::flush();
+        $this->setAdminSettingsContext($this->siteB->id);
         SiteSetting::set('i18n_enabled', '0', 'boolean', 'i18n');
 
         // Should have written to global, not overrides
@@ -278,8 +285,7 @@ class MultisiteTest extends TestCase
 
     public function test_reset_to_global_deletes_override(): void
     {
-        session(['multisite_admin_site_id' => $this->siteB->id]);
-        Cache::flush();
+        $this->setAdminSettingsContext($this->siteB->id);
         SiteSetting::set('site_name', 'Custom Name', 'text', 'general');
 
         $this->assertDatabaseHas('tallcms_site_setting_overrides', [
@@ -299,8 +305,7 @@ class MultisiteTest extends TestCase
     {
         SiteSetting::setGlobal('contact_phone', '+1-555-0100', 'text', 'contact');
 
-        session(['multisite_admin_site_id' => $this->siteB->id]);
-        Cache::flush();
+        $this->setAdminSettingsContext($this->siteB->id);
         SiteSetting::set('contact_phone', '', 'text', 'contact');
 
         $this->assertDatabaseHas('tallcms_site_setting_overrides', [
@@ -314,26 +319,38 @@ class MultisiteTest extends TestCase
         $this->assertEquals('+1-555-0100', SiteSetting::getGlobal('contact_phone'));
     }
 
-    public function test_session_takes_precedence_over_stale_resolver(): void
+    public function test_admin_session_does_not_leak_to_frontend(): void
     {
-        // Resolver resolves to site A
-        $this->setAdminSite($this->siteA->id);
+        SiteSetting::setGlobal('site_name', 'Global Name', 'text', 'general');
 
-        // But session changes to site B
+        // Admin creates override for site B
+        $this->setAdminSettingsContext($this->siteB->id);
+        SiteSetting::set('site_name', 'Portal Name', 'text', 'general');
+
+        // Simulate frontend: remove admin context, keep session
+        request()->attributes->remove('tallcms.admin_context');
+        Cache::flush();
+
+        // Frontend should get global, NOT site B's override
+        $this->assertEquals('Global Name', SiteSetting::get('site_name'));
+    }
+
+    public function test_session_used_in_admin_context_only(): void
+    {
+        SiteSetting::setGlobal('site_name', 'Global Name', 'text', 'general');
+
+        // Session has site B, but NO admin context attribute
         session(['multisite_admin_site_id' => $this->siteB->id]);
         Cache::flush();
 
-        SiteSetting::set('site_name', 'Written to B', 'text', 'general');
+        // Without admin attribute: should read global (frontend behavior)
+        $this->assertEquals('Global Name', SiteSetting::get('site_name'));
 
-        // Should write to site B (session), not site A (resolver)
-        $this->assertDatabaseHas('tallcms_site_setting_overrides', [
-            'site_id' => $this->siteB->id,
-            'key' => 'site_name',
-        ]);
-        $this->assertDatabaseMissing('tallcms_site_setting_overrides', [
-            'site_id' => $this->siteA->id,
-            'key' => 'site_name',
-        ]);
+        // With admin attribute: should use session
+        request()->attributes->set('tallcms.admin_context', true);
+        Cache::flush();
+        SiteSetting::set('site_name', 'Site B Name', 'text', 'general');
+        $this->assertEquals('Site B Name', SiteSetting::get('site_name'));
     }
 
     // -------------------------------------------------------

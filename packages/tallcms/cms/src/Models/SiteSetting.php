@@ -125,25 +125,30 @@ class SiteSetting extends Model
     /**
      * Resolve the current site ID for multisite operations.
      *
-     * Uses a two-tier strategy:
-     * 1. Admin session (authoritative for admin context — immune to stale resolver state)
-     * 2. Resolver singleton (authoritative for frontend/runtime — middleware-driven)
+     * Context-aware: uses different sources based on request type.
+     * - Admin requests (tallcms.admin_context attribute): session is authoritative
+     * - Frontend requests: resolver singleton is authoritative (domain-based)
+     * - Boot/console (no request): returns null (global settings)
      *
-     * The admin session is checked first because the resolver singleton can
-     * cache stale boot-time state. The session is always fresh.
-     *
-     * Returns null when multisite is not active or no site is selected.
+     * This separation prevents admin session state from leaking into frontend
+     * settings reads (e.g., visiting tallcms.test after selecting portal.test
+     * in the admin switcher).
      */
     protected static function resolveCurrentSiteId(): ?int
     {
-        // Tier 1: Admin session — authoritative in admin context.
-        // Checked first because the resolver can be stale from boot-time resolution.
-        $sessionValue = session('multisite_admin_site_id');
-        if ($sessionValue && $sessionValue !== '__all_sites__' && is_numeric($sessionValue)) {
-            return (int) $sessionValue;
+        $isAdminContext = request()?->attributes->get('tallcms.admin_context', false);
+
+        if ($isAdminContext) {
+            // Admin: session is the source of truth (immune to stale resolver)
+            $sessionValue = session('multisite_admin_site_id');
+            if ($sessionValue && $sessionValue !== '__all_sites__' && is_numeric($sessionValue)) {
+                return (int) $sessionValue;
+            }
+
+            return null; // "All Sites" or no selection
         }
 
-        // Tier 2: Resolver singleton — authoritative on frontend (domain-based).
+        // Frontend / non-admin: resolver is the source of truth (domain-based)
         if (app()->bound('tallcms.multisite.resolver')) {
             try {
                 $resolver = app('tallcms.multisite.resolver');
