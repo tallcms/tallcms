@@ -36,19 +36,16 @@ class CurrentSiteResolver
         $this->resolved = true;
 
         // Admin context: use session-based site selection.
-        $panelPath = config('tallcms.filament.panel_path', 'admin');
-        $isAdminPath = $request->is("{$panelPath}*") || $request->is("{$panelPath}");
-
-        // Livewire update requests (e.g. /livewire/update) don't match /admin/*,
-        // but admin Livewire components send a Referer from the admin panel.
-        $isAdminLivewire = false;
-        if ($request->is('livewire/*') && session()->has('multisite_admin_site_id')) {
-            $referer = $request->headers->get('referer', '');
-            $adminUrl = rtrim(url($panelPath), '/');
-            $isAdminLivewire = str_starts_with($referer, $adminUrl);
+        // Detected reliably via request attribute set by MarkAdminContext middleware
+        // (added to Filament panel stack by MultisitePlugin), or by URL path match.
+        // This covers all admin requests including Livewire /livewire/update.
+        $isAdminContext = $request->attributes->get('tallcms.admin_context', false);
+        if (! $isAdminContext) {
+            $panelPath = config('tallcms.filament.panel_path', 'admin');
+            $isAdminContext = $request->is("{$panelPath}*") || $request->is("{$panelPath}");
         }
 
-        if ($isAdminPath || $isAdminLivewire) {
+        if ($isAdminContext) {
             $this->resolveForAdmin();
 
             return;

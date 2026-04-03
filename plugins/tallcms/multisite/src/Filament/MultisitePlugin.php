@@ -10,6 +10,7 @@ use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\Blade;
 use TallCms\Cms\Services\PluginLicenseService;
 use Tallcms\Multisite\Filament\Resources\SiteResource\SiteResource;
+use Tallcms\Multisite\Http\Middleware\MarkAdminContext;
 use Tallcms\Multisite\Models\Site;
 use Tallcms\Multisite\Services\CurrentSiteResolver;
 
@@ -26,6 +27,13 @@ class MultisitePlugin implements Plugin
         if (! $this->isLicensed()) {
             return;
         }
+
+        // Mark admin context on every Filament panel request (including Livewire).
+        // The CurrentSiteResolver reads this attribute to reliably detect admin
+        // context without depending on URL patterns or Referer headers.
+        $panel->middleware([
+            MarkAdminContext::class,
+        ]);
 
         $panel->resources([
             SiteResource::class,
