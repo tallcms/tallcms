@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use TallCms\Cms\Casts\TranslatableArray;
 use TallCms\Cms\Filament\Forms\Components\MediaLibraryFileAttachmentProvider;
@@ -113,6 +114,17 @@ class CmsPage extends Model implements HasRichContent
             ->toUnsafeHtml();
     }
 
+    /**
+     * Whether the site_id column exists on the pages table.
+     * Cached per-process to avoid repeated schema checks.
+     */
+    protected static ?bool $hasSiteIdColumn = null;
+
+    protected static function hasSiteIdColumn(): bool
+    {
+        return static::$hasSiteIdColumn ??= Schema::hasColumn('tallcms_pages', 'site_id');
+    }
+
     protected static function boot()
     {
         parent::boot();
@@ -122,9 +134,13 @@ class CmsPage extends Model implements HasRichContent
                 $page->slug = $page->generateUniqueSlug($page->title);
             }
 
-            // Ensure only one page can be marked as homepage
+            // Ensure only one page can be marked as homepage (site-aware when multisite active)
             if ($page->is_homepage) {
-                static::where('is_homepage', true)->update(['is_homepage' => false]);
+                $query = static::withoutGlobalScopes()->where('is_homepage', true);
+                if (static::hasSiteIdColumn() && $page->site_id) {
+                    $query->where('site_id', $page->site_id);
+                }
+                $query->update(['is_homepage' => false]);
             }
         });
 
@@ -133,9 +149,13 @@ class CmsPage extends Model implements HasRichContent
                 $page->slug = $page->generateUniqueSlug($page->title);
             }
 
-            // Ensure only one page can be marked as homepage
+            // Ensure only one page can be marked as homepage (site-aware when multisite active)
             if ($page->is_homepage && $page->isDirty('is_homepage')) {
-                static::where('id', '!=', $page->id)->update(['is_homepage' => false]);
+                $query = static::withoutGlobalScopes()->where('id', '!=', $page->id);
+                if (static::hasSiteIdColumn() && $page->site_id) {
+                    $query->where('site_id', $page->site_id);
+                }
+                $query->update(['is_homepage' => false]);
             }
         });
 
