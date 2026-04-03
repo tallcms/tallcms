@@ -82,14 +82,17 @@ The middleware unconditionally normalizes theme/view state per request:
 
 The admin site switcher stores the selected site in `session('multisite_admin_site_id')`.
 
-Two contexts read this:
+**Architectural rule:** Admin-selected site comes from session. Frontend site comes from domain resolution. These must not be collapsed.
+
+Three contexts read the admin session:
 
 | Context | How it reads | Why |
 |---------|-------------|-----|
-| **SiteScope / SiteSetting** | Via `CurrentSiteResolver` singleton | Resolver detects admin via `tallcms.admin_context` request attribute or URL path match |
-| **ThemeManager page** | Directly from `session()` + `DB::table()` | Bypasses resolver to avoid singleton timing issues during boot/Livewire lifecycle |
+| **SiteSetting** | `resolveCurrentSiteId()` — checks admin context attribute, then session | Context-aware: only uses session in admin, resolver on frontend |
+| **SiteScope** | Via `CurrentSiteResolver` singleton | Resolver detects admin via `tallcms.admin_context` request attribute or URL path match |
+| **ThemeManager / SiteSettings pages** | Directly from `session()` + `DB::table()` | Bypasses resolver to avoid singleton timing issues during boot/Livewire lifecycle |
 
-`MarkAdminContext` middleware (added to Filament panel stack by `MultisitePlugin`) sets the `tallcms.admin_context` request attribute.
+`MarkAdminContext` middleware (added to Filament panel stack by `MultisitePlugin`) sets the `tallcms.admin_context` request attribute on every admin request, including Livewire updates.
 
 ---
 
@@ -137,40 +140,66 @@ The `tallcms_menus.location` unique constraint is changed to `(site_id, location
 
 ## SiteSetting Integration
 
-### Reading (site-aware `get()`)
+### Settings Scope Policy
 
-`SiteSetting::get()` checks `tallcms_site_setting_overrides` first when the multisite resolver is active:
+Each setting key has a scope:
+
+| Scope | Behavior | Examples |
+|-------|----------|---------|
+| **global-only** | Never per-site, even in site context | `i18n_enabled`, `default_locale`, `hide_default_locale`, `i18n_locale_overrides`, `code_*_audit` |
+| **site-override** | Global default + optional per-site override | All other settings (site_name, contact_email, logo, etc.) |
+
+The registry is a static array `SiteSetting::$globalOnlyKeys`. Everything not listed defaults to `site-override`.
+
+### Context-Aware Resolution
+
+`SiteSetting::get()` and `set()` use `resolveCurrentSiteId()` which is **context-aware**:
+
+| Context | Source | Why |
+|---------|--------|-----|
+| **Admin** (`tallcms.admin_context` attribute) | Session | Immune to stale resolver state |
+| **Frontend** (no attribute) | Resolver singleton | Domain-based, middleware-driven |
+| **Boot / console** (no request) | Returns null | Global settings |
+
+This prevents admin session state from leaking into frontend settings reads.
 
 ```php
-// Core code — plugin-absence-safe via string container lookup
-if (app()->bound('tallcms.multisite.resolver')) {
-    $resolver = app('tallcms.multisite.resolver');
-    if ($resolver->isResolved() && $resolver->id()) {
-        // Check override table, fall back to global
+protected static function resolveCurrentSiteId(): ?int
+{
+    $isAdminContext = request()?->attributes->get('tallcms.admin_context', false);
+
+    if ($isAdminContext) {
+        // Admin: session is the source of truth
+        $sessionValue = session('multisite_admin_site_id');
+        if ($sessionValue && $sessionValue !== '__all_sites__' && is_numeric($sessionValue)) {
+            return (int) $sessionValue;
+        }
+        return null;
     }
+
+    // Frontend: resolver is the source of truth
+    // ...
 }
 ```
 
-### Writing (site-aware `set()`)
+### Three Override States
 
-`SiteSetting::set()` writes to the override table when a site is selected:
+| State | DB | `get()` returns |
+|-------|-----|-----------------|
+| No override row | No row in overrides table | Global default |
+| Override with value | Row with value | Override value |
+| Override with empty | Row with `''` | Empty string (not global) |
 
-```php
-if (app()->bound('tallcms.multisite.resolver')) {
-    $resolver = app('tallcms.multisite.resolver');
-    if ($resolver->isResolved() && $resolver->id()) {
-        DB::table('tallcms_site_setting_overrides')->updateOrInsert(...);
-        return;
-    }
-}
-// Fall through to global write
-```
+`resetToGlobal($key)` deletes the override row. Distinct from storing empty.
 
-This is a **platform-level behavior change**: any admin code running with a site context writes per-site overrides automatically.
+### Reading and Writing
 
-### Reading global (bypass override)
-
-`SiteSetting::getGlobal()` always reads from the global table, ignoring multisite overrides. Used by the Theme Manager admin page in global/"All Sites" mode.
+- `SiteSetting::get($key)` — policy-aware: skips override for global-only keys, checks override then global for site-override keys
+- `SiteSetting::set($key, $value)` — policy-aware: writes to global for global-only keys, writes to override table in site context for site-override keys
+- `SiteSetting::getGlobal($key)` — always reads global, ignoring overrides
+- `SiteSetting::setGlobal($key, $value)` — always writes global
+- `SiteSetting::resetToGlobal($key)` — deletes the override row
+- `SiteSetting::isGlobalOnly($key)` — checks the registry
 
 ---
 
@@ -250,10 +279,12 @@ All changes are plugin-absence-safe (guarded by runtime checks):
 | File | Change | Guard |
 |------|--------|-------|
 | `CmsPage.php` | Site-aware homepage enforcement in `boot()` | `Schema::hasColumn('tallcms_pages', 'site_id')` |
-| `SiteSetting.php` | `get()` checks site overrides; `set()` writes to overrides; `getGlobal()` added | `app()->bound('tallcms.multisite.resolver')` |
+| `SiteSetting.php` | Settings scope policy, context-aware `resolveCurrentSiteId()`, `get()`/`set()` policy-aware, `getGlobal()`, `setGlobal()`, `resetToGlobal()` | `request()?->attributes->get('tallcms.admin_context')` + `app()->bound('tallcms.multisite.resolver')` |
+| `SiteSettings.php` (page) | Override indicators (hint icons, "Reset to global" actions), smart save loop (only changed fields create overrides), global-only fields locked | `session('multisite_admin_site_id')` + `DB::table()` |
 | `ThemeManager.php` (service) | `resetViewPaths()` made public; clears namespace hints | N/A (safe regardless) |
-| `ThemeManager.php` (page) | Site-aware theme activation, preset, context indicator | `session('multisite_admin_site_id')` + `DB::table()` with `QueryException` catch |
+| `ThemeManager.php` (page) | Site-aware theme activation, preset, rollback, context indicator | `session('multisite_admin_site_id')` + `DB::table()` with `QueryException` catch |
 | `UniqueTranslatableSlug.php` | Site-scoped slug uniqueness | `app()->bound('tallcms.multisite.resolver')` |
+| `CmsPageForm.php` | Uses `UniqueTranslatableSlug` for non-i18n path too (site-aware) | N/A |
 
 ---
 
@@ -280,9 +311,33 @@ $site = DB::table('tallcms_sites')->where('id', $siteId)->first();
 
 ### Writing site-aware settings
 
-Just use `SiteSetting::get()` and `SiteSetting::set()` — they're automatically site-aware when a site is selected.
+`SiteSetting::get()` and `set()` are automatically site-aware when a site is selected. The scope policy ensures global-only keys (i18n, audit) always read/write globally.
 
-For admin pages that must read the global value regardless of site context, use `SiteSetting::getGlobal()`.
+Key methods:
+- `SiteSetting::get($key)` — site-override first, global fallback
+- `SiteSetting::set($key, $value)` — writes to override in site context, global otherwise
+- `SiteSetting::getGlobal($key)` — always reads global (for admin pages showing global defaults)
+- `SiteSetting::setGlobal($key, $value)` — always writes global
+- `SiteSetting::resetToGlobal($key)` — deletes the override, restoring inheritance
+- `SiteSetting::isGlobalOnly($key)` — checks the scope policy registry
+
+### Admin save loop pattern
+
+When saving settings in a multisite-aware admin page, only create overrides for fields that actually changed:
+
+```php
+$hasExistingOverride = in_array($key, $overriddenKeys);
+$globalValue = SiteSetting::getGlobal($key);
+
+// Skip unchanged fields (no override pollution)
+if (! $hasExistingOverride && $this->valuesMatch($value, $globalValue, $type)) {
+    continue;
+}
+
+SiteSetting::set($key, $value, $type, $group);
+```
+
+This prevents the common bug where saving a form creates overrides for every field, even untouched ones that had the global default loaded into the form.
 
 ---
 
@@ -292,13 +347,22 @@ For admin pages that must read the global value regardless of site context, use 
 The scope returns empty results (`WHERE 1 = 0`) when the resolver ran but found no matching site. This prevents cross-site content leakage. Check that your domain is correctly registered.
 
 **"Admin actions affect the wrong site"**
-The `CurrentSiteResolver` singleton can cache stale boot-time state. For admin UI pages, read `session('multisite_admin_site_id')` directly instead of going through the resolver.
+The `CurrentSiteResolver` singleton can cache stale boot-time state. For admin UI pages, read `session('multisite_admin_site_id')` directly instead of going through the resolver. The `SiteSetting` model handles this via `resolveCurrentSiteId()` which uses session in admin context and resolver on frontend.
+
+**"Frontend shows the wrong site's settings"**
+`resolveCurrentSiteId()` is context-aware: it only uses the admin session when `tallcms.admin_context` request attribute is set. On frontend requests (no attribute), it uses the domain-based resolver. If you see cross-site settings leakage, check that the admin context attribute is not set on frontend requests.
+
+**"Saving settings creates overrides for untouched fields"**
+The save loop must compare submitted values against global defaults and only create overrides for fields that actually changed. See the "Admin save loop pattern" section above.
 
 **"Theme views don't change between sites"**
-`resetViewPaths()` must clear both base view paths AND namespace hints. If you see the wrong theme's layout, check that the `tallcms` namespace hints are being cleaned.
+`resetViewPaths()` must clear both base view paths AND `tallcms` namespace hints. If you see the wrong theme's layout, check that the namespace hints are being cleaned.
 
 **"Settings write to the wrong scope"**
-`SiteSetting::set()` is site-aware as a platform-level behavior. Any call with a resolved site context writes to overrides. Use `SiteSetting::getGlobal()` / direct `static::updateOrCreate()` if you need the global path.
+`SiteSetting::set()` is site-aware: writes to overrides in admin context, global on frontend. Global-only keys (i18n, audit) always write to global. Use `SiteSetting::getGlobal()` / `SiteSetting::setGlobal()` if you need the global path explicitly.
+
+**"Global-only settings are editable per-site"**
+Add the key to `SiteSetting::$globalOnlyKeys` to prevent per-site overrides. The Site Settings admin page will show these as locked fields with a "Global setting" label.
 
 ---
 

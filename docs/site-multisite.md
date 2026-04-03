@@ -91,10 +91,34 @@ Each site can use a different theme. The global theme (shown in **All Sites** mo
 
 1. Select a site in the **site switcher**
 2. Navigate to **Admin > Settings > Site Settings**
-3. Change any setting (site name, tagline, contact info, branding, maintenance mode)
-4. Click **Save**
+3. The page shows which site you're editing (e.g., "Editing settings for: Shop (shop.example.com)")
+4. Each field shows its current state:
+   - **Site override** (blue pencil icon) — This site has a custom value
+   - **Inherited from global** (gray globe icon) — Using the global default
+5. Change the settings you want to customize for this site
+6. Click **Save**
 
-Settings you change here override the global defaults for that site only. Settings you don't change inherit from the global defaults.
+Only fields you actually change create per-site overrides. Untouched fields continue to inherit from the global defaults.
+
+### Resetting a Setting to Global
+
+To remove a per-site override and go back to the global default, click the **Reset to global** button (arrow icon) next to any overridden field. This deletes the override — it does not set the value to empty.
+
+### Global-Only Settings
+
+Some settings are always global and cannot be overridden per site:
+- **Language settings** (i18n) — These affect URL routing which is installation-wide
+- These fields appear locked with a "Global setting" label when a site is selected
+
+### Three Override States
+
+| State | Meaning |
+|-------|---------|
+| No override | Setting inherits the global default |
+| Override with a value | Site has its own custom value |
+| Override with empty value | Site explicitly wants this field blank (e.g., no contact phone) |
+
+Clearing a field and saving is **not** the same as resetting to global. Clearing stores an explicit blank; resetting deletes the override.
 
 ---
 
@@ -135,6 +159,12 @@ Pages without a site assignment may be orphaned. Navigate to **All Sites** mode 
 
 **"Can't create pages in All Sites mode"**
 This is intentional. Select a specific site in the switcher before creating pages or menus.
+
+**"Settings I didn't change show as overrides"**
+Only settings you actually modify are saved as overrides. If you see unexpected overrides, check the override indicators on the Site Settings page and use **Reset to global** to clear them.
+
+**"Language settings won't change per site"**
+Language (i18n) settings are global — they affect URL routing which is installation-wide. Per-site locale is set in the site's configuration (locale field), not in Site Settings.
 
 ---
 
