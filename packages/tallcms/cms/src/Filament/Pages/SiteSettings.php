@@ -480,9 +480,11 @@ class SiteSettings extends Page implements HasForms
                 default => 'general',
             };
 
-            // In multisite context: save even null/empty values as explicit blank overrides.
+            // In multisite context: save null/empty as explicit blank overrides
+            // for text fields. For file fields, null means "unchanged" not "blank".
             // In global context: skip null values (original behavior).
-            if ($value !== null || $isMultisite) {
+            $isFileField = $type === 'file';
+            if ($value !== null || ($isMultisite && ! $isFileField)) {
                 SiteSetting::set($key, $value ?? '', $type, $group);
             }
         }
