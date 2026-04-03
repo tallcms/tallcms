@@ -7,7 +7,10 @@ namespace Tallcms\Multisite\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\View;
 use Symfony\Component\HttpFoundation\Response;
+use TallCms\Cms\Contracts\ThemeInterface;
+use TallCms\Cms\Services\FileBasedTheme;
 use TallCms\Cms\Services\ThemeManager;
 use Tallcms\Multisite\Services\CurrentSiteResolver;
 
@@ -39,13 +42,29 @@ class ResolveSiteMiddleware
             return $next($request);
         }
 
-        // Override theme if site has one assigned
+        // Override theme config if site has one assigned
         if ($site->theme) {
             Config::set('theme.active', $site->theme);
+        }
 
-            // Reset ThemeManager singleton so it re-reads from config
-            // ThemeManager caches $activeTheme on first getActiveTheme() call
-            app()->forgetInstance(ThemeManager::class);
+        // Always normalize theme/view state for the current request.
+        // Even when the site has no theme override, we must reset to ensure
+        // a previous request's theme paths don't bleed (long-lived workers).
+        app()->forgetInstance(ThemeManager::class);
+
+        $manager = app(ThemeManager::class);
+        $manager->resetViewPaths();
+        $manager->registerThemeViewPaths();
+
+        $activeTheme = $manager->getActiveTheme();
+        $manager->registerPluginViewOverrides($activeTheme);
+
+        // Flush view finder cache (matches core's View::flushFinderCache() pattern)
+        View::flushFinderCache();
+
+        // Rebind ThemeInterface for color/preset resolution in view composers
+        if ($activeTheme && isset($activeTheme->path)) {
+            app()->instance(ThemeInterface::class, new FileBasedTheme($activeTheme));
         }
 
         // Override locale if site has one assigned

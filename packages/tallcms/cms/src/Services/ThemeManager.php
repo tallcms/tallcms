@@ -606,7 +606,7 @@ class ThemeManager
     /**
      * Reset view paths to prevent bleeding from previous themes
      */
-    protected function resetViewPaths(): void
+    public function resetViewPaths(): void
     {
         $viewFinder = View::getFinder();
         $originalPaths = collect($viewFinder->getPaths())

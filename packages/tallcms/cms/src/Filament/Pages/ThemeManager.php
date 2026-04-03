@@ -285,7 +285,13 @@ class ThemeManager extends Page implements HasForms
         $theme = $this->themes->firstWhere('isActive', true);
 
         if ($theme) {
-            $theme['defaultPreset'] = daisyui_default_preset();
+            // Always read the global preset in admin context.
+            // Per-site preset overrides only apply on the frontend.
+            $activeThemeModel = $this->getThemeManager()->getActiveTheme();
+            $fallback = $activeThemeModel?->getDaisyUIPreset() ?? 'light';
+            $stored = SiteSetting::getGlobal('theme_default_preset');
+            $presets = $activeThemeModel?->getDaisyUIPresets() ?? [];
+            $theme['defaultPreset'] = ($stored && in_array($stored, $presets)) ? $stored : $fallback;
         }
 
         return $theme;

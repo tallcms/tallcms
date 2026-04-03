@@ -86,6 +86,36 @@ class SiteSetting extends Model
     }
 
     /**
+     * Get a setting value by key, always from the global table.
+     *
+     * Bypasses multisite site-specific overrides. Use this when the caller
+     * must read the installation-wide value (e.g., admin ThemeManager page).
+     */
+    public static function getGlobal(string $key, mixed $default = null): mixed
+    {
+        $cacheKey = "site_setting_{$key}";
+
+        return Cache::remember($cacheKey, 3600, function () use ($key, $default) {
+            try {
+                $setting = static::where('key', $key)->first();
+
+                if (! $setting) {
+                    return $default;
+                }
+
+                return match ($setting->type) {
+                    'boolean' => filter_var($setting->value, FILTER_VALIDATE_BOOLEAN),
+                    'json' => json_decode($setting->value, true),
+                    'file' => $setting->value,
+                    default => $setting->value,
+                };
+            } catch (QueryException) {
+                return $default;
+            }
+        });
+    }
+
+    /**
      * Cast a site setting override value based on its type.
      * Used by the multisite override path.
      */
