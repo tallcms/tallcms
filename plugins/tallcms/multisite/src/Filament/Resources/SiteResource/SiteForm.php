@@ -11,6 +11,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
+use TallCms\Cms\Models\Theme;
 use TallCms\Cms\Services\LocaleRegistry;
 use Tallcms\Multisite\Models\Site;
 
@@ -43,7 +44,9 @@ class SiteForm
                         Placeholder::make('theme_display')
                             ->label('Theme')
                             ->content(function (?Site $record) {
-                                $themeName = $record?->theme ? ucfirst($record->theme) : 'Global default';
+                                $themeSlug = $record?->theme;
+                                $themeModel = $themeSlug ? Theme::find($themeSlug) : null;
+                                $themeName = $themeModel?->name ?? ($themeSlug ? ucfirst($themeSlug) : 'Global default');
                                 $manageUrl = url(config('tallcms.filament.panel_path', 'admin').'/theme-manager');
 
                                 return new HtmlString(

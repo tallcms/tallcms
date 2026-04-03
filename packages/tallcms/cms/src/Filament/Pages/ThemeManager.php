@@ -358,10 +358,16 @@ class ThemeManager extends Page implements HasForms
     }
 
     /**
-     * Check if rollback is available
+     * Check if rollback is available.
+     * Rollback only applies to global theme changes (config/theme.php writes).
+     * Per-site theme changes are direct column updates with no rollback state.
      */
     public function canRollback(): bool
     {
+        if ($this->getMultisiteContext()) {
+            return false;
+        }
+
         return $this->getThemeManager()->canRollback();
     }
 
@@ -584,7 +590,7 @@ class ThemeManager extends Page implements HasForms
         }
 
         $this->selectedTheme = $slug;
-        $activeTheme = $this->getThemeManager()->getActiveTheme();
+        $activeSlug = $this->getActiveThemeSlug();
 
         $this->themeDetails = [
             'name' => $theme->name,
@@ -609,7 +615,7 @@ class ThemeManager extends Page implements HasForms
             'compatibility' => $theme->getCompatibility(),
             'isBuilt' => $theme->isBuilt(),
             'isPrebuilt' => $theme->isPrebuilt(),
-            'isActive' => $activeTheme && $activeTheme->slug === $theme->slug,
+            'isActive' => $activeSlug === $theme->slug,
             'meetsRequirements' => $theme->meetsRequirements(),
             'unmetRequirements' => $theme->getUnmetRequirements(),
             'screenshot' => $theme->getScreenshotUrl(),
