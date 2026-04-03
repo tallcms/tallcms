@@ -36,11 +36,12 @@ class CurrentSiteResolver
         $this->resolved = true;
 
         // Admin context: use session-based site selection.
-        // Detect admin context by panel path OR presence of admin session state
-        // (Livewire update requests go to /livewire/update, not /admin/*)
+        // Detect admin by panel path or Livewire internal routes (which don't match /admin/*)
         $panelPath = config('tallcms.filament.panel_path', 'admin');
-        $hasAdminSession = session()->has('multisite_admin_site_id');
-        if ($hasAdminSession || $request->is("{$panelPath}*") || $request->is("{$panelPath}")) {
+        $isAdminPath = $request->is("{$panelPath}*") || $request->is("{$panelPath}");
+        $isLivewireRoute = $request->is('livewire/*');
+
+        if ($isAdminPath || ($isLivewireRoute && session()->has('multisite_admin_site_id'))) {
             $this->resolveForAdmin();
 
             return;
@@ -88,14 +89,7 @@ class CurrentSiteResolver
             return;
         }
 
-        // In local/testing: fall back to default site
-        if (app()->environment('local', 'testing')) {
-            $this->resolvedSite = Site::getDefault();
-
-            return;
-        }
-
-        // In production: strict — 404 for unknown domains
+        // No site matches this domain — 404
         abort(404);
     }
 
