@@ -111,6 +111,14 @@ class ThemeManager extends Page implements HasForms
 
         try {
             $resolver = app('tallcms.multisite.resolver');
+
+            // Trigger resolution if it hasn't happened yet.
+            // On Livewire update requests, the middleware may not have run
+            // and no scoped model query may have triggered lazy resolution.
+            if (! $resolver->isResolved() && ! app()->runningInConsole()) {
+                $resolver->resolve(request());
+            }
+
             if (! $resolver->isResolved() || ! $resolver->id()) {
                 return null;
             }
