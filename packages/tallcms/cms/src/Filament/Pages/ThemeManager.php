@@ -100,18 +100,13 @@ class ThemeManager extends Page implements HasForms
     }
 
     /**
-     * Get multisite context if active.
-     * Returns null when multisite plugin is absent or no site is selected.
-     * Uses string-based container lookup to avoid compile-time dependency.
-     */
-    /**
      * Get multisite admin context by reading the session directly.
      *
      * Bypasses the CurrentSiteResolver singleton entirely — no dependency on
      * middleware timing, request attributes, or boot-time lazy resolution.
      * Returns null when multisite is not active or "All Sites" is selected.
      *
-     * Returns ?stdClass with columns: id, name, domain, theme, etc.
+     * @return ?stdClass with columns: id, name, domain, theme, etc.
      */
     protected function getMultisiteContext(): ?object
     {
