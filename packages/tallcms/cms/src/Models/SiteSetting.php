@@ -67,31 +67,24 @@ class SiteSetting extends Model
             return static::getGlobal($key, $default);
         }
 
-        // Site-override: check per-site override when multisite is active
-        if (app()->bound('tallcms.multisite.resolver')) {
-            try {
-                $resolver = app('tallcms.multisite.resolver');
-                if ($resolver->isResolved() && $resolver->id()) {
-                    $siteId = $resolver->id();
-                    $siteCacheKey = "site_setting_{$siteId}_{$key}";
+        // Site-override: check per-site override when a site is active
+        $siteId = static::resolveCurrentSiteId();
+        if ($siteId) {
+            $siteCacheKey = "site_setting_{$siteId}_{$key}";
 
-                    $override = Cache::remember($siteCacheKey, 3600, function () use ($siteId, $key) {
-                        try {
-                            return DB::table('tallcms_site_setting_overrides')
-                                ->where('site_id', $siteId)
-                                ->where('key', $key)
-                                ->first();
-                        } catch (QueryException) {
-                            return null;
-                        }
-                    });
-
-                    if ($override) {
-                        return static::castOverrideValue($override->value, $override->type);
-                    }
+            $override = Cache::remember($siteCacheKey, 3600, function () use ($siteId, $key) {
+                try {
+                    return DB::table('tallcms_site_setting_overrides')
+                        ->where('site_id', $siteId)
+                        ->where('key', $key)
+                        ->first();
+                } catch (QueryException) {
+                    return null;
                 }
-            } catch (\Throwable) {
-                // Multisite resolver not functional — fall through to global
+            });
+
+            if ($override) {
+                return static::castOverrideValue($override->value, $override->type);
             }
         }
 
@@ -130,6 +123,41 @@ class SiteSetting extends Model
     }
 
     /**
+     * Resolve the current site ID for multisite operations.
+     *
+     * Uses a two-tier strategy to avoid the singleton resolver timing issues
+     * that affected admin pages (stale boot-time resolution, middleware ordering):
+     * 1. Try the resolver singleton (works reliably on frontend via middleware)
+     * 2. Fall back to the admin session directly (reliable in Filament pages)
+     *
+     * Returns null when multisite is not active or no site is selected.
+     */
+    protected static function resolveCurrentSiteId(): ?int
+    {
+        // Tier 1: Try the resolver singleton
+        if (app()->bound('tallcms.multisite.resolver')) {
+            try {
+                $resolver = app('tallcms.multisite.resolver');
+                if ($resolver->isResolved() && $resolver->id()) {
+                    return $resolver->id();
+                }
+            } catch (\Throwable) {
+                // Resolver not functional
+            }
+        }
+
+        // Tier 2: Fall back to admin session direct read.
+        // This covers cases where the resolver hasn't resolved yet (boot-time,
+        // Livewire lifecycle, middleware ordering issues in admin context).
+        $sessionValue = session('multisite_admin_site_id');
+        if ($sessionValue && $sessionValue !== '__all_sites__' && is_numeric($sessionValue)) {
+            return (int) $sessionValue;
+        }
+
+        return null;
+    }
+
+    /**
      * Cast a site setting override value based on its type.
      */
     protected static function castOverrideValue(mixed $value, string $type): mixed
@@ -165,26 +193,23 @@ class SiteSetting extends Model
             default => (string) $value,
         };
 
-        // Site-override: write to per-site override when multisite is active
-        if (app()->bound('tallcms.multisite.resolver')) {
+        // Site-override: write to per-site override when a site is active
+        $siteId = static::resolveCurrentSiteId();
+        if ($siteId) {
             try {
-                $resolver = app('tallcms.multisite.resolver');
-                if ($resolver->isResolved() && $resolver->id()) {
-                    $siteId = $resolver->id();
-                    DB::table('tallcms_site_setting_overrides')->updateOrInsert(
-                        ['site_id' => $siteId, 'key' => $key],
-                        [
-                            'value' => $processedValue,
-                            'type' => $type,
-                            'updated_at' => now(),
-                        ]
-                    );
-                    Cache::forget("site_setting_{$siteId}_{$key}");
+                DB::table('tallcms_site_setting_overrides')->updateOrInsert(
+                    ['site_id' => $siteId, 'key' => $key],
+                    [
+                        'value' => $processedValue,
+                        'type' => $type,
+                        'updated_at' => now(),
+                    ]
+                );
+                Cache::forget("site_setting_{$siteId}_{$key}");
 
-                    return;
-                }
+                return;
             } catch (\Throwable) {
-                // Multisite not functional — fall through to global write
+                // Override table not available — fall through to global write
             }
         }
 
@@ -224,22 +249,19 @@ class SiteSetting extends Model
      */
     public static function resetToGlobal(string $key): void
     {
-        if (! app()->bound('tallcms.multisite.resolver')) {
+        $siteId = static::resolveCurrentSiteId();
+        if (! $siteId) {
             return;
         }
 
         try {
-            $resolver = app('tallcms.multisite.resolver');
-            if ($resolver->isResolved() && $resolver->id()) {
-                $siteId = $resolver->id();
-                DB::table('tallcms_site_setting_overrides')
-                    ->where('site_id', $siteId)
-                    ->where('key', $key)
-                    ->delete();
-                Cache::forget("site_setting_{$siteId}_{$key}");
-            }
+            DB::table('tallcms_site_setting_overrides')
+                ->where('site_id', $siteId)
+                ->where('key', $key)
+                ->delete();
+            Cache::forget("site_setting_{$siteId}_{$key}");
         } catch (\Throwable) {
-            // Ignore
+            // Ignore — table may not exist
         }
     }
 
@@ -275,6 +297,14 @@ class SiteSetting extends Model
             $settings = static::all();
             foreach ($settings as $setting) {
                 Cache::forget("site_setting_{$setting->key}");
+            }
+
+            // Also clear site-specific override caches if multisite is active
+            $siteId = static::resolveCurrentSiteId();
+            if ($siteId) {
+                foreach ($settings as $setting) {
+                    Cache::forget("site_setting_{$siteId}_{$setting->key}");
+                }
             }
         } catch (QueryException) {
             // Table doesn't exist yet
