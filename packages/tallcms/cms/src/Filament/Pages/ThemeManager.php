@@ -423,10 +423,22 @@ class ThemeManager extends Page implements HasForms
         $context = $this->getMultisiteContext();
 
         if ($context) {
-            // Per-site: update the site's theme column directly
+            // Per-site: update the site's theme column
             DB::table('tallcms_sites')
                 ->where('id', $context->id)
                 ->update(['theme' => $slug, 'updated_at' => now()]);
+
+            // Run essential activation steps (same as setActiveTheme minus config file write)
+            $manager = $this->getThemeManager();
+            $manager->publishThemeAssets($theme);
+
+            // Clear compiled views to prevent stale cached templates
+            $compiledViewPath = config('view.compiled');
+            if ($compiledViewPath && File::isDirectory($compiledViewPath)) {
+                foreach (File::glob($compiledViewPath.'/*.php') as $view) {
+                    File::delete($view);
+                }
+            }
 
             // Clear preset for this site (SiteSetting::set() is site-aware)
             SiteSetting::set('theme_default_preset', '', 'text', 'theme');
