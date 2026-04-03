@@ -18,7 +18,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
           extensions: mbstring, xml, ctype, json, bcmath, curl, zip, gd, sqlite3, sodium
           coverage: none
 
@@ -79,7 +79,7 @@ jobs:
               "min_php": "8.2",
               "required_extensions": ["pdo", "mbstring", "openssl", "fileinfo"],
               "build_platform": "Linux",
-              "build_php": "8.3",
+              "build_php": "8.4",
               "built_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           }
           EOF
