@@ -11,6 +11,7 @@ use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -103,30 +104,34 @@ class ThemeManager extends Page implements HasForms
      * Returns null when multisite plugin is absent or no site is selected.
      * Uses string-based container lookup to avoid compile-time dependency.
      */
+    /**
+     * Get multisite admin context by reading the session directly.
+     *
+     * Bypasses the CurrentSiteResolver singleton entirely — no dependency on
+     * middleware timing, request attributes, or boot-time lazy resolution.
+     * Returns null when multisite is not active or "All Sites" is selected.
+     *
+     * Returns ?stdClass with columns: id, name, domain, theme, etc.
+     */
     protected function getMultisiteContext(): ?object
     {
-        if (! app()->bound('tallcms.multisite.resolver')) {
+        $sessionValue = session('multisite_admin_site_id');
+
+        if (! $sessionValue || $sessionValue === '__all_sites__') {
             return null;
         }
 
         try {
-            $resolver = app('tallcms.multisite.resolver');
-
-            // Trigger resolution if it hasn't happened yet.
-            // On Livewire update requests, the middleware may not have run
-            // and no scoped model query may have triggered lazy resolution.
-            if (! $resolver->isResolved() && ! app()->runningInConsole()) {
-                $resolver->resolve(request());
-            }
-
-            if (! $resolver->isResolved() || ! $resolver->id()) {
-                return null;
-            }
-
-            return (object) ['id' => $resolver->id(), 'site' => $resolver->get()];
-        } catch (\Throwable) {
+            $site = DB::table('tallcms_sites')
+                ->where('id', $sessionValue)
+                ->where('is_active', true)
+                ->first();
+        } catch (QueryException) {
+            // Table doesn't exist (multisite plugin not installed)
             return null;
         }
+
+        return $site;
     }
 
     public function getSubheading(): ?string
@@ -136,7 +141,7 @@ class ThemeManager extends Page implements HasForms
             return null;
         }
 
-        return "Managing theme for: {$context->site->name} ({$context->site->domain})";
+        return "Managing theme for: {$context->name} ({$context->domain})";
     }
 
     /**
@@ -358,8 +363,8 @@ class ThemeManager extends Page implements HasForms
     public function getActiveThemeSlug(): string
     {
         $context = $this->getMultisiteContext();
-        if ($context && $context->site->theme) {
-            return $context->site->theme;
+        if ($context && $context->theme) {
+            return $context->theme;
         }
 
         return $this->getThemeManager()->getActiveTheme()->slug;
@@ -453,7 +458,7 @@ class ThemeManager extends Page implements HasForms
 
             Notification::make()
                 ->title('Site theme updated')
-                ->body("'{$theme->name}' is now active for {$context->site->name}.")
+                ->body("'{$theme->name}' is now active for {$context->name}.")
                 ->success()
                 ->send();
 
