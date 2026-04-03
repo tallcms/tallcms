@@ -145,5 +145,6 @@ class CurrentSiteResolver
     {
         $this->resolvedSite = null;
         $this->resolved = false;
+        $this->allSitesMode = false;
     }
 }
