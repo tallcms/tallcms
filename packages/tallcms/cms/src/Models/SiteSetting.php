@@ -125,16 +125,25 @@ class SiteSetting extends Model
     /**
      * Resolve the current site ID for multisite operations.
      *
-     * Uses a two-tier strategy to avoid the singleton resolver timing issues
-     * that affected admin pages (stale boot-time resolution, middleware ordering):
-     * 1. Try the resolver singleton (works reliably on frontend via middleware)
-     * 2. Fall back to the admin session directly (reliable in Filament pages)
+     * Uses a two-tier strategy:
+     * 1. Admin session (authoritative for admin context — immune to stale resolver state)
+     * 2. Resolver singleton (authoritative for frontend/runtime — middleware-driven)
+     *
+     * The admin session is checked first because the resolver singleton can
+     * cache stale boot-time state. The session is always fresh.
      *
      * Returns null when multisite is not active or no site is selected.
      */
     protected static function resolveCurrentSiteId(): ?int
     {
-        // Tier 1: Try the resolver singleton
+        // Tier 1: Admin session — authoritative in admin context.
+        // Checked first because the resolver can be stale from boot-time resolution.
+        $sessionValue = session('multisite_admin_site_id');
+        if ($sessionValue && $sessionValue !== '__all_sites__' && is_numeric($sessionValue)) {
+            return (int) $sessionValue;
+        }
+
+        // Tier 2: Resolver singleton — authoritative on frontend (domain-based).
         if (app()->bound('tallcms.multisite.resolver')) {
             try {
                 $resolver = app('tallcms.multisite.resolver');
@@ -144,14 +153,6 @@ class SiteSetting extends Model
             } catch (\Throwable) {
                 // Resolver not functional
             }
-        }
-
-        // Tier 2: Fall back to admin session direct read.
-        // This covers cases where the resolver hasn't resolved yet (boot-time,
-        // Livewire lifecycle, middleware ordering issues in admin context).
-        $sessionValue = session('multisite_admin_site_id');
-        if ($sessionValue && $sessionValue !== '__all_sites__' && is_numeric($sessionValue)) {
-            return (int) $sessionValue;
         }
 
         return null;
