@@ -31,6 +31,12 @@ class SiteSettings extends Page implements HasForms
 
     public ?array $data = [];
 
+    /**
+     * Cached set of overridden keys for the current site.
+     * Instance property (not static) so it's cleared on Livewire re-render.
+     */
+    protected ?array $overriddenKeysCache = null;
+
     public static function getNavigationIcon(): string
     {
         return 'heroicon-o-cog-8-tooth';
@@ -88,31 +94,38 @@ class SiteSettings extends Page implements HasForms
     }
 
     /**
-     * Get the set of keys that have per-site overrides (cached per render).
+     * Get the set of keys that have per-site overrides.
+     * Uses instance-level cache, cleared by clearOverrideCache().
      */
     protected function getOverriddenKeys(): array
     {
-        static $cache = null;
-
-        if ($cache !== null) {
-            return $cache;
+        if ($this->overriddenKeysCache !== null) {
+            return $this->overriddenKeysCache;
         }
 
         $context = $this->getMultisiteContext();
         if (! $context) {
-            return $cache = [];
+            return $this->overriddenKeysCache = [];
         }
 
         try {
-            $cache = DB::table('tallcms_site_setting_overrides')
+            $this->overriddenKeysCache = DB::table('tallcms_site_setting_overrides')
                 ->where('site_id', $context->id)
                 ->pluck('key')
                 ->toArray();
         } catch (QueryException) {
-            $cache = [];
+            $this->overriddenKeysCache = [];
         }
 
-        return $cache;
+        return $this->overriddenKeysCache;
+    }
+
+    /**
+     * Clear the override keys cache (called after save/reset actions).
+     */
+    protected function clearOverrideCache(): void
+    {
+        $this->overriddenKeysCache = null;
     }
 
     public function getSubheading(): ?string
@@ -175,10 +188,14 @@ class SiteSettings extends Page implements HasForms
             return $field;
         }
 
-        // Show global default as placeholder
+        // Show global default as placeholder for text-like fields
         $globalValue = SiteSetting::getGlobal($key);
-        if ($globalValue && is_string($globalValue) && method_exists($field, 'placeholder')) {
-            $field->placeholder("Global: {$globalValue}");
+        if ($globalValue !== null && method_exists($field, 'placeholder')) {
+            $display = is_bool($globalValue) ? ($globalValue ? 'Yes' : 'No')
+                : (is_string($globalValue) && $globalValue !== '' ? $globalValue : null);
+            if ($display) {
+                $field->placeholder("Global: {$display}");
+            }
         }
 
         $overridden = in_array($key, $this->getOverriddenKeys());
@@ -199,6 +216,7 @@ class SiteSettings extends Page implements HasForms
                     ->action(function () use ($key) {
                         SiteSetting::resetToGlobal($key);
                         SiteSetting::clearCache();
+                        $this->clearOverrideCache();
 
                         Notification::make()
                             ->title('Reset to global')
@@ -442,32 +460,36 @@ class SiteSettings extends Page implements HasForms
     public function save(): void
     {
         $data = $this->form->getState();
+        $isMultisite = $this->getMultisiteContext() !== null;
 
         foreach ($data as $key => $value) {
-            if ($value !== null) {
-                $type = match ($key) {
-                    'logo', 'favicon' => 'file',
-                    'maintenance_mode', 'i18n_enabled', 'hide_default_locale', 'show_powered_by' => 'boolean',
-                    default => 'text',
-                };
+            $type = match ($key) {
+                'logo', 'favicon' => 'file',
+                'maintenance_mode', 'i18n_enabled', 'hide_default_locale', 'show_powered_by' => 'boolean',
+                default => 'text',
+            };
 
-                $group = match ($key) {
-                    'site_name', 'site_tagline', 'site_description', 'site_type' => 'general',
-                    'contact_email', 'contact_phone', 'company_name', 'company_address' => 'contact',
-                    'social_facebook', 'social_twitter', 'social_linkedin', 'social_instagram',
-                    'social_youtube', 'social_tiktok', 'newsletter_signup_url' => 'social',
-                    'logo', 'favicon', 'show_powered_by' => 'branding',
-                    'maintenance_mode', 'maintenance_message' => 'maintenance',
-                    'i18n_enabled', 'default_locale', 'hide_default_locale' => 'i18n',
-                    default => 'general',
-                };
+            $group = match ($key) {
+                'site_name', 'site_tagline', 'site_description', 'site_type' => 'general',
+                'contact_email', 'contact_phone', 'company_name', 'company_address' => 'contact',
+                'social_facebook', 'social_twitter', 'social_linkedin', 'social_instagram',
+                'social_youtube', 'social_tiktok', 'newsletter_signup_url' => 'social',
+                'logo', 'favicon', 'show_powered_by' => 'branding',
+                'maintenance_mode', 'maintenance_message' => 'maintenance',
+                'i18n_enabled', 'default_locale', 'hide_default_locale' => 'i18n',
+                default => 'general',
+            };
 
-                SiteSetting::set($key, $value, $type, $group);
+            // In multisite context: save even null/empty values as explicit blank overrides.
+            // In global context: skip null values (original behavior).
+            if ($value !== null || $isMultisite) {
+                SiteSetting::set($key, $value ?? '', $type, $group);
             }
         }
 
-        // Clear all settings cache
+        // Clear all settings cache and override indicator cache
         SiteSetting::clearCache();
+        $this->clearOverrideCache();
 
         // Clear locale registry cache if i18n settings changed
         if (isset($data['i18n_enabled']) || isset($data['default_locale']) || isset($data['hide_default_locale'])) {
