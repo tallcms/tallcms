@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Tallcms\Multisite\Filament\Resources\SiteResource;
 
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\HtmlString;
 use TallCms\Cms\Services\LocaleRegistry;
-use TallCms\Cms\Services\ThemeManager;
 use Tallcms\Multisite\Models\Site;
 
 class SiteForm
@@ -32,22 +33,23 @@ class SiteForm
                             ->unique(table: 'tallcms_sites', column: 'domain', ignoreRecord: true)
                             ->helperText('e.g. example.com — lowercase, no protocol or port')
                             ->dehydrateStateUsing(fn (?string $state) => $state ? Site::normalizeDomain($state) : $state),
-                    ])
-                    ->columns(2),
-
-                Section::make('Appearance & Locale')
-                    ->schema([
-                        Select::make('theme')
-                            ->options(fn () => static::getThemeOptions())
-                            ->placeholder('Use global theme')
-                            ->searchable()
-                            ->nullable(),
 
                         Select::make('locale')
                             ->options(fn () => static::getLocaleOptions())
                             ->placeholder('Use global locale')
                             ->searchable()
                             ->nullable(),
+
+                        Placeholder::make('theme_display')
+                            ->label('Theme')
+                            ->content(function (?Site $record) {
+                                $themeName = $record?->theme ? ucfirst($record->theme) : 'Global default';
+                                $manageUrl = url(config('tallcms.filament.panel_path', 'admin').'/theme-manager');
+
+                                return new HtmlString(
+                                    "{$themeName} &middot; <a href=\"{$manageUrl}\" class=\"text-primary-600 hover:underline dark:text-primary-400\">Manage in Theme Manager</a>"
+                                );
+                            }),
                     ])
                     ->columns(2),
 
@@ -64,18 +66,6 @@ class SiteForm
                     ])
                     ->columns(2),
             ]);
-    }
-
-    protected static function getThemeOptions(): array
-    {
-        try {
-            return app(ThemeManager::class)
-                ->getAvailableThemes()
-                ->pluck('name', 'slug')
-                ->toArray();
-        } catch (\Throwable) {
-            return [];
-        }
     }
 
     protected static function getLocaleOptions(): array

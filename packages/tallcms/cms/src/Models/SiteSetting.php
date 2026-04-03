@@ -130,7 +130,12 @@ class SiteSetting extends Model
     }
 
     /**
-     * Set a setting value
+     * Set a setting value.
+     *
+     * When the multisite plugin is active and a site is selected, writes to
+     * the site-specific override table instead of the global settings table.
+     * This is a platform-level behavior: any admin code running with a site
+     * context will write per-site overrides automatically.
      */
     public static function set(string $key, mixed $value, string $type = 'text', string $group = 'general', ?string $description = null): void
     {
@@ -140,6 +145,30 @@ class SiteSetting extends Model
             default => (string) $value,
         };
 
+        // Write to site-specific override when multisite is active with a selected site
+        if (app()->bound('tallcms.multisite.resolver')) {
+            try {
+                $resolver = app('tallcms.multisite.resolver');
+                if ($resolver->isResolved() && $resolver->id()) {
+                    $siteId = $resolver->id();
+                    DB::table('tallcms_site_setting_overrides')->updateOrInsert(
+                        ['site_id' => $siteId, 'key' => $key],
+                        [
+                            'value' => $processedValue,
+                            'type' => $type,
+                            'updated_at' => now(),
+                        ]
+                    );
+                    Cache::forget("site_setting_{$siteId}_{$key}");
+
+                    return;
+                }
+            } catch (\Throwable) {
+                // Multisite not functional — fall through to global write
+            }
+        }
+
+        // Global write
         static::updateOrCreate(
             ['key' => $key],
             [
@@ -150,20 +179,7 @@ class SiteSetting extends Model
             ]
         );
 
-        // Clear cache (global key)
         Cache::forget("site_setting_{$key}");
-
-        // Also clear any site-specific cache for this key when multisite is active
-        if (app()->bound('tallcms.multisite.resolver')) {
-            try {
-                $resolver = app('tallcms.multisite.resolver');
-                if ($resolver->isResolved() && $resolver->id()) {
-                    Cache::forget("site_setting_{$resolver->id()}_{$key}");
-                }
-            } catch (\Throwable) {
-                // Ignore
-            }
-        }
     }
 
     /**
