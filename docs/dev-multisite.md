@@ -56,6 +56,23 @@ Per-site setting overrides. Same key/value/type structure as `tallcms_site_setti
 
 Posts and categories are intentionally **not** site-scoped.
 
+### Scope Summary
+
+| Resource | Scoped | Mechanism |
+|----------|--------|-----------|
+| `tallcms_pages` | Per-site | `site_id` FK + `SiteScope` global scope |
+| `tallcms_menus` | Per-site | `site_id` FK + `SiteScope` global scope |
+| `tallcms_menus.location` | Per-site unique | Composite unique `(site_id, location)` |
+| `tallcms_posts` | Global | No `site_id` column |
+| `tallcms_categories` | Global | No `site_id` column |
+| `tallcms_media` | Global | No `site_id` column |
+| `tallcms_site_settings` | Global defaults | Overrides in `tallcms_site_setting_overrides` |
+| Theme (active) | Per-site | `tallcms_sites.theme` column, runtime override in middleware |
+| Theme preset | Per-site | Via `SiteSetting` override for `theme_default_preset` |
+| Installed themes | Global | Filesystem-based, shared across all sites |
+| Plugins | Global | Filesystem-based, no per-site activation |
+| Users / roles | Global | No `site_id` scoping |
+
 ---
 
 ## Site Resolution

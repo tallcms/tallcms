@@ -134,15 +134,52 @@ When a visitor arrives at your server:
 
 ---
 
-## Content Scoping
+## What's Per-Site vs Global
 
-| Content Type | Scoped Per-Site? | Notes |
-|-------------|-----------------|-------|
-| **Pages** | Yes | Each site has its own pages and homepage |
-| **Menus** | Yes | Each site has its own navigation (same location names are allowed) |
-| **Posts** | No | Posts are shared across all sites |
-| **Categories** | No | Categories are shared across all sites |
-| **Media** | No | Media library is shared |
+### Content
+
+| Feature | Scope | Notes |
+|---------|-------|-------|
+| **Pages** | Per-site | Each site has its own pages with independent slugs and homepage |
+| **Menus** | Per-site | Each site has its own navigation (same location names like `header` allowed per site) |
+| **Posts** | Global | Shared across all sites — a blog post is visible on every site |
+| **Categories** | Global | Shared taxonomy used by posts on all sites |
+| **Media library** | Global | Uploaded images and files available to all sites |
+| **Comments** | Global | Tied to posts, which are global |
+
+### Appearance
+
+| Feature | Scope | Notes |
+|---------|-------|-------|
+| **Active theme** | Per-site | Each site can use a different theme, managed in Theme Manager |
+| **Theme preset** | Per-site | Default daisyUI preset (light, dark, etc.) can differ per site |
+| **Installed themes** | Global | All themes on disk are available to all sites |
+| **Theme assets** | Global | CSS/JS/images are published once, shared by all sites using that theme |
+
+### Settings
+
+| Setting Group | Scope | Notes |
+|---------------|-------|-------|
+| **Site name, tagline, description** | Per-site | Each site has its own identity |
+| **Contact info** (email, phone, address) | Per-site | Each site can have different contact details |
+| **Social media links** | Per-site | Each site can link to different profiles |
+| **Branding** (logo, favicon) | Per-site | Each site can have its own logo and favicon |
+| **Maintenance mode** | Per-site | Put one site in maintenance without affecting others |
+| **SEO** (robots, sitemap, OG image) | Per-site | Each site can have different SEO settings |
+| **Code injection** (head, body) | Per-site | Analytics, tracking scripts per site |
+| **Language settings** (i18n) | Global | URL routing is installation-wide; per-site locale is set on the site itself |
+| **"Powered by" badge** | Per-site | Show or hide per site |
+
+### System
+
+| Feature | Scope | Notes |
+|---------|-------|-------|
+| **Plugins** | Global | All installed plugins are available to all sites |
+| **Plugin licenses** | Global | One license covers the installation |
+| **User accounts** | Global | Admins manage all sites from one login |
+| **Roles & permissions** | Global | Permission system applies installation-wide |
+| **Search index** | Global | Scout indexes content across all sites |
+| **API** | Global | REST API serves content from all sites |
 
 ---
 
