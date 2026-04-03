@@ -19,7 +19,7 @@ npm install && npm run build
 php artisan serve
 ```
 
-Visit `http://localhost:8000/install` to complete the web installer.
+Visit `http://localhost:8000/install` to complete the web installer, then access the admin panel at `http://localhost:8000/admin`.
 
 ### 2. Filament Plugin (Add to Existing App)
 
@@ -53,6 +53,8 @@ Run the installer:
 ```bash
 php artisan tallcms:install
 ```
+
+Access the admin panel at `https://yourdomain.com/admin`.
 
 See the [Installation Guide](https://github.com/tallcms/tallcms/blob/main/docs/gs-installation.md) for full setup instructions.
 
@@ -203,6 +205,7 @@ See the [Architecture Reference](https://github.com/tallcms/tallcms/blob/main/do
 Common issues and solutions are documented in the [Installation Guide](https://github.com/tallcms/tallcms/blob/main/docs/gs-installation.md).
 
 **Quick fixes:**
+- **"Where is the admin panel?"** — Go to `/admin` (e.g., `https://yourdomain.com/admin`)
 - **"Page not showing changes"** — `php artisan cache:clear && php artisan view:clear`
 - **"Styles look broken"** — `npm run build`
 - **"Installation already complete"** — Delete `storage/installer.lock` or set `INSTALLER_ENABLED=true`
