@@ -31,9 +31,12 @@ class SiteScope implements Scope
         if ($siteId) {
             // Strict: only show content belonging to this site
             $builder->where($model->getTable().'.site_id', $siteId);
+        } elseif ($resolver->isAllSitesMode()) {
+            // Explicit "All Sites" admin mode — no filter, show everything
+        } else {
+            // Resolved but no site (unknown domain, no admin selection).
+            // Show nothing to prevent cross-site content leakage.
+            $builder->whereRaw('1 = 0');
         }
-
-        // If resolver ran but returned no site (e.g., "All Sites" admin mode),
-        // don't apply any filter — show everything
     }
 }
