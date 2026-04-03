@@ -85,8 +85,13 @@ class CmsPageForm
                                                         ignoreId: $record?->id
                                                     );
                                                 } else {
-                                                    // Traditional unique constraint
-                                                    $rules[] = 'unique:tallcms_pages,slug'.($record ? ','.$record->id : '');
+                                                    // Unique per default locale (site-aware when multisite active)
+                                                    $rules[] = new UniqueTranslatableSlug(
+                                                        table: 'tallcms_pages',
+                                                        column: 'slug',
+                                                        locale: app()->getLocale(),
+                                                        ignoreId: $record?->id
+                                                    );
                                                 }
 
                                                 return $rules;

@@ -63,6 +63,18 @@ class UniqueTranslatableSlug implements ValidationRule
             $query->where('id', '!=', $this->ignoreId);
         }
 
+        // Scope uniqueness to current site when multisite is active
+        if (app()->bound('tallcms.multisite.resolver')) {
+            try {
+                $resolver = app('tallcms.multisite.resolver');
+                if ($resolver->isResolved() && $resolver->id()) {
+                    $query->where('site_id', $resolver->id());
+                }
+            } catch (\Throwable) {
+                // Multisite not functional — check globally
+            }
+        }
+
         if ($query->exists()) {
             $fail("This slug is already used by another item in {$this->locale}.");
         }
