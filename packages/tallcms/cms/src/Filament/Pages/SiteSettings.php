@@ -204,7 +204,7 @@ class SiteSettings extends Page implements HasForms
         $field->hintColor($overridden ? 'primary' : 'gray');
         $field->hintIcon($overridden ? 'heroicon-m-pencil-square' : 'heroicon-m-globe-alt');
 
-        if ($overridden) {
+        if ($overridden && method_exists($field, 'suffixAction')) {
             $field->suffixAction(
                 Action::make("reset_{$key}")
                     ->icon('heroicon-m-arrow-uturn-left')
