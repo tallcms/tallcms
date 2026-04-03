@@ -106,11 +106,13 @@ class Site extends Model
 
     public function pages(): HasMany
     {
-        return $this->hasMany(\TallCms\Cms\Models\CmsPage::class, 'site_id');
+        return $this->hasMany(\TallCms\Cms\Models\CmsPage::class, 'site_id')
+            ->withoutGlobalScopes();
     }
 
     public function menus(): HasMany
     {
-        return $this->hasMany(\TallCms\Cms\Models\TallcmsMenu::class, 'site_id');
+        return $this->hasMany(\TallCms\Cms\Models\TallcmsMenu::class, 'site_id')
+            ->withoutGlobalScopes();
     }
 }
