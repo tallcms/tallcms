@@ -71,7 +71,7 @@ class CmsPageResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return config('tallcms.filament.navigation_group') ?? 'Content Management';
+        return config('tallcms.navigation.groups.content', 'Content');
     }
 
     public static function getNavigationLabel(): string
@@ -81,7 +81,7 @@ class CmsPageResource extends Resource
 
     public static function getNavigationSort(): ?int
     {
-        return config('tallcms.filament.navigation_sort') ?? 1;
+        return 10;
     }
 
     public static function getNavigationBadge(): ?string

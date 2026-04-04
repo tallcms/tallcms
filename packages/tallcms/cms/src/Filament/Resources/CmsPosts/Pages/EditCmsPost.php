@@ -20,7 +20,7 @@ use TallCms\Cms\Services\PublishingWorkflowService;
 
 class EditCmsPost extends EditRecord
 {
-    use Translatable, HasTranslationCopying {
+    use HasTranslationCopying, Translatable {
         HasTranslationCopying::updatedActiveLocale insteadof Translatable;
     }
 

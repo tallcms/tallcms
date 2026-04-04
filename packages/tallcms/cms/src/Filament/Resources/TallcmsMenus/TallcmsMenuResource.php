@@ -2,17 +2,17 @@
 
 namespace TallCms\Cms\Filament\Resources\TallcmsMenus;
 
+use BackedEnum;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Table;
 use TallCms\Cms\Filament\Resources\TallcmsMenus\Pages\CreateTallcmsMenu;
 use TallCms\Cms\Filament\Resources\TallcmsMenus\Pages\EditTallcmsMenu;
 use TallCms\Cms\Filament\Resources\TallcmsMenus\Pages\ListTallcmsMenus;
 use TallCms\Cms\Filament\Resources\TallcmsMenus\Schemas\TallcmsMenuForm;
 use TallCms\Cms\Filament\Resources\TallcmsMenus\Tables\TallcmsMenusTable;
 use TallCms\Cms\Models\TallcmsMenu;
-use BackedEnum;
-use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Table;
 
 class TallcmsMenuResource extends Resource
 {
@@ -28,12 +28,12 @@ class TallcmsMenuResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return config('tallcms.filament.navigation_group') ?? 'Content Management';
+        return config('tallcms.navigation.groups.content', 'Content');
     }
 
     public static function getNavigationSort(): ?int
     {
-        return config('tallcms.filament.navigation_sort') ?? 5;
+        return 15;
     }
 
     public static function form(Schema $schema): Schema

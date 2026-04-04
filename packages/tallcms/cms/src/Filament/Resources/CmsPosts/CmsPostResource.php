@@ -63,7 +63,7 @@ class CmsPostResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return config('tallcms.filament.navigation_group') ?? 'Content Management';
+        return config('tallcms.navigation.groups.content', 'Content');
     }
 
     public static function getNavigationLabel(): string
@@ -73,7 +73,7 @@ class CmsPostResource extends Resource
 
     public static function getNavigationSort(): ?int
     {
-        return config('tallcms.filament.navigation_sort') ?? 2;
+        return 11;
     }
 
     public static function getEloquentQuery(): Builder

@@ -53,6 +53,7 @@ class PostsBlock extends RichContentCustomBlock
     {
         return 10;
     }
+
     public static function getId(): string
     {
         return 'posts';

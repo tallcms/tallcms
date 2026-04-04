@@ -7,7 +7,6 @@ use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
 use Illuminate\Database\Eloquent\Builder;
 use TallCms\Cms\Filament\Resources\TallcmsMedia\TallcmsMediaResource;
-use TallCms\Cms\Models\MediaCollection;
 use TallCms\Cms\Models\TallcmsMedia;
 
 class ListTallcmsMedia extends ListRecords

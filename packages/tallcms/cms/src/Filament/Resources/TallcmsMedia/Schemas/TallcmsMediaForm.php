@@ -59,10 +59,10 @@ class TallcmsMediaForm
                                     </a>
                                     <div class='text-sm text-gray-600 dark:text-gray-400'>
                                         <div>{$fileName}</div>
-                                        <div>{$humanSize} · {$mimeType}".($dimensions ? " · {$dimensions}" : '')."</div>
+                                        <div>{$humanSize} · {$mimeType}".($dimensions ? " · {$dimensions}" : '').'</div>
                                     </div>
                                 </div>
-                            ");
+                            ');
                         }
 
                         $fileName = e($record->file_name ?? '');
@@ -155,7 +155,7 @@ class TallcmsMediaForm
                     ->label('Alt Text')
                     ->helperText('Describe the image for accessibility. Recommended: under 125 characters.')
                     ->maxLength(255)
-                    ->hint(fn ($state) => strlen($state ?? '') . '/125 chars')
+                    ->hint(fn ($state) => strlen($state ?? '').'/125 chars')
                     ->suffixAction(
                         Action::make('generate_alt')
                             ->icon('heroicon-m-sparkles')

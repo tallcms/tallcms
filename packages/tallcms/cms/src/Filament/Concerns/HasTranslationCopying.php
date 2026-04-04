@@ -96,7 +96,7 @@ trait HasTranslationCopying
 
             Notification::make()
                 ->info()
-                ->title('Content copied from ' . $defaultLabel)
+                ->title('Content copied from '.$defaultLabel)
                 ->body('Review and translate the content for this locale.')
                 ->persistent()
                 ->send();
@@ -172,15 +172,15 @@ trait HasTranslationCopying
         $defaultLabel = $this->getLocaleLabelForCopy($defaultLocale);
 
         return Action::make('copyFromDefault')
-            ->label('Copy from ' . $defaultLabel)
+            ->label('Copy from '.$defaultLabel)
             ->icon('heroicon-o-document-duplicate')
             ->color('gray')
             ->visible(fn () => tallcms_i18n_enabled()
                 && $this->activeLocale !== $defaultLocale
                 && count($this->getTranslatableLocales()) > 1)
             ->requiresConfirmation()
-            ->modalHeading('Copy content from ' . $defaultLabel)
-            ->modalDescription('This will overwrite the current content with the ' . $defaultLabel . ' version. This action cannot be undone.')
+            ->modalHeading('Copy content from '.$defaultLabel)
+            ->modalDescription('This will overwrite the current content with the '.$defaultLabel.' version. This action cannot be undone.')
             ->modalSubmitActionLabel('Copy & Overwrite')
             ->action(function () use ($defaultLocale, $defaultLabel) {
                 $translatableAttributes = static::getResource()::getTranslatableAttributes();
@@ -200,8 +200,8 @@ trait HasTranslationCopying
 
                 Notification::make()
                     ->success()
-                    ->title('Content copied from ' . $defaultLabel)
-                    ->body('The form has been updated with ' . $defaultLabel . ' content. Remember to save your changes.')
+                    ->title('Content copied from '.$defaultLabel)
+                    ->body('The form has been updated with '.$defaultLabel.' content. Remember to save your changes.')
                     ->send();
             });
     }

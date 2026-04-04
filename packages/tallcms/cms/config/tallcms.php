@@ -168,16 +168,30 @@ return [
         // Panel path for URL construction and middleware exclusions
         'panel_path' => env('TALLCMS_PANEL_PATH', 'admin'),
 
-        // Navigation group override - when set, CMS resources/pages use this group.
-        // Note: UserResource stays in 'User Management' regardless of this setting.
-        // Leave unset (null) to use per-resource defaults (Content Management, Settings, etc.)
+        // Legacy navigation overrides (deprecated — use navigation.groups below)
         'navigation_group' => env('TALLCMS_NAVIGATION_GROUP'),
-
-        // Navigation sort override - when set, CMS resources/pages use this sort.
-        // Leave unset (null) to use per-resource defaults.
         'navigation_sort' => env('TALLCMS_NAVIGATION_SORT') !== null
             ? (int) env('TALLCMS_NAVIGATION_SORT')
             : null,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Navigation Groups
+    |--------------------------------------------------------------------------
+    |
+    | Admin sidebar group names. Change these to rename groups globally.
+    | The multisite plugin adds 'platform' when active.
+    |
+    */
+    'navigation' => [
+        'groups' => [
+            'platform' => 'Platform',
+            'content' => 'Content',
+            'appearance' => 'Appearance',
+            'configuration' => 'Configuration',
+            'system' => 'System',
+        ],
     ],
 
     /*

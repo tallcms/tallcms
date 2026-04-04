@@ -613,18 +613,33 @@ class ThemeManager
     /**
      * Reset view paths to prevent bleeding from previous themes
      */
-    protected function resetViewPaths(): void
+    public function resetViewPaths(): void
     {
         $viewFinder = View::getFinder();
+
+        // Remove theme paths from the base view finder locations
         $originalPaths = collect($viewFinder->getPaths())
             ->filter(function ($path) {
-                // Remove any theme paths but keep original Laravel paths
                 return ! str_contains($path, '/themes/');
             })
             ->values()
             ->toArray();
 
         $viewFinder->setPaths($originalPaths);
+
+        // Also reset theme paths from the 'tallcms' namespace hints.
+        // registerThemeViewPaths() prepends theme view dirs to this namespace,
+        // and without clearing them, old theme paths accumulate across calls.
+        $hints = $viewFinder->getHints();
+        if (isset($hints['tallcms'])) {
+            $hints['tallcms'] = collect($hints['tallcms'])
+                ->filter(fn ($path) => ! str_contains($path, '/themes/'))
+                ->values()
+                ->toArray();
+
+            // Re-register the cleaned hints (replaceNamespace replaces all hints for the namespace)
+            View::replaceNamespace('tallcms', $hints['tallcms']);
+        }
     }
 
     /**

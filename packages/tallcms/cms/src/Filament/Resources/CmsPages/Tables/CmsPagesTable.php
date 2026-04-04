@@ -2,7 +2,6 @@
 
 namespace TallCms\Cms\Filament\Resources\CmsPages\Tables;
 
-use TallCms\Cms\Enums\ContentStatus;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -13,6 +12,8 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\QueryException;
+use TallCms\Cms\Enums\ContentStatus;
 
 class CmsPagesTable
 {
@@ -58,6 +59,10 @@ class CmsPagesTable
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                // Multisite: show which site each page belongs to.
+                // Only visible when the multisite plugin is active.
+                ...static::getSiteColumn(),
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -80,5 +85,36 @@ class CmsPagesTable
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
+    }
+
+    /**
+     * Site column for multisite. Returns empty array when plugin is absent.
+     */
+    protected static function getSiteColumn(): array
+    {
+        if (! app()->bound('tallcms.multisite.resolver')) {
+            return [];
+        }
+
+        try {
+            $sites = \Illuminate\Support\Facades\DB::table('tallcms_sites')
+                ->pluck('name', 'id')
+                ->toArray();
+        } catch (QueryException) {
+            return [];
+        }
+
+        if (empty($sites)) {
+            return [];
+        }
+
+        return [
+            TextColumn::make('site_id')
+                ->label('Site')
+                ->formatStateUsing(fn ($state) => $sites[$state] ?? 'Unassigned')
+                ->badge()
+                ->color(fn ($state) => $state ? 'primary' : 'gray')
+                ->sortable(),
+        ];
     }
 }

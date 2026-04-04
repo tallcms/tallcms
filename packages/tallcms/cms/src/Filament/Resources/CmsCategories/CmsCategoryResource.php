@@ -18,6 +18,7 @@ use TallCms\Cms\Models\CmsCategory;
 class CmsCategoryResource extends Resource
 {
     use Translatable;
+
     protected static ?string $model = CmsCategory::class;
 
     protected static ?string $pluralModelLabel = 'Categories';
@@ -55,7 +56,7 @@ class CmsCategoryResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return config('tallcms.filament.navigation_group') ?? 'Content Management';
+        return config('tallcms.navigation.groups.content', 'Content');
     }
 
     public static function getNavigationLabel(): string
@@ -65,7 +66,7 @@ class CmsCategoryResource extends Resource
 
     public static function getNavigationSort(): ?int
     {
-        return config('tallcms.filament.navigation_sort') ?? 2;
+        return 12;
     }
 
     public static function getEloquentQuery(): Builder

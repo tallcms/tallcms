@@ -11,7 +11,9 @@ use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -44,12 +46,12 @@ class ThemeManager extends Page implements HasForms
 
     public static function getNavigationGroup(): ?string
     {
-        return config('tallcms.filament.navigation_group') ?? 'Appearance';
+        return config('tallcms.navigation.groups.appearance', 'Appearance');
     }
 
     public static function getNavigationSort(): ?int
     {
-        return config('tallcms.filament.navigation_sort') ?? 50;
+        return 30;
     }
 
     public ?string $selectedTheme = null;
@@ -95,6 +97,46 @@ class ThemeManager extends Page implements HasForms
     protected function getValidator(): ThemeValidator
     {
         return app(ThemeValidator::class);
+    }
+
+    /**
+     * Get multisite admin context by reading the session directly.
+     *
+     * Bypasses the CurrentSiteResolver singleton entirely — no dependency on
+     * middleware timing, request attributes, or boot-time lazy resolution.
+     * Returns null when multisite is not active or "All Sites" is selected.
+     *
+     * @return ?stdClass with columns: id, name, domain, theme, etc.
+     */
+    protected function getMultisiteContext(): ?object
+    {
+        $sessionValue = session('multisite_admin_site_id');
+
+        if (! $sessionValue || $sessionValue === '__all_sites__') {
+            return null;
+        }
+
+        try {
+            $site = DB::table('tallcms_sites')
+                ->where('id', $sessionValue)
+                ->where('is_active', true)
+                ->first();
+        } catch (QueryException) {
+            // Table doesn't exist (multisite plugin not installed)
+            return null;
+        }
+
+        return $site;
+    }
+
+    public function getSubheading(): ?string
+    {
+        $context = $this->getMultisiteContext();
+        if (! $context) {
+            return null;
+        }
+
+        return "Managing theme for: {$context->name} ({$context->domain})";
     }
 
     /**
@@ -285,7 +327,18 @@ class ThemeManager extends Page implements HasForms
         $theme = $this->themes->firstWhere('isActive', true);
 
         if ($theme) {
-            $theme['defaultPreset'] = daisyui_default_preset();
+            // Resolve theme model directly from slug (not from global ThemeManager state)
+            $activeThemeModel = Theme::find($this->getActiveThemeSlug());
+            $fallback = $activeThemeModel?->getDaisyUIPreset() ?? 'light';
+            $presets = $activeThemeModel?->getDaisyUIPresets() ?? [];
+
+            // Site-selected: read site-specific preset. Global: read global preset.
+            $context = $this->getMultisiteContext();
+            $stored = $context
+                ? SiteSetting::get('theme_default_preset')
+                : SiteSetting::getGlobal('theme_default_preset');
+
+            $theme['defaultPreset'] = ($stored && in_array($stored, $presets)) ? $stored : $fallback;
         }
 
         return $theme;
@@ -299,18 +352,30 @@ class ThemeManager extends Page implements HasForms
     }
 
     /**
-     * Get the active theme slug
+     * Get the active theme slug (site-aware when multisite is active).
+     * When a site is selected, returns the site's theme. Falls back to global.
      */
     public function getActiveThemeSlug(): string
     {
+        $context = $this->getMultisiteContext();
+        if ($context && $context->theme) {
+            return $context->theme;
+        }
+
         return $this->getThemeManager()->getActiveTheme()->slug;
     }
 
     /**
-     * Check if rollback is available
+     * Check if rollback is available.
+     * Rollback only applies to global theme changes (config/theme.php writes).
+     * Per-site theme changes are direct column updates with no rollback state.
      */
     public function canRollback(): bool
     {
+        if ($this->getMultisiteContext()) {
+            return false;
+        }
+
         return $this->getThemeManager()->canRollback();
     }
 
@@ -363,18 +428,46 @@ class ThemeManager extends Page implements HasForms
             }
         }
 
-        // Activate theme with rollback support
-        if ($this->getThemeManager()->activateWithRollback($slug)) {
-            // Clear stored default preset — new theme uses its own default
+        $context = $this->getMultisiteContext();
+
+        if ($context) {
+            // Per-site: update the site's theme column
+            DB::table('tallcms_sites')
+                ->where('id', $context->id)
+                ->update(['theme' => $slug, 'updated_at' => now()]);
+
+            // Run essential activation steps (same as setActiveTheme minus config file write)
+            $manager = $this->getThemeManager();
+            $manager->publishThemeAssets($theme);
+
+            // Clear compiled views to prevent stale cached templates
+            $compiledViewPath = config('view.compiled');
+            if ($compiledViewPath && File::isDirectory($compiledViewPath)) {
+                foreach (File::glob($compiledViewPath.'/*.php') as $view) {
+                    File::delete($view);
+                }
+            }
+
+            // Clear preset for this site (SiteSetting::set() is site-aware)
+            SiteSetting::set('theme_default_preset', '', 'text', 'theme');
+
+            Notification::make()
+                ->title('Site theme updated')
+                ->body("'{$theme->name}' is now active for {$context->name}.")
+                ->success()
+                ->send();
+
+            $this->clearThemeCache();
+        } elseif ($this->getThemeManager()->activateWithRollback($slug)) {
+            // Global: write to config/theme.php with rollback support
             SiteSetting::set('theme_default_preset', '', 'text', 'theme');
 
             Notification::make()
                 ->title('Theme activated')
-                ->body("'{$theme->name}' is now active.")
+                ->body("'{$theme->name}' is now the default theme.")
                 ->success()
                 ->send();
 
-            // Clear the computed property cache so themes list re-evaluates
             $this->clearThemeCache();
         } else {
             Notification::make()
@@ -476,9 +569,10 @@ class ThemeManager extends Page implements HasForms
      */
     public function changeDefaultPreset(string $preset): void
     {
-        $activeTheme = $this->getThemeManager()->getActiveTheme();
+        // Resolve theme directly from site-aware slug, not from global ThemeManager
+        $activeTheme = Theme::find($this->getActiveThemeSlug());
 
-        if (! $activeTheme->supportsThemeController()) {
+        if (! $activeTheme || ! $activeTheme->supportsThemeController()) {
             return;
         }
 
@@ -516,7 +610,7 @@ class ThemeManager extends Page implements HasForms
         }
 
         $this->selectedTheme = $slug;
-        $activeTheme = $this->getThemeManager()->getActiveTheme();
+        $activeSlug = $this->getActiveThemeSlug();
 
         $this->themeDetails = [
             'name' => $theme->name,
@@ -541,7 +635,7 @@ class ThemeManager extends Page implements HasForms
             'compatibility' => $theme->getCompatibility(),
             'isBuilt' => $theme->isBuilt(),
             'isPrebuilt' => $theme->isPrebuilt(),
-            'isActive' => $activeTheme && $activeTheme->slug === $theme->slug,
+            'isActive' => $activeSlug === $theme->slug,
             'meetsRequirements' => $theme->meetsRequirements(),
             'unmetRequirements' => $theme->getUnmetRequirements(),
             'screenshot' => $theme->getScreenshotUrl(),

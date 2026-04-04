@@ -2,26 +2,26 @@
 
 namespace TallCms\Cms\Filament\Resources\CmsPages\Schemas;
 
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Livewire;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
+use Illuminate\Support\Str;
 use TallCms\Cms\Enums\ContentStatus;
+use TallCms\Cms\Filament\Forms\Components\CmsRichEditor;
 use TallCms\Cms\Livewire\RevisionHistory;
 use TallCms\Cms\Models\CmsPage;
 use TallCms\Cms\Rules\UniqueTranslatableSlug;
 use TallCms\Cms\Services\CustomBlockDiscoveryService;
 use TallCms\Cms\Services\LocaleRegistry;
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Select;
-use TallCms\Cms\Filament\Forms\Components\CmsRichEditor;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Livewire;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Schema;
-use Illuminate\Support\Str;
 use TallCms\Cms\Services\TemplateRegistry;
 use TallCms\Cms\Services\WidgetRegistry;
 
@@ -85,8 +85,13 @@ class CmsPageForm
                                                         ignoreId: $record?->id
                                                     );
                                                 } else {
-                                                    // Traditional unique constraint
-                                                    $rules[] = 'unique:tallcms_pages,slug'.($record ? ','.$record->id : '');
+                                                    // Unique per default locale (site-aware when multisite active)
+                                                    $rules[] = new UniqueTranslatableSlug(
+                                                        table: 'tallcms_pages',
+                                                        column: 'slug',
+                                                        locale: app()->getLocale(),
+                                                        ignoreId: $record?->id
+                                                    );
                                                 }
 
                                                 return $rules;

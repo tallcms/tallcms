@@ -83,14 +83,14 @@ trait HasBlockIdentifiers
         // Add ID if available
         $anchorId = static::getAnchorId($config, $fallbackTitle);
         if ($anchorId) {
-            $attributes[] = 'id="' . e($anchorId) . '"';
+            $attributes[] = 'id="'.e($anchorId).'"';
         }
 
         // Combine base classes with custom classes
         $customClasses = static::getCssClasses($config);
-        $allClasses = trim($baseClasses . ' ' . $customClasses);
+        $allClasses = trim($baseClasses.' '.$customClasses);
         if ($allClasses) {
-            $attributes[] = 'class="' . e($allClasses) . '"';
+            $attributes[] = 'class="'.e($allClasses).'"';
         }
 
         return implode(' ', $attributes);

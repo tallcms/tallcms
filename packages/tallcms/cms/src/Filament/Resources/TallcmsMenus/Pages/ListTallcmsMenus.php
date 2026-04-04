@@ -2,9 +2,9 @@
 
 namespace TallCms\Cms\Filament\Resources\TallcmsMenus\Pages;
 
-use TallCms\Cms\Filament\Resources\TallcmsMenus\TallcmsMenuResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use TallCms\Cms\Filament\Resources\TallcmsMenus\TallcmsMenuResource;
 
 class ListTallcmsMenus extends ListRecords
 {

@@ -63,6 +63,34 @@ class UniqueTranslatableSlug implements ValidationRule
             $query->where('id', '!=', $this->ignoreId);
         }
 
+        // Scope uniqueness to current site when multisite is active.
+        // Livewire update requests use the 'web' middleware group, NOT the
+        // Filament panel middleware, so tallcms.admin_context attribute may
+        // not be set. Check session first (covers admin), then resolver (frontend).
+        $siteId = null;
+
+        // Tier 1: Admin session (always available during Filament/Livewire requests)
+        $sessionValue = session('multisite_admin_site_id');
+        if ($sessionValue && $sessionValue !== '__all_sites__' && is_numeric($sessionValue)) {
+            $siteId = (int) $sessionValue;
+        }
+
+        // Tier 2: Resolver (frontend domain-based)
+        if (! $siteId && app()->bound('tallcms.multisite.resolver')) {
+            try {
+                $resolver = app('tallcms.multisite.resolver');
+                if ($resolver->isResolved() && $resolver->id()) {
+                    $siteId = $resolver->id();
+                }
+            } catch (\Throwable) {
+                // Multisite not functional
+            }
+        }
+
+        if ($siteId) {
+            $query->where('site_id', $siteId);
+        }
+
         if ($query->exists()) {
             $fail("This slug is already used by another item in {$this->locale}.");
         }

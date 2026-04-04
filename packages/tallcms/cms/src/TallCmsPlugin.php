@@ -64,7 +64,7 @@ class TallCmsPlugin implements Plugin
 
     protected bool $hasShieldPlugin = true;
 
-    protected ?string $shieldNavigationGroup = 'User Management';
+    protected ?string $shieldNavigationGroup = null; // Set dynamically from config
 
     public static function make(): static
     {
@@ -95,9 +95,9 @@ class TallCmsPlugin implements Plugin
         if ($this->hasShieldPlugin) {
             $shieldPlugin = FilamentShieldPlugin::make();
 
-            if ($this->shieldNavigationGroup !== null) {
-                $shieldPlugin->navigationGroup($this->shieldNavigationGroup);
-            }
+            // Place Shield under System group
+            $group = $this->shieldNavigationGroup ?? config('tallcms.navigation.groups.system', 'System');
+            $shieldPlugin->navigationGroup($group);
 
             $panel->plugin($shieldPlugin);
         }
@@ -187,7 +187,17 @@ class TallCmsPlugin implements Plugin
 
     public function boot(Panel $panel): void
     {
-        //
+        // Set default navigation group order if no plugin (e.g. Multisite) has set it.
+        // Filament's navigationGroups() appends, so we check if groups are already set.
+        // MultisitePlugin sets groups with Platform first during register().
+        if (empty($panel->getNavigationGroups())) {
+            $panel->navigationGroups([
+                \Filament\Navigation\NavigationGroup::make(config('tallcms.navigation.groups.content', 'Content')),
+                \Filament\Navigation\NavigationGroup::make(config('tallcms.navigation.groups.appearance', 'Appearance')),
+                \Filament\Navigation\NavigationGroup::make(config('tallcms.navigation.groups.configuration', 'Configuration')),
+                \Filament\Navigation\NavigationGroup::make(config('tallcms.navigation.groups.system', 'System')),
+            ]);
+        }
     }
 
     /**

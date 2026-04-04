@@ -2,7 +2,6 @@
 
 namespace TallCms\Cms\Filament\Resources\TallcmsMenus\Tables;
 
-use TallCms\Cms\Filament\Pages\MenuItemsManager;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -10,6 +9,8 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\QueryException;
+use TallCms\Cms\Filament\Pages\MenuItemsManager;
 
 class TallcmsMenusTable
 {
@@ -40,6 +41,8 @@ class TallcmsMenusTable
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                ...static::getSiteColumn(),
             ])
             ->filters([
                 //
@@ -69,5 +72,36 @@ class TallcmsMenusTable
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /**
+     * Site column for multisite. Returns empty array when plugin is absent.
+     */
+    protected static function getSiteColumn(): array
+    {
+        if (! app()->bound('tallcms.multisite.resolver')) {
+            return [];
+        }
+
+        try {
+            $sites = \Illuminate\Support\Facades\DB::table('tallcms_sites')
+                ->pluck('name', 'id')
+                ->toArray();
+        } catch (QueryException) {
+            return [];
+        }
+
+        if (empty($sites)) {
+            return [];
+        }
+
+        return [
+            TextColumn::make('site_id')
+                ->label('Site')
+                ->formatStateUsing(fn ($state) => $sites[$state] ?? 'Unassigned')
+                ->badge()
+                ->color(fn ($state) => $state ? 'primary' : 'gray')
+                ->sortable(),
+        ];
     }
 }

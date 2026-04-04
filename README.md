@@ -116,6 +116,7 @@ Full documentation lives in the [`docs/`](https://github.com/tallcms/tallcms/blo
 | [Comments](https://github.com/tallcms/tallcms/blob/main/docs/site-comments.md) | Comment system and moderation |
 | [SEO](https://github.com/tallcms/tallcms/blob/main/docs/site-seo.md) | Sitemaps, meta tags, structured data |
 | [Site Settings](https://github.com/tallcms/tallcms/blob/main/docs/site-settings.md) | Logo, contact info, SPA mode |
+| [Multisite](https://github.com/tallcms/tallcms/blob/main/docs/site-multisite.md) | Multi-domain site management |
 | [Page Templates](https://github.com/tallcms/tallcms/blob/main/docs/site-templates.md) | Page templates and sidebar widgets |
 
 ### Block Reference
@@ -160,6 +161,7 @@ Learn more at [tallcms.com/pro](https://tallcms.com/pro).
 | [Theme Switcher](https://github.com/tallcms/tallcms/blob/main/docs/dev-theme-switcher.md) | Enable runtime theme switching |
 | [Plugin Development](https://github.com/tallcms/tallcms/blob/main/docs/dev-plugins.md) | Extend TallCMS with plugins |
 | [Template & Widget Development](https://github.com/tallcms/tallcms/blob/main/docs/dev-templates-widgets.md) | Custom templates and sidebar widgets |
+| [Multisite Architecture](https://github.com/tallcms/tallcms/blob/main/docs/dev-multisite.md) | Multisite internals, settings policy, theme integration |
 | [REST API](https://github.com/tallcms/tallcms/blob/main/docs/dev-api.md) | Build integrations with the TallCMS API |
 | [CLI Commands](https://github.com/tallcms/tallcms/blob/main/docs/dev-cli-commands.md) | Artisan command reference |
 

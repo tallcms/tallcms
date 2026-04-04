@@ -2,15 +2,15 @@
 
 namespace TallCms\Cms\Filament\Resources\CmsCategories\Schemas;
 
-use TallCms\Cms\Models\CmsCategory;
-use TallCms\Cms\Rules\UniqueTranslatableSlug;
-use TallCms\Cms\Services\LocaleRegistry;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
+use TallCms\Cms\Models\CmsCategory;
+use TallCms\Cms\Rules\UniqueTranslatableSlug;
+use TallCms\Cms\Services\LocaleRegistry;
 
 class CmsCategoryForm
 {

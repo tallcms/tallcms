@@ -45,12 +45,12 @@ class WebhookManager extends Page implements HasForms
 
     public static function getNavigationGroup(): ?string
     {
-        return config('tallcms.filament.navigation_group') ?? 'Settings';
+        return config('tallcms.navigation.groups.system', 'System');
     }
 
     public static function getNavigationSort(): ?int
     {
-        return config('tallcms.filament.navigation_sort') ?? 66;
+        return 53;
     }
 
     public static function shouldRegisterNavigation(): bool

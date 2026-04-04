@@ -2,20 +2,19 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
-use TallCms\Cms\Filament\Blocks\Concerns\HasAnimationOptions;
-use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
-use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
-use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
-use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use TallCms\Cms\Filament\Blocks\Concerns\HasAnimationOptions;
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
+use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
+use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 
 class ContentBlockBlock extends RichContentCustomBlock
 {

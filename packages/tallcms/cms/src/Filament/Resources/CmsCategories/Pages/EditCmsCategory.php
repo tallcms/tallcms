@@ -13,7 +13,7 @@ use TallCms\Cms\Filament\Resources\CmsCategories\CmsCategoryResource;
 
 class EditCmsCategory extends EditRecord
 {
-    use Translatable, HasTranslationCopying {
+    use HasTranslationCopying, Translatable {
         HasTranslationCopying::updatedActiveLocale insteadof Translatable;
     }
 
