@@ -34,12 +34,12 @@ class SeoSettings extends Page implements HasForms
 
     public static function getNavigationGroup(): ?string
     {
-        return config('tallcms.navigation.groups.appearance', 'Appearance');
+        return config('tallcms.navigation.groups.configuration', 'Configuration');
     }
 
     public static function getNavigationSort(): ?int
     {
-        return 31;
+        return 41;
     }
 
     public function mount(): void

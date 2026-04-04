@@ -16,9 +16,9 @@ class CodeInjection extends Page implements HasForms
 
     protected string $view = 'tallcms::filament.pages.code-injection';
 
-    protected static ?string $navigationLabel = 'Code Injection';
+    protected static ?string $navigationLabel = 'Embed Code';
 
-    protected static ?string $title = 'Code Injection';
+    protected static ?string $title = 'Embed Code';
 
     public ?array $data = [];
 
@@ -39,12 +39,12 @@ class CodeInjection extends Page implements HasForms
 
     public static function getNavigationGroup(): ?string
     {
-        return config('tallcms.navigation.groups.appearance', 'Appearance');
+        return config('tallcms.navigation.groups.configuration', 'Configuration');
     }
 
     public static function getNavigationSort(): ?int
     {
-        return 32;
+        return 42;
     }
 
     public function mount(): void
