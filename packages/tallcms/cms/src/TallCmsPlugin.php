@@ -86,14 +86,6 @@ class TallCmsPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
-        // Set explicit navigation group order
-        $panel->navigationGroups([
-            \Filament\Navigation\NavigationGroup::make(config('tallcms.navigation.groups.content', 'Content')),
-            \Filament\Navigation\NavigationGroup::make(config('tallcms.navigation.groups.appearance', 'Appearance')),
-            \Filament\Navigation\NavigationGroup::make(config('tallcms.navigation.groups.configuration', 'Configuration')),
-            \Filament\Navigation\NavigationGroup::make(config('tallcms.navigation.groups.system', 'System')),
-        ]);
-
         $panel
             ->resources($this->getResources())
             ->pages($this->getPages())
@@ -195,7 +187,17 @@ class TallCmsPlugin implements Plugin
 
     public function boot(Panel $panel): void
     {
-        //
+        // Set default navigation group order if no plugin (e.g. Multisite) has set it.
+        // Filament's navigationGroups() appends, so we check if groups are already set.
+        // MultisitePlugin sets groups with Platform first during register().
+        if (empty($panel->getNavigationGroups())) {
+            $panel->navigationGroups([
+                \Filament\Navigation\NavigationGroup::make(config('tallcms.navigation.groups.content', 'Content')),
+                \Filament\Navigation\NavigationGroup::make(config('tallcms.navigation.groups.appearance', 'Appearance')),
+                \Filament\Navigation\NavigationGroup::make(config('tallcms.navigation.groups.configuration', 'Configuration')),
+                \Filament\Navigation\NavigationGroup::make(config('tallcms.navigation.groups.system', 'System')),
+            ]);
+        }
     }
 
     /**
