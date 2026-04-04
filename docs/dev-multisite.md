@@ -358,6 +358,43 @@ This prevents the common bug where saving a form creates overrides for every fie
 
 ---
 
+## Site Ownership
+
+### Model
+
+`tallcms_sites.user_id` identifies the site owner. `Site::owner()` is a `BelongsTo` relationship.
+
+- **Super-admin:** Sees all sites. Can assign/reassign ownership via Select field.
+- **Non-super-admin:** Sees only their owned sites. `user_id` auto-assigned on creation.
+
+### Enforcement Layers
+
+| Layer | What it does | Where |
+|-------|-------------|-------|
+| **SiteResource::getEloquentQuery()** | Filters site list by `user_id` | Plugin resource |
+| **SiteSwitcher::siteQuery()** | Filters switcher by `user_id` | Plugin Livewire |
+| **SitePolicy** | Gates view/update/delete by ownership | Plugin policy |
+| **MarkAdminContext** | Validates session site belongs to user, resets if not | Plugin middleware |
+| **"All Sites" mode** | Disabled for non-super-admins | Switcher Blade view |
+
+### Quotas
+
+The multisite plugin **does not enforce site quotas**. Quota logic (how many sites a user can create) belongs to the **app layer**, which knows about subscriptions, billing, and plan tiers.
+
+To add quotas in your app, override `SitePolicy::create()`:
+
+```php
+// In your app's AppServiceProvider or a custom policy
+public function create(User $user): bool
+{
+    $maxSites = $user->subscription->max_sites;
+    $currentCount = Site::where('user_id', $user->id)->where('is_active', true)->count();
+    return $currentCount < $maxSites;
+}
+```
+
+---
+
 ## Common Pitfalls
 
 **"SiteScope filters out all content"**

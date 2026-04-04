@@ -183,6 +183,19 @@ When a visitor arrives at your server:
 
 ---
 
+## Site Ownership
+
+Each site has an **owner** — the user who created it. Ownership controls who can see and manage the site:
+
+- **Super-admins** see all sites and can assign ownership to any user
+- **Regular users** see only their own sites
+- When you create a site, you automatically become its owner
+- The "All Sites" view is only available to super-admins
+
+This means multiple users can work in the same TallCMS installation, each managing their own set of sites without seeing each other's content.
+
+---
+
 ## Common Pitfalls
 
 **"404 when visiting my new site's domain"**
