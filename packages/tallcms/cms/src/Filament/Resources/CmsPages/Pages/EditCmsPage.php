@@ -20,7 +20,7 @@ use TallCms\Cms\Services\PublishingWorkflowService;
 
 class EditCmsPage extends EditRecord
 {
-    use Translatable, HasTranslationCopying {
+    use HasTranslationCopying, Translatable {
         HasTranslationCopying::updatedActiveLocale insteadof Translatable;
     }
 
@@ -36,7 +36,7 @@ class EditCmsPage extends EditRecord
             $this->getCopyFromDefaultAction(),
 
             $this->getSaveFormAction()
-            ->formId('form'),
+                ->formId('form'),
 
             // Workflow Actions Group
             ActionGroup::make([

@@ -2,17 +2,17 @@
 
 namespace TallCms\Cms\Filament\Resources\TallcmsMedia;
 
+use BackedEnum;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Table;
 use TallCms\Cms\Filament\Resources\TallcmsMedia\Pages\CreateTallcmsMedia;
 use TallCms\Cms\Filament\Resources\TallcmsMedia\Pages\EditTallcmsMedia;
 use TallCms\Cms\Filament\Resources\TallcmsMedia\Pages\ListTallcmsMedia;
 use TallCms\Cms\Filament\Resources\TallcmsMedia\Schemas\TallcmsMediaForm;
 use TallCms\Cms\Filament\Resources\TallcmsMedia\Tables\TallcmsMediaTable;
 use TallCms\Cms\Models\TallcmsMedia;
-use BackedEnum;
-use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Table;
 
 class TallcmsMediaResource extends Resource
 {
@@ -28,12 +28,12 @@ class TallcmsMediaResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return config('tallcms.filament.navigation_group') ?? 'Content Management';
+        return config('tallcms.navigation.groups.content', 'Content');
     }
 
     public static function getNavigationSort(): ?int
     {
-        return config('tallcms.filament.navigation_sort') ?? 4;
+        return 13;
     }
 
     public static function form(Schema $schema): Schema

@@ -39,12 +39,12 @@ class CodeInjection extends Page implements HasForms
 
     public static function getNavigationGroup(): ?string
     {
-        return config('tallcms.filament.navigation_group') ?? 'Settings';
+        return config('tallcms.navigation.groups.appearance', 'Appearance');
     }
 
     public static function getNavigationSort(): ?int
     {
-        return (config('tallcms.filament.navigation_sort') ?? 99) + 2;
+        return 32;
     }
 
     public function mount(): void

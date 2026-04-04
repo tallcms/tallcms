@@ -2,17 +2,9 @@
 
 namespace TallCms\Cms\Filament\Resources\CmsPosts\Schemas;
 
-use TallCms\Cms\Enums\ContentStatus;
-use TallCms\Cms\Livewire\RevisionHistory;
-use TallCms\Cms\Models\CmsCategory;
-use TallCms\Cms\Models\CmsPost;
-use TallCms\Cms\Rules\UniqueTranslatableSlug;
-use TallCms\Cms\Services\CustomBlockDiscoveryService;
-use TallCms\Cms\Services\LocaleRegistry;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
-use TallCms\Cms\Filament\Forms\Components\CmsRichEditor;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -21,6 +13,14 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
+use TallCms\Cms\Enums\ContentStatus;
+use TallCms\Cms\Filament\Forms\Components\CmsRichEditor;
+use TallCms\Cms\Livewire\RevisionHistory;
+use TallCms\Cms\Models\CmsCategory;
+use TallCms\Cms\Models\CmsPost;
+use TallCms\Cms\Rules\UniqueTranslatableSlug;
+use TallCms\Cms\Services\CustomBlockDiscoveryService;
+use TallCms\Cms\Services\LocaleRegistry;
 
 class CmsPostForm
 {

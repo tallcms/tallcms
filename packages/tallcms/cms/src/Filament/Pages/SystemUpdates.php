@@ -2,13 +2,13 @@
 
 namespace TallCms\Cms\Filament\Pages;
 
-use TallCms\Cms\Jobs\TallCmsUpdateJob;
-use TallCms\Cms\Services\TallCmsUpdater;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Log;
+use TallCms\Cms\Jobs\TallCmsUpdateJob;
+use TallCms\Cms\Services\TallCmsUpdater;
 
 class SystemUpdates extends Page
 {
@@ -61,12 +61,12 @@ class SystemUpdates extends Page
 
     public static function getNavigationGroup(): ?string
     {
-        return config('tallcms.filament.navigation_group') ?? 'Settings';
+        return config('tallcms.navigation.groups.system', 'System');
     }
 
     public static function getNavigationSort(): ?int
     {
-        return config('tallcms.filament.navigation_sort') ?? 100;
+        return 54;
     }
 
     public function mount(): void
@@ -124,7 +124,7 @@ class SystemUpdates extends Page
         // SERVER-SIDE GUARD: Block update if backup required but not capable AND not acknowledged
         $requireDbBackup = config('tallcms.updates.require_db_backup', true);
         $dbCapable = $this->dbBackupCapability['capable'] ?? false;
-        if ($requireDbBackup && !$dbCapable && !$this->skipDbBackup) {
+        if ($requireDbBackup && ! $dbCapable && ! $this->skipDbBackup) {
             Notification::make()
                 ->title('Database backup acknowledgment required')
                 ->body('Please acknowledge the database backup warning before proceeding.')

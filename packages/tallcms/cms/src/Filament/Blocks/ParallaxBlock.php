@@ -2,9 +2,6 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
-use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
-use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
-use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
@@ -15,6 +12,9 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
+use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
 
 class ParallaxBlock extends RichContentCustomBlock
 {

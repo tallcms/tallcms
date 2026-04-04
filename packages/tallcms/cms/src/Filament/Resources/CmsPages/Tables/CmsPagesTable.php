@@ -2,7 +2,6 @@
 
 namespace TallCms\Cms\Filament\Resources\CmsPages\Tables;
 
-use TallCms\Cms\Enums\ContentStatus;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -14,6 +13,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\QueryException;
+use TallCms\Cms\Enums\ContentStatus;
 
 class CmsPagesTable
 {

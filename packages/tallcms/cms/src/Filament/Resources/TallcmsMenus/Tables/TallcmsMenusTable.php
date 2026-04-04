@@ -2,7 +2,6 @@
 
 namespace TallCms\Cms\Filament\Resources\TallcmsMenus\Tables;
 
-use TallCms\Cms\Filament\Pages\MenuItemsManager;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -11,6 +10,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\QueryException;
+use TallCms\Cms\Filament\Pages\MenuItemsManager;
 
 class TallcmsMenusTable
 {

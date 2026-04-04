@@ -3,8 +3,8 @@
 namespace TallCms\Cms\Filament\Resources\CmsPosts\Pages;
 
 use Filament\Actions\CreateAction;
-use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
 use Filament\Resources\Pages\ListRecords;
+use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
 use LaraZeus\SpatieTranslatable\Resources\Pages\ListRecords\Concerns\Translatable;
 use TallCms\Cms\Filament\Resources\CmsPosts\CmsPostResource;
 

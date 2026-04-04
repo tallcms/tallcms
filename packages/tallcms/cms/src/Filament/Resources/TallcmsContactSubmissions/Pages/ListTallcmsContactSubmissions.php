@@ -2,8 +2,8 @@
 
 namespace TallCms\Cms\Filament\Resources\TallcmsContactSubmissions\Pages;
 
-use TallCms\Cms\Filament\Resources\TallcmsContactSubmissions\TallcmsContactSubmissionResource;
 use Filament\Resources\Pages\ListRecords;
+use TallCms\Cms\Filament\Resources\TallcmsContactSubmissions\TallcmsContactSubmissionResource;
 
 class ListTallcmsContactSubmissions extends ListRecords
 {

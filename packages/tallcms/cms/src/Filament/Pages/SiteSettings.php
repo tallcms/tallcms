@@ -44,12 +44,12 @@ class SiteSettings extends Page implements HasForms
 
     public static function getNavigationGroup(): ?string
     {
-        return config('tallcms.filament.navigation_group') ?? 'Settings';
+        return config('tallcms.navigation.groups.configuration', 'Configuration');
     }
 
     public static function getNavigationSort(): ?int
     {
-        return config('tallcms.filament.navigation_sort') ?? 99;
+        return 40;
     }
 
     /**

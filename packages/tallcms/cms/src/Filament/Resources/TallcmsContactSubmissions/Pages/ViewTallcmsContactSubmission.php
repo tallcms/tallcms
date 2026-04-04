@@ -2,10 +2,10 @@
 
 namespace TallCms\Cms\Filament\Resources\TallcmsContactSubmissions\Pages;
 
-use TallCms\Cms\Filament\Resources\TallcmsContactSubmissions\TallcmsContactSubmissionResource;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\ViewRecord;
+use TallCms\Cms\Filament\Resources\TallcmsContactSubmissions\TallcmsContactSubmissionResource;
 
 class ViewTallcmsContactSubmission extends ViewRecord
 {

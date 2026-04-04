@@ -2,12 +2,6 @@
 
 namespace TallCms\Cms\Filament\Blocks;
 
-use TallCms\Cms\Filament\Blocks\Concerns\HasAnimationOptions;
-use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
-use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
-use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
-use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
-use TallCms\Cms\Models\CmsPage;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor\RichContentCustomBlock;
@@ -20,6 +14,12 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
+use TallCms\Cms\Filament\Blocks\Concerns\HasAnimationOptions;
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
+use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
+use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
+use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
+use TallCms\Cms\Models\CmsPage;
 
 class ContactFormBlock extends RichContentCustomBlock
 {
@@ -58,6 +58,7 @@ class ContactFormBlock extends RichContentCustomBlock
     {
         return 10;
     }
+
     public static function getId(): string
     {
         return 'contact_form';

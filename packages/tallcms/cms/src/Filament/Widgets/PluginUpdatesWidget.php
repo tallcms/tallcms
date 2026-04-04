@@ -2,10 +2,10 @@
 
 namespace TallCms\Cms\Filament\Widgets;
 
-use TallCms\Cms\Services\PluginLicenseService;
-use TallCms\Cms\Services\PluginManager;
 use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
+use TallCms\Cms\Services\PluginLicenseService;
+use TallCms\Cms\Services\PluginManager;
 
 class PluginUpdatesWidget extends Widget
 {
@@ -49,7 +49,7 @@ class PluginUpdatesWidget extends Widget
         } else {
             Notification::make()
                 ->title('Update check complete')
-                ->body(count($this->updates) . ' update(s) available')
+                ->body(count($this->updates).' update(s) available')
                 ->info()
                 ->send();
         }

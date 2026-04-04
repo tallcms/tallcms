@@ -15,7 +15,6 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
-use TallCms\Cms\Validation\TokenAbilityValidator;
 
 class ApiTokens extends Page implements HasForms
 {
@@ -40,12 +39,12 @@ class ApiTokens extends Page implements HasForms
 
     public static function getNavigationGroup(): ?string
     {
-        return config('tallcms.filament.navigation_group') ?? 'Settings';
+        return config('tallcms.navigation.groups.system', 'System');
     }
 
     public static function getNavigationSort(): ?int
     {
-        return config('tallcms.filament.navigation_sort') ?? 65;
+        return 52;
     }
 
     public static function shouldRegisterNavigation(): bool

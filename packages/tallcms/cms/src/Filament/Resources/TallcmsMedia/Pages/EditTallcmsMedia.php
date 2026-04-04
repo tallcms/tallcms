@@ -2,11 +2,11 @@
 
 namespace TallCms\Cms\Filament\Resources\TallcmsMedia\Pages;
 
-use TallCms\Cms\Filament\Resources\TallcmsMedia\TallcmsMediaResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use TallCms\Cms\Filament\Resources\TallcmsMedia\TallcmsMediaResource;
 
 class EditTallcmsMedia extends EditRecord
 {

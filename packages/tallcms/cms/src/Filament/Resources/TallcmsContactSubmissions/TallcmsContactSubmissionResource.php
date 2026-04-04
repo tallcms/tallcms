@@ -2,12 +2,12 @@
 
 namespace TallCms\Cms\Filament\Resources\TallcmsContactSubmissions;
 
+use Filament\Resources\Resource;
+use Filament\Tables\Table;
 use TallCms\Cms\Filament\Resources\TallcmsContactSubmissions\Pages\ListTallcmsContactSubmissions;
 use TallCms\Cms\Filament\Resources\TallcmsContactSubmissions\Pages\ViewTallcmsContactSubmission;
 use TallCms\Cms\Filament\Resources\TallcmsContactSubmissions\Tables\TallcmsContactSubmissionsTable;
 use TallCms\Cms\Models\TallcmsContactSubmission;
-use Filament\Resources\Resource;
-use Filament\Tables\Table;
 
 class TallcmsContactSubmissionResource extends Resource
 {
@@ -29,12 +29,12 @@ class TallcmsContactSubmissionResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return config('tallcms.filament.navigation_group') ?? 'Content Management';
+        return config('tallcms.navigation.groups.content', 'Content');
     }
 
     public static function getNavigationSort(): ?int
     {
-        return config('tallcms.filament.navigation_sort') ?? 50;
+        return 17;
     }
 
     public static function table(Table $table): Table

@@ -2,8 +2,8 @@
 
 namespace TallCms\Cms\Filament\Resources\TallcmsMenus\Pages;
 
-use TallCms\Cms\Filament\Resources\TallcmsMenus\TallcmsMenuResource;
 use Filament\Resources\Pages\CreateRecord;
+use TallCms\Cms\Filament\Resources\TallcmsMenus\TallcmsMenuResource;
 
 class CreateTallcmsMenu extends CreateRecord
 {

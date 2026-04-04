@@ -64,7 +64,7 @@ class TallCmsPlugin implements Plugin
 
     protected bool $hasShieldPlugin = true;
 
-    protected ?string $shieldNavigationGroup = 'User Management';
+    protected ?string $shieldNavigationGroup = null; // Set dynamically from config
 
     public static function make(): static
     {
@@ -86,6 +86,14 @@ class TallCmsPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
+        // Set explicit navigation group order
+        $panel->navigationGroups([
+            \Filament\Navigation\NavigationGroup::make(config('tallcms.navigation.groups.content', 'Content')),
+            \Filament\Navigation\NavigationGroup::make(config('tallcms.navigation.groups.appearance', 'Appearance')),
+            \Filament\Navigation\NavigationGroup::make(config('tallcms.navigation.groups.configuration', 'Configuration')),
+            \Filament\Navigation\NavigationGroup::make(config('tallcms.navigation.groups.system', 'System')),
+        ]);
+
         $panel
             ->resources($this->getResources())
             ->pages($this->getPages())
@@ -95,9 +103,9 @@ class TallCmsPlugin implements Plugin
         if ($this->hasShieldPlugin) {
             $shieldPlugin = FilamentShieldPlugin::make();
 
-            if ($this->shieldNavigationGroup !== null) {
-                $shieldPlugin->navigationGroup($this->shieldNavigationGroup);
-            }
+            // Place Shield under System group
+            $group = $this->shieldNavigationGroup ?? config('tallcms.navigation.groups.system', 'System');
+            $shieldPlugin->navigationGroup($group);
 
             $panel->plugin($shieldPlugin);
         }

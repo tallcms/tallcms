@@ -2,10 +2,10 @@
 
 namespace TallCms\Cms\Filament\Pages;
 
-use TallCms\Cms\Services\TallCmsUpdater;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Pages\Page;
 use Livewire\Attributes\Computed;
+use TallCms\Cms\Services\TallCmsUpdater;
 
 class UpdateManual extends Page
 {

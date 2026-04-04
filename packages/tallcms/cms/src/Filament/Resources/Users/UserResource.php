@@ -19,8 +19,6 @@ class UserResource extends Resource
 {
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;
 
-    protected static ?int $navigationSort = 1;
-
     protected static ?string $modelLabel = 'User';
 
     protected static ?string $pluralModelLabel = 'Users';
@@ -56,6 +54,11 @@ class UserResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'User Management';
+        return config('tallcms.navigation.groups.system', 'System');
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return 51;
     }
 }

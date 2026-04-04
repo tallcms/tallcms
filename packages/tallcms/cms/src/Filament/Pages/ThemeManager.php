@@ -46,12 +46,12 @@ class ThemeManager extends Page implements HasForms
 
     public static function getNavigationGroup(): ?string
     {
-        return config('tallcms.filament.navigation_group') ?? 'Appearance';
+        return config('tallcms.navigation.groups.appearance', 'Appearance');
     }
 
     public static function getNavigationSort(): ?int
     {
-        return config('tallcms.filament.navigation_sort') ?? 50;
+        return 30;
     }
 
     public ?string $selectedTheme = null;
