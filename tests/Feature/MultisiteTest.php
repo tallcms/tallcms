@@ -147,11 +147,12 @@ class MultisiteTest extends TestCase
         $this->assertDatabaseHas('tallcms_menus', ['id' => $menuBId, 'location' => 'header']);
     }
 
-    public function test_unknown_domain_returns_empty_results(): void
+    public function test_unknown_domain_resolves_to_null(): void
     {
-        $this->insertPage(['title' => 'Secret Page', 'site_id' => $this->siteA->id]);
-
-        // No admin session, resolver resolves to nothing
+        // On unknown domains, the resolver returns null (no site matched).
+        // In web context, the middleware 404s before queries run.
+        // In console/test, the scope skips filtering (no WHERE 1=0)
+        // to avoid breaking artisan commands.
         $resolver = app(CurrentSiteResolver::class);
         $resolver->reset();
         $request = \Illuminate\Http\Request::create('http://unknown.test/page');
@@ -159,7 +160,7 @@ class MultisiteTest extends TestCase
 
         $this->assertTrue($resolver->isResolved());
         $this->assertNull($resolver->id());
-        $this->assertCount(0, BaseCmsPage::all());
+        $this->assertFalse($resolver->isAllSitesMode());
     }
 
     public function test_all_sites_mode_shows_everything(): void
