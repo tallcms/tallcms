@@ -79,15 +79,25 @@ class MenuOverviewWidget extends BaseWidget
     {
         $sessionValue = session('multisite_admin_site_id');
 
-        if (! $sessionValue || $sessionValue === '__all_sites__') {
+        // Explicit "All Sites" selection
+        if ($sessionValue === '__all_sites__') {
             return null;
         }
 
-        if (is_numeric($sessionValue)) {
+        // Specific site selected
+        if ($sessionValue && is_numeric($sessionValue)) {
             return (int) $sessionValue;
         }
 
-        return null;
+        // No session yet (first login) — fall back to default site
+        // to match the site switcher which also shows the default site
+        try {
+            $default = DB::table('tallcms_sites')->where('is_default', true)->value('id');
+
+            return $default ? (int) $default : null;
+        } catch (QueryException) {
+            return null;
+        }
     }
 
     /**
