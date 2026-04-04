@@ -89,9 +89,20 @@ class MenuOverviewWidget extends BaseWidget
             return (int) $sessionValue;
         }
 
-        // No session yet (first login) — fall back to default site
-        // to match the site switcher which also shows the default site
+        // No session yet (first login) — fall back based on role
         try {
+            if (auth()->check() && ! auth()->user()->hasRole('super_admin')) {
+                // Non-super-admin: first owned site (deterministic: oldest)
+                $firstOwned = DB::table('tallcms_sites')
+                    ->where('user_id', auth()->id())
+                    ->where('is_active', true)
+                    ->orderBy('created_at')
+                    ->value('id');
+
+                return $firstOwned ? (int) $firstOwned : null;
+            }
+
+            // Super-admin: global default site
             $default = DB::table('tallcms_sites')->where('is_default', true)->value('id');
 
             return $default ? (int) $default : null;
