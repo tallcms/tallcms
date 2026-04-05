@@ -236,11 +236,17 @@ class PluginLicenseService
 
         $domain = $this->getDomainForContext($pluginSlug);
 
-        // Deactivate with license proxy
-        $result = $this->client->deactivate($pluginSlug, $license->license_key, $domain);
+        // Master key licenses have no Anystack activation to remove — skip proxy call
+        $isMasterOverride = ($license->metadata['source'] ?? null) === 'master_override';
 
-        // Only mark license as invalid if proxy confirmed deactivation
-        // Don't invalidate locally if proxy call failed (network/500) - license may still be active
+        if ($isMasterOverride) {
+            $result = ['success' => true, 'message' => 'Master key license deactivated locally'];
+        } else {
+            // Deactivate with license proxy
+            $result = $this->client->deactivate($pluginSlug, $license->license_key, $domain);
+        }
+
+        // Only mark license as invalid if proxy confirmed deactivation (or master key)
         if ($result['success']) {
             // Clear activated_at so hasEverBeenLicensed() returns false
             // This is different from expiration - deactivation means the user
