@@ -30,6 +30,7 @@ class PluginLicense extends Model
      */
     protected $fillable = [
         'plugin_slug',
+        'site_id',
         'license_key',
         'status',
         'domain',
@@ -185,11 +186,84 @@ class PluginLicense extends Model
     }
 
     /**
-     * Find license by plugin slug
+     * Find license by plugin slug with explicit site_id.
+     * Pass null for installation-global licenses.
      */
-    public static function findByPluginSlug(string $pluginSlug): ?self
+    public static function findByPluginSlug(string $pluginSlug, ?int $siteId = null): ?self
     {
-        return static::where('plugin_slug', $pluginSlug)->first();
+        $query = static::where('plugin_slug', $pluginSlug);
+
+        if ($siteId !== null) {
+            $query->where('site_id', $siteId);
+        } else {
+            $query->whereNull('site_id');
+        }
+
+        return $query->first();
+    }
+
+    /**
+     * Find license for the current context (auto-resolves site from plugin's license_scope).
+     * For scope=site plugins in multisite admin, resolves to the selected site.
+     * For scope=installation plugins, always returns the global record.
+     */
+    public static function findForCurrentContext(string $pluginSlug): ?self
+    {
+        $siteId = static::resolveContextSiteId($pluginSlug);
+
+        // Also check for legacy global license (site_id = NULL) when per-site not found
+        $license = static::findByPluginSlug($pluginSlug, $siteId);
+        if (! $license && $siteId !== null) {
+            $license = static::findByPluginSlug($pluginSlug, null);
+        }
+
+        return $license;
+    }
+
+    /**
+     * Resolve the site ID based on the plugin's license_scope and current context.
+     *
+     * Returns null for installation-scoped plugins or when no multisite context.
+     * Returns site ID for site-scoped plugins when a site is selected.
+     */
+    public static function resolveContextSiteId(string $pluginSlug): ?int
+    {
+        // Check plugin's license_scope
+        try {
+            $plugin = app(\TallCms\Cms\Services\PluginManager::class)
+                ->getInstalledPlugins()
+                ->first(fn ($p) => $p->getFullSlug() === $pluginSlug);
+
+            if (! $plugin || ($plugin->licenseScope ?? 'installation') === 'installation') {
+                return null;
+            }
+        } catch (\Throwable) {
+            return null;
+        }
+
+        // Plugin is site-scoped: resolve current site
+        $isAdminContext = request()?->attributes->get('tallcms.admin_context', false);
+
+        if ($isAdminContext) {
+            $sessionValue = session('multisite_admin_site_id');
+            if ($sessionValue && $sessionValue !== '__all_sites__' && is_numeric($sessionValue)) {
+                return (int) $sessionValue;
+            }
+
+            return null;
+        }
+
+        if (app()->bound('tallcms.multisite.resolver')) {
+            try {
+                $resolver = app('tallcms.multisite.resolver');
+                if ($resolver->isResolved() && $resolver->id()) {
+                    return $resolver->id();
+                }
+            } catch (\Throwable) {
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -197,8 +271,10 @@ class PluginLicense extends Model
      */
     public static function findOrCreateForPlugin(string $pluginSlug): self
     {
+        $siteId = static::resolveContextSiteId($pluginSlug);
+
         return static::firstOrCreate(
-            ['plugin_slug' => $pluginSlug],
+            ['plugin_slug' => $pluginSlug, 'site_id' => $siteId],
             ['status' => 'pending']
         );
     }

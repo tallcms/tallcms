@@ -79,6 +79,24 @@ class PluginManager extends Page implements HasForms
 
     public ?string $autoActivateName = null;
 
+    public function getSubheading(): ?string
+    {
+        $sessionValue = session('multisite_admin_site_id');
+        if (! $sessionValue || $sessionValue === '__all_sites__') {
+            return null;
+        }
+
+        try {
+            $site = \Illuminate\Support\Facades\DB::table('tallcms_sites')
+                ->where('id', $sessionValue)
+                ->first();
+
+            return $site ? "Viewing licenses for: {$site->name} ({$site->domain})" : null;
+        } catch (\Illuminate\Database\QueryException) {
+            return null;
+        }
+    }
+
     public function mount(): void
     {
         // Trigger automatic update check (rate-limited internally)

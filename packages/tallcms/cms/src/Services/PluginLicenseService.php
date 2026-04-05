@@ -40,7 +40,7 @@ class PluginLicenseService
      */
     public function hasEverBeenLicensed(string $pluginSlug): bool
     {
-        $license = PluginLicense::findByPluginSlug($pluginSlug);
+        $license = PluginLicense::findForCurrentContext($pluginSlug);
 
         return $license && $license->activated_at !== null;
     }
@@ -57,15 +57,16 @@ class PluginLicenseService
     public function isValid(string $pluginSlug): bool
     {
         // Tier 1: In-memory cache for this request
-        if (isset($this->cachedValidStates[$pluginSlug])) {
-            return $this->cachedValidStates[$pluginSlug];
+        $cacheKey = $this->getLicenseCacheKey($pluginSlug);
+        if (isset($this->cachedValidStates[$cacheKey])) {
+            return $this->cachedValidStates[$cacheKey];
         }
 
-        $license = PluginLicense::findByPluginSlug($pluginSlug);
+        $license = PluginLicense::findForCurrentContext($pluginSlug);
 
         // No license stored
         if (! $license) {
-            $this->cachedValidStates[$pluginSlug] = false;
+            $this->cachedValidStates[$cacheKey] = false;
 
             return false;
         }
@@ -79,14 +80,14 @@ class PluginLicenseService
         // - OR license is within renewal grace period (allows time for billing webhooks)
         if (! $license->needsRevalidation($cacheTtl) && $license->isActive()) {
             if (! $license->isHardExpired($renewalGraceDays)) {
-                $this->cachedValidStates[$pluginSlug] = true;
+                $this->cachedValidStates[$cacheKey] = true;
 
                 return true;
             }
         }
 
         // Tier 3: Try to validate with license proxy
-        $domain = $this->getCurrentDomain();
+        $domain = $this->getDomainForContext($pluginSlug);
         $result = $this->client->validate($pluginSlug, $license->license_key, $domain);
 
         if ($result['valid']) {
@@ -104,7 +105,7 @@ class PluginLicenseService
 
             $license->updateFromValidation($updateData);
 
-            $this->cachedValidStates[$pluginSlug] = true;
+            $this->cachedValidStates[$cacheKey] = true;
 
             return true;
         }
@@ -121,7 +122,7 @@ class PluginLicenseService
                     'expires_at' => $license->expires_at?->toDateTimeString(),
                 ]);
 
-                $this->cachedValidStates[$pluginSlug] = true;
+                $this->cachedValidStates[$cacheKey] = true;
 
                 return true;
             }
@@ -141,7 +142,7 @@ class PluginLicenseService
 
                 // Keep status as 'active' during grace period so UI shows "Renewal Due" not "Expired"
                 // Don't change status here - let it remain 'active'
-                $this->cachedValidStates[$pluginSlug] = true;
+                $this->cachedValidStates[$cacheKey] = true;
 
                 return true;
             }
@@ -152,7 +153,7 @@ class PluginLicenseService
             $license->save();
         }
 
-        $this->cachedValidStates[$pluginSlug] = false;
+        $this->cachedValidStates[$cacheKey] = false;
 
         return false;
     }
@@ -162,7 +163,7 @@ class PluginLicenseService
      */
     public function activate(string $pluginSlug, string $licenseKey): array
     {
-        $domain = $this->getCurrentDomain();
+        $domain = $this->getDomainForContext($pluginSlug);
 
         // Activate with the license proxy
         $result = $this->client->activate($pluginSlug, $licenseKey, $domain);
@@ -172,7 +173,8 @@ class PluginLicenseService
         }
 
         // Find existing license or create new one (overwrites existing)
-        $license = PluginLicense::findByPluginSlug($pluginSlug);
+        $siteId = PluginLicense::resolveContextSiteId($pluginSlug);
+        $license = PluginLicense::findByPluginSlug($pluginSlug, $siteId);
 
         if ($license) {
             // Update existing license record
@@ -194,6 +196,7 @@ class PluginLicenseService
                 'license_key' => $licenseKey,
                 'status' => 'active',
                 'domain' => $domain,
+                'site_id' => $siteId,
                 'activated_at' => now(),
                 'last_validated_at' => now(),
                 'expires_at' => isset($result['data']['expires_at'])
@@ -204,8 +207,9 @@ class PluginLicenseService
         }
 
         // Clear cached state
-        unset($this->cachedValidStates[$pluginSlug]);
-        Cache::forget("plugin_license_valid:{$pluginSlug}");
+        $licenseCacheKey = $this->getLicenseCacheKey($pluginSlug);
+        unset($this->cachedValidStates[$licenseCacheKey]);
+        Cache::forget("plugin_license_valid:{$licenseCacheKey}");
 
         Log::info('PluginLicenseService: License activated', [
             'plugin_slug' => $pluginSlug,
@@ -221,7 +225,7 @@ class PluginLicenseService
      */
     public function deactivate(string $pluginSlug): array
     {
-        $license = PluginLicense::findByPluginSlug($pluginSlug);
+        $license = PluginLicense::findForCurrentContext($pluginSlug);
 
         if (! $license) {
             return [
@@ -230,7 +234,7 @@ class PluginLicenseService
             ];
         }
 
-        $domain = $this->getCurrentDomain();
+        $domain = $this->getDomainForContext($pluginSlug);
 
         // Deactivate with license proxy
         $result = $this->client->deactivate($pluginSlug, $license->license_key, $domain);
@@ -246,8 +250,9 @@ class PluginLicenseService
             $license->save();
 
             // Clear cached state
-            unset($this->cachedValidStates[$pluginSlug]);
-            Cache::forget("plugin_license_valid:{$pluginSlug}");
+            $licenseCacheKey = $this->getLicenseCacheKey($pluginSlug);
+            unset($this->cachedValidStates[$licenseCacheKey]);
+            Cache::forget("plugin_license_valid:{$licenseCacheKey}");
 
             Log::info('PluginLicenseService: License deactivated', [
                 'plugin_slug' => $pluginSlug,
@@ -267,7 +272,7 @@ class PluginLicenseService
      */
     public function getStatus(string $pluginSlug): array
     {
-        $license = PluginLicense::findByPluginSlug($pluginSlug);
+        $license = PluginLicense::findForCurrentContext($pluginSlug);
 
         if (! $license) {
             return [
@@ -451,6 +456,40 @@ class PluginLicenseService
     }
 
     /**
+     * Get the domain for the current plugin context.
+     * For site-scoped plugins, returns the selected site's domain (not the panel host).
+     * For installation-scoped plugins, returns the current request host.
+     */
+    protected function getDomainForContext(string $pluginSlug): string
+    {
+        $siteId = PluginLicense::resolveContextSiteId($pluginSlug);
+
+        if ($siteId !== null) {
+            try {
+                $siteDomain = \Illuminate\Support\Facades\DB::table('tallcms_sites')
+                    ->where('id', $siteId)
+                    ->value('domain');
+                if ($siteDomain) {
+                    return $siteDomain;
+                }
+            } catch (\Throwable) {
+            }
+        }
+
+        return $this->getCurrentDomain();
+    }
+
+    /**
+     * Get a site-aware cache key for license state.
+     */
+    protected function getLicenseCacheKey(string $pluginSlug): string
+    {
+        $siteId = PluginLicense::resolveContextSiteId($pluginSlug);
+
+        return $siteId !== null ? "{$pluginSlug}:{$siteId}" : $pluginSlug;
+    }
+
+    /**
      * Check for plugin updates (requires valid license)
      *
      * This is the server-side update gate: the proxy validates the license
@@ -460,7 +499,7 @@ class PluginLicenseService
      */
     public function checkForUpdates(string $pluginSlug): array
     {
-        $license = PluginLicense::findByPluginSlug($pluginSlug);
+        $license = PluginLicense::findForCurrentContext($pluginSlug);
         $purchaseUrl = app(MarketplaceCatalogService::class)->getPurchaseUrl($pluginSlug);
 
         if (! $license) {
@@ -482,7 +521,7 @@ class PluginLicenseService
             ->first(fn (Plugin $p) => $p->getLicenseSlug() === $pluginSlug);
 
         $currentVersion = $plugin?->version ?? '0.0.0';
-        $domain = $this->getCurrentDomain();
+        $domain = $this->getDomainForContext($pluginSlug);
 
         // Call proxy to check for updates (proxy validates license)
         $result = $this->client->checkForUpdates(
@@ -527,14 +566,17 @@ class PluginLicenseService
     }
 
     /**
-     * Clear in-memory cache for testing
+     * Clear in-memory cache for testing.
+     * When called without arguments, clears all cached states including site-specific ones.
      */
     public function clearCache(?string $pluginSlug = null): void
     {
         if ($pluginSlug) {
-            unset($this->cachedValidStates[$pluginSlug]);
-            Cache::forget("plugin_license_valid:{$pluginSlug}");
+            $licenseCacheKey = $this->getLicenseCacheKey($pluginSlug);
+            unset($this->cachedValidStates[$licenseCacheKey]);
+            Cache::forget("plugin_license_valid:{$licenseCacheKey}");
         } else {
+            // Clears all cached states including site-specific ones
             $this->cachedValidStates = [];
         }
     }
@@ -566,11 +608,16 @@ class PluginLicenseService
             return;
         }
 
+        // Skip site-scoped plugins in automatic checks (v1 rule)
+        $licensablePlugins = $licensablePlugins->filter(
+            fn ($plugin) => ($plugin->licenseScope ?? 'installation') === 'installation'
+        );
+
         $updates = [];
 
         foreach ($licensablePlugins as $plugin) {
             $pluginSlug = $plugin->getLicenseSlug();
-            $license = PluginLicense::findByPluginSlug($pluginSlug);
+            $license = PluginLicense::findForCurrentContext($pluginSlug);
 
             // Only check if we have a license (don't waste API calls for unlicensed plugins)
             if (! $license) {

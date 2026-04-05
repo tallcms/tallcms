@@ -35,6 +35,8 @@ class Plugin
 
     public bool $licenseRequired = false;
 
+    public string $licenseScope = 'installation';
+
     public function __construct(array $data, string $path)
     {
         $this->name = $data['name'] ?? 'Untitled Plugin';
@@ -48,6 +50,7 @@ class Plugin
         $this->filamentPlugin = $data['filament_plugin'] ?? null;
         $this->tags = $data['tags'] ?? [];
         $this->licenseRequired = (bool) ($data['license_required'] ?? false);
+        $this->licenseScope = $data['license_scope'] ?? 'installation';
         $this->path = $path;
 
         // Store compatibility info in extras
