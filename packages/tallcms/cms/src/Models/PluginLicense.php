@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TallCms\Cms\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 
 class PluginLicense extends Model
@@ -186,6 +187,17 @@ class PluginLicense extends Model
     }
 
     /**
+     * Whether the site_id column exists on the plugin licenses table.
+     * Cached per-process to avoid repeated schema checks.
+     */
+    protected static ?bool $hasSiteIdColumn = null;
+
+    protected static function hasSiteIdColumn(): bool
+    {
+        return static::$hasSiteIdColumn ??= Schema::hasColumn('tallcms_plugin_licenses', 'site_id');
+    }
+
+    /**
      * Find license by plugin slug with explicit site_id.
      * Pass null for installation-global licenses.
      */
@@ -193,10 +205,12 @@ class PluginLicense extends Model
     {
         $query = static::where('plugin_slug', $pluginSlug);
 
-        if ($siteId !== null) {
-            $query->where('site_id', $siteId);
-        } else {
-            $query->whereNull('site_id');
+        if (static::hasSiteIdColumn()) {
+            if ($siteId !== null) {
+                $query->where('site_id', $siteId);
+            } else {
+                $query->whereNull('site_id');
+            }
         }
 
         return $query->first();
@@ -228,6 +242,11 @@ class PluginLicense extends Model
      */
     public static function resolveContextSiteId(string $pluginSlug): ?int
     {
+        // No site_id column = no per-site licensing possible
+        if (! static::hasSiteIdColumn()) {
+            return null;
+        }
+
         // Check plugin's license_scope
         try {
             $plugin = app(\TallCms\Cms\Services\PluginManager::class)
@@ -271,12 +290,13 @@ class PluginLicense extends Model
      */
     public static function findOrCreateForPlugin(string $pluginSlug): self
     {
-        $siteId = static::resolveContextSiteId($pluginSlug);
+        $attributes = ['plugin_slug' => $pluginSlug];
 
-        return static::firstOrCreate(
-            ['plugin_slug' => $pluginSlug, 'site_id' => $siteId],
-            ['status' => 'pending']
-        );
+        if (static::hasSiteIdColumn()) {
+            $attributes['site_id'] = static::resolveContextSiteId($pluginSlug);
+        }
+
+        return static::firstOrCreate($attributes, ['status' => 'pending']);
     }
 
     /**
