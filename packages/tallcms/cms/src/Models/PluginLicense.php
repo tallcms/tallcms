@@ -192,7 +192,7 @@ class PluginLicense extends Model
      */
     protected static ?bool $hasSiteIdColumn = null;
 
-    protected static function hasSiteIdColumn(): bool
+    public static function hasSiteIdColumn(): bool
     {
         return static::$hasSiteIdColumn ??= Schema::hasColumn('tallcms_plugin_licenses', 'site_id');
     }

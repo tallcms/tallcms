@@ -176,34 +176,30 @@ class PluginLicenseService
         $siteId = PluginLicense::resolveContextSiteId($pluginSlug);
         $license = PluginLicense::findByPluginSlug($pluginSlug, $siteId);
 
+        $licenseData = [
+            'plugin_slug' => $pluginSlug,
+            'license_key' => $licenseKey,
+            'status' => 'active',
+            'domain' => $domain,
+            'activated_at' => now(),
+            'last_validated_at' => now(),
+            'expires_at' => isset($result['data']['expires_at'])
+                ? Carbon::parse($result['data']['expires_at'])
+                : null,
+            'metadata' => $result['data'],
+        ];
+
+        if (PluginLicense::hasSiteIdColumn()) {
+            $licenseData['site_id'] = $siteId;
+        }
+
         if ($license) {
-            // Update existing license record
-            $license->update([
-                'license_key' => $licenseKey,
-                'status' => 'active',
-                'domain' => $domain,
-                'activated_at' => now(),
-                'last_validated_at' => now(),
-                'expires_at' => isset($result['data']['expires_at'])
-                    ? Carbon::parse($result['data']['expires_at'])
-                    : null,
-                'metadata' => $result['data'],
-            ]);
+            // Update existing license record (no need to set plugin_slug or site_id)
+            unset($licenseData['plugin_slug'], $licenseData['site_id']);
+            $license->update($licenseData);
         } else {
             // Create new license record
-            $license = PluginLicense::create([
-                'plugin_slug' => $pluginSlug,
-                'license_key' => $licenseKey,
-                'status' => 'active',
-                'domain' => $domain,
-                'site_id' => $siteId,
-                'activated_at' => now(),
-                'last_validated_at' => now(),
-                'expires_at' => isset($result['data']['expires_at'])
-                    ? Carbon::parse($result['data']['expires_at'])
-                    : null,
-                'metadata' => $result['data'],
-            ]);
+            $license = PluginLicense::create($licenseData);
         }
 
         // Clear cached state
