@@ -881,6 +881,10 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
             // Comments
             '2026_02_21_000001_create_tallcms_comments_table',
+
+            // GEO Phase 1: Author profiles & review metadata
+            '2026_04_07_000001_add_author_profile_fields_to_users_table',
+            '2026_04_07_000002_add_review_metadata_to_content_tables',
         ];
     }
 
