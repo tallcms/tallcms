@@ -475,8 +475,13 @@ class CmsPageRenderer extends Component
                 'url' => url(tallcms_localized_url($postUrl)),
             ];
 
-            $showBreadcrumbs = true; // Posts always show breadcrumbs
-            $breadcrumbItems = $seoBreadcrumbs;
+            $showBreadcrumbs = $this->page->shouldShowBreadcrumbs();
+            if ($showBreadcrumbs) {
+                $breadcrumbItems = $seoBreadcrumbs;
+            } else {
+                $seoBreadcrumbs = null;
+                $breadcrumbItems = [];
+            }
         } else {
             // Page SEO
             $metaTags = SeoService::getMetaTags($this->page);
