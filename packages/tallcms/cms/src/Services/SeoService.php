@@ -154,19 +154,63 @@ class SeoService
             ];
         }
 
-        // Add author if available
+        // Add author if available (enriched with E-E-A-T signals)
         if ($author) {
-            $data['author'] = [
+            $authorData = [
                 '@type' => 'Person',
                 'name' => $author->name,
             ];
 
-            // Add author URL if they have a slug
             if (! empty($author->slug)) {
                 $prefix = config('tallcms.plugin_mode.routes_prefix', '');
                 $prefix = $prefix ? "/{$prefix}" : '';
-                $data['author']['url'] = url("{$prefix}/author/{$author->slug}");
+                $authorData['url'] = url("{$prefix}/author/{$author->slug}");
             }
+
+            if (! empty($author->job_title)) {
+                $authorData['jobTitle'] = $author->job_title;
+            }
+
+            if (! empty($author->company)) {
+                $authorData['worksFor'] = [
+                    '@type' => 'Organization',
+                    'name' => $author->company,
+                ];
+            }
+
+            $sameAs = [];
+            if (! empty($author->linkedin_url)) {
+                $sameAs[] = $author->linkedin_url;
+            }
+            if (! empty($author->twitter_handle)) {
+                $handle = ltrim($author->twitter_handle, '@');
+                $sameAs[] = "https://x.com/{$handle}";
+            }
+            if (! empty($sameAs)) {
+                $authorData['sameAs'] = $sameAs;
+            }
+
+            $data['author'] = $authorData;
+        }
+
+        // Add expert reviewer if available
+        if (! empty($post->expert_reviewer_name)) {
+            $reviewerData = [
+                '@type' => 'Person',
+                'name' => $post->expert_reviewer_name,
+            ];
+            if (! empty($post->expert_reviewer_title)) {
+                $reviewerData['jobTitle'] = $post->expert_reviewer_title;
+            }
+            if (! empty($post->expert_reviewer_url)) {
+                $reviewerData['url'] = $post->expert_reviewer_url;
+            }
+            $data['reviewedBy'] = $reviewerData;
+        }
+
+        // Add last reviewed date
+        if ($post->last_reviewed_at) {
+            $data['lastReviewed'] = $post->last_reviewed_at->toIso8601String();
         }
 
         // Add featured image if available
@@ -181,8 +225,27 @@ class SeoService
             $data['articleSection'] = $categories->first()->name;
         }
 
-        // Add word count for reading time
-        $wordCount = str_word_count(strip_tags($post->excerpt ?? ''));
+        // Add citation sources
+        if (! empty($post->sources) && is_array($post->sources)) {
+            $citations = [];
+            foreach ($post->sources as $source) {
+                $citation = ['@type' => 'CreativeWork'];
+                if (! empty($source['title'])) {
+                    $citation['name'] = $source['title'];
+                }
+                if (! empty($source['url'])) {
+                    $citation['url'] = $source['url'];
+                }
+                $citations[] = $citation;
+            }
+            if (! empty($citations)) {
+                $data['citation'] = $citations;
+            }
+        }
+
+        // Add word count from full content (not excerpt)
+        $contentText = app(ContentIndexer::class)->extractSearchableText($post->content);
+        $wordCount = str_word_count($contentText);
         if ($wordCount > 0) {
             $data['wordCount'] = $wordCount;
         }

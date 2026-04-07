@@ -107,6 +107,7 @@ class ContentIndexer
                 $attrs['secondary_button_text'] ?? '',
             ]),
             'faq' => $this->extractFaq($attrs),
+            'how-to' => $this->extractHowTo($attrs),
             'pricing' => $this->extractPricing($attrs),
             'features' => $this->extractFeatures($attrs),
             'team' => $this->extractTeam($attrs),
@@ -146,6 +147,19 @@ class ContentIndexer
             if (is_array($item)) {
                 $text[] = $item['question'] ?? '';
                 $text[] = $item['answer'] ?? '';
+            }
+        }
+
+        return $this->join($text);
+    }
+
+    protected function extractHowTo(array $attrs): string
+    {
+        $text = [$attrs['title'] ?? '', $attrs['description'] ?? ''];
+        foreach ($attrs['steps'] ?? [] as $step) {
+            if (is_array($step)) {
+                $text[] = $step['step_name'] ?? '';
+                $text[] = $step['step_text'] ?? '';
             }
         }
 

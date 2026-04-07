@@ -6,6 +6,7 @@ use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -59,6 +60,13 @@ class SeoSettings extends Page implements HasForms
 
             // Default OG image
             'seo_default_og_image' => SiteSetting::get('seo_default_og_image'),
+
+            // llms.txt
+            'seo_llms_txt_enabled' => SiteSetting::get('seo_llms_txt_enabled', false),
+            'seo_llms_txt_preamble' => SiteSetting::get('seo_llms_txt_preamble', ''),
+            'seo_llms_txt_include_pages' => SiteSetting::get('seo_llms_txt_include_pages', true),
+            'seo_llms_txt_include_posts' => SiteSetting::get('seo_llms_txt_include_posts', true),
+            'seo_llms_txt_post_limit' => SiteSetting::get('seo_llms_txt_post_limit', '0'),
         ]);
     }
 
@@ -130,6 +138,51 @@ class SeoSettings extends Page implements HasForms
                         ->nullable()
                         ->columnSpanFull(),
                 ]),
+
+            Section::make('llms.txt')
+                ->description('Machine-readable content index for AI systems. The file is auto-generated from your published content — these settings control what is included.')
+                ->schema([
+                    Toggle::make('seo_llms_txt_enabled')
+                        ->label('Enable llms.txt')
+                        ->helperText('Publish a /llms.txt file for AI consumption')
+                        ->live()
+                        ->columnSpanFull(),
+
+                    Textarea::make('seo_llms_txt_preamble')
+                        ->label('Preamble')
+                        ->rows(3)
+                        ->maxLength(500)
+                        ->placeholder('e.g., TallCMS is a Laravel-based CMS built on the TALL stack...')
+                        ->helperText('A short intro paragraph shown at the top. Keep it factual and concise.')
+                        ->visible(fn ($get) => $get('seo_llms_txt_enabled'))
+                        ->columnSpanFull(),
+
+                    Toggle::make('seo_llms_txt_include_pages')
+                        ->label('Include Pages')
+                        ->helperText('List published pages')
+                        ->default(true)
+                        ->visible(fn ($get) => $get('seo_llms_txt_enabled')),
+
+                    Toggle::make('seo_llms_txt_include_posts')
+                        ->label('Include Posts')
+                        ->helperText('List published posts grouped by category')
+                        ->default(true)
+                        ->visible(fn ($get) => $get('seo_llms_txt_enabled')),
+
+                    Select::make('seo_llms_txt_post_limit')
+                        ->label('Post Limit')
+                        ->options([
+                            '0' => 'All posts',
+                            '10' => '10 most recent',
+                            '25' => '25 most recent',
+                            '50' => '50 most recent',
+                            '100' => '100 most recent',
+                        ])
+                        ->default('0')
+                        ->helperText('Limit total posts to keep the file focused')
+                        ->visible(fn ($get) => $get('seo_llms_txt_enabled') && $get('seo_llms_txt_include_posts')),
+                ])
+                ->columns(3),
         ];
     }
 
@@ -151,8 +204,9 @@ class SeoSettings extends Page implements HasForms
             if (str_starts_with($key, 'seo_')) {
                 $type = match ($key) {
                     'seo_default_og_image' => 'file',
-                    'seo_rss_enabled', 'seo_rss_full_content', 'seo_sitemap_enabled', 'seo_robots_append_sitemap' => 'boolean',
-                    'seo_rss_limit' => 'integer',
+                    'seo_rss_enabled', 'seo_rss_full_content', 'seo_sitemap_enabled', 'seo_robots_append_sitemap',
+                    'seo_llms_txt_enabled', 'seo_llms_txt_include_pages', 'seo_llms_txt_include_posts' => 'boolean',
+                    'seo_rss_limit', 'seo_llms_txt_post_limit' => 'integer',
                     default => 'text',
                 };
 

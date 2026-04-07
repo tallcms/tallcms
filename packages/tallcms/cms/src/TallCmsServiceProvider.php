@@ -163,6 +163,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
         'App\\Filament\\Blocks\\FaqBlock' => Filament\Blocks\FaqBlock::class,
         'App\\Filament\\Blocks\\FeaturesBlock' => Filament\Blocks\FeaturesBlock::class,
         'App\\Filament\\Blocks\\HeroBlock' => Filament\Blocks\HeroBlock::class,
+        'App\\Filament\\Blocks\\HowToBlock' => Filament\Blocks\HowToBlock::class,
         'App\\Filament\\Blocks\\ImageGalleryBlock' => Filament\Blocks\ImageGalleryBlock::class,
         'App\\Filament\\Blocks\\LogosBlock' => Filament\Blocks\LogosBlock::class,
         'App\\Filament\\Blocks\\ParallaxBlock' => Filament\Blocks\ParallaxBlock::class,

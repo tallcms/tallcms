@@ -9,6 +9,10 @@
     $showImage = $config['show_image'] ?? true;
     $showExcerpt = $config['show_excerpt'] ?? true;
 
+    // Route prefix for plugin-mode compatibility
+    $routePrefix = config('tallcms.plugin_mode.routes_prefix', '');
+    $routePrefix = $routePrefix ? "/{$routePrefix}" : '';
+
     // Save previous values to restore after rendering (avoid global bleed)
     $previousCmsPageSlug = View::shared('cmsPageSlug');
     $previousCmsPageContentWidth = View::shared('cmsPageContentWidth');
@@ -28,7 +32,7 @@
             <h1 class="text-4xl font-bold text-base-content mb-4">{{ $post->title }}</h1>
 
             @if($showDate || $showAuthor)
-                <div class="flex items-center text-base-content/60 text-sm space-x-4">
+                <div class="flex flex-wrap items-center text-base-content/60 text-sm gap-x-4 gap-y-1">
                     @if($showDate && $post->published_at)
                         <time datetime="{{ $post->published_at->toISOString() }}">
                             {{ $post->published_at->format('F j, Y') }}
@@ -36,7 +40,38 @@
                     @endif
 
                     @if($showAuthor && $post->author)
-                        <span>by {{ $post->author->name ?? $post->author }}</span>
+                        <span>
+                            by
+                            @if($post->author->slug)
+                                <a href="{{ url($routePrefix . '/author/' . $post->author->slug) }}"
+                                   class="hover:text-base-content transition-colors underline">{{ $post->author->name }}</a>
+                            @else
+                                {{ $post->author->name }}
+                            @endif
+                            @if($post->author->job_title ?? null)
+                                <span class="text-base-content/40">&mdash; {{ $post->author->job_title }}{{ ($post->author->company ?? null) ? ', ' . $post->author->company : '' }}</span>
+                            @endif
+                        </span>
+                    @endif
+                </div>
+            @endif
+
+            @if($post->last_reviewed_at || ($post->expert_reviewer_name ?? null))
+                <div class="text-xs text-base-content/50 mt-2 flex flex-wrap gap-x-4">
+                    @if($post->last_reviewed_at)
+                        <span>Last reviewed: {{ $post->last_reviewed_at->format('F j, Y') }}</span>
+                    @endif
+                    @if($post->expert_reviewer_name ?? null)
+                        <span>Expert reviewer:
+                            @if($post->expert_reviewer_url ?? null)
+                                <a href="{{ $post->expert_reviewer_url }}" target="_blank" rel="noopener" class="underline">{{ $post->expert_reviewer_name }}</a>
+                            @else
+                                {{ $post->expert_reviewer_name }}
+                            @endif
+                            @if($post->expert_reviewer_title ?? null)
+                                ({{ $post->expert_reviewer_title }})
+                            @endif
+                        </span>
                     @endif
                 </div>
             @endif
@@ -116,6 +151,23 @@
             {!! $postContent !!}
         </div>
     </article>
+
+    @if(!empty($post->sources))
+        <div class="mt-8 pt-6 border-t border-base-300">
+            <h3 class="text-sm font-semibold text-base-content/70 uppercase tracking-wider mb-3">Sources</h3>
+            <ol class="list-decimal list-inside text-sm text-base-content/60 space-y-1">
+                @foreach($post->sources as $source)
+                    <li>
+                        @if(!empty($source['url']))
+                            <a href="{{ $source['url'] }}" target="_blank" rel="noopener" class="underline hover:text-base-content">{{ $source['title'] }}</a>
+                        @else
+                            {{ $source['title'] }}
+                        @endif
+                    </li>
+                @endforeach
+            </ol>
+        </div>
+    @endif
 
     @if(config('tallcms.comments.enabled', true) && ($config['show_comments'] ?? true) && $post->isPublished())
         <x-tallcms::comments :post="$post" />

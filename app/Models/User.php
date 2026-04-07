@@ -32,6 +32,9 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         'slug',
         'bio',
         'twitter_handle',
+        'job_title',
+        'company',
+        'linkedin_url',
     ];
 
     /**

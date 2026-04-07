@@ -4,6 +4,8 @@ namespace TallCms\Cms\Filament\Resources\CmsPosts\Schemas;
 
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -12,6 +14,7 @@ use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Schema as DbSchema;
 use Illuminate\Support\Str;
 use TallCms\Cms\Enums\ContentStatus;
 use TallCms\Cms\Filament\Forms\Components\CmsRichEditor;
@@ -265,6 +268,75 @@ class CmsPostForm
                                             ])
                                             ->helperText('Used for social media sharing and post headers. Recommended: 1200x630px for best compatibility.'),
                                     ]),
+                            ]),
+
+                        Tabs\Tab::make('Attribution')
+                            ->icon('heroicon-o-shield-check')
+                            ->visible(fn () => DbSchema::hasColumn('tallcms_posts', 'last_reviewed_at'))
+                            ->schema([
+                                Section::make('Content Review')
+                                    ->description('Track when this content was last reviewed for accuracy')
+                                    ->schema([
+                                        Placeholder::make('last_reviewed_display')
+                                            ->label('Last Reviewed')
+                                            ->content(fn (?CmsPost $record) => $record?->last_reviewed_at
+                                                ? $record->last_reviewed_at->format('F j, Y \a\t g:i A')
+                                                : 'Never reviewed'),
+
+                                        Placeholder::make('reviewed_by_display')
+                                            ->label('Reviewed By')
+                                            ->content(fn (?CmsPost $record) => $record?->reviewer?->name ?? 'Not yet reviewed'),
+                                    ])
+                                    ->columns(2),
+
+                                Section::make('Expert Reviewer')
+                                    ->description('Optional external expert who reviewed this content for accuracy')
+                                    ->schema([
+                                        TextInput::make('expert_reviewer_name')
+                                            ->label('Reviewer Name')
+                                            ->maxLength(255)
+                                            ->placeholder('e.g., Dr. Jane Smith'),
+
+                                        TextInput::make('expert_reviewer_title')
+                                            ->label('Reviewer Title / Credentials')
+                                            ->maxLength(255)
+                                            ->placeholder('e.g., Medical Doctor, CPA'),
+
+                                        TextInput::make('expert_reviewer_url')
+                                            ->label('Reviewer URL')
+                                            ->url()
+                                            ->maxLength(500)
+                                            ->placeholder('https://...'),
+                                    ])
+                                    ->columns(3)
+                                    ->collapsible(),
+
+                                Section::make('Citation Sources')
+                                    ->description('References and sources cited in this content')
+                                    ->schema([
+                                        Repeater::make('sources')
+                                            ->label('')
+                                            ->schema([
+                                                TextInput::make('title')
+                                                    ->label('Source Title')
+                                                    ->required()
+                                                    ->maxLength(255),
+
+                                                TextInput::make('url')
+                                                    ->label('Source URL')
+                                                    ->url()
+                                                    ->required()
+                                                    ->maxLength(500),
+                                            ])
+                                            ->columns(2)
+                                            ->defaultItems(0)
+                                            ->maxItems(20)
+                                            ->collapsible()
+                                            ->reorderable()
+                                            ->itemLabel(fn (array $state): ?string => $state['title'] ?? null)
+                                            ->addActionLabel('Add Source'),
+                                    ])
+                                    ->collapsible(),
                             ]),
 
                         Tabs\Tab::make('Revisions')

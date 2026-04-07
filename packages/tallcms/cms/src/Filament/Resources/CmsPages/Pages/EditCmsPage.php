@@ -12,6 +12,7 @@ use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Schema;
 use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
 use LaraZeus\SpatieTranslatable\Resources\Pages\EditRecord\Concerns\Translatable;
 use TallCms\Cms\Filament\Concerns\HasTranslationCopying;
@@ -66,11 +67,38 @@ class EditCmsPage extends EditRecord
                 ->button(),
 
             $this->getSaveSnapshotAction(),
+            $this->getMarkAsReviewedAction(),
 
             DeleteAction::make(),
             ForceDeleteAction::make(),
             RestoreAction::make(),
         ];
+    }
+
+    protected function getMarkAsReviewedAction(): Action
+    {
+        return Action::make('markAsReviewed')
+            ->label('Mark as Reviewed')
+            ->icon('heroicon-o-check-badge')
+            ->color('success')
+            ->visible(fn () => $this->record !== null && Schema::hasColumn('tallcms_pages', 'last_reviewed_at'))
+            ->requiresConfirmation()
+            ->modalHeading('Mark Content as Reviewed')
+            ->modalDescription('This will update the review timestamp and set you as the reviewer.')
+            ->modalSubmitActionLabel('Confirm Review')
+            ->action(function () {
+                $this->record->update([
+                    'last_reviewed_at' => now(),
+                    'reviewed_by' => auth()->id(),
+                ]);
+
+                Notification::make()
+                    ->success()
+                    ->title('Content Marked as Reviewed')
+                    ->send();
+
+                $this->refreshFormData(['last_reviewed_at', 'reviewed_by']);
+            });
     }
 
     protected function getSaveSnapshotAction(): Action

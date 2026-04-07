@@ -70,6 +70,13 @@ class CmsPost extends Model implements HasRichContent
         'rejection_reason',
         'submitted_by',
         'submitted_at',
+        // Review metadata fields
+        'last_reviewed_at',
+        'reviewed_by',
+        'expert_reviewer_name',
+        'expert_reviewer_title',
+        'expert_reviewer_url',
+        'sources',
     ];
 
     protected $casts = [
@@ -78,6 +85,8 @@ class CmsPost extends Model implements HasRichContent
         'is_featured' => 'boolean',
         'approved_at' => 'datetime',
         'submitted_at' => 'datetime',
+        'last_reviewed_at' => 'datetime',
+        'sources' => 'array',
     ];
 
     protected function setUpRichContent(): void
@@ -138,6 +147,13 @@ class CmsPost extends Model implements HasRichContent
         $userModel = config('tallcms.plugin_mode.user_model', \App\Models\User::class);
 
         return $this->belongsTo($userModel, 'author_id');
+    }
+
+    public function reviewer(): BelongsTo
+    {
+        $userModel = config('tallcms.plugin_mode.user_model', \App\Models\User::class);
+
+        return $this->belongsTo($userModel, 'reviewed_by');
     }
 
     public function comments(): HasMany

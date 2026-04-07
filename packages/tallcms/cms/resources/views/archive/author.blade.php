@@ -7,18 +7,30 @@
         <header class="max-w-4xl mx-auto text-center mb-12">
             <p class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Author</p>
             <h1 class="text-4xl font-bold text-gray-900 mb-4">{{ $author->name ?? 'Unknown Author' }}</h1>
-            @if($author->bio ?? null)
-                <p class="text-lg text-gray-600 max-w-2xl mx-auto">{{ $author->bio }}</p>
-            @endif
-            @if($author->twitter_handle ?? null)
-                @php
-                    $handle = Str::startsWith($author->twitter_handle, '@') ? $author->twitter_handle : '@' . $author->twitter_handle;
-                @endphp
-                <p class="text-sm text-gray-500 mt-4">
-                    <a href="https://twitter.com/{{ ltrim($handle, '@') }}" target="_blank" rel="noopener" class="text-blue-500 hover:text-blue-600 transition-colors">
-                        {{ $handle }}
-                    </a>
+            @if($author->job_title ?? null)
+                <p class="text-base text-gray-500">
+                    {{ $author->job_title }}{{ ($author->company ?? null) ? ', ' . $author->company : '' }}
                 </p>
+            @endif
+            @if($author->bio ?? null)
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto mt-3">{{ $author->bio }}</p>
+            @endif
+            @if(($author->twitter_handle ?? null) || ($author->linkedin_url ?? null))
+                <div class="flex items-center justify-center gap-4 mt-4">
+                    @if($author->twitter_handle ?? null)
+                        @php
+                            $handle = Str::startsWith($author->twitter_handle, '@') ? $author->twitter_handle : '@' . $author->twitter_handle;
+                        @endphp
+                        <a href="https://x.com/{{ ltrim($handle, '@') }}" target="_blank" rel="noopener" class="text-sm text-blue-500 hover:text-blue-600 transition-colors">
+                            {{ $handle }}
+                        </a>
+                    @endif
+                    @if($author->linkedin_url ?? null)
+                        <a href="{{ $author->linkedin_url }}" target="_blank" rel="noopener" class="text-sm text-blue-500 hover:text-blue-600 transition-colors">
+                            LinkedIn
+                        </a>
+                    @endif
+                </div>
             @endif
             <p class="text-sm text-gray-500 mt-4">
                 {{ $posts->total() }} {{ Str::plural('post', $posts->total()) }}
