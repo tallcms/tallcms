@@ -30,5 +30,10 @@ Route::name($namePrefix)->middleware('tallcms.maintenance')->group(function () {
     Route::get('/sitemap-posts-{page}.xml', [SitemapController::class, 'posts'])->name('seo.sitemap.posts')->where('page', '[0-9]+');
     Route::get('/sitemap-categories.xml', [SitemapController::class, 'categories'])->name('seo.sitemap.categories');
     Route::get('/sitemap-authors.xml', [SitemapController::class, 'authors'])->name('seo.sitemap.authors');
-    Route::get('/llms.txt', \TallCms\Cms\Http\Controllers\LlmsTxtController::class)->name('seo.llms-txt');
+
+    // llms.txt - opt-in route registration for plugin mode safety
+    // Host apps can disable this route entirely via config while keeping other SEO routes
+    if (config('tallcms.plugin_mode.llms_txt_route_enabled', true)) {
+        Route::get('/llms.txt', \TallCms\Cms\Http\Controllers\LlmsTxtController::class)->name('seo.llms-txt');
+    }
 });

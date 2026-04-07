@@ -296,9 +296,11 @@ class TallCmsPlugin implements Plugin
      */
     public function getWidgets(): array
     {
-        $widgets = [
-            ContentHealthWidget::class,
-        ];
+        $widgets = [];
+
+        if ($this->hasPosts) {
+            $widgets[] = ContentHealthWidget::class;
+        }
 
         if ($this->hasMenus) {
             $widgets[] = MenuOverviewWidget::class;

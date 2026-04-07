@@ -47,17 +47,18 @@ class LlmsTxtController extends Controller
     }
 
     /**
-     * Get the canonical base URL, preferring HTTPS.
+     * Get the canonical base URL.
+     *
+     * Uses config('app.url') as the source of truth. If the current request
+     * is served over HTTPS but app.url is HTTP, upgrades to match — this
+     * handles common deployments where app.url hasn't been updated for HTTPS.
      */
     protected function getCanonicalBaseUrl(): string
     {
         $baseUrl = rtrim(config('app.url'), '/');
 
-        if (request()->isSecure() || (
-            ! str_contains($baseUrl, 'localhost') &&
-            ! str_contains($baseUrl, '127.0.0.1') &&
-            str_starts_with($baseUrl, 'http://')
-        )) {
+        // Only upgrade to HTTPS if the current request is actually secure
+        if (request()->isSecure() && str_starts_with($baseUrl, 'http://')) {
             $baseUrl = preg_replace('/^http:\/\//', 'https://', $baseUrl);
         }
 
@@ -201,13 +202,14 @@ class LlmsTxtController extends Controller
     }
 
     /**
-     * Get the canonical URL for a post, ensuring HTTPS consistency.
+     * Get the canonical URL for a post, matching the base URL scheme.
      */
     protected function getPostUrl(CmsPost $post): string
     {
         $url = SeoService::getPostUrl($post);
 
-        if (str_starts_with($url, 'http://') && ! str_contains($url, 'localhost') && ! str_contains($url, '127.0.0.1')) {
+        // Match the scheme used by getCanonicalBaseUrl()
+        if (request()->isSecure() && str_starts_with($url, 'http://')) {
             $url = preg_replace('/^http:\/\//', 'https://', $url);
         }
 
