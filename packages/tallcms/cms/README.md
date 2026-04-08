@@ -6,22 +6,29 @@
 
 A modern Content Management System package for Laravel Filament. Add rich content editing, pages, posts, media library, and menus to your existing Filament application.
 
+> **Note:** This repository is a read-only subtree split of the [tallcms/tallcms](https://github.com/tallcms/tallcms) monorepo, updated automatically via CI. For issues, pull requests, and full documentation, please visit [tallcms/tallcms](https://github.com/tallcms/tallcms).
+
 > For a full standalone CMS with themes, plugins, and auto-updates, see [tallcms/tallcms](https://github.com/tallcms/tallcms).
 
 ## Features
 
-- **Rich Content Editor** - Block-based editor with 16 built-in content blocks
-- **Pages & Posts** - Static pages and blog posts with categories
-- **Publishing Workflow** - Draft, Pending Review, Scheduled, and Published states
-- **Revision History** - Track changes with diff comparison and rollback
-- **Preview System** - Preview unpublished content with shareable tokens
-- **Media Library** - Organize uploads with collections and metadata
-- **Menu Builder** - Drag-and-drop navigation menus for multiple locations
-- **Site Settings** - Centralized configuration for site name, contact info, social links
-- **Contact Form** - Built-in contact form block with email notifications
-- **SEO Ready** - Meta descriptions, canonical URLs, and structured data support
-- **Role-Based Permissions** - Super Admin, Administrator, Editor, Author
-- **Multi-Panel Support** - Works with any Filament panel configuration
+- **Block-Based Editor** — 18 built-in content blocks with animations and responsive design
+- **Pages & Posts** — Static pages and blog posts with categories and templates
+- **Publishing Workflow** — Draft, Pending Review, Scheduled, and Published states
+- **Revision History** — Track changes with diff comparison and rollback
+- **Preview System** — Preview unpublished content with shareable tokens
+- **Media Library** — Organize uploads with collections and metadata
+- **Menu Builder** — Drag-and-drop navigation menus with mega menu support
+- **Comments** — Built-in comment system with moderation
+- **Contact Form** — Dynamic contact form block with email notifications
+- **Full-Text Search** — Laravel Scout-powered search across content
+- **SEO** — Meta descriptions, canonical URLs, Open Graph, and structured data (Schema.org)
+- **Internationalization** — Multi-language support via Spatie Translatable
+- **Site Settings** — Centralized configuration for site name, contact info, social links
+- **Role-Based Permissions** — Super Admin, Administrator, Editor, Author via Filament Shield
+- **REST API** — Optional Sanctum-authenticated API for headless usage
+- **Cloud Storage** — S3-compatible storage (AWS, DigitalOcean, Cloudflare R2)
+- **Multi-Panel Support** — Works with any Filament panel configuration
 
 ## Screenshots
 
@@ -62,9 +69,9 @@ Configure site name, contact info, social links, and more.
 
 ## Requirements
 
-- **PHP**: 8.2+ with OpenSSL, PDO, Mbstring, GD extensions
-- **Laravel**: 11.0 or 12.0
-- **Filament**: 5.0
+- **PHP**: 8.2+
+- **Laravel**: 11.x or 12.x
+- **Filament**: 5.x
 - **Database**: MySQL 8.0+, MariaDB 10.3+, or SQLite
 
 ## Installation
@@ -202,7 +209,7 @@ TALLCMS_ROUTES_ENABLED=true
 This registers both `/` (homepage) and `/{slug}` routes for CMS pages.
 Routes automatically exclude common paths like your panel path (default `/admin`), `/api`, `/livewire`, `/storage`, etc.
 
-> ⚠️ **Warning:** When `TALLCMS_ROUTES_ENABLED=true` without a prefix, TallCMS
+> **Warning:** When `TALLCMS_ROUTES_ENABLED=true` without a prefix, TallCMS
 > registers the `/` route. However, Laravel loads your app's `routes/web.php` after
 > package routes, so **you must remove the default `/` route from `routes/web.php`**
 > for TallCMS to handle your homepage. Alternatively, set `TALLCMS_ROUTES_PREFIX=cms`
@@ -255,7 +262,8 @@ components on `alpine:init`.
 | **Content** | Article content with headings and rich text |
 | **Features** | Feature grids with icons and descriptions |
 | **Pricing** | Pricing tables with feature comparison |
-| **FAQ** | Accordion-style frequently asked questions |
+| **FAQ** | Accordion-style Q&A with optional FAQPage schema markup |
+| **How To** | Step-by-step instructions with HowTo schema markup |
 | **Testimonials** | Customer testimonials with ratings |
 | **Team** | Team member profiles with social links |
 | **Stats** | Statistics and metrics display |
@@ -265,6 +273,7 @@ components on `alpine:init`.
 | **Contact Form** | Dynamic forms with email notifications |
 | **Posts** | Display recent blog posts |
 | **Parallax** | Parallax scrolling sections |
+| **Document List** | Downloadable file listings |
 | **Divider** | Visual section separators |
 
 ### Creating Custom Blocks
@@ -283,9 +292,9 @@ This creates:
 
 Upgrade to **TallCMS Pro** for advanced features:
 
-- **9 Premium Blocks** - Accordion, Tabs, Counter, Table, Comparison, Video, Before/After, Code Snippet, Map
-- **Analytics Dashboard** - Google Analytics 4 integration with visitor stats
-- **Priority Support** - Direct email support
+- **9 Premium Blocks** — Accordion, Tabs, Counter, Table, Comparison, Video, Before/After, Code Snippet, Map
+- **Analytics Dashboard** — Google Analytics 4 integration with visitor stats
+- **Priority Support** — Direct email support
 
 Learn more at [tallcms.com/pro](https://tallcms.com/pro)
 
@@ -403,8 +412,13 @@ TallCMS creates these tables (all prefixed with `tallcms_`):
 | `tallcms_menus` | Navigation menus |
 | `tallcms_menu_items` | Menu items (nested set) |
 | `tallcms_contact_submissions` | Contact form entries |
+| `tallcms_comments` | Content comments |
 | `tallcms_revisions` | Content revision history |
 | `tallcms_preview_tokens` | Preview sharing tokens |
+| `tallcms_webhooks` | Webhook configurations |
+| `tallcms_webhook_deliveries` | Webhook delivery log |
+| `tallcms_plugin_migrations` | Plugin migration tracking |
+| `tallcms_plugin_licenses` | Plugin license keys |
 
 ## Artisan Commands
 
@@ -413,6 +427,7 @@ TallCMS creates these tables (all prefixed with `tallcms_`):
 | `tallcms:install` | Full installation (migrations, roles, admin user) |
 | `tallcms:setup` | Setup roles, permissions, and admin user only |
 | `make:tallcms-block` | Create a custom content block |
+| `search:index` | Rebuild the full-text search index |
 | `tallcms:clean-preview-tokens` | Remove expired preview tokens |
 
 ## Permissions
@@ -423,9 +438,13 @@ TallCMS integrates with [Filament Shield](https://github.com/bezhanSalleh/filame
 - `View:SiteSettings` for the settings page
 - `View:MenuItemsManager` for menu management
 
+## Documentation
+
+Full documentation is available in the monorepo: [tallcms/tallcms/docs](https://github.com/tallcms/tallcms/tree/main/docs)
+
 ## Contributing
 
-Contributions are welcome! Please submit issues and pull requests on [GitHub](https://github.com/tallcms/cms).
+Contributions are welcome! This repository is a read-only subtree split of the [tallcms/tallcms](https://github.com/tallcms/tallcms) monorepo. Please submit issues and pull requests there.
 
 ## Security
 
@@ -437,16 +456,24 @@ TallCMS is open-source software licensed under the [MIT license](LICENSE.md).
 
 ## Credits
 
-- [Laravel](https://laravel.com/) - The PHP framework
-- [Filament](https://filamentphp.com/) - Admin panel framework
-- [Livewire](https://laravel-livewire.com/) - Dynamic frontend
-- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS
-- [daisyUI](https://daisyui.com/) - Tailwind component classes
-- [Spatie](https://spatie.be/) - Laravel packages
+### Built with AI
+
+TallCMS is co-developed with [Claude AI](https://claude.ai) (Anthropic) and code-reviewed by [Codex](https://openai.com/index/openai-codex/) (OpenAI).
+
+### Core Technologies
+
+- [Laravel](https://laravel.com/) — The PHP framework
+- [Filament](https://filamentphp.com/) — Admin panel framework
+- [Livewire](https://laravel-livewire.com/) — Dynamic frontend components
+- [Tailwind CSS](https://tailwindcss.com/) — Utility-first CSS
+- [daisyUI](https://daisyui.com/) — Tailwind component library and themes
+- [Alpine.js](https://alpinejs.dev/) — Lightweight JavaScript framework
+- [Spatie](https://spatie.be/) — Laravel packages
 
 ## Links
 
 - **Website**: [tallcms.com](https://tallcms.com)
 - **Documentation**: [tallcms.com/docs](https://tallcms.com/docs)
-- **Standalone**: [github.com/tallcms/tallcms](https://github.com/tallcms/tallcms)
+- **Monorepo**: [github.com/tallcms/tallcms](https://github.com/tallcms/tallcms)
+- **Roadmap**: [ROADMAP.md](https://github.com/tallcms/tallcms/blob/main/ROADMAP.md)
 - **Support**: hello@tallcms.com
