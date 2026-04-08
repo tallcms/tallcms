@@ -43,6 +43,7 @@
         "spatie/laravel-package-tools": "^1.16",
         "bezhansalleh/filament-shield": "^4.0",
         "spatie/laravel-permission": "^6.0",
+        "ext-sodium": "*",
         "ezyang/htmlpurifier": "^4.19",
         "wsmallnews/filament-nestedset": "^2.0",
         "laravel/scout": "^10.0",

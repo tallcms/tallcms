@@ -56,7 +56,7 @@ class TallCmsUpdater
     {
         if (! function_exists('sodium_crypto_sign_verify_detached')) {
             throw new MissingDependencyException(
-                'Signature verification unavailable. Please run: composer require paragonie/sodium_compat'
+                'Signature verification unavailable. Please enable the sodium PHP extension.'
             );
         }
 

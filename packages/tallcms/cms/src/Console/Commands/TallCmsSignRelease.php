@@ -27,7 +27,7 @@ class TallCmsSignRelease extends Command
 
         // Verify sodium is available
         if (! function_exists('sodium_crypto_sign_detached')) {
-            $this->error('Sodium functions not available. Please run: composer require paragonie/sodium_compat');
+            $this->error('Sodium functions not available. Please enable the sodium PHP extension.');
 
             return 1;
         }
