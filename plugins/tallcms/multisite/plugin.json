@@ -14,6 +14,6 @@
     "license_required": true,
     "compatibility": {
         "php": "^8.2",
-        "tallcms": ">=3.11.0"
+        "tallcms": ">=3.10.3"
     }
 }
