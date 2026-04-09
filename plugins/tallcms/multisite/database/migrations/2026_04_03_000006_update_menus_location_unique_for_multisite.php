@@ -8,14 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('tallcms_menus', function (Blueprint $table) {
-            $indexes = collect(Schema::getIndexes('tallcms_menus'))->pluck('name');
+        $indexes = collect(Schema::getIndexes('tallcms_menus'))->pluck('name')->all();
 
-            if ($indexes->contains('tallcms_menus_location_unique')) {
+        Schema::table('tallcms_menus', function (Blueprint $table) use ($indexes) {
+            if (in_array('tallcms_menus_location_unique', $indexes)) {
                 $table->dropUnique('tallcms_menus_location_unique');
             }
 
-            if (! $indexes->contains('tallcms_menus_site_location_unique')) {
+            if (! in_array('tallcms_menus_site_location_unique', $indexes)) {
                 $table->unique(['site_id', 'location'], 'tallcms_menus_site_location_unique');
             }
         });
@@ -23,14 +23,14 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('tallcms_menus', function (Blueprint $table) {
-            $indexes = collect(Schema::getIndexes('tallcms_menus'))->pluck('name');
+        $indexes = collect(Schema::getIndexes('tallcms_menus'))->pluck('name')->all();
 
-            if ($indexes->contains('tallcms_menus_site_location_unique')) {
+        Schema::table('tallcms_menus', function (Blueprint $table) use ($indexes) {
+            if (in_array('tallcms_menus_site_location_unique', $indexes)) {
                 $table->dropUnique('tallcms_menus_site_location_unique');
             }
 
-            if (! $indexes->contains('tallcms_menus_location_unique')) {
+            if (! in_array('tallcms_menus_location_unique', $indexes)) {
                 $table->unique('location', 'tallcms_menus_location_unique');
             }
         });

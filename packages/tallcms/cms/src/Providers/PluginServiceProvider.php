@@ -168,7 +168,7 @@ class PluginServiceProvider extends ServiceProvider
 
                     throw new \RuntimeException(
                         "Plugin '{$plugin->getFullSlug()}' provider contains Route:: calls. ".
-                        'Plugins must use routes/public.php or routes/web.php for route registration.'
+                        'Plugins must use routes/public.php, routes/web.php, or routes/internal.php for route registration.'
                     );
                 }
 
@@ -181,7 +181,7 @@ class PluginServiceProvider extends ServiceProvider
 
                     throw new \RuntimeException(
                         "Plugin '{$plugin->getFullSlug()}' contains router usage in {$srcRouterFile}. ".
-                        'Routes must only be defined in routes/public.php or routes/web.php.'
+                        'Routes must only be defined in routes/public.php, routes/web.php, or routes/internal.php.'
                     );
                 }
 
@@ -571,6 +571,11 @@ class PluginServiceProvider extends ServiceProvider
                 if ($plugin->hasPrefixedRoutes()) {
                     $this->loadPrefixedRoutes($plugin);
                 }
+
+                // Load internal routes (no web middleware — machine-to-machine)
+                if ($plugin->hasInternalRoutes()) {
+                    $this->loadInternalRoutes($plugin);
+                }
             } catch (\Throwable $e) {
                 Log::error("Failed to load routes for plugin {$plugin->getFullSlug()}", [
                     'error' => $e->getMessage(),
@@ -954,6 +959,45 @@ class PluginServiceProvider extends ServiceProvider
             ->name("plugin.{$plugin->vendor}.{$plugin->slug}.")
             ->prefix("_plugins/{$plugin->vendor}/{$plugin->slug}")
             ->group($webRoutesPath);
+    }
+
+    /**
+     * Load internal routes for a plugin (no web middleware — machine-to-machine)
+     */
+    protected function loadInternalRoutes(Plugin $plugin): void
+    {
+        $internalRoutesPath = $plugin->getRoutesPath('internal.php');
+
+        if (! File::exists($internalRoutesPath)) {
+            return;
+        }
+
+        // Validate the route file (same security parsing as public routes)
+        $parseResult = $this->parseRouteFile($internalRoutesPath);
+
+        if (! $parseResult['valid']) {
+            Log::warning("Plugin internal.php blocked: {$parseResult['error']}", [
+                'plugin' => $plugin->getFullSlug(),
+            ]);
+
+            return;
+        }
+
+        // All routes must live under /internal/ — reject anything else
+        foreach ($parseResult['routes'] as $route) {
+            $normalizedRoute = ltrim($route, '/');
+            if (! str_starts_with($normalizedRoute, 'internal/')) {
+                Log::warning("Internal route path must start with /internal/: {$route}", [
+                    'plugin' => $plugin->getFullSlug(),
+                ]);
+
+                return;
+            }
+        }
+
+        // Internal routes: throttle only, no web middleware
+        Route::middleware(['throttle:120,1'])
+            ->group($internalRoutesPath);
     }
 
     /**

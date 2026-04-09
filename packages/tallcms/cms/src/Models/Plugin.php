@@ -285,7 +285,8 @@ class Plugin
     public function hasRoutes(): bool
     {
         return File::exists($this->getRoutesPath('public.php'))
-            || File::exists($this->getRoutesPath('web.php'));
+            || File::exists($this->getRoutesPath('web.php'))
+            || File::exists($this->getRoutesPath('internal.php'));
     }
 
     /**
@@ -302,6 +303,14 @@ class Plugin
     public function hasPrefixedRoutes(): bool
     {
         return File::exists($this->getRoutesPath('web.php'));
+    }
+
+    /**
+     * Check if plugin has internal routes (no web middleware)
+     */
+    public function hasInternalRoutes(): bool
+    {
+        return File::exists($this->getRoutesPath('internal.php'));
     }
 
     /**

@@ -937,4 +937,70 @@ class TestServiceProvider
 
         $this->assertEmpty($errors);
     }
+
+    // =========================================================================
+    // INTERNAL ROUTES — routes/internal.php SUPPORT
+    // =========================================================================
+
+    public function test_internal_route_file_is_accepted_by_validator(): void
+    {
+        // Create a minimal plugin directory with routes/internal.php
+        $pluginPath = $this->tempDir.'/test-internal-plugin';
+        File::makeDirectory($pluginPath.'/routes', 0755, true);
+
+        File::put($pluginPath.'/routes/internal.php', "<?php\nRoute::get('/internal/health', fn() => 'ok');");
+
+        $result = $this->validator->validateDirectory($pluginPath, [
+            'slug' => 'test-internal',
+            'vendor' => 'test-vendor',
+            'name' => 'Test Internal Plugin',
+            'version' => '1.0.0',
+            'description' => 'Test',
+            'author' => 'Test',
+            'namespace' => 'TestVendor\\TestInternal',
+            'provider' => 'TestVendor\\TestInternal\\TestProvider',
+        ]);
+
+        // routes/internal.php should not be flagged as forbidden
+        $forbiddenErrors = array_filter($result->errors, function ($error) {
+            return str_contains($error, 'internal.php') && str_contains($error, 'only allowed');
+        });
+
+        $this->assertEmpty($forbiddenErrors, 'routes/internal.php should be an allowed PHP file path');
+    }
+
+    public function test_internal_route_outside_internal_prefix_is_blocked(): void
+    {
+        $result = $this->parseRouteFile("<?php\nRoute::get('/api/backdoor', fn() => 'evil');");
+
+        // The file parses as valid (it's a legitimate Route::get call)
+        $this->assertTrue($result['valid']);
+
+        // But loadInternalRoutes should reject it because the path doesn't start with /internal/
+        $pluginPath = $this->tempDir.'/bad-internal-plugin';
+        File::makeDirectory($pluginPath.'/routes', 0755, true);
+        File::put($pluginPath.'/routes/internal.php', "<?php\nRoute::get('/api/backdoor', fn() => 'evil');");
+
+        $plugin = new Plugin([
+            'slug' => 'bad-internal',
+            'vendor' => 'test-vendor',
+            'name' => 'Bad Internal Plugin',
+            'version' => '1.0.0',
+            'namespace' => 'TestVendor\\BadInternal',
+            'provider' => 'TestVendor\\BadInternal\\TestProvider',
+        ], $pluginPath);
+
+        // Use reflection to call loadInternalRoutes
+        $reflection = new \ReflectionClass($this->serviceProvider);
+        $method = $reflection->getMethod('loadInternalRoutes');
+        $method->setAccessible(true);
+
+        \Illuminate\Support\Facades\Log::shouldReceive('warning')
+            ->once()
+            ->withArgs(function ($message) {
+                return str_contains($message, 'Internal route path must start with /internal/');
+            });
+
+        $method->invoke($this->serviceProvider, $plugin);
+    }
 }

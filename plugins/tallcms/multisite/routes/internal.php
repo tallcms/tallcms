@@ -4,16 +4,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 
-/*
-|--------------------------------------------------------------------------
-| Internal Routes
-|--------------------------------------------------------------------------
-|
-| Machine-to-machine endpoints for infrastructure integration.
-| These routes have no web middleware (no sessions, no CSRF).
-|
-*/
-
 Route::get('/internal/tls/verify', function (Request $request) {
     $expectedToken = config('tallcms.multisite.tls_verify_token');
     if ($expectedToken && $request->header('X-Internal-Token') !== $expectedToken) {

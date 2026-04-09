@@ -39,6 +39,7 @@ class PluginValidator
         'database/migrations/',      // Migrations (flat only)
         'routes/public.php',         // Public routes file
         'routes/web.php',            // Prefixed routes file
+        'routes/internal.php',       // Internal routes file (no web middleware)
     ];
 
     /**
@@ -447,7 +448,7 @@ class PluginValidator
 
             // Check for Route:: calls (case-insensitive - PHP class names are case-insensitive)
             if (preg_match('/\bRoute::/i', $contentWithoutComments)) {
-                $errors[] = "Route registration found in src/{$relativePath}. Routes must only be defined in routes/public.php or routes/web.php.";
+                $errors[] = "Route registration found in src/{$relativePath}. Routes must only be defined in routes/public.php, routes/web.php, or routes/internal.php.";
 
                 continue;
             }
@@ -456,7 +457,7 @@ class PluginValidator
             if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/i', $contentWithoutComments, $matches)) {
                 $alias = $matches[1];
                 if (preg_match('/\b'.preg_quote($alias, '/').'::/'.'i', $contentWithoutComments)) {
-                    $errors[] = "Aliased Route facade ({$alias}::) found in src/{$relativePath}. Routes must only be defined in routes/public.php or routes/web.php.";
+                    $errors[] = "Aliased Route facade ({$alias}::) found in src/{$relativePath}. Routes must only be defined in routes/public.php, routes/web.php, or routes/internal.php.";
 
                     continue;
                 }
@@ -483,7 +484,7 @@ class PluginValidator
 
             foreach ($routerPatterns as $pattern => $description) {
                 if (preg_match($pattern, $contentWithoutComments)) {
-                    $errors[] = "Router access ({$description}) found in src/{$relativePath}. Routes must only be defined in routes/public.php or routes/web.php.";
+                    $errors[] = "Router access ({$description}) found in src/{$relativePath}. Routes must only be defined in routes/public.php, routes/web.php, or routes/internal.php.";
                     break; // Only report first issue per file
                 }
             }
@@ -527,7 +528,7 @@ class PluginValidator
 
             // Check for Route:: calls (case-insensitive)
             if (preg_match('/\bRoute::/i', $contentWithoutComments)) {
-                $errors[] = "Route registration found in {$relativePath}. Routes must only be defined in routes/public.php or routes/web.php.";
+                $errors[] = "Route registration found in {$relativePath}. Routes must only be defined in routes/public.php, routes/web.php, or routes/internal.php.";
 
                 continue;
             }
@@ -536,7 +537,7 @@ class PluginValidator
             if (preg_match('/\buse\s+[^;]*\\\\Route\s+as\s+(\w+)\s*;/i', $contentWithoutComments, $matches)) {
                 $alias = $matches[1];
                 if (preg_match('/\b'.preg_quote($alias, '/').'::/'.'i', $contentWithoutComments)) {
-                    $errors[] = "Aliased Route facade ({$alias}::) found in {$relativePath}. Routes must only be defined in routes/public.php or routes/web.php.";
+                    $errors[] = "Aliased Route facade ({$alias}::) found in {$relativePath}. Routes must only be defined in routes/public.php, routes/web.php, or routes/internal.php.";
 
                     continue;
                 }
@@ -563,7 +564,7 @@ class PluginValidator
 
             foreach ($routerPatterns as $pattern => $description) {
                 if (preg_match($pattern, $contentWithoutComments)) {
-                    $errors[] = "Router access ({$description}) found in {$relativePath}. Routes must only be defined in routes/public.php or routes/web.php.";
+                    $errors[] = "Router access ({$description}) found in {$relativePath}. Routes must only be defined in routes/public.php, routes/web.php, or routes/internal.php.";
                     break;
                 }
             }
@@ -604,7 +605,7 @@ class PluginValidator
 
         // Check for direct Route:: calls (case-insensitive - PHP class names are case-insensitive)
         if (preg_match('/\bRoute::/i', $contentWithoutComments)) {
-            $errors[] = 'Plugin providers must not register routes directly. Use routes/public.php or routes/web.php instead. Found Route:: call in provider.';
+            $errors[] = 'Plugin providers must not register routes directly. Use routes/public.php, routes/web.php, or routes/internal.php instead. Found Route:: call in provider.';
 
             return $errors;
         }
@@ -784,7 +785,7 @@ class PluginValidator
                 // Check PHP files are in allowed locations
                 if ($this->isPotentialPhpFile($filename)) {
                     if (! $this->isPhpFileAllowed($relativePath)) {
-                        $forbidden[] = $relativePath.' (PHP files only allowed in src/, database/migrations/, routes/public.php, routes/web.php)';
+                        $forbidden[] = $relativePath.' (PHP files only allowed in src/, database/migrations/, routes/public.php, routes/web.php, routes/internal.php)';
                     }
                 }
             }
@@ -843,7 +844,7 @@ class PluginValidator
             // Check PHP files are in allowed locations
             if ($this->isPotentialPhpFile($filename)) {
                 if (! $this->isPhpFileAllowed($normalizedName)) {
-                    $forbidden[] = $name.' (PHP files only allowed in src/, database/migrations/, routes/public.php, routes/web.php)';
+                    $forbidden[] = $name.' (PHP files only allowed in src/, database/migrations/, routes/public.php, routes/web.php, routes/internal.php)';
                 }
             }
         }
@@ -917,7 +918,7 @@ class PluginValidator
     protected function scanZipRoutesForDangerousPatterns(ZipArchive $zip): array
     {
         $errors = [];
-        $routeFiles = ['routes/public.php', 'routes/web.php'];
+        $routeFiles = ['routes/public.php', 'routes/web.php', 'routes/internal.php'];
 
         for ($i = 0; $i < $zip->numFiles; $i++) {
             $name = $zip->getNameIndex($i);
@@ -939,7 +940,7 @@ class PluginValidator
     protected function scanDirectoryRoutesForDangerousPatterns(string $path): array
     {
         $errors = [];
-        $routeFiles = ['routes/public.php', 'routes/web.php'];
+        $routeFiles = ['routes/public.php', 'routes/web.php', 'routes/internal.php'];
 
         foreach ($routeFiles as $routeFile) {
             $filePath = "{$path}/{$routeFile}";
