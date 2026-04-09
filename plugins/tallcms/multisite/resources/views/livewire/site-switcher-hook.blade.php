@@ -1,0 +1,1 @@
+@livewire('site-switcher')
