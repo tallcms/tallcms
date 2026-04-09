@@ -60,7 +60,7 @@ Route::middleware('tallcms.maintenance')->group(function () {
 $i18nEnabled = config('tallcms.i18n.enabled', false);
 $urlStrategy = config('tallcms.i18n.url_strategy', 'prefix');
 $hideDefault = config('tallcms.i18n.hide_default_locale', true);
-$baseExclusions = 'preview|admin|livewire|storage|api|install|feed|sitemap|category|author|robots\.txt';
+$baseExclusions = 'preview|admin|livewire|storage|api|install|feed|sitemap|category|author|internal|robots\.txt';
 
 Route::middleware(['tallcms.maintenance', 'tallcms.set-locale'])->group(function () use ($i18nEnabled, $urlStrategy, $hideDefault, $baseExclusions) {
     if ($i18nEnabled && $urlStrategy === 'prefix') {

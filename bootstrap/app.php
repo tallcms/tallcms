@@ -22,6 +22,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 \Illuminate\View\Middleware\ShareErrorsFromSession::class,
                 \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
             ])->group(base_path('routes/installer.php'));
+
+            // Internal machine-to-machine endpoints (no web middleware)
+            Route::middleware(['throttle:120,1'])
+                ->group(base_path('routes/internal.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {

@@ -141,4 +141,25 @@ return [
             'searchable_types' => ['pages', 'posts'],
         ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Multisite
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for the multisite plugin's TLS verification endpoint.
+    |
+    */
+    'multisite' => [
+        // Base domain for managed subdomains (e.g., 'yoursaas.com').
+        // Only *.yoursaas.com subdomains are auto-trusted for TLS;
+        // the apex itself is not. Set to null to require domain_verified
+        // for all domains.
+        'base_domain' => env('TALLCMS_MULTISITE_BASE_DOMAIN'),
+
+        // Shared secret for the /internal/tls/verify endpoint.
+        // The reverse proxy sends this in the X-Internal-Token header.
+        // Set to null to rely on network-level security only.
+        'tls_verify_token' => env('TALLCMS_TLS_VERIFY_TOKEN'),
+    ],
 ];
