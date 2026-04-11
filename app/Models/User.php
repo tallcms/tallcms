@@ -124,8 +124,8 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             return true;
         }
 
-        // Allow access if user has any role (Shield will handle specific permissions)
-        return $this->hasAnyRole(['super_admin', 'administrator', 'editor', 'author']);
+        // Allow access if user has any role — Shield handles specific permissions
+        return $this->roles->isNotEmpty();
     }
 
     /**
