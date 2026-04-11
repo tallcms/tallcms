@@ -65,7 +65,7 @@ class MergeTagService
             'social_instagram' => SiteSetting::get('social_instagram', ''),
             'social_youtube' => SiteSetting::get('social_youtube', ''),
             'social_tiktok' => SiteSetting::get('social_tiktok', ''),
-            'newsletter_signup' => SiteSetting::get('newsletter_signup_url', '#newsletter'),
+            'newsletter_signup' => SiteSetting::get('newsletter_signup_url', ''),
 
             // SEO and branding from settings
             'logo_url' => SiteSetting::get('logo') ? Storage::disk(cms_media_disk())->url(SiteSetting::get('logo')) : '',

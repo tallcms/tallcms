@@ -40,10 +40,18 @@ The plugin is a first-party official plugin (`vendor: tallcms`) that requires li
 | `theme` | string, nullable | Theme slug override |
 | `locale` | string, nullable | Locale override |
 | `uuid` | uuid, unique | Stable public identifier |
-| `user_id` | unsignedBigInteger, nullable | Reserved for future SaaS model |
+| `user_id` | unsignedBigInteger, nullable | Site owner (for SaaS multi-tenancy) |
 | `is_default` | boolean | Fallback site for admin |
 | `is_active` | boolean | Enable/disable |
+| `domain_verified` | boolean | Backward-compat TLS flag (synced from `domain_status`) |
+| `domain_status` | string(20) | `pending`, `verified`, `failed`, `stale` — backed by `DomainStatus` enum |
+| `domain_verified_at` | timestamp, nullable | When DNS was last successfully verified |
+| `domain_checked_at` | timestamp, nullable | When DNS was last checked (success or failure) |
+| `domain_verification_note` | string, nullable | Human-readable verification result |
+| `domain_verification_data` | json, nullable | Structured observed DNS records for diagnostics |
 | `metadata` | json, nullable | Extensibility |
+
+**Indexes:** `(domain_status, domain_checked_at)` composite index for re-verification query.
 
 ### `tallcms_site_setting_overrides`
 
@@ -216,7 +224,7 @@ protected static function resolveCurrentSiteId(): ?int
 - `SiteSetting::getGlobal($key)` — always reads global, ignoring overrides
 - `SiteSetting::setGlobal($key, $value)` — always writes global
 - `SiteSetting::resetToGlobal($key)` — deletes the override row
-- `SiteSetting::isGlobalOnly($key)` — checks the registry
+- `SiteSetting::isGlobalOnly($key)` — checks the hardcoded `$globalOnlyKeys` array in the core model
 
 ---
 
@@ -263,6 +271,79 @@ protected function getMultisiteContext(): ?object
 ```
 
 This intentionally bypasses the `CurrentSiteResolver` singleton to avoid boot-time resolution races.
+
+---
+
+## Domain Verification
+
+### Architecture
+
+Custom domains require DNS verification before TLS certificates are issued. Managed subdomains (`*.base_domain`) are auto-trusted.
+
+**Key classes:**
+
+| Class | Location | Purpose |
+|-------|----------|---------|
+| `DomainStatus` | `src/Enums/DomainStatus.php` | Backed string enum: `Pending`, `Verified`, `Failed`, `Stale` |
+| `DomainVerificationService` | `src/Services/DomainVerificationService.php` | DNS checks (A/AAAA/CNAME), setup instructions, TLS dispatch |
+| `TriggerTlsProvisioning` | `src/Jobs/TriggerTlsProvisioning.php` | Queued job, 3 retries with backoff |
+| `ReverifyDomains` | `src/Console/Commands/ReverifyDomains.php` | Scheduled hourly, batched re-verification |
+| `MultisiteSettings` | `src/Filament/Pages/MultisiteSettings.php` | Admin page for server IPs, CNAME target, batch config |
+
+### State Machine
+
+```
+[Create site] → Pending
+                  ↓ (manual verify succeeds)
+               Verified ←──────────────────┐
+                  ↓ (re-verify fails)       │
+                Stale                       │
+                  ↓ (re-verify fails again) │
+                Failed                      │
+                  ↓ (manual verify succeeds)│
+                  └─────────────────────────┘
+
+[Domain changed] → Pending (resets all verification fields)
+```
+
+**Verified** is the only status eligible for TLS. **Stale** is a grace period (one failed re-check). **Failed** revokes `domain_verified` and TLS eligibility.
+
+### TLS Eligibility
+
+`Site::isEligibleForTls()` checks:
+
+1. Site must be active
+2. Managed subdomain → always eligible
+3. Custom domain → `domain_status === DomainStatus::Verified`
+
+The `/internal/tls/verify` endpoint calls `Site::findVerifiedByDomain()` which uses this method.
+
+### Verification Flow
+
+`DomainVerificationService::verify(Site $site)` reads configuration from `SiteSetting::getGlobal()`:
+
+- `multisite_server_ips` — newline-separated list of accepted IPs (IPv4/IPv6)
+- `multisite_cname_target` — expected CNAME target domain
+
+DNS checks use PHP's `dns_get_record()` against A, AAAA, and CNAME record types.
+
+### Re-verification
+
+`tallcms:reverify-domains` runs hourly via auto-registered schedule:
+
+1. Reads `multisite_reverify_days` (minimum 7, 0 = disabled) and `multisite_reverify_batch_size` (clamped 1-500)
+2. Queries verified/stale sites with null or stale `domain_checked_at`, ordered stalest-first
+3. Processes up to `batch_size` sites per run
+4. Writes a heartbeat timestamp (`multisite_reverify_last_run`) for scheduler health monitoring
+5. State transitions: verified → stale (first failure), stale → failed (second consecutive failure)
+
+### Backward Compatibility
+
+`domain_verified` (boolean) is kept in sync with `domain_status` for the TLS verify endpoint and any external consumers. `isEligibleForTls()` reads `domain_status` as the source of truth.
+
+### Settings Storage
+
+Multisite settings use `SiteSetting::getGlobal()` / `setGlobal()` directly, making them installation-wide without needing to register global-only keys in the core package.
 
 ---
 
@@ -326,6 +407,26 @@ $site = DB::table('tallcms_sites')->where('id', $siteId)->first();
 3. Auto-assign `site_id` via a `creating` listener
 4. Update any unique constraints to be composite with `site_id`
 
+### Checking domain verification
+
+```php
+$site = Site::find($id);
+
+// Check TLS eligibility (managed subdomain or verified status)
+$site->isEligibleForTls();
+
+// Check if managed subdomain (auto-trusted)
+$site->isManagedSubdomain();
+
+// Read verification status
+$site->domain_status; // DomainStatus enum: Pending, Verified, Failed, Stale
+
+// Programmatic verification
+$service = app(DomainVerificationService::class);
+$result = $service->verify($site);
+// Returns: ['status' => 'verified'|'failed', 'message' => '...', 'observed' => [...], 'matched_on' => 'A'|'CNAME'|null]
+```
+
 ### Writing site-aware settings
 
 `SiteSetting::get()` and `set()` are automatically site-aware when a site is selected. The scope policy ensures global-only keys (i18n, audit) always read/write globally.
@@ -336,7 +437,7 @@ Key methods:
 - `SiteSetting::getGlobal($key)` — always reads global (for admin pages showing global defaults)
 - `SiteSetting::setGlobal($key, $value)` — always writes global
 - `SiteSetting::resetToGlobal($key)` — deletes the override, restoring inheritance
-- `SiteSetting::isGlobalOnly($key)` — checks the scope policy registry
+- `SiteSetting::isGlobalOnly($key)` — checks the hardcoded `$globalOnlyKeys` array (core-owned keys only; plugins should use `getGlobal()`/`setGlobal()` instead)
 
 ### Admin save loop pattern
 
@@ -416,7 +517,13 @@ The save loop must compare submitted values against global defaults and only cre
 `SiteSetting::set()` is site-aware: writes to overrides in admin context, global on frontend. Global-only keys (i18n, audit) always write to global. Use `SiteSetting::getGlobal()` / `SiteSetting::setGlobal()` if you need the global path explicitly.
 
 **"Global-only settings are editable per-site"**
-Add the key to `SiteSetting::$globalOnlyKeys` to prevent per-site overrides. The Site Settings admin page will show these as locked fields with a "Global setting" label.
+Add the key to `SiteSetting::$globalOnlyKeys` to prevent per-site overrides. The Site Settings admin page will show these as locked fields with a "Global setting" label. For plugin-owned settings, use `SiteSetting::getGlobal()` / `setGlobal()` directly to bypass the override system entirely.
+
+**"Domain verification says 'not configured'"**
+Server IPs or CNAME target must be set in **Multisite Settings** (`multisite_server_ips` / `multisite_cname_target` in `tallcms_site_settings` table). These are read via `SiteSetting::getGlobal()`.
+
+**"Re-verification never runs"**
+The command is auto-scheduled hourly but requires the Laravel scheduler (`php artisan schedule:run`) to be running. The Multisite Settings page shows a health warning if the scheduler heartbeat (`multisite_reverify_last_run`) is stale.
 
 ---
 
