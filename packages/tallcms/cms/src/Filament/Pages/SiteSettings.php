@@ -345,6 +345,7 @@ class SiteSettings extends Page implements HasForms
                             ->disk(\cms_media_disk())
                             ->visibility(\cms_media_visibility())
                             ->helperText('Upload your site logo (PNG, JPG, or SVG)')
+                            ->deletable()
                             ->nullable(),
                         'logo'
                     ),
@@ -515,9 +516,11 @@ class SiteSettings extends Page implements HasForms
 
                 SiteSetting::set($key, $value ?? '', $type, $group);
             } else {
-                // Global context: original behavior — skip null values
+                // Global context: save non-null values, and allow file fields to be cleared
                 if ($value !== null) {
                     SiteSetting::set($key, $value, $type, $group);
+                } elseif ($type === 'file') {
+                    SiteSetting::set($key, '', $type, $group);
                 }
             }
         }
