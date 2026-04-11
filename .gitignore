@@ -50,9 +50,8 @@ Thumbs.db
 *.zip
 tallcms-*.zip
 
-# Private/premium plugins (have their own repos)
-/plugins/tallcms/pro
-/plugins/tallcms/license-proxy
+# Plugins are installed via the admin panel and have their own repos
+/plugins/
 
 # Internal documentation
 daisyui.md
