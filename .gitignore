@@ -55,6 +55,9 @@ tallcms-*.zip
 
 # Internal documentation
 daisyui.md
+PRO_MENU_PLAN.md
+RELEASING.md
+ROADMAP.md
 
 # Scribe API documentation (generated)
 .scribe/
