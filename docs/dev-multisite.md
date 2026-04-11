@@ -224,7 +224,7 @@ protected static function resolveCurrentSiteId(): ?int
 - `SiteSetting::getGlobal($key)` — always reads global, ignoring overrides
 - `SiteSetting::setGlobal($key, $value)` — always writes global
 - `SiteSetting::resetToGlobal($key)` — deletes the override row
-- `SiteSetting::isGlobalOnly($key)` — checks the registry
+- `SiteSetting::isGlobalOnly($key)` — checks the hardcoded `$globalOnlyKeys` array in the core model
 
 ---
 
@@ -437,7 +437,7 @@ Key methods:
 - `SiteSetting::getGlobal($key)` — always reads global (for admin pages showing global defaults)
 - `SiteSetting::setGlobal($key, $value)` — always writes global
 - `SiteSetting::resetToGlobal($key)` — deletes the override, restoring inheritance
-- `SiteSetting::isGlobalOnly($key)` — checks the scope policy registry
+- `SiteSetting::isGlobalOnly($key)` — checks the hardcoded `$globalOnlyKeys` array (core-owned keys only; plugins should use `getGlobal()`/`setGlobal()` instead)
 
 ### Admin save loop pattern
 
