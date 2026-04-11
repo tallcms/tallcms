@@ -33,9 +33,9 @@ Posts and categories remain shared across all sites.
 
 ## Requirements
 
-- TallCMS 3.6 or later
+- TallCMS 3.10.3 or later
 - The **TallCMS Multisite** plugin installed and activated with a valid license
-- Each site domain must point to the same server (via DNS or local hosts file)
+- Each site domain must point to the same server (via DNS A/AAAA record or CNAME)
 
 ---
 
@@ -59,8 +59,9 @@ A default site is created automatically from your current domain and settings.
    - **Domain** — The domain this site responds to (e.g., `shop.example.com`). Lowercase, no protocol or port.
    - **Locale** — Optional language override (or leave empty for the global locale)
    - **Active** — Toggle to enable/disable the site
-   - **Default Site** — Only one site can be the default (used as fallback in admin)
 4. Click **Create**
+
+After creating the site, you'll need to [verify the domain](#6-verify-a-custom-domain) before TLS certificates are issued.
 
 ---
 
@@ -87,7 +88,60 @@ Each site can use a different theme. The global theme (shown in **All Sites** mo
 
 ---
 
-## 5. Configure Per-Site Settings
+## 5. Multisite Settings
+
+Navigate to **Admin > Configuration > Multisite Settings** to configure installation-wide multisite options.
+
+### Default Site
+
+Select which site serves as the fallback for the admin panel and local development. Only one site can be the default.
+
+### Domain Verification
+
+Configure how custom domains are verified:
+
+- **Server IP Addresses** — Enter the IP addresses your server resolves to (one per line). Supports both IPv4 and IPv6.
+- **CNAME Target** — The domain users should point a CNAME record to (e.g., `sites.yoursaas.com`).
+
+Set at least one for domain verification to work. Users see DNS setup instructions based on what you configure.
+
+### Re-verification
+
+Verified domains are periodically re-checked to detect DNS changes:
+
+- **Re-verify Every (Days)** — Minimum 7 days. Set to 0 to disable.
+- **Batch Size** — Maximum domains checked per hourly run (default 50, max 500). Lower values reduce DNS load on large installations.
+
+Re-verification runs hourly in small batches. If a domain fails re-verification, it enters a **Stale** grace period. A second consecutive failure escalates to **Failed**, which revokes TLS eligibility.
+
+---
+
+## 6. Verify a Custom Domain
+
+Custom domains must be verified before TLS certificates are issued. Managed subdomains (e.g., `*.yoursaas.com`) are auto-trusted and skip this step.
+
+1. Navigate to the site's edit page (**Admin > Multisite > Sites > Edit**)
+2. The **DNS Setup** section shows instructions for configuring your domain's DNS records
+3. Add the appropriate DNS record at your domain registrar:
+   - **CNAME record** pointing to the configured target domain, or
+   - **A/AAAA record** pointing to the configured server IP
+4. Click the **Verify Domain** button in the page header
+5. If DNS is configured correctly, the status changes to **Verified** and TLS provisioning is triggered automatically
+
+### Verification Statuses
+
+| Status | Meaning |
+|--------|---------|
+| **Pending** | Domain added but not yet verified |
+| **Verified** | DNS confirmed, TLS eligible |
+| **Stale** | Re-verification failed once (grace period) |
+| **Failed** | Two consecutive re-verification failures, TLS revoked |
+
+You can click **Verify Domain** again at any time to re-check. Changing a site's domain resets the status to **Pending**.
+
+---
+
+## 7. Configure Per-Site Settings
 
 1. Select a site in the **site switcher**
 2. Navigate to **Admin > Settings > Site Settings**
@@ -127,10 +181,17 @@ Clearing a field and saving is **not** the same as resetting to global. Clearing
 When a visitor arrives at your server:
 
 1. TallCMS looks up the request domain in the sites table
-2. If a match is found, that site's theme, settings, and content are loaded
+2. If a match is found and the site is active, its theme, settings, and content are loaded
 3. If no match is found, the visitor sees a 404 page
 
-**Each domain maps to exactly one site.** Domain aliases (e.g., `www.example.com` and `example.com`) are not supported in v1 — register the canonical domain only.
+**Each domain maps to exactly one site.** Domain aliases (e.g., `www.example.com` and `example.com`) are not supported — register the canonical domain only.
+
+### TLS Certificates
+
+TLS certificates are provisioned automatically when a domain is verified. The reverse proxy (e.g., Caddy) requests a certificate on first HTTPS handshake. A domain is TLS-eligible when:
+
+- It is a **managed subdomain** (`*.yoursaas.com`), which is auto-trusted, or
+- It is a **custom domain** with verification status **Verified**
 
 ---
 
@@ -199,7 +260,16 @@ This means multiple users can work in the same TallCMS installation, each managi
 ## Common Pitfalls
 
 **"404 when visiting my new site's domain"**
-The domain must be configured in your DNS or local hosts file to point to the same server as your TallCMS installation. The domain must also be added to a site in **Admin > Multisite > Sites**.
+The domain must be configured in your DNS to point to the same server as your TallCMS installation (A/AAAA or CNAME record). The domain must also be added to a site in **Admin > Multisite > Sites** and the site must be active.
+
+**"Verify Domain says 'not configured'"**
+Go to **Admin > Configuration > Multisite Settings** and enter your server IP address or CNAME target. At least one must be set for verification to work.
+
+**"Domain shows as Stale or Failed"**
+The domain's DNS records no longer point to the expected target. Update the DNS records and click **Verify Domain** to re-check. Failed domains lose TLS eligibility until re-verified.
+
+**"TLS certificate not issued after verification"**
+TLS provisioning is triggered automatically but runs as a background job. Check that your queue worker is running. The reverse proxy must also be configured to auto-provision certificates (e.g., Caddy with automatic HTTPS).
 
 **"Theme doesn't change on the frontend"**
 Make sure you selected the correct site in the **site switcher** before activating the theme. Check the subheading on the Theme Manager page to confirm which site you're managing.
