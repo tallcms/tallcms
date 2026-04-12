@@ -16,6 +16,8 @@ TallCMS can be installed in two ways: as a **standalone application** (full CMS)
 | **Plugin** | Existing Laravel/Filament apps — add CMS features via Composer |
 | **Standalone** | New projects — full CMS with themes, plugins, web installer, and auto-updates |
 
+Because TallCMS is built on Filament, you get access to **two plugin ecosystems**: TallCMS plugins for CMS features (blocks, themes, frontend routes) and [hundreds of Filament community plugins](filament-ecosystem) for admin panel enhancements (form fields, data tools, auth providers, and more). Any Filament plugin works with TallCMS out of the box.
+
 ## System Requirements
 
 | Requirement | Version |

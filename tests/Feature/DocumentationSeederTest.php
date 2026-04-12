@@ -104,7 +104,7 @@ class DocumentationSeederTest extends TestCase
         }
     }
 
-    public function test_is_idempotent_and_skips_existing_posts(): void
+    public function test_updates_existing_posts_without_duplicating(): void
     {
         if (! File::isDirectory($this->docsPath)) {
             $this->markTestSkipped('docs directory does not exist');
@@ -116,24 +116,23 @@ class DocumentationSeederTest extends TestCase
 
         $firstCount = CmsPost::count();
 
-        // Modify a post to simulate manual edits
+        // Modify a post to simulate stale content
         $post = CmsPost::first();
-        $originalContent = $post?->content;
-        $post?->update(['excerpt' => 'MANUALLY_MODIFIED_EXCERPT']);
+        $post?->update(['excerpt' => 'STALE_EXCERPT']);
 
-        // Seed again - should skip existing posts (idempotent)
+        // Seed again — should update existing posts, not duplicate
         $this->artisan('db:seed', ['--class' => 'DocumentationSeeder'])
             ->assertSuccessful();
 
         $secondCount = CmsPost::count();
 
-        // Should have same count (not doubled)
+        // Same count — no duplicates
         $this->assertEquals($firstCount, $secondCount);
 
-        // Manual modification should be preserved
+        // Excerpt should be refreshed from the markdown source
         if ($post) {
             $post->refresh();
-            $this->assertEquals('MANUALLY_MODIFIED_EXCERPT', $post->excerpt);
+            $this->assertNotEquals('STALE_EXCERPT', $post->excerpt);
         }
     }
 

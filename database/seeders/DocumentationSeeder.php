@@ -237,8 +237,7 @@ class DocumentationSeeder extends Seeder
     }
 
     /**
-     * Create a documentation post from parsed frontmatter and content.
-     * Skips posts that already exist (idempotent).
+     * Create or update a documentation post from parsed frontmatter and content.
      *
      * @param  array{filename: string, frontmatter: array<string, mixed>, content: string}  $doc
      * @param  \Carbon\Carbon  $publishedAt  Timestamp for ordering docs chronologically
@@ -249,26 +248,34 @@ class DocumentationSeeder extends Seeder
         $content = $doc['content'];
 
         $slug = $frontmatter['slug'];
+        $title = $frontmatter['title'] ?? $this->converter->extractTitle($content, $doc['filename']);
+        $excerpt = $this->converter->generateMetaDescription($content);
+        $contentWithoutExcerpt = $this->stripFirstParagraph($content);
+        $html = $this->converter->convert($contentWithoutExcerpt);
 
-        // Skip if post already exists (preserve manual edits)
-        if (CmsPost::withSlug($slug)->exists()) {
-            $this->command->info("Skipping existing post: {$slug}");
+        $existing = CmsPost::withSlug($slug)->first();
+
+        if ($existing) {
+            $existing->update([
+                'title' => $title,
+                'excerpt' => $excerpt,
+                'meta_title' => "{$title} - TallCMS Documentation",
+                'meta_description' => $excerpt,
+            ]);
+
+            $existing->setTranslation('content', config('app.locale', 'en'), $html);
+            $existing->save();
+
+            // Sync category (in case it changed)
+            if (! $existing->categories()->where('tallcms_categories.id', $category->id)->exists()) {
+                $existing->categories()->sync([$category->id]);
+            }
+
+            $this->command->info("Updated post: {$title} (slug: {$slug})");
 
             return;
         }
 
-        $title = $frontmatter['title'] ?? $this->converter->extractTitle($content, $doc['filename']);
-
-        // Extract excerpt from first paragraph (before conversion)
-        $excerpt = $this->converter->generateMetaDescription($content);
-
-        // Remove the first paragraph from content to avoid duplication with excerpt
-        $contentWithoutExcerpt = $this->stripFirstParagraph($content);
-
-        // Convert markdown to HTML
-        $html = $this->converter->convert($contentWithoutExcerpt);
-
-        // Create post with sequential timestamp for proper ordering
         $post = CmsPost::create([
             'title' => $title,
             'slug' => $slug,
@@ -282,11 +289,9 @@ class DocumentationSeeder extends Seeder
             'author_id' => $this->authorId,
         ]);
 
-        // Store HTML content directly
         $post->setTranslation('content', config('app.locale', 'en'), $html);
         $post->save();
 
-        // Attach category
         $post->categories()->attach($category->id);
 
         $this->command->info("Created post: {$title} (slug: {$slug})");
