@@ -917,6 +917,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
             Console\Commands\PluginInstallCommand::class,
             Console\Commands\PluginListCommand::class,
             Console\Commands\PluginMigrateCommand::class,
+            Console\Commands\PluginPackageCommand::class,
             Console\Commands\PluginUninstallCommand::class,
         ];
 
