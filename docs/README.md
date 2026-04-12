@@ -46,6 +46,7 @@ Welcome to TallCMS — a modern, block-based CMS built on Laravel and Filament.
 | [Publishing Workflow](publishing) | Draft, review, schedule, publish |
 | [Internationalization](i18n) | Multi-language support |
 | [Rich Editor](rich-editor) | Block categories and search |
+| [Redirects](redirects) | Manage 301/302 redirects for SEO and migrations |
 | [Filament Ecosystem](filament-ecosystem) | Use hundreds of Filament plugins with TallCMS |
 | [Architecture](architecture) | Internal developer reference |
 
