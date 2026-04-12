@@ -2,7 +2,7 @@
 title: "Email Marketing Integration"
 slug: "pro-email-marketing"
 audience: "site-owner"
-category: "integrations"
+category: "reference"
 order: 80
 prerequisites:
   - "installation"
