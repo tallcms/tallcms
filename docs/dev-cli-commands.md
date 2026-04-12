@@ -327,6 +327,47 @@ php artisan plugin:cleanup-backups --keep=1 --force
 
 ---
 
+### plugin:package
+
+Package an installed plugin into a clean ZIP file ready for upload or distribution. Automatically excludes development files (`.git`, `.DS_Store`, `__MACOSX`, `tests/`, `vendor/`, `node_modules/`) and validates the ZIP against the plugin validator before finalizing.
+
+```bash
+php artisan plugin:package [slug]
+```
+
+| Argument | Description |
+|----------|-------------|
+| `slug` | Plugin slug (`registration`) or full slug (`tallcms/registration`). Omit for interactive picker. |
+
+| Option | Description |
+|--------|-------------|
+| `--output=DIR` | Output directory (default: current directory) |
+| `--skip-validate` | Skip ZIP validation after packaging |
+
+**Example:**
+
+```bash
+# Package by slug
+php artisan plugin:package registration
+
+# Package by vendor/slug
+php artisan plugin:package tallcms/pro
+
+# Interactive — choose from installed plugins
+php artisan plugin:package
+
+# Custom output directory
+php artisan plugin:package registration --output=~/Desktop
+```
+
+The resulting ZIP has `plugin.json` at the root (no nested directory), passes the plugin validator, and can be uploaded directly through **Admin > System > Plugins**.
+
+**What gets excluded:**
+
+`.git`, `.gitignore`, `.gitattributes`, `.DS_Store`, `__MACOSX`, `Thumbs.db`, `node_modules/`, `vendor/`, `tests/`, `.phpunit.cache`, `phpunit.xml`, `.env`, `CLAUDE.md`, IDE configs (`.idea/`, `.vscode/`)
+
+---
+
 ### make:plugin
 
 Create a new plugin scaffold.

@@ -506,9 +506,57 @@ Publish to Packagist:
 
 ### Via ZIP Upload
 
-Package as ZIP and upload through the admin panel (if enabled). The ZIP is validated against all the rules described in [File Restrictions](#file-restrictions) before extraction. Common rejection reasons:
+Upload through **Admin > System > Plugins**. The ZIP is validated against all the rules described in [File Restrictions](#file-restrictions) before extraction.
 
-- PHP files outside `src/`, `database/migrations/`, or route files (e.g., `config/*.php`)
+#### Packaging with `plugin:package` (recommended)
+
+The easiest way to create a valid ZIP is with the built-in artisan command:
+
+```bash
+php artisan plugin:package my-plugin
+```
+
+This creates a clean ZIP from your installed plugin directory. It automatically:
+- Excludes `.git`, `.DS_Store`, `__MACOSX`, `tests/`, `vendor/`, `node_modules/`, IDE configs
+- Places `plugin.json` at the root (no nested directory)
+- Validates the ZIP against the plugin validator before finalizing
+- Reports file count, ZIP size, and validation status
+
+```bash
+# Package by slug
+php artisan plugin:package my-plugin
+
+# Interactive picker
+php artisan plugin:package
+
+# Custom output directory
+php artisan plugin:package my-plugin --output=~/releases
+```
+
+See the [CLI Commands Reference](cli-commands) for full options.
+
+#### Packaging with `git archive` (from plugin repo)
+
+If you develop your plugin in a separate git repository, `git archive` produces a clean ZIP without development files:
+
+```bash
+cd /path/to/my-plugin-repo
+git archive --format=zip HEAD -o my-plugin-1.0.0.zip
+```
+
+Add a `.gitattributes` to exclude tests and dev files from the archive:
+
+```
+/tests export-ignore
+/.gitattributes export-ignore
+/CLAUDE.md export-ignore
+```
+
+#### Common ZIP rejection reasons
+
+- PHP files outside `src/`, `database/migrations/`, or route files (e.g., `tests/*.php`, `config/*.php`)
+- macOS junk files (`.DS_Store`, `__MACOSX/`) — use `plugin:package` or `git archive` to avoid
+- `plugin.json` nested inside a subdirectory (GitHub release ZIPs do this by default)
 - Version constraint that doesn't match the installed TallCMS version
 - Route files using forbidden methods like `Route::group()`
 
