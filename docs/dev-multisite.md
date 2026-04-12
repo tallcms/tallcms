@@ -478,21 +478,35 @@ This prevents the common bug where saving a form creates overrides for every fie
 | **MarkAdminContext** | Validates session site belongs to user, resets if not | Plugin middleware |
 | **"All Sites" mode** | Disabled for non-super-admins | Switcher Blade view |
 
-### Quotas
+### Quotas (Site Plan System)
 
-The multisite plugin **does not enforce site quotas**. Quota logic (how many sites a user can create) belongs to the **app layer**, which knows about subscriptions, billing, and plan tiers.
+As of v1.3.0, the plugin includes a built-in plan/tier system for quota enforcement.
 
-To add quotas in your app, override `SitePolicy::create()`:
+**Database tables:**
+- `tallcms_site_plans` — Plan definitions (name, slug, max_sites, is_default, is_active)
+- `tallcms_user_site_plans` — Per-user plan assignments (user_id unique, site_plan_id with restrictOnDelete)
 
-```php
-// In your app's AppServiceProvider or a custom policy
-public function create(User $user): bool
-{
-    $maxSites = $user->subscription->max_sites;
-    $currentCount = Site::where('user_id', $user->id)->where('is_active', true)->count();
-    return $currentCount < $maxSites;
-}
-```
+**Enforcement architecture (three layers):**
+
+| Layer | Role | Locking? |
+|-------|------|----------|
+| `SitePolicy::create()` | **Advisory UI gate** — hides Create buttons, returns 403. No lock, can be stale. | No |
+| `SitePlanService::createSiteWithQuota()` | **Authoritative** — owns DB transaction, acquires per-user `lockForUpdate()`, counts, creates. | Yes |
+| `Site::creating()` boot hook | **Safety net** — catches direct `Site::create()` calls that bypass the service. | No |
+
+All three layers delegate to `SitePlanService::resolveQuotaDecision()` — the single source of truth for quota logic.
+
+**Key service methods:**
+- `SitePlanService::createSiteWithQuota($user, $attributes)` — The only path for user-facing site creation
+- `SitePlanService::canCreateSite($user)` — Advisory check (no lock), for UI/policy
+- `SitePlanService::assignPlan($user, $plan, $assignedBy)` — Upserts the assignment row
+- `SitePlanService::isOverQuota($user)` — Grandfathering indicator
+
+**Configuration:** `tallcms.multisite.quota_enforcement` — `'strict'` (default, deny if no plan) or `'permissive'` (allow if no plan, for self-hosted).
+
+**Customization:** Apps can swap the `SitePlanService` binding or extend `SitePolicy` for custom quota logic. The `HasSitePlan` trait (`Tallcms\Multisite\Concerns\HasSitePlan`) can be added to the User model for convenience methods.
+
+**Spark integration:** Plan slugs (`tallcms_site_plans.slug`) are the bridge. When Spark is added, a subscription change listener calls `SitePlanService::assignPlan()` to update the user's effective plan.
 
 ---
 

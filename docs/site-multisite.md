@@ -257,6 +257,40 @@ This means multiple users can work in the same TallCMS installation, each managi
 
 ---
 
+## Site Plans & Quotas
+
+The multisite plugin includes a plan/tier system to control how many sites each user can create.
+
+### Managing Plans
+
+1. Navigate to **Admin > Multisite > Site Plans**
+2. Create plans with a name, slug, and max sites (leave empty for unlimited)
+3. Toggle **Default Plan** to set which plan new users receive automatically
+
+A default "Free" plan (max 1 site) is created when you install the plugin.
+
+### Assigning Plans to Users
+
+1. Navigate to **Admin > Multisite > User Site Plans**
+2. The table shows all users with their current plan, sites used, and quota status
+3. Click **Change Plan** on any user to assign a different plan
+4. Use the checkbox + **Assign Plan** toolbar action to change plans in bulk
+
+### Over-Quota Behavior
+
+If you downgrade a user's plan (e.g., from Pro to Free) and they already have more sites than the new limit:
+
+- **Existing sites are preserved** — no sites are deleted or deactivated
+- **New site creation is blocked** until they reduce their site count
+- The user sees a quota warning on their sites list
+- The admin sees an "Over Quota" badge on the User Site Plans page
+
+### Super-Admin Bypass
+
+Super-admins are never quota-limited. They can always create sites regardless of plan limits.
+
+---
+
 ## Common Pitfalls
 
 **"404 when visiting my new site's domain"**
