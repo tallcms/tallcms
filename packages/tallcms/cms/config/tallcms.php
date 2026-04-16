@@ -186,7 +186,7 @@ return [
     */
     'navigation' => [
         'groups' => [
-            'platform' => 'Platform',
+            'platform' => 'Sites',
             'content' => 'Content',
             'appearance' => 'Appearance',
             'configuration' => 'Configuration',

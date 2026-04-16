@@ -51,6 +51,11 @@ class ShieldSeeder extends Seeder
             // Page permissions
             'View:MenuItemsManager', 'View:SiteSettings', 'View:ThemeManager', 'View:MenuOverviewWidget',
             'View:PluginManager', 'View:PluginLicenses',
+            // SiteTemplate permissions (multisite plugin)
+            'ViewAny:SiteTemplate', 'View:SiteTemplate', 'Create:SiteTemplate', 'Update:SiteTemplate',
+            'Delete:SiteTemplate',
+            // Template gallery page
+            'View:TemplateGallery',
         ];
 
         // Administrator: Full content management + approval
@@ -73,6 +78,8 @@ class ShieldSeeder extends Seeder
             'ViewAny:TallcmsMenu', 'View:TallcmsMenu', 'Create:TallcmsMenu', 'Update:TallcmsMenu', 'Delete:TallcmsMenu',
             // Pages
             'View:MenuItemsManager', 'View:SiteSettings',
+            // Template gallery
+            'View:TemplateGallery',
         ];
 
         // Editor: Content management without approval (can submit for review)
@@ -87,6 +94,8 @@ class ShieldSeeder extends Seeder
             'SubmitForReview:CmsPost', 'ViewRevisions:CmsPost', 'GeneratePreviewLink:CmsPost',
             // Media
             'ViewAny:TallcmsMedia', 'View:TallcmsMedia', 'Create:TallcmsMedia', 'Update:TallcmsMedia',
+            // Template gallery
+            'View:TemplateGallery',
         ];
 
         // Author: Basic content creation + submit for review
@@ -98,6 +107,8 @@ class ShieldSeeder extends Seeder
             'SubmitForReview:CmsPost', 'ViewRevisions:CmsPost', 'GeneratePreviewLink:CmsPost',
             // Media
             'ViewAny:TallcmsMedia', 'View:TallcmsMedia', 'Create:TallcmsMedia',
+            // Template gallery
+            'View:TemplateGallery',
         ];
 
         $rolesWithPermissions = json_encode([
