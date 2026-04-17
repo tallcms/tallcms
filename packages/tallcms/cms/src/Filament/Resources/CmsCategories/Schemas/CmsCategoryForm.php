@@ -9,6 +9,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
 use TallCms\Cms\Models\CmsCategory;
+use TallCms\Cms\Rules\SiteAwareUnique;
 use TallCms\Cms\Rules\UniqueTranslatableSlug;
 use TallCms\Cms\Services\LocaleRegistry;
 
@@ -64,8 +65,8 @@ class CmsCategoryForm
                                 ignoreId: $record?->id
                             );
                         } else {
-                            // Traditional unique constraint
-                            $rules[] = 'unique:tallcms_categories,slug'.($record ? ','.$record->id : '');
+                            // Site-aware unique constraint
+                            $rules[] = SiteAwareUnique::rule('tallcms_categories', 'slug', $record?->id);
                         }
 
                         return $rules;

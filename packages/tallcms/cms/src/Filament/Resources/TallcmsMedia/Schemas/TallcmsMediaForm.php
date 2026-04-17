@@ -12,6 +12,7 @@ use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use TallCms\Cms\Models\MediaCollection;
+use TallCms\Cms\Rules\SiteAwareUnique;
 
 class TallcmsMediaForm
 {
@@ -119,7 +120,7 @@ class TallcmsMediaForm
                             ->label('Collection Name')
                             ->required()
                             ->maxLength(255)
-                            ->unique(MediaCollection::class, 'name'),
+                            ->rules([SiteAwareUnique::rule('tallcms_media_collections', 'name')]),
 
                         Textarea::make('description')
                             ->label('Description')
@@ -142,7 +143,7 @@ class TallcmsMediaForm
                             ->label('Collection Name')
                             ->required()
                             ->maxLength(255)
-                            ->unique(MediaCollection::class, 'name'),
+                            ->rules([SiteAwareUnique::rule('tallcms_media_collections', 'name')]),
 
                         Textarea::make('description')
                             ->label('Description')

@@ -21,6 +21,7 @@ use TallCms\Cms\Filament\Forms\Components\CmsRichEditor;
 use TallCms\Cms\Livewire\RevisionHistory;
 use TallCms\Cms\Models\CmsCategory;
 use TallCms\Cms\Models\CmsPost;
+use TallCms\Cms\Rules\SiteAwareUnique;
 use TallCms\Cms\Rules\UniqueTranslatableSlug;
 use TallCms\Cms\Services\CustomBlockDiscoveryService;
 use TallCms\Cms\Services\LocaleRegistry;
@@ -85,8 +86,8 @@ class CmsPostForm
                                                         ignoreId: $record?->id
                                                     );
                                                 } else {
-                                                    // Traditional unique constraint
-                                                    $rules[] = 'unique:tallcms_posts,slug'.($record ? ','.$record->id : '');
+                                                    // Site-aware unique constraint
+                                                    $rules[] = SiteAwareUnique::rule('tallcms_posts', 'slug', $record?->id);
                                                 }
 
                                                 return $rules;
@@ -219,8 +220,8 @@ class CmsPostForm
                                                                 locale: $activeLocale
                                                             );
                                                         } else {
-                                                            // Traditional unique constraint
-                                                            $rules[] = 'unique:tallcms_categories,slug';
+                                                            // Site-aware unique constraint
+                                                            $rules[] = SiteAwareUnique::rule('tallcms_categories', 'slug');
                                                         }
 
                                                         return $rules;
