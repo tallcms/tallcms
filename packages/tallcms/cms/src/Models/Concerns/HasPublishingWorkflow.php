@@ -80,6 +80,46 @@ trait HasPublishingWorkflow
     }
 
     /**
+     * Retract a pending submission back to draft.
+     *
+     * Allows the original submitter (or a super-admin) to pull back
+     * content that was submitted for review, without needing an approver.
+     */
+    public function retractSubmission(): void
+    {
+        $this->update([
+            'status' => ContentStatus::Draft->value,
+            'submitted_by' => null,
+            'submitted_at' => null,
+            'rejection_reason' => null,
+        ]);
+    }
+
+    /**
+     * Check if the current user can retract this submission.
+     * Only the original submitter or a super-admin can retract.
+     */
+    public function canRetractSubmission(): bool
+    {
+        if (! $this->isPending()) {
+            return false;
+        }
+
+        $user = auth()->user();
+        if (! $user) {
+            return false;
+        }
+
+        // Super-admins can always retract
+        if ($user->hasRole('super_admin')) {
+            return true;
+        }
+
+        // The original submitter can retract their own submission
+        return $this->submitted_by === $user->id;
+    }
+
+    /**
      * Approve content and publish
      */
     public function approve(): void

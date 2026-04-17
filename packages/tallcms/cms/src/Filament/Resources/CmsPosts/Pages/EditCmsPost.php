@@ -39,6 +39,7 @@ class EditCmsPost extends EditRecord
             // Workflow Actions Group
             ActionGroup::make([
                 $this->getSubmitForReviewAction(),
+                $this->getRetractSubmissionAction(),
                 $this->getApproveAction(),
                 $this->getRejectAction(),
             ])
@@ -150,6 +151,30 @@ class EditCmsPost extends EditRecord
                 Notification::make()
                     ->title('Submitted for Review')
                     ->body('Your post has been submitted for review.')
+                    ->success()
+                    ->send();
+
+                $this->refreshFormData(['status', 'submitted_at', 'submitted_by']);
+            });
+    }
+
+    protected function getRetractSubmissionAction(): Action
+    {
+        return Action::make('retractSubmission')
+            ->label('Retract Submission')
+            ->icon('heroicon-o-arrow-uturn-left')
+            ->color('gray')
+            ->visible(fn () => $this->record->canRetractSubmission())
+            ->requiresConfirmation()
+            ->modalHeading('Retract Submission')
+            ->modalDescription('This will move the post back to draft so you can edit it. You can submit it for review again later.')
+            ->modalSubmitActionLabel('Retract')
+            ->action(function () {
+                $this->record->retractSubmission();
+
+                Notification::make()
+                    ->title('Submission Retracted')
+                    ->body('The post has been moved back to draft.')
                     ->success()
                     ->send();
 
