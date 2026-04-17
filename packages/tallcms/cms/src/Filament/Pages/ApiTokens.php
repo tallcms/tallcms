@@ -61,15 +61,30 @@ class ApiTokens extends Page implements HasForms
         return auth()->user()->tokens()
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(fn ($token) => [
-                'id' => $token->id,
-                'name' => $token->name,
-                'abilities' => $token->abilities,
-                'last_used_at' => $token->last_used_at?->diffForHumans(),
-                'expires_at' => $token->expires_at?->format('M d, Y'),
-                'is_expired' => $token->expires_at && $token->expires_at->isPast(),
-                'created_at' => $token->created_at->format('M d, Y'),
-            ]);
+            ->map(function ($token) {
+                $data = [
+                    'id' => $token->id,
+                    'name' => $token->name,
+                    'abilities' => $token->abilities,
+                    'last_used_at' => $token->last_used_at?->diffForHumans(),
+                    'expires_at' => $token->expires_at?->format('M d, Y'),
+                    'is_expired' => $token->expires_at && $token->expires_at->isPast(),
+                    'created_at' => $token->created_at->format('M d, Y'),
+                    'site_name' => null,
+                ];
+
+                // Show site context when multisite is active
+                if (isset($token->site_id) && $token->site_id) {
+                    try {
+                        $data['site_name'] = \Illuminate\Support\Facades\DB::table('tallcms_sites')
+                            ->where('id', $token->site_id)
+                            ->value('name');
+                    } catch (\Throwable) {
+                    }
+                }
+
+                return $data;
+            });
     }
 
     /**
@@ -122,6 +137,19 @@ class ApiTokens extends Page implements HasForms
                     $data['abilities'],
                     $expiresAt
                 );
+
+                // Store site context on the token when multisite is active
+                if (\Illuminate\Support\Facades\Schema::hasColumn('personal_access_tokens', 'site_id')) {
+                    $siteId = null;
+                    $sessionValue = session('multisite_admin_site_id');
+                    if ($sessionValue && $sessionValue !== '__all_sites__' && is_numeric($sessionValue)) {
+                        $siteId = (int) $sessionValue;
+                    }
+
+                    if ($siteId) {
+                        $token->accessToken->update(['site_id' => $siteId]);
+                    }
+                }
 
                 $this->newToken = $token->plainTextToken;
 

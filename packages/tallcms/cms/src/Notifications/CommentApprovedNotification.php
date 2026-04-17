@@ -24,9 +24,14 @@ class CommentApprovedNotification extends Notification
     {
         $postTitle = $this->comment->post?->title ?? 'a post';
         $postUrl = $this->getPostUrl();
+        $siteName = $this->getSiteName();
+
+        $subject = $siteName
+            ? "Your comment on {$siteName} has been approved"
+            : 'Your comment has been approved';
 
         return (new MailMessage)
-            ->subject('Your comment has been approved')
+            ->subject($subject)
             ->greeting("Hello {$this->comment->getAuthorName()}!")
             ->line("Your comment on \"{$postTitle}\" has been approved and is now visible.")
             ->action('View Your Comment', $postUrl)
@@ -36,9 +41,30 @@ class CommentApprovedNotification extends Notification
     protected function getPostUrl(): string
     {
         if ($this->comment->post) {
-            return SeoService::getPostUrl($this->comment->post) . '#comment-' . $this->comment->id;
+            // Pass site_id explicitly for queued notification context
+            // where no request exists for domain resolution.
+            $siteId = $this->comment->site_id ?? $this->comment->post->site_id ?? null;
+
+            return SeoService::getPostUrl($this->comment->post, $siteId).'#comment-'.$this->comment->id;
         }
 
-        return url('/');
+        return tallcms_base_url($this->comment->site_id ?? null);
+    }
+
+    protected function getSiteName(): ?string
+    {
+        $siteId = $this->comment->site_id ?? $this->comment->post?->site_id ?? null;
+
+        if (! $siteId) {
+            return null;
+        }
+
+        try {
+            return \Illuminate\Support\Facades\DB::table('tallcms_sites')
+                ->where('id', $siteId)
+                ->value('name');
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

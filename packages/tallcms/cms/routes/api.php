@@ -26,7 +26,7 @@ Route::post('/auth/token', [AuthController::class, 'store'])
     ->name('auth.token.store');
 
 // Authenticated routes
-Route::middleware(['auth:sanctum', 'tallcms.token-expiry'])->group(function () {
+Route::middleware(['auth:sanctum', 'tallcms.token-expiry', \TallCms\Cms\Http\Middleware\ResolveSiteFromToken::class])->group(function () {
     // Auth management
     Route::delete('/auth/token', [AuthController::class, 'destroy'])
         ->name('auth.token.destroy');
