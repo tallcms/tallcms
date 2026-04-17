@@ -1042,3 +1042,34 @@ if (! function_exists('tallcms_locale_label')) {
         return $localeCode;
     }
 }
+
+if (! function_exists('tallcms_review_workflow_enabled')) {
+    /**
+     * Check if the review workflow is enabled for the current site.
+     *
+     * When disabled, all users can publish directly (Draft → Published).
+     * When enabled, the submit → approve → publish flow applies.
+     *
+     * Defaults to OFF when multisite plugin is active (SaaS tenants publish directly),
+     * ON when standalone (traditional editorial team).
+     */
+    function tallcms_review_workflow_enabled(): bool
+    {
+        // Determine default: multisite active → off, standalone → on
+        $multisiteActive = app()->bound('tallcms.multisite.resolver');
+        $default = ! $multisiteActive;
+
+        try {
+            $value = \TallCms\Cms\Models\SiteSetting::get('review_workflow_enabled');
+
+            // If not explicitly set, use the default
+            if ($value === null || $value === '') {
+                return $default;
+            }
+
+            return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+        } catch (\Throwable) {
+            return $default;
+        }
+    }
+}

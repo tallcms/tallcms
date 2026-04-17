@@ -37,6 +37,7 @@ class EditCmsPost extends EditRecord
             $this->getCopyFromDefaultAction(),
 
             // Workflow Actions Group
+            // Workflow Actions Group — only visible when review workflow is enabled
             ActionGroup::make([
                 $this->getSubmitForReviewAction(),
                 $this->getRetractSubmissionAction(),
@@ -46,7 +47,8 @@ class EditCmsPost extends EditRecord
                 ->label('Workflow')
                 ->icon('heroicon-o-arrow-path')
                 ->color('primary')
-                ->button(),
+                ->button()
+                ->visible(fn () => tallcms_review_workflow_enabled()),
 
             // Preview Actions Group
             ActionGroup::make([

@@ -39,7 +39,7 @@ class EditCmsPage extends EditRecord
             $this->getSaveFormAction()
                 ->formId('form'),
 
-            // Workflow Actions Group
+            // Workflow Actions Group — only visible when review workflow is enabled
             ActionGroup::make([
                 $this->getSubmitForReviewAction(),
                 $this->getRetractSubmissionAction(),
@@ -49,7 +49,8 @@ class EditCmsPage extends EditRecord
                 ->label('Workflow')
                 ->icon('heroicon-o-arrow-path')
                 ->color('primary')
-                ->button(),
+                ->button()
+                ->visible(fn () => tallcms_review_workflow_enabled()),
 
             // Preview Actions Group
             ActionGroup::make([

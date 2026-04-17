@@ -71,4 +71,16 @@ enum ContentStatus: string implements HasColor, HasIcon, HasLabel
             self::Published->value => self::Published->getLabel(),
         ];
     }
+
+    /**
+     * Get status options when review workflow is disabled.
+     * All users can publish directly — no Pending state.
+     */
+    public static function directPublishOptions(): array
+    {
+        return [
+            self::Draft->value => self::Draft->getLabel(),
+            self::Published->value => self::Published->getLabel(),
+        ];
+    }
 }

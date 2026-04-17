@@ -139,7 +139,12 @@ class CmsPostForm
                                     ->schema([
                                         Select::make('status')
                                             ->options(function () {
-                                                // Authors can only set draft/pending, approvers can set all
+                                                // When review workflow is disabled, all users can publish directly
+                                                if (! tallcms_review_workflow_enabled()) {
+                                                    return ContentStatus::directPublishOptions();
+                                                }
+
+                                                // With review workflow: approvers get all options, authors get draft only
                                                 if (auth()->user()?->can('Approve:CmsPost')) {
                                                     return ContentStatus::editorOptions();
                                                 }

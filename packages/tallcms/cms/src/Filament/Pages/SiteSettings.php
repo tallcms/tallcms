@@ -167,6 +167,9 @@ class SiteSettings extends Page implements HasForms
             'favicon' => SiteSetting::get('favicon'),
             'show_powered_by' => SiteSetting::get('show_powered_by', true),
 
+            // Publishing settings
+            'review_workflow_enabled' => tallcms_review_workflow_enabled(),
+
             // System settings
             'maintenance_mode' => SiteSetting::get('maintenance_mode', false),
             'maintenance_message' => SiteSetting::get('maintenance_message', 'We\'re currently performing scheduled maintenance. Please check back soon!'),
@@ -374,6 +377,18 @@ class SiteSettings extends Page implements HasForms
                 ])
                 ->columns(2),
 
+            Section::make('Publishing')
+                ->description('Control how content gets published on this site')
+                ->schema([
+                    $this->withMultisiteHint(
+                        Toggle::make('review_workflow_enabled')
+                            ->label('Enable Review Workflow')
+                            ->helperText('When enabled, authors must submit content for review before it can be published. When disabled, all users with create permission can publish directly.')
+                            ->columnSpanFull(),
+                        'review_workflow_enabled'
+                    ),
+                ]),
+
             Section::make('Maintenance Mode')
                 ->description('Control site maintenance settings')
                 ->schema([
@@ -479,7 +494,7 @@ class SiteSettings extends Page implements HasForms
         foreach ($data as $key => $value) {
             $type = match ($key) {
                 'logo', 'favicon' => 'file',
-                'maintenance_mode', 'i18n_enabled', 'hide_default_locale', 'show_powered_by' => 'boolean',
+                'maintenance_mode', 'i18n_enabled', 'hide_default_locale', 'show_powered_by', 'review_workflow_enabled' => 'boolean',
                 default => 'text',
             };
 
@@ -489,6 +504,7 @@ class SiteSettings extends Page implements HasForms
                 'social_facebook', 'social_twitter', 'social_linkedin', 'social_instagram',
                 'social_youtube', 'social_tiktok', 'newsletter_signup_url' => 'social',
                 'logo', 'favicon', 'show_powered_by' => 'branding',
+                'review_workflow_enabled' => 'publishing',
                 'maintenance_mode', 'maintenance_message' => 'maintenance',
                 'i18n_enabled', 'default_locale', 'hide_default_locale' => 'i18n',
                 default => 'general',
