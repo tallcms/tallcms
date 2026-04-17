@@ -99,7 +99,7 @@ class SeoService
     public static function getPageJsonLd(CmsPage $page): array
     {
         $siteName = SiteSetting::get('site_name', config('app.name'));
-        $siteUrl = config('app.url');
+        $siteUrl = tallcms_base_url($page->site_id ?? null);
 
         return [
             '@context' => 'https://schema.org',
@@ -121,7 +121,7 @@ class SeoService
     public static function getPostJsonLd(CmsPost $post): array
     {
         $siteName = SiteSetting::get('site_name', config('app.name'));
-        $siteUrl = config('app.url');
+        $siteUrl = tallcms_base_url($post->site_id ?? null);
         $author = $post->author;
         $logoUrl = SiteSetting::get('logo')
             ? Storage::disk(cms_media_disk())->url(SiteSetting::get('logo'))
@@ -284,7 +284,7 @@ class SeoService
     public static function getWebsiteJsonLd(): array
     {
         $siteName = SiteSetting::get('site_name', config('app.name'));
-        $siteUrl = config('app.url');
+        $siteUrl = tallcms_base_url();
         $description = SiteSetting::get('site_description', '');
 
         return [
@@ -482,6 +482,6 @@ class SeoService
         $prefix = config('tallcms.plugin_mode.routes_prefix', '');
         $prefix = $prefix ? "/{$prefix}" : '';
 
-        return rtrim(config('app.url'), '/').$prefix;
+        return tallcms_base_url().$prefix;
     }
 }

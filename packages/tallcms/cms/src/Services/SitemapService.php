@@ -38,12 +38,12 @@ class SitemapService
      * Get a site-scoped cache key. In multisite, each site gets its own
      * cached sitemap so site A's pages don't appear in site B's sitemap.
      */
-    protected static function cacheKey(string $key): string
+    /**
+     * @param  ?int  $siteId  Explicit site ID. If null, resolves from current context.
+     */
+    protected static function cacheKey(string $key, ?int $siteId = null): string
     {
-        $siteId = null;
-
-        // Resolve from request domain on frontend
-        if (app()->bound('tallcms.multisite.resolver')) {
+        if (is_null($siteId) && app()->bound('tallcms.multisite.resolver')) {
             try {
                 $resolver = app('tallcms.multisite.resolver');
                 if ($resolver->isResolved() && $resolver->id()) {
@@ -247,19 +247,27 @@ class SitemapService
     /**
      * Clear all sitemap caches.
      */
-    public static function clearCache(): void
+    /**
+     * Clear all sitemap caches.
+     *
+     * @param  ?int  $siteId  Explicit site ID. Pass this when clearing from
+     *                        console/queue where request context may not match
+     *                        the target site. If null, uses current context.
+     */
+    public static function clearCache(?int $siteId = null): void
     {
-        Cache::forget(self::cacheKey('index'));
-        Cache::forget(self::cacheKey('pages'));
-        Cache::forget(self::cacheKey('categories'));
-        Cache::forget(self::cacheKey('authors'));
+        Cache::forget(self::cacheKey('index', $siteId));
+        Cache::forget(self::cacheKey('pages', $siteId));
+        Cache::forget(self::cacheKey('categories', $siteId));
+        Cache::forget(self::cacheKey('authors', $siteId));
 
-        // Clear chunked post caches
-        $postCount = CmsPost::published()->count();
-        $postChunks = max(1, ceil($postCount / self::CHUNK_SIZE));
-
-        for ($i = 1; $i <= $postChunks; $i++) {
-            Cache::forget(self::cacheKey("posts:{$i}"));
+        // Clear chunked post caches (generous range since we can't know exact count)
+        for ($i = 1; $i <= 100; $i++) {
+            $key = self::cacheKey("posts:{$i}", $siteId);
+            if (! Cache::has($key)) {
+                break;
+            }
+            Cache::forget($key);
         }
     }
 }
