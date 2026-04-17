@@ -1055,8 +1055,18 @@ if (! function_exists('tallcms_review_workflow_enabled')) {
      */
     function tallcms_review_workflow_enabled(): bool
     {
-        // Determine default: multisite active → off, standalone → on
-        $multisiteActive = app()->bound('tallcms.multisite.resolver');
+        // Determine default: multisite licensed & active → off, standalone → on.
+        // Check if CmsPage has a site_id column AND the multisite scope is applied.
+        // The resolver is bound unconditionally in register(), but scopes are only
+        // registered in boot() after the license gate passes. Checking for the
+        // scope class existence + hasGlobalScope ensures we detect actual activation.
+        $multisiteActive = false;
+        try {
+            if (class_exists('Tallcms\Multisite\Scopes\SiteScope')) {
+                $multisiteActive = \TallCms\Cms\Models\CmsPage::hasGlobalScope('Tallcms\Multisite\Scopes\SiteScope');
+            }
+        } catch (\Throwable) {
+        }
         $default = ! $multisiteActive;
 
         try {

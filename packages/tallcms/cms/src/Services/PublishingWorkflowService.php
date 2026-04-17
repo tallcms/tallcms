@@ -17,10 +17,17 @@ use TallCms\Cms\Support\NotificationDispatcher;
 class PublishingWorkflowService
 {
     /**
-     * Submit content for review
+     * Submit content for review.
+     *
+     * Throws if the review workflow is disabled for the current site —
+     * this blocks both UI and API paths from pushing content into pending.
      */
     public function submitForReview(Model $content): void
     {
+        if (! tallcms_review_workflow_enabled()) {
+            throw new \RuntimeException('Review workflow is disabled for this site. Publish content directly by setting status to Published.');
+        }
+
         DB::transaction(function () use ($content) {
             $content->submitForReview();
 

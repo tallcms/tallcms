@@ -175,8 +175,8 @@ class CmsPostForm
                                         DateTimePicker::make('published_at')
                                             ->label('Publish Date')
                                             ->nullable()
-                                            ->helperText('Leave empty to publish immediately when approved, or set a future date to schedule.')
-                                            ->visible(fn () => auth()->user()?->can('Approve:CmsPost')),
+                                            ->helperText('Leave empty to publish immediately, or set a future date to schedule.')
+                                            ->visible(fn () => ! tallcms_review_workflow_enabled() || auth()->user()?->can('Approve:CmsPost')),
 
                                         Select::make('author_id')
                                             ->label('Author')
