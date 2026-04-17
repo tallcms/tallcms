@@ -23,7 +23,7 @@ class RobotsController extends Controller
         if ($appendSitemap && SiteSetting::get('seo_sitemap_enabled', true)) {
             $prefix = config('tallcms.plugin_mode.routes_prefix', '');
             $prefix = $prefix ? "/{$prefix}" : '';
-            $sitemapUrl = rtrim(config('app.url'), '/').$prefix.'/sitemap.xml';
+            $sitemapUrl = tallcms_base_url().$prefix.'/sitemap.xml';
 
             // Only append if not already present
             if (! str_contains($content, 'Sitemap:')) {

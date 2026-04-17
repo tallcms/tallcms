@@ -349,13 +349,13 @@ class SeoService
      * Posts can be nested under a page containing a PostsBlock (e.g., /blog/post-slug)
      * or at the root if the homepage contains a PostsBlock (e.g., /post-slug).
      */
-    public static function getPostUrl(CmsPost $post): string
+    public static function getPostUrl(CmsPost $post, ?int $siteId = null): string
     {
         $prefix = config('tallcms.plugin_mode.routes_prefix', '');
         $prefix = $prefix ? "/{$prefix}" : '';
-        $baseUrl = rtrim(config('app.url'), '/');
+        $baseUrl = tallcms_base_url($siteId ?? $post->site_id ?? null);
 
-        $blogParent = static::getBlogParentSlug();
+        $blogParent = static::getBlogParentSlug($siteId ?? $post->site_id ?? null);
 
         if ($blogParent) {
             return $baseUrl.$prefix.'/'.$blogParent.'/'.$post->slug;
@@ -376,43 +376,47 @@ class SeoService
      *
      * Results are cached for performance within a single request.
      */
-    public static function getBlogParentSlug(): ?string
+    /**
+     * Get the blog parent page slug for the given site context.
+     *
+     * Accepts an optional site_id for queued/console contexts where
+     * no request exists. In web context, SiteScope handles filtering.
+     * Results are cached per-site for the process lifetime.
+     */
+    public static function getBlogParentSlug(?int $siteId = null): ?string
     {
-        static $cached = null;
-        static $resolved = false;
+        static $cache = [];
 
-        if ($resolved) {
-            return $cached;
+        $cacheKey = $siteId ?? 'default';
+
+        if (array_key_exists($cacheKey, $cache)) {
+            return $cache[$cacheKey];
         }
 
-        $resolved = true;
+        // When explicit siteId is given (queue context), bypass SiteScope
+        $pageQuery = $siteId
+            ? CmsPage::withoutGlobalScopes()->where('site_id', $siteId)
+            : CmsPage::query();
 
         // First check homepage
-        $homepage = CmsPage::where('is_homepage', true)->published()->first();
+        $homepage = (clone $pageQuery)->where('is_homepage', true)->published()->first();
         if ($homepage && static::pageHasPostsBlock($homepage)) {
-            $cached = null; // Posts at root
-
-            return $cached;
+            return $cache[$cacheKey] = null; // Posts at root
         }
 
         // Find first non-homepage page with a PostsBlock
-        $pages = CmsPage::where('is_homepage', false)
+        $pages = (clone $pageQuery)->where('is_homepage', false)
             ->published()
             ->orderBy('sort_order')
             ->get();
 
         foreach ($pages as $page) {
             if (static::pageHasPostsBlock($page)) {
-                $cached = $page->slug;
-
-                return $cached;
+                return $cache[$cacheKey] = $page->slug;
             }
         }
 
-        // No page with PostsBlock found, default to root
-        $cached = null;
-
-        return $cached;
+        return $cache[$cacheKey] = null;
     }
 
     /**

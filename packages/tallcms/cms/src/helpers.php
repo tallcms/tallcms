@@ -1083,3 +1083,40 @@ if (! function_exists('tallcms_review_workflow_enabled')) {
         }
     }
 }
+
+if (! function_exists('tallcms_base_url')) {
+    /**
+     * Get the canonical base URL for the current site context.
+     *
+     * In a web request, uses the request's scheme + host (correct for multisite).
+     * In console/queue context, falls back to config('app.url').
+     * Optionally accepts an explicit site_id to look up the domain.
+     */
+    function tallcms_base_url(?int $siteId = null): string
+    {
+        // Explicit site_id: look up the domain directly
+        if ($siteId !== null) {
+            try {
+                $domain = \Illuminate\Support\Facades\DB::table('tallcms_sites')
+                    ->where('id', $siteId)
+                    ->value('domain');
+
+                if ($domain) {
+                    // Determine scheme: prefer HTTPS, fall back to current request scheme
+                    $scheme = request()?->isSecure() ? 'https' : (str_starts_with(config('app.url', ''), 'https') ? 'https' : 'http');
+
+                    return "{$scheme}://{$domain}";
+                }
+            } catch (\Throwable) {
+            }
+        }
+
+        // Web request: use the actual request host (handles multisite domains)
+        if (app()->runningInConsole() === false && request()) {
+            return rtrim(request()->getSchemeAndHttpHost(), '/');
+        }
+
+        // Console/queue fallback
+        return rtrim(config('app.url', 'http://localhost'), '/');
+    }
+}

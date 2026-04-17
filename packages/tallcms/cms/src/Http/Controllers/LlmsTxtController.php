@@ -55,14 +55,7 @@ class LlmsTxtController extends Controller
      */
     protected function getCanonicalBaseUrl(): string
     {
-        $baseUrl = rtrim(config('app.url'), '/');
-
-        // Only upgrade to HTTPS if the current request is actually secure
-        if (request()->isSecure() && str_starts_with($baseUrl, 'http://')) {
-            $baseUrl = preg_replace('/^http:\/\//', 'https://', $baseUrl);
-        }
-
-        return $baseUrl;
+        return tallcms_base_url();
     }
 
     /**

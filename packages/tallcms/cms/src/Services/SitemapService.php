@@ -35,6 +35,28 @@ class SitemapService
     }
 
     /**
+     * Get a site-scoped cache key. In multisite, each site gets its own
+     * cached sitemap so site A's pages don't appear in site B's sitemap.
+     */
+    protected static function cacheKey(string $key): string
+    {
+        $siteId = null;
+
+        // Resolve from request domain on frontend
+        if (app()->bound('tallcms.multisite.resolver')) {
+            try {
+                $resolver = app('tallcms.multisite.resolver');
+                if ($resolver->isResolved() && $resolver->id()) {
+                    $siteId = $resolver->id();
+                }
+            } catch (\Throwable) {
+            }
+        }
+
+        return $siteId ? "sitemap:{$siteId}:{$key}" : "sitemap:{$key}";
+    }
+
+    /**
      * Check if sitemap generation is enabled.
      */
     public static function isEnabled(): bool
@@ -47,10 +69,10 @@ class SitemapService
      */
     public static function getIndex(): array
     {
-        return Cache::remember('sitemap:index', self::CACHE_TTL, function () {
+        return Cache::remember(self::cacheKey('index'), self::CACHE_TTL, function () {
             $sitemaps = [];
             $prefix = self::getPrefix();
-            $baseUrl = rtrim(config('app.url'), '/');
+            $baseUrl = tallcms_base_url();
 
             // Always include pages sitemap
             $sitemaps[] = [
@@ -124,9 +146,9 @@ class SitemapService
      */
     public static function getPages(): Collection
     {
-        return Cache::remember('sitemap:pages', self::CACHE_TTL, function () {
+        return Cache::remember(self::cacheKey('pages'), self::CACHE_TTL, function () {
             $prefix = self::getPrefix();
-            $baseUrl = rtrim(config('app.url'), '/');
+            $baseUrl = tallcms_base_url();
 
             return CmsPage::published()
                 ->orderBy('updated_at', 'desc')
@@ -149,7 +171,7 @@ class SitemapService
      */
     public static function getPosts(int $page = 1): Collection
     {
-        $cacheKey = "sitemap:posts:{$page}";
+        $cacheKey = self::cacheKey("posts:{$page}");
 
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($page) {
             $offset = ($page - 1) * self::CHUNK_SIZE;
@@ -175,9 +197,9 @@ class SitemapService
      */
     public static function getCategories(): Collection
     {
-        return Cache::remember('sitemap:categories', self::CACHE_TTL, function () {
+        return Cache::remember(self::cacheKey('categories'), self::CACHE_TTL, function () {
             $prefix = self::getPrefix();
-            $baseUrl = rtrim(config('app.url'), '/');
+            $baseUrl = tallcms_base_url();
 
             return CmsCategory::whereHas('posts', function ($q) {
                 $q->published();
@@ -200,9 +222,9 @@ class SitemapService
      */
     public static function getAuthors(): Collection
     {
-        return Cache::remember('sitemap:authors', self::CACHE_TTL, function () {
+        return Cache::remember(self::cacheKey('authors'), self::CACHE_TTL, function () {
             $prefix = self::getPrefix();
-            $baseUrl = rtrim(config('app.url'), '/');
+            $baseUrl = tallcms_base_url();
             $userModel = config('tallcms.plugin_mode.user_model', \App\Models\User::class);
 
             return $userModel::whereHas('posts', function ($q) {
@@ -227,17 +249,17 @@ class SitemapService
      */
     public static function clearCache(): void
     {
-        Cache::forget('sitemap:index');
-        Cache::forget('sitemap:pages');
-        Cache::forget('sitemap:categories');
-        Cache::forget('sitemap:authors');
+        Cache::forget(self::cacheKey('index'));
+        Cache::forget(self::cacheKey('pages'));
+        Cache::forget(self::cacheKey('categories'));
+        Cache::forget(self::cacheKey('authors'));
 
         // Clear chunked post caches
         $postCount = CmsPost::published()->count();
         $postChunks = max(1, ceil($postCount / self::CHUNK_SIZE));
 
         for ($i = 1; $i <= $postChunks; $i++) {
-            Cache::forget("sitemap:posts:{$i}");
+            Cache::forget(self::cacheKey("posts:{$i}"));
         }
     }
 }
