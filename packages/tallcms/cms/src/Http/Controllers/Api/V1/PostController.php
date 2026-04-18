@@ -221,6 +221,11 @@ class PostController extends Controller
         $categoryIds = $data['category_ids'] ?? [];
         unset($data['category_ids']);
 
+        // Validate category ownership
+        if (! empty($categoryIds)) {
+            $this->validateRelationOwnership($request->user(), 'tallcms_categories', $categoryIds);
+        }
+
         $post = CmsPost::create(array_merge($data, [
             'author_id' => $request->user()->id,
         ]));
@@ -252,6 +257,7 @@ class PostController extends Controller
         $postModel->update($data);
 
         if ($categoryIds !== null) {
+            $this->validateRelationOwnership($request->user(), 'tallcms_categories', $categoryIds);
             $postModel->categories()->sync($categoryIds);
         }
 

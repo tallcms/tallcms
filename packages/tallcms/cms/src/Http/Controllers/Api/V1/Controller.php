@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace TallCms\Cms\Http\Controllers\Api\V1;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 abstract class Controller extends BaseController
 {
     use AuthorizesRequests;
+
     /**
      * Return a successful response with data.
      *
@@ -115,5 +119,39 @@ abstract class Controller extends BaseController
     protected function respondCreated($data, array $headers = []): JsonResponse
     {
         return $this->respondWithData($data, 201, $headers);
+    }
+
+    /**
+     * Validate that all related IDs belong to the authenticated user.
+     *
+     * Prevents cross-user linkage (e.g., attaching another user's categories
+     * to your post). Super-admins bypass this check.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    protected function validateRelationOwnership(Authenticatable $user, string $table, array $ids): void
+    {
+        if (empty($ids)) {
+            return;
+        }
+
+        // Super-admins can link to any record
+        if (method_exists($user, 'hasRole') && $user->hasRole('super_admin')) {
+            return;
+        }
+
+        // Check if table has user_id column (user-owned model)
+        if (! Schema::hasColumn($table, 'user_id')) {
+            return;
+        }
+
+        $ownedCount = DB::table($table)
+            ->where('user_id', $user->getAuthIdentifier())
+            ->whereIn('id', $ids)
+            ->count();
+
+        if ($ownedCount !== count($ids)) {
+            abort(422, 'One or more related IDs do not belong to you.');
+        }
     }
 }

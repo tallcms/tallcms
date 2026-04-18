@@ -236,8 +236,9 @@ class MediaController extends Controller
             'height' => $height,
         ]);
 
-        // Sync collections if provided
+        // Sync collections if provided (validate ownership)
         if ($request->has('collection_ids')) {
+            $this->validateRelationOwnership($request->user(), 'tallcms_media_collections', $request->input('collection_ids'));
             $media->collections()->sync($request->input('collection_ids'));
         }
 
@@ -261,6 +262,7 @@ class MediaController extends Controller
 
         // Sync collections if provided
         if ($request->has('collection_ids')) {
+            $this->validateRelationOwnership($request->user(), 'tallcms_media_collections', $request->input('collection_ids'));
             $mediaModel->collections()->sync($request->input('collection_ids'));
         }
 
