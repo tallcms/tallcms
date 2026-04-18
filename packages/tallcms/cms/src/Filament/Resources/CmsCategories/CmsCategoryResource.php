@@ -71,16 +71,24 @@ class CmsCategoryResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+
+        // User-owned: non-super-admins see only their own categories
+        if (auth()->check() && ! auth()->user()->hasRole('super_admin')
+            && \Illuminate\Support\Facades\Schema::hasColumn('tallcms_categories', 'user_id')) {
+            $query->where('tallcms_categories.user_id', auth()->id());
+        }
+
+        return $query;
     }
 
     public static function getNavigationBadge(): ?string
     {
         try {
-            return (string) static::getModel()::count();
+            return (string) static::getEloquentQuery()->count();
         } catch (\Throwable) {
             return null;
         }

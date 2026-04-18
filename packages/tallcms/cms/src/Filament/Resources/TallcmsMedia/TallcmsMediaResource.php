@@ -7,6 +7,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use TallCms\Cms\Filament\Resources\TallcmsMedia\Pages\CreateTallcmsMedia;
 use TallCms\Cms\Filament\Resources\TallcmsMedia\Pages\EditTallcmsMedia;
 use TallCms\Cms\Filament\Resources\TallcmsMedia\Pages\ListTallcmsMedia;
@@ -51,6 +52,19 @@ class TallcmsMediaResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        // User-owned: non-super-admins see only their own media
+        if (auth()->check() && ! auth()->user()->hasRole('super_admin')
+            && \Illuminate\Support\Facades\Schema::hasColumn('tallcms_media', 'user_id')) {
+            $query->where('tallcms_media.user_id', auth()->id());
+        }
+
+        return $query;
     }
 
     public static function getPages(): array

@@ -123,6 +123,19 @@ class MediaCollectionResource extends Resource
             ]);
     }
 
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        // User-owned: non-super-admins see only their own collections
+        if (auth()->check() && ! auth()->user()->hasRole('super_admin')
+            && \Illuminate\Support\Facades\Schema::hasColumn('tallcms_media_collections', 'user_id')) {
+            $query->where('tallcms_media_collections.user_id', auth()->id());
+        }
+
+        return $query;
+    }
+
     public static function getPages(): array
     {
         return [
