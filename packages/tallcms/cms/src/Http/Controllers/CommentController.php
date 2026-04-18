@@ -67,8 +67,11 @@ class CommentController extends Controller
             ], 422);
         }
 
-        // Verify post exists and is published
-        $post = CmsPost::published()->find($request->input('post_id'));
+        // Verify post exists and is published.
+        // Use withoutGlobalScopes() because this endpoint is called from the
+        // frontend via AJAX on an API route — SiteScope may not resolve
+        // correctly outside the web middleware group.
+        $post = CmsPost::withoutGlobalScopes()->published()->find($request->input('post_id'));
         if (! $post) {
             return response()->json([
                 'errors' => ['post_id' => ['The selected post is not available for comments.']],
@@ -77,7 +80,8 @@ class CommentController extends Controller
 
         // Validate parent_id if provided
         if ($request->filled('parent_id')) {
-            $parent = CmsComment::where('id', $request->input('parent_id'))
+            $parent = CmsComment::withoutGlobalScopes()
+                ->where('id', $request->input('parent_id'))
                 ->where('status', 'approved')
                 ->whereNull('deleted_at')
                 ->where('post_id', $request->input('post_id'))
@@ -152,7 +156,7 @@ class CommentController extends Controller
         while ($current->parent_id !== null) {
             $depth++;
             // Use withTrashed to avoid null when an ancestor is soft-deleted
-            $current = CmsComment::withTrashed()->find($current->parent_id);
+            $current = CmsComment::withoutGlobalScopes()->withTrashed()->find($current->parent_id);
             if ($current === null) {
                 break;
             }

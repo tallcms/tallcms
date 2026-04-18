@@ -6,7 +6,6 @@ namespace TallCms\Cms\Services;
 
 use TallCms\Cms\Models\CmsPage;
 use TallCms\Cms\Models\SiteSetting;
-use TallCms\Cms\Services\LocaleRegistry;
 
 class BlockLinkResolver
 {
@@ -21,7 +20,7 @@ class BlockLinkResolver
             case 'page':
                 $pageId = $config["{$prefix}_page_id"] ?? null;
                 if ($pageId) {
-                    $page = CmsPage::where('id', $pageId)->where('status', 'published')->first();
+                    $page = CmsPage::withoutGlobalScopes()->where('id', $pageId)->where('status', 'published')->first();
                     if ($page) {
                         $siteType = SiteSetting::get('site_type', 'multi-page');
                         if ($siteType === 'single-page') {

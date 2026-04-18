@@ -33,11 +33,22 @@ class ContentSubmittedForReviewNotification extends Notification
     {
         $contentType = $this->getContentTypeName();
         $submitterName = $this->content->submitter?->name ?? 'Unknown';
+        $siteName = $this->getSiteName();
 
-        return (new MailMessage)
-            ->subject("New {$contentType} Submitted for Review: {$this->content->title}")
+        $subject = $siteName
+            ? "New {$contentType} for Review on {$siteName}: {$this->content->title}"
+            : "New {$contentType} Submitted for Review: {$this->content->title}";
+
+        $mail = (new MailMessage)
+            ->subject($subject)
             ->greeting("Hello {$notifiable->name}!")
-            ->line("{$submitterName} has submitted a {$contentType} for your review.")
+            ->line("{$submitterName} has submitted a {$contentType} for your review.");
+
+        if ($siteName) {
+            $mail->line("**Site:** {$siteName}");
+        }
+
+        return $mail
             ->line("**Title:** {$this->content->title}")
             ->action('Review Content', $this->getEditUrl())
             ->line('Please review and approve or reject this content.');
@@ -55,7 +66,9 @@ class ContentSubmittedForReviewNotification extends Notification
             ->warning()
             ->icon('heroicon-o-document-text')
             ->title("New {$contentType} for Review")
-            ->body("{$submitterName} submitted: {$this->content->title}")
+            ->body($this->getSiteName()
+                ? "{$submitterName} submitted on {$this->getSiteName()}: {$this->content->title}"
+                : "{$submitterName} submitted: {$this->content->title}")
             ->actions([
                 FilamentAction::make('review')
                     ->label('Review')
@@ -103,15 +116,44 @@ class ContentSubmittedForReviewNotification extends Notification
     protected function getEditUrl(): string
     {
         $panelId = config('tallcms.filament.panel_id', 'admin');
+        $url = null;
 
         if ($this->content instanceof CmsPost) {
-            return route("filament.{$panelId}.resources.cms-posts.edit", $this->content);
+            $url = route("filament.{$panelId}.resources.cms-posts.edit", $this->content);
+        } elseif ($this->content instanceof CmsPage) {
+            $url = route("filament.{$panelId}.resources.cms-pages.edit", $this->content);
         }
 
-        if ($this->content instanceof CmsPage) {
-            return route("filament.{$panelId}.resources.cms-pages.edit", $this->content);
+        if (! $url) {
+            return tallcms_panel_url();
         }
 
-        return tallcms_panel_url();
+        // Append site context so the admin auto-switches to the correct site
+        $siteId = $this->content->site_id ?? null;
+        if ($siteId) {
+            $url .= (str_contains($url, '?') ? '&' : '?').'switch_site='.$siteId;
+        }
+
+        return $url;
+    }
+
+    /**
+     * Get the site name for the content (multisite context).
+     */
+    protected function getSiteName(): ?string
+    {
+        $siteId = $this->content->site_id ?? null;
+
+        if (! $siteId) {
+            return null;
+        }
+
+        try {
+            return \Illuminate\Support\Facades\DB::table('tallcms_sites')
+                ->where('id', $siteId)
+                ->value('name');
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }
