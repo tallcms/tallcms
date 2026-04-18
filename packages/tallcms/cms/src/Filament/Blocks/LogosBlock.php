@@ -97,7 +97,15 @@ class LogosBlock extends RichContentCustomBlock
 
                                 Select::make('collection_id')
                                     ->label('Media Collection')
-                                    ->options(fn () => MediaCollection::pluck('name', 'id')->toArray())
+                                    ->options(function () {
+                                        $query = MediaCollection::query();
+                                        if (auth()->check() && ! auth()->user()->hasRole('super_admin')
+                                            && \Illuminate\Support\Facades\Schema::hasColumn('tallcms_media_collections', 'user_id')) {
+                                            $query->where('user_id', auth()->id());
+                                        }
+
+                                        return $query->pluck('name', 'id')->toArray();
+                                    })
                                     ->searchable()
                                     ->visible(fn (Get $get): bool => $get('source') === 'collection')
                                     ->helperText('Select a collection containing logo images'),

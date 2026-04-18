@@ -74,8 +74,8 @@ class SearchResults extends Component
                 $results = $results->merge($pages);
             }
 
-            // Search posts - limit results to avoid memory issues
-            if (($this->type === 'all' || $this->type === 'posts') && in_array('posts', $searchableTypes)) {
+            // Search posts - skip in multisite (posts reach sites through blocks only)
+            if (! tallcms_multisite_active() && ($this->type === 'all' || $this->type === 'posts') && in_array('posts', $searchableTypes)) {
                 $posts = CmsPost::search($this->q)
                     ->query(fn ($query) => $query->published())
                     ->take($maxResultsPerType)

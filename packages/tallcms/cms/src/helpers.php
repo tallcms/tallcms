@@ -1120,3 +1120,24 @@ if (! function_exists('tallcms_base_url')) {
         return rtrim(config('app.url', 'http://localhost'), '/');
     }
 }
+
+if (! function_exists('tallcms_multisite_active')) {
+    /**
+     * Check if the multisite plugin is actively running.
+     *
+     * Returns true only when the multisite plugin is installed, licensed,
+     * and has registered its scopes (post-boot). Uses the same detection
+     * pattern as tallcms_review_workflow_enabled().
+     */
+    function tallcms_multisite_active(): bool
+    {
+        try {
+            if (class_exists('Tallcms\Multisite\Scopes\SiteScope')) {
+                return \TallCms\Cms\Models\CmsPage::hasGlobalScope('Tallcms\Multisite\Scopes\SiteScope');
+            }
+        } catch (\Throwable) {
+        }
+
+        return false;
+    }
+}

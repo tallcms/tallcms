@@ -80,7 +80,11 @@ class SitemapService
                 'lastmod' => CmsPage::published()->max('updated_at'),
             ];
 
-            // Posts - chunked if needed
+            // Posts - skip in multisite (posts reach sites through blocks, not standalone URLs)
+            if (tallcms_multisite_active()) {
+                return $sitemaps;
+            }
+
             $postCount = CmsPost::published()->count();
             $postChunks = max(1, ceil($postCount / self::CHUNK_SIZE));
 

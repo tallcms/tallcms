@@ -19,7 +19,7 @@ use TallCms\Cms\Filament\Resources\MediaCollection\Pages\CreateMediaCollection;
 use TallCms\Cms\Filament\Resources\MediaCollection\Pages\EditMediaCollection;
 use TallCms\Cms\Filament\Resources\MediaCollection\Pages\ListMediaCollections;
 use TallCms\Cms\Models\MediaCollection;
-use TallCms\Cms\Rules\SiteAwareUnique;
+use TallCms\Cms\Rules\UserAwareUnique;
 
 class MediaCollectionResource extends Resource
 {
@@ -54,7 +54,7 @@ class MediaCollectionResource extends Resource
                     ->required()
                     ->maxLength(255)
                     ->rules(fn (?MediaCollection $record) => [
-                        SiteAwareUnique::rule('tallcms_media_collections', 'name', $record?->id),
+                        UserAwareUnique::rule('tallcms_media_collections', 'name', $record?->id),
                     ])
                     ->autofocus(),
 
@@ -62,7 +62,7 @@ class MediaCollectionResource extends Resource
                     ->label('Slug')
                     ->maxLength(255)
                     ->rules(fn (?MediaCollection $record) => [
-                        SiteAwareUnique::rule('tallcms_media_collections', 'slug', $record?->id),
+                        UserAwareUnique::rule('tallcms_media_collections', 'slug', $record?->id),
                     ])
                     ->helperText('Leave empty to auto-generate from name'),
 

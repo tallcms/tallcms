@@ -33,8 +33,6 @@ class UniqueTranslatableSlug implements ValidationRule
     /**
      * Run the validation rule.
      *
-     * @param  string  $attribute
-     * @param  mixed  $value
      * @param  Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
@@ -56,26 +54,49 @@ class UniqueTranslatableSlug implements ValidationRule
 
             default:
                 // MySQL/MariaDB
-                $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT({$this->column}, '$.\"" . $this->locale . "\"')) = ?", [$value]);
+                $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT({$this->column}, '$.\"".$this->locale."\"')) = ?", [$value]);
         }
 
         if ($this->ignoreId) {
             $query->where('id', '!=', $this->ignoreId);
         }
 
-        // Scope uniqueness to current site when multisite is active.
-        // Livewire update requests use the 'web' middleware group, NOT the
-        // Filament panel middleware, so tallcms.admin_context attribute may
-        // not be set. Check session first (covers admin), then resolver (frontend).
+        // Scope uniqueness based on ownership model:
+        // - User-owned tables (posts, categories): scope by user_id
+        // - Site-owned tables (pages): scope by site_id
+        $this->applyScopeFilter($query);
+
+        if ($query->exists()) {
+            $fail("This slug is already used by another item in {$this->locale}.");
+        }
+    }
+
+    /**
+     * Apply the appropriate ownership filter based on the table type.
+     *
+     * User-owned tables (posts, categories): scope by user_id or auth user.
+     * Site-owned tables (pages): scope by site_id via session/resolver.
+     */
+    protected function applyScopeFilter($query): void
+    {
+        // Check if table is user-owned (has user_id column)
+        $isUserOwned = \Illuminate\Support\Facades\Schema::hasColumn($this->table, 'user_id');
+
+        if ($isUserOwned && auth()->check()) {
+            $ownerColumn = $this->table === 'tallcms_posts' ? 'user_id' : 'user_id';
+            $query->where($ownerColumn, auth()->id());
+
+            return;
+        }
+
+        // Site-owned: scope by site_id
         $siteId = null;
 
-        // Tier 1: Admin session (always available during Filament/Livewire requests)
         $sessionValue = session('multisite_admin_site_id');
         if ($sessionValue && $sessionValue !== '__all_sites__' && is_numeric($sessionValue)) {
             $siteId = (int) $sessionValue;
         }
 
-        // Tier 2: Resolver (frontend domain-based)
         if (! $siteId && app()->bound('tallcms.multisite.resolver')) {
             try {
                 $resolver = app('tallcms.multisite.resolver');
@@ -83,16 +104,11 @@ class UniqueTranslatableSlug implements ValidationRule
                     $siteId = $resolver->id();
                 }
             } catch (\Throwable) {
-                // Multisite not functional
             }
         }
 
-        if ($siteId) {
+        if ($siteId && \Illuminate\Support\Facades\Schema::hasColumn($this->table, 'site_id')) {
             $query->where('site_id', $siteId);
-        }
-
-        if ($query->exists()) {
-            $fail("This slug is already used by another item in {$this->locale}.");
         }
     }
 }

@@ -90,7 +90,15 @@ class DocumentListBlock extends RichContentCustomBlock
                                 Select::make('collection_ids')
                                     ->label('Collections')
                                     ->multiple()
-                                    ->options(fn () => MediaCollection::pluck('name', 'id')->toArray())
+                                    ->options(function () {
+                                        $query = MediaCollection::query();
+                                        if (auth()->check() && ! auth()->user()->hasRole('super_admin')
+                                            && \Illuminate\Support\Facades\Schema::hasColumn('tallcms_media_collections', 'user_id')) {
+                                            $query->where('user_id', auth()->id());
+                                        }
+
+                                        return $query->pluck('name', 'id')->toArray();
+                                    })
                                     ->searchable()
                                     ->required()
                                     ->helperText('Select collections containing documents'),

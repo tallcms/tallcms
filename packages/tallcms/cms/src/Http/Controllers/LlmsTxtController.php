@@ -35,7 +35,9 @@ class LlmsTxtController extends Controller
             $lines = array_merge($lines, $this->buildPagesSection($baseUrl, $prefix));
         }
 
-        if (SiteSetting::get('seo_llms_txt_include_posts', true)) {
+        // Posts are user-owned libraries in multisite — they reach sites through blocks.
+        // Only include standalone post sections in non-multisite mode.
+        if (! tallcms_multisite_active() && SiteSetting::get('seo_llms_txt_include_posts', true)) {
             $postLimit = (int) SiteSetting::get('seo_llms_txt_post_limit', 0);
             $lines = array_merge($lines, $this->buildPostsSections($postLimit));
         }

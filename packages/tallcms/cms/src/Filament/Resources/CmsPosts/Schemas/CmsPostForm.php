@@ -21,8 +21,8 @@ use TallCms\Cms\Filament\Forms\Components\CmsRichEditor;
 use TallCms\Cms\Livewire\RevisionHistory;
 use TallCms\Cms\Models\CmsCategory;
 use TallCms\Cms\Models\CmsPost;
-use TallCms\Cms\Rules\SiteAwareUnique;
 use TallCms\Cms\Rules\UniqueTranslatableSlug;
+use TallCms\Cms\Rules\UserAwareUnique;
 use TallCms\Cms\Services\CustomBlockDiscoveryService;
 use TallCms\Cms\Services\LocaleRegistry;
 
@@ -87,7 +87,7 @@ class CmsPostForm
                                                     );
                                                 } else {
                                                     // Site-aware unique constraint
-                                                    $rules[] = SiteAwareUnique::rule('tallcms_posts', 'slug', $record?->id);
+                                                    $rules[] = UserAwareUnique::rule('tallcms_posts', 'slug', $record?->id);
                                                 }
 
                                                 return $rules;
@@ -198,7 +198,15 @@ class CmsPostForm
                                         Select::make('categories')
                                             ->multiple()
                                             ->relationship('categories', 'name')
-                                            ->options(CmsCategory::query()->pluck('name', 'id'))
+                                            ->options(function () {
+                                                $query = CmsCategory::query();
+                                                if (auth()->check() && ! auth()->user()->hasRole('super_admin')
+                                                    && DbSchema::hasColumn('tallcms_categories', 'user_id')) {
+                                                    $query->where('user_id', auth()->id());
+                                                }
+
+                                                return $query->pluck('name', 'id');
+                                            })
                                             ->searchable()
                                             ->preload()
                                             ->createOptionForm([
@@ -226,7 +234,7 @@ class CmsPostForm
                                                             );
                                                         } else {
                                                             // Site-aware unique constraint
-                                                            $rules[] = SiteAwareUnique::rule('tallcms_categories', 'slug');
+                                                            $rules[] = UserAwareUnique::rule('tallcms_categories', 'slug');
                                                         }
 
                                                         return $rules;

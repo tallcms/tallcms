@@ -18,8 +18,6 @@ use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasContentWidth;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
-use TallCms\Cms\Models\CmsCategory;
-use TallCms\Cms\Models\CmsPost;
 
 class PostsBlock extends RichContentCustomBlock
 {
@@ -84,7 +82,15 @@ class PostsBlock extends RichContentCustomBlock
                                         Select::make('categories')
                                             ->label('Filter by Categories')
                                             ->multiple()
-                                            ->options(fn () => CmsCategory::pluck('name', 'id')->toArray())
+                                            ->options(function () {
+                                                $query = \TallCms\Cms\Models\CmsCategory::query();
+                                                if (auth()->check() && ! auth()->user()->hasRole('super_admin')
+                                                    && \Illuminate\Support\Facades\Schema::hasColumn('tallcms_categories', 'user_id')) {
+                                                    $query->where('user_id', auth()->id());
+                                                }
+
+                                                return $query->pluck('name', 'id')->toArray();
+                                            })
                                             ->placeholder('All categories')
                                             ->helperText('Leave empty to show posts from all categories'),
 
@@ -130,7 +136,15 @@ class PostsBlock extends RichContentCustomBlock
                                         Select::make('pinned_posts')
                                             ->label('Select Posts (Manual Order)')
                                             ->multiple()
-                                            ->options(fn () => CmsPost::published()->pluck('title', 'id')->toArray())
+                                            ->options(function () {
+                                                $query = \TallCms\Cms\Models\CmsPost::published();
+                                                if (auth()->check() && ! auth()->user()->hasRole('super_admin')
+                                                    && \Illuminate\Support\Facades\Schema::hasColumn('tallcms_posts', 'user_id')) {
+                                                    $query->where('user_id', auth()->id());
+                                                }
+
+                                                return $query->pluck('title', 'id')->toArray();
+                                            })
                                             ->visible(fn (Get $get) => $get('sort_by') === 'manual')
                                             ->helperText('Select and order posts manually'),
                                     ])

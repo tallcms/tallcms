@@ -12,7 +12,7 @@ use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use TallCms\Cms\Models\MediaCollection;
-use TallCms\Cms\Rules\SiteAwareUnique;
+use TallCms\Cms\Rules\UserAwareUnique;
 
 class TallcmsMediaForm
 {
@@ -110,7 +110,15 @@ class TallcmsMediaForm
                 Select::make('collection_ids')
                     ->label('Collections')
                     ->multiple()
-                    ->options(fn () => MediaCollection::pluck('name', 'id')->toArray())
+                    ->options(function () {
+                        $query = MediaCollection::query();
+                        if (auth()->check() && ! auth()->user()->hasRole('super_admin')
+                            && \Illuminate\Support\Facades\Schema::hasColumn('tallcms_media_collections', 'user_id')) {
+                            $query->where('user_id', auth()->id());
+                        }
+
+                        return $query->pluck('name', 'id')->toArray();
+                    })
                     ->searchable()
                     ->preload()
                     ->visibleOn(['create'])
@@ -120,7 +128,7 @@ class TallcmsMediaForm
                             ->label('Collection Name')
                             ->required()
                             ->maxLength(255)
-                            ->rules([SiteAwareUnique::rule('tallcms_media_collections', 'name')]),
+                            ->rules([UserAwareUnique::rule('tallcms_media_collections', 'name')]),
 
                         Textarea::make('description')
                             ->label('Description')
@@ -143,7 +151,7 @@ class TallcmsMediaForm
                             ->label('Collection Name')
                             ->required()
                             ->maxLength(255)
-                            ->rules([SiteAwareUnique::rule('tallcms_media_collections', 'name')]),
+                            ->rules([UserAwareUnique::rule('tallcms_media_collections', 'name')]),
 
                         Textarea::make('description')
                             ->label('Description')

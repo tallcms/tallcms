@@ -9,8 +9,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
 use TallCms\Cms\Models\CmsCategory;
-use TallCms\Cms\Rules\SiteAwareUnique;
 use TallCms\Cms\Rules\UniqueTranslatableSlug;
+use TallCms\Cms\Rules\UserAwareUnique;
 use TallCms\Cms\Services\LocaleRegistry;
 
 class CmsCategoryForm
@@ -66,7 +66,7 @@ class CmsCategoryForm
                             );
                         } else {
                             // Site-aware unique constraint
-                            $rules[] = SiteAwareUnique::rule('tallcms_categories', 'slug', $record?->id);
+                            $rules[] = UserAwareUnique::rule('tallcms_categories', 'slug', $record?->id);
                         }
 
                         return $rules;
@@ -78,9 +78,15 @@ class CmsCategoryForm
 
                 Select::make('parent_id')
                     ->label('Parent Category')
-                    ->options(CmsCategory::query()
-                        ->whereNull('parent_id')
-                        ->pluck('name', 'id'))
+                    ->options(function () {
+                        $query = CmsCategory::query()->whereNull('parent_id');
+                        if (auth()->check() && ! auth()->user()->hasRole('super_admin')
+                            && \Illuminate\Support\Facades\Schema::hasColumn('tallcms_categories', 'user_id')) {
+                            $query->where('user_id', auth()->id());
+                        }
+
+                        return $query->pluck('name', 'id');
+                    })
                     ->searchable()
                     ->nullable(),
 
