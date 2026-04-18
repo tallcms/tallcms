@@ -4,10 +4,15 @@
     $limit = (int) ($settings['limit'] ?: 5);
     $showImage = (bool) ($settings['show_image'] ?? true);
 
-    $posts = \TallCms\Cms\Models\CmsPost::published()
-        ->orderBy('published_at', 'desc')
-        ->limit($limit)
-        ->get();
+    // In multisite, posts reach sites through blocks only — this widget is disabled
+    if (function_exists('tallcms_multisite_active') && tallcms_multisite_active()) {
+        $posts = collect();
+    } else {
+        $posts = \TallCms\Cms\Models\CmsPost::published()
+            ->orderBy('published_at', 'desc')
+            ->limit($limit)
+            ->get();
+    }
 
     // Use the current page slug for post URLs
     $parentSlug = $page?->slug ?? '';

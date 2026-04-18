@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace TallCms\Cms\Policies;
 
-use TallCms\Cms\Models\TallcmsMenu;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Contracts\Auth\Authenticatable;
+use TallCms\Cms\Models\TallcmsMenu;
 
 class TallcmsMenuPolicy
 {

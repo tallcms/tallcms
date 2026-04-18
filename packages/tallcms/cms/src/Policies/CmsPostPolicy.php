@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace TallCms\Cms\Policies;
 
-use TallCms\Cms\Models\CmsPost;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Contracts\Auth\Authenticatable;
+use TallCms\Cms\Models\CmsPost;
 
 class CmsPostPolicy
 {
@@ -19,7 +19,7 @@ class CmsPostPolicy
 
     public function view(Authenticatable $user, CmsPost $cmsPost): bool
     {
-        return $user->can('View:CmsPost');
+        return $user->can('View:CmsPost') && $this->ownsOrSuperAdmin($user, $cmsPost);
     }
 
     public function create(Authenticatable $user): bool
@@ -29,22 +29,22 @@ class CmsPostPolicy
 
     public function update(Authenticatable $user, CmsPost $cmsPost): bool
     {
-        return $user->can('Update:CmsPost');
+        return $user->can('Update:CmsPost') && $this->ownsOrSuperAdmin($user, $cmsPost);
     }
 
     public function delete(Authenticatable $user, CmsPost $cmsPost): bool
     {
-        return $user->can('Delete:CmsPost');
+        return $user->can('Delete:CmsPost') && $this->ownsOrSuperAdmin($user, $cmsPost);
     }
 
     public function restore(Authenticatable $user, CmsPost $cmsPost): bool
     {
-        return $user->can('Restore:CmsPost');
+        return $user->can('Restore:CmsPost') && $this->ownsOrSuperAdmin($user, $cmsPost);
     }
 
     public function forceDelete(Authenticatable $user, CmsPost $cmsPost): bool
     {
-        return $user->can('ForceDelete:CmsPost');
+        return $user->can('ForceDelete:CmsPost') && $this->ownsOrSuperAdmin($user, $cmsPost);
     }
 
     public function forceDeleteAny(Authenticatable $user): bool
@@ -104,6 +104,25 @@ class CmsPostPolicy
      */
     public function generatePreviewLink(Authenticatable $user, CmsPost $cmsPost): bool
     {
-        return $user->can('GeneratePreviewLink:CmsPost');
+        return $user->can('GeneratePreviewLink:CmsPost') && $this->ownsOrSuperAdmin($user, $cmsPost);
+    }
+
+    /**
+     * Check if the user owns the post or is a super-admin.
+     * Uses user_id (ownership) not author_id (editorial metadata).
+     */
+    protected function ownsOrSuperAdmin(Authenticatable $user, CmsPost $cmsPost): bool
+    {
+        if (method_exists($user, 'hasRole') && $user->hasRole('super_admin')) {
+            return true;
+        }
+
+        // If user_id column exists and is set, check ownership
+        if (isset($cmsPost->user_id) && $cmsPost->user_id !== null) {
+            return $cmsPost->user_id === $user->getAuthIdentifier();
+        }
+
+        // Fallback: check author_id (pre-migration or standalone)
+        return $cmsPost->author_id === $user->getAuthIdentifier();
     }
 }

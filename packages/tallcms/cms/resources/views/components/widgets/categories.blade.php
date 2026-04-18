@@ -3,10 +3,15 @@
 @php
     $showCount = (bool) ($settings['show_count'] ?? true);
 
-    $categories = \TallCms\Cms\Models\CmsCategory::query()
-        ->when($showCount, fn($q) => $q->withCount(['posts' => fn($q) => $q->published()]))
-        ->orderBy('name')
-        ->get();
+    // In multisite, categories are user-owned — this widget is disabled
+    if (function_exists('tallcms_multisite_active') && tallcms_multisite_active()) {
+        $categories = collect();
+    } else {
+        $categories = \TallCms\Cms\Models\CmsCategory::query()
+            ->when($showCount, fn($q) => $q->withCount(['posts' => fn($q) => $q->published()]))
+            ->orderBy('name')
+            ->get();
+    }
 
     // Use the current page for category filter URLs
     $currentPageSlug = $page?->slug ?? '';
