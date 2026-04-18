@@ -661,7 +661,7 @@ class CommentSystemTest extends TestCase
         $response->assertOk();
         $response->assertJsonFragment(['message' => 'Your comment has been posted.']);
 
-        $comment = CmsComment::latest('id')->first();
+        $comment = CmsComment::withoutGlobalScopes()->latest('id')->first();
         $this->assertEquals('approved', $comment->status);
         $this->assertNotNull($comment->approved_at);
     }
@@ -694,7 +694,7 @@ class CommentSystemTest extends TestCase
         $response->assertOk();
         $response->assertJsonFragment(['message' => 'Your comment has been submitted and is awaiting moderation.']);
 
-        $comment = CmsComment::latest('id')->first();
+        $comment = CmsComment::withoutGlobalScopes()->latest('id')->first();
         $this->assertEquals('pending', $comment->status);
         $this->assertNull($comment->approved_at);
     }
