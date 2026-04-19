@@ -259,7 +259,10 @@ trait HasRevisions
      */
     public function createRevisionFromOriginal(?string $notes = null): CmsRevision
     {
-        $nextNumber = ($this->revisions()->max('revision_number') ?? 0) + 1;
+        $nextNumber = (CmsRevision::withoutGlobalScopes()
+            ->where('revisionable_type', static::class)
+            ->where('revisionable_id', $this->getKey())
+            ->max('revision_number') ?? 0) + 1;
 
         // Compute hash from original values
         $hash = $this->computeContentHashFromOriginal();
@@ -285,7 +288,10 @@ trait HasRevisions
      */
     public function createRevisionFromCurrent(?string $notes = null, bool $isManual = false): CmsRevision
     {
-        $nextNumber = ($this->revisions()->max('revision_number') ?? 0) + 1;
+        $nextNumber = (CmsRevision::withoutGlobalScopes()
+            ->where('revisionable_type', static::class)
+            ->where('revisionable_id', $this->getKey())
+            ->max('revision_number') ?? 0) + 1;
 
         return $this->revisions()->create([
             'user_id' => auth()->id(),
