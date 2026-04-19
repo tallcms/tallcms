@@ -27,6 +27,27 @@ class EditCmsPage extends EditRecord
 
     protected static string $resource = CmsPageResource::class;
 
+    /**
+     * Repair orphaned page before save.
+     *
+     * If the page has no site_id (orphaned from clone or pre-migration),
+     * assign it from the admin session context. This prevents the revision
+     * listener from throwing when it tries to derive site_id from the page.
+     */
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        if (is_null($this->record->site_id) && Schema::hasColumn('tallcms_pages', 'site_id')) {
+            $sessionValue = session('multisite_admin_site_id');
+            if ($sessionValue && $sessionValue !== '__all_sites__' && is_numeric($sessionValue)) {
+                $siteId = (int) $sessionValue;
+                $data['site_id'] = $siteId;
+                $this->record->site_id = $siteId;
+            }
+        }
+
+        return $data;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
