@@ -11,11 +11,11 @@ use Illuminate\Support\Facades\Log;
 use LaraZeus\SpatieTranslatable\SpatieTranslatablePlugin;
 use TallCms\Cms\Filament\Pages\ApiTokens;
 use TallCms\Cms\Filament\Pages\CodeInjection;
+use TallCms\Cms\Filament\Pages\GlobalDefaults;
 use TallCms\Cms\Filament\Pages\MenuItemsManager;
 use TallCms\Cms\Filament\Pages\PluginLicenses;
 use TallCms\Cms\Filament\Pages\PluginManager;
 use TallCms\Cms\Filament\Pages\SeoSettings;
-use TallCms\Cms\Filament\Pages\SiteSettings;
 use TallCms\Cms\Filament\Pages\SystemUpdates;
 use TallCms\Cms\Filament\Pages\ThemeManager;
 use TallCms\Cms\Filament\Pages\UpdateManual;
@@ -26,6 +26,7 @@ use TallCms\Cms\Filament\Resources\CmsComments\CmsCommentResource;
 use TallCms\Cms\Filament\Resources\CmsPages\CmsPageResource;
 use TallCms\Cms\Filament\Resources\CmsPosts\CmsPostResource;
 use TallCms\Cms\Filament\Resources\MediaCollection\MediaCollectionResource;
+use TallCms\Cms\Filament\Resources\SiteResource\SiteResource;
 use TallCms\Cms\Filament\Resources\TallcmsContactSubmissions\TallcmsContactSubmissionResource;
 use TallCms\Cms\Filament\Resources\TallcmsMedia\TallcmsMediaResource;
 use TallCms\Cms\Filament\Resources\TallcmsMenus\TallcmsMenuResource;
@@ -54,6 +55,10 @@ class TallCmsPlugin implements Plugin
     protected bool $hasUsers = true;
 
     protected bool $hasSiteSettings = true;
+
+    protected bool $hasGlobalDefaults = true;
+
+    protected bool $hasSeoSettings = true;
 
     protected bool $hasCodeInjection = true;
 
@@ -210,8 +215,11 @@ class TallCmsPlugin implements Plugin
     {
         $pages = [];
 
-        if ($this->hasSiteSettings) {
-            $pages[] = SiteSettings::class;
+        if ($this->hasGlobalDefaults) {
+            $pages[] = GlobalDefaults::class;
+        }
+
+        if ($this->hasSeoSettings) {
             $pages[] = SeoSettings::class;
         }
 
@@ -322,6 +330,10 @@ class TallCmsPlugin implements Plugin
     public function getResources(): array
     {
         $resources = [];
+
+        if ($this->hasSiteSettings) {
+            $resources[] = SiteResource::class;
+        }
 
         if ($this->hasCategories) {
             $resources[] = CmsCategoryResource::class;
@@ -453,11 +465,31 @@ class TallCmsPlugin implements Plugin
     }
 
     /**
-     * Disable site settings page.
+     * Disable site settings resource.
      */
     public function withoutSiteSettings(): static
     {
         $this->hasSiteSettings = false;
+
+        return $this;
+    }
+
+    /**
+     * Disable global defaults page.
+     */
+    public function withoutGlobalDefaults(): static
+    {
+        $this->hasGlobalDefaults = false;
+
+        return $this;
+    }
+
+    /**
+     * Disable SEO settings page.
+     */
+    public function withoutSeoSettings(): static
+    {
+        $this->hasSeoSettings = false;
 
         return $this;
     }

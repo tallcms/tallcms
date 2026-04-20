@@ -64,6 +64,17 @@ class CmsPageResource extends Resource
             ]);
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        // In multisite mode, Pages are accessed through the Site resource.
+        // The resource stays registered (URLs work) but nav is hidden.
+        if (tallcms_multisite_active()) {
+            return false;
+        }
+
+        return parent::shouldRegisterNavigation();
+    }
+
     public static function getNavigationIcon(): string
     {
         return 'heroicon-o-document-text';

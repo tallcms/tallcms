@@ -26,6 +26,17 @@ class TallcmsMenuResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Menus';
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        // In multisite mode, Menus are accessed through the Site resource.
+        // The resource stays registered (URLs work) but nav is hidden.
+        if (tallcms_multisite_active()) {
+            return false;
+        }
+
+        return parent::shouldRegisterNavigation();
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return config('tallcms.navigation.groups.content', 'Content');

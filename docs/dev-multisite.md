@@ -12,78 +12,229 @@ prerequisites:
 
 # Multisite Architecture
 
-> **What you'll learn:** How the multisite plugin works internally, how to build multisite-aware features, and how per-site isolation is implemented.
+> **What you'll learn:** How the multisite system works internally, how Site is a core model, how settings inheritance works, and how to build multisite-aware features.
 
 ---
 
 ## Overview
 
-The TallCMS Multisite plugin (`plugins/tallcms/multisite/`) enables multiple websites from a single installation. It operates through three mechanisms:
+TallCMS has a two-layer site architecture:
 
-1. **Domain-based site resolution** on the frontend
-2. **Session-based site selection** in the admin panel
-3. **Global query scopes** that filter content by site
+1. **Core**: Every TallCMS installation has at least one Site record. Standalone = one site. Site model, settings service, and Site resource live in core (`packages/tallcms/cms/`).
+2. **Multisite plugin**: Adds multiple sites, domain resolution, ownership, site switching, domain verification, plans/quotas, and templates (`plugins/tallcms/multisite/`).
 
-The plugin is a first-party official plugin (`vendor: tallcms`) that requires license activation. All core package changes are plugin-absence-safe.
+The plugin extends core — it does not own the Site model or settings infrastructure.
 
 ---
 
 ## Database Schema
 
-### `tallcms_sites`
+### `tallcms_sites` (core)
 
 | Column | Type | Notes |
 |--------|------|-------|
 | `id` | bigIncrements | |
-| `name` | string | Display name |
+| `name` | string | Public brand name |
 | `domain` | string, unique | Normalized domain (lowercase, no protocol/port) |
 | `theme` | string, nullable | Theme slug override |
 | `locale` | string, nullable | Locale override |
 | `uuid` | uuid, unique | Stable public identifier |
-| `user_id` | unsignedBigInteger, nullable | Site owner (for SaaS multi-tenancy) |
-| `is_default` | boolean | Fallback site for admin |
+| `is_default` | boolean | Fallback site (exactly one) |
 | `is_active` | boolean | Enable/disable |
-| `domain_verified` | boolean | Backward-compat TLS flag (synced from `domain_status`) |
-| `domain_status` | string(20) | `pending`, `verified`, `failed`, `stale` — backed by `DomainStatus` enum |
-| `domain_verified_at` | timestamp, nullable | When DNS was last successfully verified |
-| `domain_checked_at` | timestamp, nullable | When DNS was last checked (success or failure) |
-| `domain_verification_note` | string, nullable | Human-readable verification result |
-| `domain_verification_data` | json, nullable | Structured observed DNS records for diagnostics |
 | `metadata` | json, nullable | Extensibility |
 
-**Indexes:** `(domain_status, domain_checked_at)` composite index for re-verification query.
+### Multisite plugin adds to `tallcms_sites`:
 
-### `tallcms_site_setting_overrides`
+| Column | Type | Notes |
+|--------|------|-------|
+| `user_id` | unsignedBigInteger, nullable | Site owner |
+| `is_template_source` | boolean | Template authoring flag |
+| `domain_verified` | boolean | Backward-compat TLS flag |
+| `domain_status` | string(20) | `pending`, `verified`, `failed`, `stale` |
+| `domain_verified_at` | timestamp, nullable | Last successful verification |
+| `domain_checked_at` | timestamp, nullable | Last check attempt |
+| `domain_verification_note` | string, nullable | Human-readable result |
+| `domain_verification_data` | json, nullable | Observed DNS records |
 
-Per-site setting overrides. Same key/value/type structure as `tallcms_site_settings`, scoped by `site_id`.
+### `tallcms_site_setting_overrides` (core)
 
-### Added columns
+Per-site setting overrides. `site_id` + `key` unique composite.
 
-- `tallcms_pages.site_id` — nullable FK to `tallcms_sites`, `nullOnDelete`
-- `tallcms_menus.site_id` — same pattern
+| Column | Type |
+|--------|------|
+| `site_id` | FK to `tallcms_sites` |
+| `key` | string |
+| `value` | text |
+| `type` | string |
 
-Posts and categories are intentionally **not** site-scoped.
-
-### Scope Summary
+### Content scoping
 
 | Resource | Scoped | Mechanism |
 |----------|--------|-----------|
 | `tallcms_pages` | Per-site | `site_id` FK + `SiteScope` global scope |
 | `tallcms_menus` | Per-site | `site_id` FK + `SiteScope` global scope |
-| `tallcms_menus.location` | Per-site unique | Composite unique `(site_id, location)` |
-| `tallcms_posts` | Global | No `site_id` column |
-| `tallcms_categories` | Global | No `site_id` column |
-| `tallcms_media` | Global | No `site_id` column |
-| `tallcms_site_settings` | Global defaults | Overrides in `tallcms_site_setting_overrides` |
-| Theme (active) | Per-site | `tallcms_sites.theme` column, runtime override in middleware |
-| Theme preset | Per-site | Via `SiteSetting` override for `theme_default_preset` |
-| Installed themes | Global | Filesystem-based, shared across all sites |
-| Plugins | Global | Filesystem-based, no per-site activation |
-| Users / roles | Global | No `site_id` scoping |
+| `tallcms_posts` | User-owned | `user_id` FK, no site scope |
+| `tallcms_categories` | User-owned | `user_id` FK, no site scope |
+| `tallcms_media` | User-owned | `user_id` FK, no site scope |
 
 ---
 
-## Site Resolution
+## Settings Architecture
+
+### Two-Level Model
+
+Settings use a global-default + per-site-override model:
+
+```
+SiteSetting::get('contact_email')
+  → Check per-site override (tallcms_site_setting_overrides)
+  → Fall back to global default (tallcms_site_settings)
+```
+
+### Settings Service (Admin Writes)
+
+All admin settings writes go through `SiteSettingsService` with explicit site IDs:
+
+```php
+$service = app(SiteSettingsService::class);
+
+// Read for a specific site (override → global fallback)
+$service->getForSite($siteId, 'contact_email', $default);
+
+// Write an override for a specific site
+$service->setForSite($siteId, 'contact_email', 'hello@example.com');
+
+// Remove override (site resumes inheriting global)
+$service->resetForSite($siteId, 'contact_email');
+
+// Check if a site has an override
+$service->hasOverride($siteId, 'contact_email');
+
+// Read global default (no site context)
+$service->getGlobal('contact_email', $default);
+```
+
+No admin write path uses ambient session context. The site ID is always explicit.
+
+### Frontend Reads
+
+Frontend code uses `SiteSetting::get()` which resolves site context automatically:
+
+- **Admin requests** (`tallcms.admin_context` attribute): reads from session site
+- **Frontend requests**: reads from domain-resolved site
+- **Console/boot**: returns global default
+
+### Global-Only Keys
+
+Some settings are installation-scoped and never per-site:
+
+```php
+// Explicit keys
+SiteSetting::$globalOnlyKeys = [
+    'i18n_enabled', 'default_locale', 'hide_default_locale', 'i18n_locale_overrides',
+    'code_head', 'code_body_start', 'code_body_end',
+    'code_head_audit', 'code_body_start_audit', 'code_body_end_audit',
+    'seo_rss_enabled', 'seo_rss_limit', 'seo_rss_full_content', 'seo_sitemap_enabled',
+];
+
+// Prefix-based
+SiteSetting::$globalOnlyPrefixes = ['seo_'];
+```
+
+`SiteSetting::set()` automatically routes global-only keys through `setGlobal()`.
+
+### site_name Alias
+
+`site_name` is a Site model field (`tallcms_sites.name`), not a setting override:
+
+- `SiteSetting::get('site_name')` resolves from `Site.name` for the current site
+- `SiteSetting::set('site_name', ...)` writes to `Site.name` for the current site
+- Fallback chain: current site name → global `site_name` setting → default site name → `config('app.name')`
+
+### Admin Save Loop Pattern
+
+When saving settings on a Site edit page, the loop preserves inheritance:
+
+```php
+foreach ($settingKeys as $key => $type) {
+    $value = $data[$key];
+    $globalValue = $service->getGlobal($key);
+    $matchesGlobal = valuesMatch($value, $globalValue, $type);
+    $hasOverride = $service->hasOverride($site->id, $key);
+
+    if ($matchesGlobal) {
+        // Matches global — remove override to restore inheritance
+        if ($hasOverride) {
+            $service->resetForSite($site->id, $key);
+        }
+        continue;
+    }
+
+    // Differs from global — create or update override
+    $service->setForSite($site->id, $key, $value, $type);
+}
+```
+
+Four states:
+- No override + matches global → skip (preserve inheritance)
+- No override + differs from global → create override
+- Has override + matches global → delete override (restore inheritance)
+- Has override + differs from global → update override
+
+---
+
+## Filament Admin Structure
+
+### Core (packages/tallcms/cms/)
+
+| Component | Purpose |
+|-----------|---------|
+| `SiteResource` | Single-record edit page in standalone; base for multisite extension |
+| `EditSite` (Page) | Custom page with settings form; loads/saves via SiteSettingsService |
+| `SiteForm` | Tab-based form: General, Branding, Contact, Social, Publishing, Maintenance |
+| `GlobalDefaults` (Page) | Installation-scoped defaults for all 20 site-scoped settings + i18n |
+| `SeoSettings` (Page) | Installation-scoped SEO settings (RSS, sitemap, robots, OG, llms.txt) |
+| `CodeInjection` (Page) | Installation-scoped embed code (head, body start, body end) |
+| `PagesRelationManager` | Pages belonging to the site |
+| `MenusRelationManager` | Menus belonging to the site |
+
+### Multisite Plugin (plugins/tallcms/multisite/)
+
+| Component | Purpose |
+|-----------|---------|
+| `SiteResource` | Full CRUD with list/create/edit, ownership filtering |
+| `EditSite` (EditRecord) | Extends Filament EditRecord; saves settings in `afterSave()` |
+| `SiteForm` | Site + Status tabs (multisite-specific), imports core settings tabs |
+| `PagesRelationManager` | Pages with site-context-aware create action |
+| `MenusRelationManager` | Menus with inline create |
+| `SiteSwitcher` (Livewire) | "Filter by Site" dropdown for content browsing |
+
+The multisite `SiteForm` imports core's settings tabs:
+
+```php
+protected static function coreSettingsTabs(): array
+{
+    return [
+        CoreSiteForm::settingsGeneralTab(),
+        CoreSiteForm::brandingTab(),
+        CoreSiteForm::contactTab(),
+        CoreSiteForm::socialTab(),
+        CoreSiteForm::publishingTab(),
+        CoreSiteForm::maintenanceTab(),
+    ];
+}
+```
+
+### Navigation Adapts to Mode
+
+- **Standalone**: Pages and Menus are top-level nav items (direct access)
+- **Multisite**: Pages and Menus hidden from top-level nav; accessed through Site resource relation managers
+
+This is controlled by `shouldRegisterNavigation()` on `CmsPageResource` and `TallcmsMenuResource`, which return `false` when `tallcms_multisite_active()`.
+
+---
+
+## Site Resolution (Multisite Only)
 
 ### Frontend (Domain-Based)
 
@@ -92,452 +243,115 @@ Posts and categories are intentionally **not** site-scoped.
 ```
 Request → match domain against tallcms_sites.domain
   → found: load site, override theme/view paths/locale
-  → not found: 404 (frontend routes only)
+  → not found: 404
 ```
-
-The middleware unconditionally normalizes theme/view state per request:
-1. Override `Config::set('theme.active')` if site has a theme
-2. Reset `ThemeManager` singleton
-3. Reset and re-register view paths (including `tallcms` namespace hints)
-4. Register plugin view overrides
-5. Flush view finder cache
-6. Rebind `ThemeInterface` for color/preset resolution
 
 ### Admin (Session-Based)
 
-The admin site switcher stores the selected site in `session('multisite_admin_site_id')`.
+The "Filter by Site" dropdown stores the selected site in `session('multisite_admin_site_id')`. This filters content lists (pages, menus) via `SiteScope`.
 
-**Architectural rule:** Admin-selected site comes from session. Frontend site comes from domain resolution. These must not be collapsed.
+**Important**: The site filter only affects content browsing. Settings writes are always explicit-by-site-id through the Site edit page — they never depend on the session filter.
 
-Three contexts read the admin session:
+### Context-Aware Resolution
 
-| Context | How it reads | Why |
-|---------|-------------|-----|
-| **SiteSetting** | `resolveCurrentSiteId()` — checks admin context attribute, then session | Context-aware: only uses session in admin, resolver on frontend |
-| **SiteScope** | Via `CurrentSiteResolver` singleton | Resolver detects admin via `tallcms.admin_context` request attribute or URL path match |
-| **ThemeManager / SiteSettings pages** | Directly from `session()` + `DB::table()` | Bypasses resolver to avoid singleton timing issues during boot/Livewire lifecycle |
+`SiteSetting::resolveCurrentSiteId()` uses different sources based on request type:
 
-`MarkAdminContext` middleware (added to Filament panel stack by `MultisitePlugin`) sets the `tallcms.admin_context` request attribute on every admin request, including Livewire updates.
+| Context | Source | Why |
+|---------|--------|-----|
+| **Admin** (`tallcms.admin_context` attribute) | Session | Immune to stale resolver |
+| **Frontend** (no attribute) | Resolver singleton | Domain-based |
+| **Boot / console** (no request) | Returns null | Global settings |
 
 ---
 
-## Query Scoping
+## Query Scoping (Multisite Only)
 
-### SiteScope (Global Scope)
+### SiteScope
 
-Applied to `CmsPage` and `TallcmsMenu` in the service provider:
-
-```php
-CmsPage::addGlobalScope(new SiteScope());
-TallcmsMenu::addGlobalScope(new SiteScope());
-```
-
-Behavior:
+Applied to `CmsPage` and `TallcmsMenu`:
 
 | Condition | SQL Effect |
 |-----------|-----------|
 | Site resolved (has ID) | `WHERE site_id = :siteId` |
-| All Sites mode (explicit) | No filter |
-| Resolved but no site (unknown domain) | `WHERE 1 = 0` (empty result) |
-| Not resolved (console, boot) | No filter |
-
-The scope lazily triggers `resolve(request())` if the resolver hasn't run yet.
+| All Sites mode | No filter |
+| Unknown domain | `WHERE 1 = 0` (empty) |
+| Not resolved (console) | No filter |
 
 ### Slug Uniqueness
 
-`UniqueTranslatableSlug` validation rule is site-aware. The same slug (e.g., `/about`) can exist on different sites:
-
-```php
-// In UniqueTranslatableSlug::validate()
-if (app()->bound('tallcms.multisite.resolver')) {
-    $resolver = app('tallcms.multisite.resolver');
-    if ($resolver->isResolved() && $resolver->id()) {
-        $query->where('site_id', $resolver->id());
-    }
-}
-```
-
-### Menu Location Uniqueness
-
-The `tallcms_menus.location` unique constraint is changed to `(site_id, location)` composite unique, allowing the same location (e.g., `header`) per site.
+`UniqueTranslatableSlug` is site-aware for site-scoped tables and user-aware for user-owned tables. It also excludes soft-deleted records.
 
 ---
 
-## SiteSetting Integration
-
-### Settings Scope Policy
-
-Each setting key has a scope:
-
-| Scope | Behavior | Examples |
-|-------|----------|---------|
-| **global-only** | Never per-site, even in site context | `i18n_enabled`, `default_locale`, `hide_default_locale`, `i18n_locale_overrides`, `code_*_audit` |
-| **site-override** | Global default + optional per-site override | All other settings (site_name, contact_email, logo, etc.) |
-
-The registry is a static array `SiteSetting::$globalOnlyKeys`. Everything not listed defaults to `site-override`.
-
-### Context-Aware Resolution
-
-`SiteSetting::get()` and `set()` use `resolveCurrentSiteId()` which is **context-aware**:
-
-| Context | Source | Why |
-|---------|--------|-----|
-| **Admin** (`tallcms.admin_context` attribute) | Session | Immune to stale resolver state |
-| **Frontend** (no attribute) | Resolver singleton | Domain-based, middleware-driven |
-| **Boot / console** (no request) | Returns null | Global settings |
-
-This prevents admin session state from leaking into frontend settings reads.
-
-```php
-protected static function resolveCurrentSiteId(): ?int
-{
-    $isAdminContext = request()?->attributes->get('tallcms.admin_context', false);
-
-    if ($isAdminContext) {
-        // Admin: session is the source of truth
-        $sessionValue = session('multisite_admin_site_id');
-        if ($sessionValue && $sessionValue !== '__all_sites__' && is_numeric($sessionValue)) {
-            return (int) $sessionValue;
-        }
-        return null;
-    }
-
-    // Frontend: resolver is the source of truth
-    // ...
-}
-```
-
-### Three Override States
-
-| State | DB | `get()` returns |
-|-------|-----|-----------------|
-| No override row | No row in overrides table | Global default |
-| Override with value | Row with value | Override value |
-| Override with empty | Row with `''` | Empty string (not global) |
-
-`resetToGlobal($key)` deletes the override row. Distinct from storing empty.
-
-### Reading and Writing
-
-- `SiteSetting::get($key)` — policy-aware: skips override for global-only keys, checks override then global for site-override keys
-- `SiteSetting::set($key, $value)` — policy-aware: writes to global for global-only keys, writes to override table in site context for site-override keys
-- `SiteSetting::getGlobal($key)` — always reads global, ignoring overrides
-- `SiteSetting::setGlobal($key, $value)` — always writes global
-- `SiteSetting::resetToGlobal($key)` — deletes the override row
-- `SiteSetting::isGlobalOnly($key)` — checks the hardcoded `$globalOnlyKeys` array in the core model
-
----
-
-## Theme Integration
-
-### Per-Request Theme Setup
-
-`ResolveSiteMiddleware` handles theme switching per request:
-
-1. Sets `Config::set('theme.active', $site->theme)`
-2. Resets `ThemeManager` singleton via `app()->forgetInstance()`
-3. Calls `resetViewPaths()` — clears base paths AND `tallcms` namespace hints
-4. Calls `registerThemeViewPaths()` — registers new theme's view hierarchy
-5. Calls `registerPluginViewOverrides($theme)` — theme overrides for plugin views
-6. Flushes view finder cache via `View::flushFinderCache()`
-7. Rebinds `ThemeInterface` to new `FileBasedTheme` instance
-
-### Per-Site Theme Activation
-
-When the Theme Manager activates a theme for a specific site:
-
-1. Updates `tallcms_sites.theme` column
-2. Publishes theme assets (`publishThemeAssets()` — creates symlinks)
-3. Clears compiled views (prevents stale cached Blade templates)
-4. Clears the site's default preset
-
-Global activation (All Sites mode) uses the standard `activateWithRollback()` path, writing to `config/theme.php`.
-
-### Theme Manager Admin Context
-
-The Theme Manager page reads the selected site directly from session, not from the resolver:
-
-```php
-protected function getMultisiteContext(): ?object
-{
-    $sessionValue = session('multisite_admin_site_id');
-    if (!$sessionValue || $sessionValue === '__all_sites__') return null;
-
-    return DB::table('tallcms_sites')
-        ->where('id', $sessionValue)
-        ->where('is_active', true)
-        ->first();
-}
-```
-
-This intentionally bypasses the `CurrentSiteResolver` singleton to avoid boot-time resolution races.
-
----
-
-## Domain Verification
-
-### Architecture
+## Domain Verification (Multisite Only)
 
 Custom domains require DNS verification before TLS certificates are issued. Managed subdomains (`*.base_domain`) are auto-trusted.
-
-**Key classes:**
-
-| Class | Location | Purpose |
-|-------|----------|---------|
-| `DomainStatus` | `src/Enums/DomainStatus.php` | Backed string enum: `Pending`, `Verified`, `Failed`, `Stale` |
-| `DomainVerificationService` | `src/Services/DomainVerificationService.php` | DNS checks (A/AAAA/CNAME), setup instructions, TLS dispatch |
-| `TriggerTlsProvisioning` | `src/Jobs/TriggerTlsProvisioning.php` | Queued job, 3 retries with backoff |
-| `ReverifyDomains` | `src/Console/Commands/ReverifyDomains.php` | Scheduled hourly, batched re-verification |
-| `MultisiteSettings` | `src/Filament/Pages/MultisiteSettings.php` | Admin page for server IPs, CNAME target, batch config |
 
 ### State Machine
 
 ```
 [Create site] → Pending
-                  ↓ (manual verify succeeds)
-               Verified ←──────────────────┐
-                  ↓ (re-verify fails)       │
-                Stale                       │
-                  ↓ (re-verify fails again) │
-                Failed                      │
-                  ↓ (manual verify succeeds)│
-                  └─────────────────────────┘
-
-[Domain changed] → Pending (resets all verification fields)
+                  ↓ (verify succeeds)
+               Verified ←──────────────┐
+                  ↓ (re-verify fails)   │
+                Stale                   │
+                  ↓ (fails again)       │
+                Failed                  │
+                  ↓ (verify succeeds)   │
+                  └─────────────────────┘
 ```
 
-**Verified** is the only status eligible for TLS. **Stale** is a grace period (one failed re-check). **Failed** revokes `domain_verified` and TLS eligibility.
+### Key Classes
 
-### TLS Eligibility
-
-`Site::isEligibleForTls()` checks:
-
-1. Site must be active
-2. Managed subdomain → always eligible
-3. Custom domain → `domain_status === DomainStatus::Verified`
-
-The `/internal/tls/verify` endpoint calls `Site::findVerifiedByDomain()` which uses this method.
-
-### Verification Flow
-
-`DomainVerificationService::verify(Site $site)` reads configuration from `SiteSetting::getGlobal()`:
-
-- `multisite_server_ips` — newline-separated list of accepted IPs (IPv4/IPv6)
-- `multisite_cname_target` — expected CNAME target domain
-
-DNS checks use PHP's `dns_get_record()` against A, AAAA, and CNAME record types.
-
-### Re-verification
-
-`tallcms:reverify-domains` runs hourly via auto-registered schedule:
-
-1. Reads `multisite_reverify_days` (minimum 7, 0 = disabled) and `multisite_reverify_batch_size` (clamped 1-500)
-2. Queries verified/stale sites with null or stale `domain_checked_at`, ordered stalest-first
-3. Processes up to `batch_size` sites per run
-4. Writes a heartbeat timestamp (`multisite_reverify_last_run`) for scheduler health monitoring
-5. State transitions: verified → stale (first failure), stale → failed (second consecutive failure)
-
-### Backward Compatibility
-
-`domain_verified` (boolean) is kept in sync with `domain_status` for the TLS verify endpoint and any external consumers. `isEligibleForTls()` reads `domain_status` as the source of truth.
-
-### Settings Storage
-
-Multisite settings use `SiteSetting::getGlobal()` / `setGlobal()` directly, making them installation-wide without needing to register global-only keys in the core package.
-
----
-
-## License Gating
-
-### Entitlement Model
-
-| State | Behavior |
-|-------|----------|
-| Never activated | Plugin inert — migrations run, features disabled |
-| Active license | All features enabled |
-| Expired license | All features **continue working** (updates gated) |
-| Deactivated | Plugin inert (license transferred elsewhere) |
-
-### Implementation
-
-```php
-// MultisiteServiceProvider::isLicensed()
-$licenseService->isValid('tallcms/multisite')     // active + grace
-    || $licenseService->hasEverBeenLicensed(...)   // hard-expired but was activated
-```
-
-The Filament admin UI (`MultisitePlugin::register()`) performs the same check and skips resource/render hook registration when unlicensed.
-
----
-
-## Core Package Changes
-
-All changes are plugin-absence-safe (guarded by runtime checks):
-
-| File | Change | Guard |
-|------|--------|-------|
-| `CmsPage.php` | Site-aware homepage enforcement in `boot()` | `Schema::hasColumn('tallcms_pages', 'site_id')` |
-| `SiteSetting.php` | Settings scope policy, context-aware `resolveCurrentSiteId()`, `get()`/`set()` policy-aware, `getGlobal()`, `setGlobal()`, `resetToGlobal()` | `request()?->attributes->get('tallcms.admin_context')` + `app()->bound('tallcms.multisite.resolver')` |
-| `SiteSettings.php` (page) | Override indicators (hint icons, "Reset to global" actions), smart save loop (only changed fields create overrides), global-only fields locked | `session('multisite_admin_site_id')` + `DB::table()` |
-| `ThemeManager.php` (service) | `resetViewPaths()` made public; clears namespace hints | N/A (safe regardless) |
-| `ThemeManager.php` (page) | Site-aware theme activation, preset, rollback, context indicator | `session('multisite_admin_site_id')` + `DB::table()` with `QueryException` catch |
-| `UniqueTranslatableSlug.php` | Site-scoped slug uniqueness | `app()->bound('tallcms.multisite.resolver')` |
-| `CmsPageForm.php` | Uses `UniqueTranslatableSlug` for non-i18n path too (site-aware) | N/A |
+| Class | Purpose |
+|-------|---------|
+| `DomainStatus` | Enum: Pending, Verified, Failed, Stale |
+| `DomainVerificationService` | DNS checks, setup instructions, TLS dispatch |
+| `TriggerTlsProvisioning` | Queued job, 3 retries |
+| `ReverifyDomains` | Scheduled hourly, batched re-verification |
 
 ---
 
 ## Building Multisite-Aware Features
 
-### Reading the current site
+### Reading settings for a specific site
 
 ```php
-// In middleware/frontend (via resolver)
-$resolver = app('tallcms.multisite.resolver');
-$siteId = $resolver->id();
+// Explicit (admin writes, jobs, commands)
+$service = app(SiteSettingsService::class);
+$value = $service->getForSite($siteId, 'contact_email');
 
-// In admin Filament pages (via session — preferred for reliability)
-$siteId = session('multisite_admin_site_id');
-$site = DB::table('tallcms_sites')->where('id', $siteId)->first();
+// Ambient (frontend runtime, views, Blade)
+$value = SiteSetting::get('contact_email');
 ```
 
 ### Adding site_id to a new model
 
 1. Add a nullable `site_id` FK column with `nullOnDelete`
-2. Add `SiteScope` global scope in the service provider
+2. Add `SiteScope` global scope in the multisite service provider
 3. Auto-assign `site_id` via a `creating` listener
-4. Update any unique constraints to be composite with `site_id`
+4. Update unique constraints to be composite with `site_id`
 
-### Checking domain verification
+### Writing installation-scoped settings
 
-```php
-$site = Site::find($id);
-
-// Check TLS eligibility (managed subdomain or verified status)
-$site->isEligibleForTls();
-
-// Check if managed subdomain (auto-trusted)
-$site->isManagedSubdomain();
-
-// Read verification status
-$site->domain_status; // DomainStatus enum: Pending, Verified, Failed, Stale
-
-// Programmatic verification
-$service = app(DomainVerificationService::class);
-$result = $service->verify($site);
-// Returns: ['status' => 'verified'|'failed', 'message' => '...', 'observed' => [...], 'matched_on' => 'A'|'CNAME'|null]
-```
-
-### Writing site-aware settings
-
-`SiteSetting::get()` and `set()` are automatically site-aware when a site is selected. The scope policy ensures global-only keys (i18n, audit) always read/write globally.
-
-Key methods:
-- `SiteSetting::get($key)` — site-override first, global fallback
-- `SiteSetting::set($key, $value)` — writes to override in site context, global otherwise
-- `SiteSetting::getGlobal($key)` — always reads global (for admin pages showing global defaults)
-- `SiteSetting::setGlobal($key, $value)` — always writes global
-- `SiteSetting::resetToGlobal($key)` — deletes the override, restoring inheritance
-- `SiteSetting::isGlobalOnly($key)` — checks the hardcoded `$globalOnlyKeys` array (core-owned keys only; plugins should use `getGlobal()`/`setGlobal()` instead)
-
-### Admin save loop pattern
-
-When saving settings in a multisite-aware admin page, only create overrides for fields that actually changed:
+For settings that should never vary per site:
 
 ```php
-$hasExistingOverride = in_array($key, $overriddenKeys);
-$globalValue = SiteSetting::getGlobal($key);
-
-// Skip unchanged fields (no override pollution)
-if (! $hasExistingOverride && $this->valuesMatch($value, $globalValue, $type)) {
-    continue;
-}
-
-SiteSetting::set($key, $value, $type, $group);
+// Option A: Add to $globalOnlyKeys in SiteSetting
+// Option B: Use setGlobal/getGlobal directly
+SiteSetting::setGlobal('my_plugin_setting', $value, 'text', 'my-plugin');
+$value = SiteSetting::getGlobal('my_plugin_setting', $default);
 ```
-
-This prevents the common bug where saving a form creates overrides for every field, even untouched ones that had the global default loaded into the form.
 
 ---
 
-## Site Ownership
+## Remaining Cleanup (Post-Refactor)
 
-### Model
+The following are known architectural items deferred for future work:
 
-`tallcms_sites.user_id` identifies the site owner. `Site::owner()` is a `BelongsTo` relationship.
-
-- **Super-admin:** Sees all sites. Can assign/reassign ownership via Select field.
-- **Non-super-admin:** Sees only their owned sites. `user_id` auto-assigned on creation.
-
-### Enforcement Layers
-
-| Layer | What it does | Where |
-|-------|-------------|-------|
-| **SiteResource::getEloquentQuery()** | Filters site list by `user_id` | Plugin resource |
-| **SiteSwitcher::siteQuery()** | Filters switcher by `user_id` | Plugin Livewire |
-| **SitePolicy** | Gates view/update/delete by ownership | Plugin policy |
-| **MarkAdminContext** | Validates session site belongs to user, resets if not | Plugin middleware |
-| **"All Sites" mode** | Disabled for non-super-admins | Switcher Blade view |
-
-### Quotas (Site Plan System)
-
-As of v1.3.0, the plugin includes a built-in plan/tier system for quota enforcement.
-
-**Database tables:**
-- `tallcms_site_plans` — Plan definitions (name, slug, max_sites, is_default, is_active)
-- `tallcms_user_site_plans` — Per-user plan assignments (user_id unique, site_plan_id with restrictOnDelete)
-
-**Enforcement architecture (three layers):**
-
-| Layer | Role | Locking? |
-|-------|------|----------|
-| `SitePolicy::create()` | **Advisory UI gate** — hides Create buttons, returns 403. No lock, can be stale. | No |
-| `SitePlanService::createSiteWithQuota()` | **Authoritative** — owns DB transaction, acquires per-user `lockForUpdate()`, counts, creates. | Yes |
-| `Site::creating()` boot hook | **Safety net** — catches direct `Site::create()` calls that bypass the service. | No |
-
-All three layers delegate to `SitePlanService::resolveQuotaDecision()` — the single source of truth for quota logic.
-
-**Key service methods:**
-- `SitePlanService::createSiteWithQuota($user, $attributes)` — The only path for user-facing site creation
-- `SitePlanService::canCreateSite($user)` — Advisory check (no lock), for UI/policy
-- `SitePlanService::assignPlan($user, $plan, $assignedBy)` — Upserts the assignment row
-- `SitePlanService::isOverQuota($user)` — Grandfathering indicator
-
-**Configuration:** `tallcms.multisite.quota_enforcement` — `'strict'` (default, deny if no plan) or `'permissive'` (allow if no plan, for self-hosted).
-
-**Customization:** Apps can swap the `SitePlanService` binding or extend `SitePolicy` for custom quota logic. The `HasSitePlan` trait (`Tallcms\Multisite\Concerns\HasSitePlan`) can be added to the User model for convenience methods.
-
-**Spark integration:** Plan slugs (`tallcms_site_plans.slug`) are the bridge. When Spark is added, a subscription change listener calls `SitePlanService::assignPlan()` to update the user's effective plan.
-
----
-
-## Common Pitfalls
-
-**"SiteScope filters out all content"**
-The scope returns empty results (`WHERE 1 = 0`) when the resolver ran but found no matching site. This prevents cross-site content leakage. Check that your domain is correctly registered.
-
-**"Admin actions affect the wrong site"**
-The `CurrentSiteResolver` singleton can cache stale boot-time state. For admin UI pages, read `session('multisite_admin_site_id')` directly instead of going through the resolver. The `SiteSetting` model handles this via `resolveCurrentSiteId()` which uses session in admin context and resolver on frontend.
-
-**"Frontend shows the wrong site's settings"**
-`resolveCurrentSiteId()` is context-aware: it only uses the admin session when `tallcms.admin_context` request attribute is set. On frontend requests (no attribute), it uses the domain-based resolver. If you see cross-site settings leakage, check that the admin context attribute is not set on frontend requests.
-
-**"Saving settings creates overrides for untouched fields"**
-The save loop must compare submitted values against global defaults and only create overrides for fields that actually changed. See the "Admin save loop pattern" section above.
-
-**"Theme views don't change between sites"**
-`resetViewPaths()` must clear both base view paths AND `tallcms` namespace hints. If you see the wrong theme's layout, check that the namespace hints are being cleaned.
-
-**"Settings write to the wrong scope"**
-`SiteSetting::set()` is site-aware: writes to overrides in admin context, global on frontend. Global-only keys (i18n, audit) always write to global. Use `SiteSetting::getGlobal()` / `SiteSetting::setGlobal()` if you need the global path explicitly.
-
-**"Global-only settings are editable per-site"**
-Add the key to `SiteSetting::$globalOnlyKeys` to prevent per-site overrides. The Site Settings admin page will show these as locked fields with a "Global setting" label. For plugin-owned settings, use `SiteSetting::getGlobal()` / `setGlobal()` directly to bypass the override system entirely.
-
-**"Domain verification says 'not configured'"**
-Server IPs or CNAME target must be set in **Multisite Settings** (`multisite_server_ips` / `multisite_cname_target` in `tallcms_site_settings` table). These are read via `SiteSetting::getGlobal()`.
-
-**"Re-verification never runs"**
-The command is auto-scheduled hourly but requires the Laravel scheduler (`php artisan schedule:run`) to be running. The Multisite Settings page shows a health warning if the scheduler heartbeat (`multisite_reverify_last_run`) is stale.
+1. **Model duplication**: Multisite plugin has its own `Site.php` and `SiteSettingOverride.php` that shadow core's instead of extending them. Future fixes should land in one place.
+2. **SEO scoping**: Currently all `seo_*` keys are global-only. A future pass should split them: feed/index settings stay global, brand/policy settings (robots.txt, OG image, llms.txt) become site-scoped.
+3. **ThemeManager**: Still uses `SiteSetting::set()` for `theme_default_preset` — could be made explicitly global.
 
 ---
 
@@ -545,4 +359,4 @@ The command is auto-scheduled hourly but requires the Laravel scheduler (`php ar
 
 - [Plugin development](plugins) — Build plugins compatible with multisite
 - [Theme development](themes) — Create themes for multi-site installations
-- [Plugin licensing](plugin-licensing) — How official plugin licensing works
+- [Site settings](site-settings) — User guide for settings management

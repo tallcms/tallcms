@@ -37,10 +37,20 @@ class SiteSetting extends Model
         'default_locale',
         'hide_default_locale',
         'i18n_locale_overrides',
-        // Audit metadata: operational state, not user-facing config.
+        // Code injection: installation-scoped, runs on every page.
+        'code_head',
+        'code_body_start',
+        'code_body_end',
         'code_head_audit',
         'code_body_start_audit',
         'code_body_end_audit',
+    ];
+
+    /**
+     * Prefixes that are always installation-global.
+     */
+    protected static array $globalOnlyPrefixes = [
+        'seo_',
     ];
 
     /**
@@ -48,7 +58,17 @@ class SiteSetting extends Model
      */
     public static function isGlobalOnly(string $key): bool
     {
-        return in_array($key, static::$globalOnlyKeys, true);
+        if (in_array($key, static::$globalOnlyKeys, true)) {
+            return true;
+        }
+
+        foreach (static::$globalOnlyPrefixes as $prefix) {
+            if (str_starts_with($key, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -62,6 +82,11 @@ class SiteSetting extends Model
      */
     public static function get(string $key, mixed $default = null): mixed
     {
+        // Alias: site_name → resolve from Site.name model field
+        if ($key === 'site_name') {
+            return static::resolveSiteName($default);
+        }
+
         // Global-only keys skip the override check entirely
         if (static::isGlobalOnly($key)) {
             return static::getGlobal($key, $default);
@@ -164,6 +189,75 @@ class SiteSetting extends Model
     }
 
     /**
+     * Resolve site_name from the Site model's name field.
+     *
+     * Legacy read compatibility: SiteSetting::get('site_name') returns the
+     * current site's name instead of looking up a setting override.
+     * site_name is no longer a setting — it's a model field on Site.
+     *
+     * Fallback chain:
+     * 1. Current site's name (via resolveCurrentSiteId)
+     * 2. Global site_name setting row (preserves pre-migration behavior)
+     * 3. Default site's name
+     * 4. Caller-provided $default / config('app.name')
+     */
+    protected static function resolveSiteName(mixed $default = null): mixed
+    {
+        try {
+            $siteId = static::resolveCurrentSiteId();
+
+            if ($siteId) {
+                $name = DB::table('tallcms_sites')->where('id', $siteId)->value('name');
+                if ($name) {
+                    return $name;
+                }
+            }
+
+            // Fallback: global site_name setting (preserves old no-context behavior)
+            $global = static::getGlobal('site_name');
+            if ($global) {
+                return $global;
+            }
+
+            // Fallback: default site's name
+            $name = DB::table('tallcms_sites')->where('is_default', true)->value('name');
+            if ($name) {
+                return $name;
+            }
+        } catch (\Throwable) {
+        }
+
+        return $default ?? config('app.name', 'My Site');
+    }
+
+    /**
+     * Write site_name to the Site model's name field.
+     *
+     * Legacy write compatibility: SiteSetting::set('site_name', ...)
+     * writes to tallcms_sites.name instead of the override table.
+     * In site context: updates that site's name.
+     * Without context: writes to global site_name setting (standalone/no session).
+     */
+    protected static function writeSiteName(string $value): void
+    {
+        try {
+            $siteId = static::resolveCurrentSiteId();
+
+            if ($siteId) {
+                DB::table('tallcms_sites')
+                    ->where('id', $siteId)
+                    ->update(['name' => $value]);
+
+                return;
+            }
+
+            // No site context: write to global setting (standalone behavior)
+            static::setGlobal('site_name', $value, 'text', 'general');
+        } catch (\Throwable) {
+        }
+    }
+
+    /**
      * Cast a site setting override value based on its type.
      */
     protected static function castOverrideValue(mixed $value, string $type): mixed
@@ -186,6 +280,13 @@ class SiteSetting extends Model
      */
     public static function set(string $key, mixed $value, string $type = 'text', string $group = 'general', ?string $description = null): void
     {
+        // Alias: site_name → write to Site.name model field
+        if ($key === 'site_name') {
+            static::writeSiteName((string) $value);
+
+            return;
+        }
+
         // Global-only keys always write to global table
         if (static::isGlobalOnly($key)) {
             static::setGlobal($key, $value, $type, $group, $description);

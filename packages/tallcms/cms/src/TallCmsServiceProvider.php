@@ -249,7 +249,6 @@ class TallCmsServiceProvider extends PackageServiceProvider
         'App\\Filament\\Pages\\PluginLicenses' => Filament\Pages\PluginLicenses::class,
         'App\\Filament\\Pages\\PluginManager' => Filament\Pages\PluginManager::class,
         'App\\Filament\\Pages\\SeoSettings' => Filament\Pages\SeoSettings::class,
-        'App\\Filament\\Pages\\SiteSettings' => Filament\Pages\SiteSettings::class,
         'App\\Filament\\Pages\\SystemUpdates' => Filament\Pages\SystemUpdates::class,
         'App\\Filament\\Pages\\ThemeManager' => Filament\Pages\ThemeManager::class,
         'App\\Filament\\Pages\\UpdateManual' => Filament\Pages\UpdateManual::class,

@@ -61,6 +61,11 @@ class UniqueTranslatableSlug implements ValidationRule
             $query->where('id', '!=', $this->ignoreId);
         }
 
+        // Exclude soft-deleted records
+        if (\Illuminate\Support\Facades\Schema::hasColumn($this->table, 'deleted_at')) {
+            $query->whereNull('deleted_at');
+        }
+
         // Scope uniqueness based on ownership model:
         // - User-owned tables (posts, categories): scope by user_id
         // - Site-owned tables (pages): scope by site_id

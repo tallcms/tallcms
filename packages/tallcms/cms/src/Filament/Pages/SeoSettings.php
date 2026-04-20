@@ -6,7 +6,6 @@ use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -47,26 +46,26 @@ class SeoSettings extends Page implements HasForms
     {
         $this->form->fill([
             // RSS settings
-            'seo_rss_enabled' => SiteSetting::get('seo_rss_enabled', true),
-            'seo_rss_limit' => SiteSetting::get('seo_rss_limit', 20),
-            'seo_rss_full_content' => SiteSetting::get('seo_rss_full_content', false),
+            'seo_rss_enabled' => SiteSetting::getGlobal('seo_rss_enabled', true),
+            'seo_rss_limit' => SiteSetting::getGlobal('seo_rss_limit', 20),
+            'seo_rss_full_content' => SiteSetting::getGlobal('seo_rss_full_content', false),
 
             // Sitemap settings
-            'seo_sitemap_enabled' => SiteSetting::get('seo_sitemap_enabled', true),
+            'seo_sitemap_enabled' => SiteSetting::getGlobal('seo_sitemap_enabled', true),
 
             // robots.txt settings
-            'seo_robots_txt' => SiteSetting::get('seo_robots_txt', $this->getDefaultRobots()),
-            'seo_robots_append_sitemap' => SiteSetting::get('seo_robots_append_sitemap', true),
+            'seo_robots_txt' => SiteSetting::getGlobal('seo_robots_txt', $this->getDefaultRobots()),
+            'seo_robots_append_sitemap' => SiteSetting::getGlobal('seo_robots_append_sitemap', true),
 
             // Default OG image
-            'seo_default_og_image' => SiteSetting::get('seo_default_og_image'),
+            'seo_default_og_image' => SiteSetting::getGlobal('seo_default_og_image'),
 
             // llms.txt
-            'seo_llms_txt_enabled' => SiteSetting::get('seo_llms_txt_enabled', false),
-            'seo_llms_txt_preamble' => SiteSetting::get('seo_llms_txt_preamble', ''),
-            'seo_llms_txt_include_pages' => SiteSetting::get('seo_llms_txt_include_pages', true),
-            'seo_llms_txt_include_posts' => SiteSetting::get('seo_llms_txt_include_posts', true),
-            'seo_llms_txt_post_limit' => SiteSetting::get('seo_llms_txt_post_limit', '0'),
+            'seo_llms_txt_enabled' => SiteSetting::getGlobal('seo_llms_txt_enabled', false),
+            'seo_llms_txt_preamble' => SiteSetting::getGlobal('seo_llms_txt_preamble', ''),
+            'seo_llms_txt_include_pages' => SiteSetting::getGlobal('seo_llms_txt_include_pages', true),
+            'seo_llms_txt_include_posts' => SiteSetting::getGlobal('seo_llms_txt_include_posts', true),
+            'seo_llms_txt_post_limit' => SiteSetting::getGlobal('seo_llms_txt_post_limit', '0'),
         ]);
     }
 
@@ -210,7 +209,7 @@ class SeoSettings extends Page implements HasForms
                     default => 'text',
                 };
 
-                SiteSetting::set($key, $value ?? ($type === 'boolean' ? false : null), $type, 'seo');
+                SiteSetting::setGlobal($key, $value ?? ($type === 'boolean' ? false : null), $type, 'seo');
             }
         }
 
