@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "82eabc1676eb6321131f85f9e453ad4f",
+    "content-hash": "991945b341dfd3bfef8bc9b81eb3bbf2",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -8993,11 +8993,11 @@
         },
         {
             "name": "tallcms/cms",
-            "version": "3.13.1",
+            "version": "4.0.0",
             "dist": {
                 "type": "path",
                 "url": "./packages/tallcms/cms",
-                "reference": "cee28c1c65c4eda30e2cbe238c796c9c824804ca"
+                "reference": "3711ee621004f0971f61973d788fef4813c9ea71"
             },
             "require": {
                 "bezhansalleh/filament-shield": "^4.0",
