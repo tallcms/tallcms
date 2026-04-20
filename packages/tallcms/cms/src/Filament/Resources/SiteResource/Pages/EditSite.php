@@ -194,6 +194,11 @@ class EditSite extends Page implements HasForms
             return $this->siteRecord;
         }
 
+        // Guard: table may not exist yet on fresh upgrades
+        if (! \Illuminate\Support\Facades\Schema::hasTable('tallcms_sites')) {
+            abort(503, 'Please run "php artisan migrate" to complete the TallCMS 4.0 upgrade.');
+        }
+
         return $this->siteRecord = Site::getDefault() ?? Site::first() ?? $this->createDefaultSite();
     }
 
