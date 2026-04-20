@@ -884,6 +884,11 @@ class TallCmsServiceProvider extends PackageServiceProvider
             // GEO Phase 1: Author profiles & review metadata
             '2026_04_07_000001_add_author_profile_fields_to_users_table',
             '2026_04_07_000002_add_review_metadata_to_content_tables',
+
+            // Site as core model (v4.0)
+            '2026_04_20_000001_create_tallcms_sites_core_table',
+            '2026_04_20_000002_create_tallcms_site_setting_overrides_core_table',
+            '2026_04_20_000003_migrate_site_name_to_site_model',
         ];
     }
 
