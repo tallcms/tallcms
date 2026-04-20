@@ -68,12 +68,16 @@
                     </ul>
                 </div>
                 <!-- Logo -->
-                @php $logo = \TallCms\Cms\Models\SiteSetting::get('logo'); @endphp
-                <a href="{{ tallcms_home_url() }}" class="btn btn-ghost text-xl font-bold gap-2">
+                @php
+                    $logo = \TallCms\Cms\Models\SiteSetting::get('logo');
+                    $siteName = \TallCms\Cms\Models\SiteSetting::get('site_name', config('app.name'));
+                @endphp
+                <a href="{{ tallcms_home_url() }}" class="btn btn-ghost text-xl font-bold">
                     @if($logo)
-                        <img src="{{ Storage::disk(cms_media_disk())->url($logo) }}" alt="{{ config('app.name') }}" class="h-8 w-auto">
+                        <img src="{{ Storage::disk(cms_media_disk())->url($logo) }}" alt="{{ $siteName }}" class="h-8 w-auto">
+                    @else
+                        {{ $siteName }}
                     @endif
-                    {{ config('app.name') }}
                 </a>
             </div>
 
