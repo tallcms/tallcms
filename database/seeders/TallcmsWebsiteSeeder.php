@@ -4,9 +4,9 @@ namespace Database\Seeders;
 
 use App\Enums\ContentStatus;
 use App\Models\CmsPage;
+use App\Models\CmsPost;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 use TallCms\Cms\Models\CmsCategory;
 use TallCms\Cms\Models\TallcmsMenu;
 use TallCms\Cms\Models\TallcmsMenuItem;
@@ -23,7 +23,7 @@ class TallcmsWebsiteSeeder extends Seeder
         ]);
 
         $this->createHomepage();
-        $this->createDocumentationPage();
+        $this->createWelcomePost();
         $this->createHeaderMenu();
 
         $this->command->info('TallCMS website seeded successfully!');
@@ -52,27 +52,65 @@ class TallcmsWebsiteSeeder extends Seeder
         $this->command->info('Created homepage');
     }
 
-    protected function createDocumentationPage(): void
+    protected function createWelcomePost(): void
     {
-        $page = CmsPage::withSlug('documentation')->first();
-
-        if (! $page) {
-            $page = CmsPage::create([
-                'title' => 'Documentation',
-                'slug' => 'documentation',
-                'meta_title' => 'Documentation - TallCMS',
-                'meta_description' => 'Learn how to install, configure, and build with TallCMS.',
-                'status' => ContentStatus::Published->value,
-                'published_at' => now(),
-                'is_homepage' => false,
-                'author_id' => $this->author->id,
+        // Create a "Blog" category
+        $category = CmsCategory::withSlug('blog')->first();
+        if (! $category) {
+            $category = CmsCategory::create([
+                'name' => 'Blog',
+                'slug' => 'blog',
+                'description' => 'News and updates',
+                'color' => '#3b82f6',
+                'user_id' => $this->author->id,
             ]);
         }
 
-        $page->setTranslation('content', app()->getLocale(), $this->getDocumentationContent());
-        $page->save();
+        // Create a single welcome post
+        $post = CmsPost::withSlug('welcome-to-tallcms')->first();
+        if (! $post) {
+            $post = CmsPost::create([
+                'title' => 'Welcome to TallCMS',
+                'slug' => 'welcome-to-tallcms',
+                'excerpt' => 'Your new site is ready. Start creating content, customizing your theme, and making it yours.',
+                'status' => ContentStatus::Published->value,
+                'published_at' => now(),
+                'is_featured' => true,
+                'user_id' => $this->author->id,
+            ]);
 
-        $this->command->info('Created documentation page');
+            $post->categories()->sync([$category->id]);
+        }
+
+        $post->setTranslation('content', app()->getLocale(), [
+            'type' => 'doc',
+            'content' => [
+                [
+                    'type' => 'paragraph',
+                    'content' => [
+                        ['type' => 'text', 'text' => 'Congratulations! Your TallCMS site is up and running. Here are a few things you can do next:'],
+                    ],
+                ],
+                [
+                    'type' => 'bulletList',
+                    'content' => [
+                        ['type' => 'listItem', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'marks' => [['type' => 'bold']], 'text' => 'Create pages'], ['type' => 'text', 'text' => ' — Build your site structure with the drag-and-drop block editor.']]]]],
+                        ['type' => 'listItem', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'marks' => [['type' => 'bold']], 'text' => 'Write posts'], ['type' => 'text', 'text' => ' �� Share news, articles, and updates with your audience.']]]]],
+                        ['type' => 'listItem', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'marks' => [['type' => 'bold']], 'text' => 'Customize your theme'], ['type' => 'text', 'text' => ' — Pick a theme and preset from the Theme Manager.']]]]],
+                        ['type' => 'listItem', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'marks' => [['type' => 'bold']], 'text' => 'Configure settings'], ['type' => 'text', 'text' => ' — Set your site name, logo, and contact details in Site Settings.']]]]],
+                    ],
+                ],
+                [
+                    'type' => 'paragraph',
+                    'content' => [
+                        ['type' => 'text', 'text' => 'You can edit or delete this post at any time from the admin panel. Happy building!'],
+                    ],
+                ],
+            ],
+        ]);
+        $post->save();
+
+        $this->command->info('Created welcome post');
     }
 
     protected function createHeaderMenu(): void
@@ -93,7 +131,6 @@ class TallcmsWebsiteSeeder extends Seeder
         }
 
         $homePage = CmsPage::withSlug('home')->first();
-        $docsPage = CmsPage::withSlug('documentation')->first();
 
         TallcmsMenuItem::create([
             'menu_id' => $menu->id,
@@ -105,9 +142,9 @@ class TallcmsWebsiteSeeder extends Seeder
 
         TallcmsMenuItem::create([
             'menu_id' => $menu->id,
-            'label' => 'Documentation',
-            'type' => 'page',
-            'page_id' => $docsPage?->id,
+            'label' => 'Blog',
+            'type' => 'url',
+            'url' => '/blog',
             'is_active' => true,
         ]);
 
@@ -166,41 +203,6 @@ class TallcmsWebsiteSeeder extends Seeder
         ], $overrides);
     }
 
-    protected function getDocumentationContent(): array
-    {
-        $category = CmsCategory::withSlug('getting-started')->first();
-        $categoryIds = $category ? [$category->id] : [];
-
-        return $this->buildContent([
-            ['heading' => 'Getting Started'],
-            [
-                'block' => 'posts',
-                'config' => array_merge($this->blockDefaults(), [
-                    'block_uuid' => (string) Str::uuid(),
-                    'categories' => $categoryIds,
-                    'featured_only' => false,
-                    'posts_count' => 6,
-                    'offset' => 0,
-                    'sort_by' => 'oldest',
-                    'show_image' => true,
-                    'show_excerpt' => true,
-                    'show_date' => true,
-                    'show_author' => false,
-                    'show_categories' => true,
-                    'show_read_more' => true,
-                    'show_comments' => true,
-                    'empty_message' => null,
-                    'layout' => 'grid',
-                    'columns' => 3,
-                    'enable_pagination' => false,
-                    'show_featured_badge' => false,
-                    'featured_card_style' => 'default',
-                    'animation_type' => null,
-                ]),
-            ],
-        ]);
-    }
-
     protected function getHomepageContent(): array
     {
         return $this->buildContent([
@@ -217,7 +219,7 @@ class TallcmsWebsiteSeeder extends Seeder
                     'parallax_effect' => false,
                     'button_text' => 'Start Building',
                     'button_link_type' => 'custom',
-                    'button_url' => '/documentation',
+                    'button_url' => '/blog',
                     'button_variant' => 'btn-primary',
                     'button_size' => 'btn-lg',
                     'secondary_button_text' => 'View on GitHub',
@@ -300,7 +302,7 @@ class TallcmsWebsiteSeeder extends Seeder
                                 ['text' => 'Priority support', 'included' => false],
                             ],
                             'button_text' => 'Get Started',
-                            'button_url' => '/documentation',
+                            'button_url' => '/blog',
                             'button_style' => 'btn-outline btn-primary',
                         ],
                         [
@@ -435,7 +437,7 @@ class TallcmsWebsiteSeeder extends Seeder
                     'background' => 'bg-gradient-to-br from-primary to-secondary',
                     'button_text' => 'Get Started',
                     'button_link_type' => 'custom',
-                    'button_url' => '/documentation',
+                    'button_url' => '/blog',
                     'button_variant' => 'btn-primary',
                     'button_size' => 'btn-lg',
                     'secondary_button_text' => 'GitHub',
