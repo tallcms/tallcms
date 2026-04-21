@@ -889,6 +889,9 @@ class TallCmsServiceProvider extends PackageServiceProvider
             '2026_04_20_000001_create_tallcms_sites_core_table',
             '2026_04_20_000002_create_tallcms_site_setting_overrides_core_table',
             '2026_04_20_000003_migrate_site_name_to_site_model',
+
+            // v4.0.1 patch: add user_id for installs that ran v4.0.0 without it
+            '2026_04_21_000001_add_user_id_to_tallcms_sites_table',
         ];
     }
 

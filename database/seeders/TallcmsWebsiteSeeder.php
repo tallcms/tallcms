@@ -15,12 +15,19 @@ class TallcmsWebsiteSeeder extends Seeder
 {
     protected ?User $author = null;
 
+    protected ?int $defaultSiteId = null;
+
     public function run(): void
     {
         $this->author = User::first() ?? User::factory()->create([
             'name' => 'TallCMS',
             'email' => 'hello@tallcms.com',
         ]);
+
+        // Get default site for page/menu ownership
+        $this->defaultSiteId = \Illuminate\Support\Facades\DB::table('tallcms_sites')
+            ->where('is_default', true)
+            ->value('id');
 
         $this->createHomepage();
         $this->createWelcomePost();
@@ -34,7 +41,7 @@ class TallcmsWebsiteSeeder extends Seeder
         $page = CmsPage::withSlug('home')->first();
 
         if (! $page) {
-            $page = CmsPage::create([
+            $attrs = [
                 'title' => 'Home',
                 'slug' => 'home',
                 'meta_title' => 'TallCMS - The Modern CMS for Laravel Developers',
@@ -43,7 +50,13 @@ class TallcmsWebsiteSeeder extends Seeder
                 'published_at' => now(),
                 'is_homepage' => true,
                 'author_id' => $this->author->id,
-            ]);
+            ];
+
+            if ($this->defaultSiteId && \Illuminate\Support\Facades\Schema::hasColumn('tallcms_pages', 'site_id')) {
+                $attrs['site_id'] = $this->defaultSiteId;
+            }
+
+            $page = CmsPage::create($attrs);
         }
 
         $page->setTranslation('content', app()->getLocale(), $this->getHomepageContent());
@@ -115,12 +128,18 @@ class TallcmsWebsiteSeeder extends Seeder
 
     protected function createHeaderMenu(): void
     {
+        $menuAttrs = [
+            'name' => 'Header',
+            'is_active' => true,
+        ];
+
+        if ($this->defaultSiteId && \Illuminate\Support\Facades\Schema::hasColumn('tallcms_menus', 'site_id')) {
+            $menuAttrs['site_id'] = $this->defaultSiteId;
+        }
+
         $menu = TallcmsMenu::firstOrCreate(
             ['location' => 'header'],
-            [
-                'name' => 'Header',
-                'is_active' => true,
-            ]
+            $menuAttrs
         );
 
         // Skip if menu already has items
