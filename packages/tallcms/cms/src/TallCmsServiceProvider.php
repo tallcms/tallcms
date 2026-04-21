@@ -453,12 +453,6 @@ class TallCmsServiceProvider extends PackageServiceProvider
         // Register search route respecting mode and i18n settings
         $this->registerSearchRoute();
 
-        // Warn if Scout is not properly configured
-        if (config('scout.driver') !== 'database') {
-            \Illuminate\Support\Facades\Log::warning(
-                'TallCMS search requires SCOUT_DRIVER=database. Current: '.(config('scout.driver') ?? 'not set')
-            );
-        }
     }
 
     /**
