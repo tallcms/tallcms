@@ -173,7 +173,7 @@ class TallcmsWebsiteSeeder extends Seeder
         TallcmsMenuItem::create([
             'menu_id' => $menu->id,
             'label' => 'Blog',
-            'type' => 'url',
+            'type' => 'custom',
             'url' => '/blog',
             'is_active' => true,
         ]);
