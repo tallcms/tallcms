@@ -70,27 +70,37 @@ class TallcmsWebsiteSeeder extends Seeder
         // Create a "Blog" category
         $category = CmsCategory::withSlug('blog')->first();
         if (! $category) {
-            $category = CmsCategory::create([
+            $categoryAttrs = [
                 'name' => 'Blog',
                 'slug' => 'blog',
                 'description' => 'News and updates',
                 'color' => '#3b82f6',
-                'user_id' => $this->author->id,
-            ]);
+            ];
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('tallcms_categories', 'user_id')) {
+                $categoryAttrs['user_id'] = $this->author->id;
+            }
+
+            $category = CmsCategory::create($categoryAttrs);
         }
 
         // Create a single welcome post
         $post = CmsPost::withSlug('welcome-to-tallcms')->first();
         if (! $post) {
-            $post = CmsPost::create([
+            $postAttrs = [
                 'title' => 'Welcome to TallCMS',
                 'slug' => 'welcome-to-tallcms',
                 'excerpt' => 'Your new site is ready. Start creating content, customizing your theme, and making it yours.',
                 'status' => ContentStatus::Published->value,
                 'published_at' => now(),
                 'is_featured' => true,
-                'user_id' => $this->author->id,
-            ]);
+            ];
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('tallcms_posts', 'user_id')) {
+                $postAttrs['user_id'] = $this->author->id;
+            }
+
+            $post = CmsPost::create($postAttrs);
 
             $post->categories()->sync([$category->id]);
         }
