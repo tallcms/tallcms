@@ -94,6 +94,7 @@ class TallcmsWebsiteSeeder extends Seeder
                 'status' => ContentStatus::Published->value,
                 'published_at' => now(),
                 'is_featured' => true,
+                'author_id' => $this->author->id,
             ];
 
             if (\Illuminate\Support\Facades\Schema::hasColumn('tallcms_posts', 'user_id')) {
