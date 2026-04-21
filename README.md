@@ -75,13 +75,14 @@ See the [Installation Guide](https://github.com/tallcms/tallcms/blob/main/docs/g
 - **Full-Text Search** — Laravel Scout-powered search across content
 - **SEO** — Sitemaps, meta tags, Open Graph, and structured data
 - **Internationalization** — Multi-language support via Spatie Translatable
-- **Site Settings** — Centralized configuration for site name, contact info, social links, SPA mode
+- **Site Settings** — Per-site configuration with global defaults and inheritance
 - **Role-Based Permissions** — Super Admin, Administrator, Editor, Author
 - **Plugin System** — Extend functionality with installable plugins (standalone)
 - **Theme System** — daisyUI presets or custom themes with template overrides (standalone)
 - **REST API** — Optional Sanctum-authenticated API for headless usage
 - **Cloud Storage** — S3-compatible storage (AWS, DigitalOcean, Cloudflare R2)
 - **Maintenance Mode** — Built-in site maintenance with custom messaging
+- **Multisite Ready** — Core Site model supports the [Multisite plugin](https://github.com/tallcms/multisite-plugin) for multi-domain SaaS
 
 ## System Requirements
 
@@ -202,6 +203,27 @@ tallcms/tallcms (Standalone skeleton)    tallcms/cms (Package)
 
 See the [Architecture Reference](https://github.com/tallcms/tallcms/blob/main/docs/ref-architecture.md) for details.
 
+## Updating
+
+### Standalone Mode
+
+Use the built-in update system in **Admin > System > Updates**, or via CLI:
+
+```bash
+php artisan tallcms:update
+php artisan migrate
+```
+
+The updater downloads the new release and replaces package files. Always run `migrate` after updating to apply any database changes.
+
+### Plugin Mode
+
+```bash
+composer update tallcms/cms
+php artisan migrate
+php artisan view:clear
+```
+
 ## Troubleshooting
 
 Common issues and solutions are documented in the [Installation Guide](https://github.com/tallcms/tallcms/blob/main/docs/gs-installation.md).
@@ -214,6 +236,7 @@ Common issues and solutions are documented in the [Installation Guide](https://g
 - **"Permission denied"** — `chmod -R 775 storage bootstrap/cache`
 - **"CMS resources not appearing"** — Ensure the plugin is registered and run `php artisan migrate`
 - **"Call to undefined method assignRole()"** — Add the `HasRoles` trait to your User model
+- **"Site Settings shows migration error"** — Run `php artisan migrate` to create the sites table (required since v4.0)
 
 ## Credits
 
