@@ -527,7 +527,13 @@ php artisan tallcms:update --dry-run
 php artisan tallcms:update
 
 # Update to specific version
-php artisan tallcms:update --target=3.2.0
+php artisan tallcms:update --target=4.0.3
+```
+
+After updating, always run migrations in case the update includes database changes:
+
+```bash
+php artisan migrate
 ```
 
 ### Plugin Mode
