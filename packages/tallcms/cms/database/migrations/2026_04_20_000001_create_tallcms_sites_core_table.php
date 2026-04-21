@@ -60,8 +60,21 @@ return new class extends Migration
             return;
         }
 
-        $appUrl = config('app.url', 'http://localhost');
-        $domain = strtolower(parse_url($appUrl, PHP_URL_HOST) ?? 'localhost');
+        // Prefer the actual request host (accurate during web installer)
+        // over config('app.url') which may be stale in the same process
+        // after .env was written but config not reloaded.
+        $domain = null;
+        try {
+            if (app()->runningInConsole() === false && request()->getHost()) {
+                $domain = strtolower(request()->getHost());
+            }
+        } catch (\Throwable) {
+        }
+
+        if (! $domain) {
+            $appUrl = config('app.url', 'http://localhost');
+            $domain = strtolower(parse_url($appUrl, PHP_URL_HOST) ?? 'localhost');
+        }
 
         // Check if a site with this domain exists but isn't default
         $existing = DB::table('tallcms_sites')->where('domain', $domain)->first();
