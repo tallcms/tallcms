@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TallCms\Cms\Models\Concerns;
 
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Schema;
 use TallCms\Cms\Models\CmsRevision;
 
 trait HasRevisions
@@ -384,14 +385,26 @@ trait HasRevisions
 
         // Use forceFill to bypass guarded/cast issues
         // Deserialize translatable fields (stored as JSON strings in revision table)
-        $this->forceFill([
+        $attributes = [
             'title' => $this->deserializeFromRevision($revision->title),
             'excerpt' => $this->deserializeFromRevision($revision->excerpt),
             'content' => $this->deserializeFromRevision($revision->content),
             'meta_title' => $this->deserializeFromRevision($revision->meta_title),
             'meta_description' => $this->deserializeFromRevision($revision->meta_description),
             'featured_image' => $revision->featured_image,
-        ])->save();
+        ];
+
+        // The revisions table is shared across content types (pages, posts, etc.) and stores
+        // a superset of columns. Only restore fields that exist on this model's table —
+        // e.g. tallcms_pages has no `excerpt` column, while tallcms_posts does.
+        $table = $this->getTable();
+        $attributes = array_filter(
+            $attributes,
+            fn (string $field) => Schema::hasColumn($table, $field),
+            ARRAY_FILTER_USE_KEY
+        );
+
+        $this->forceFill($attributes)->save();
     }
 
     /**
