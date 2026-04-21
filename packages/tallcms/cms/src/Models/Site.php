@@ -26,6 +26,7 @@ class Site extends Model
         'theme',
         'locale',
         'uuid',
+        'user_id',
         'is_default',
         'is_active',
         'metadata',

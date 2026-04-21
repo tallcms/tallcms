@@ -10,17 +10,23 @@ use Illuminate\Support\Str;
  * Core Site table migration.
  *
  * Every TallCMS installation has at least one Site record.
- * If the table already exists (from the multisite plugin), this is a no-op.
- * The multisite plugin adds additional columns (user_id, domain_verified, etc.)
- * via its own migrations.
+ * If the table already exists (from the multisite plugin), this is a no-op
+ * for creation but still ensures user_id and default site exist.
  */
 return new class extends Migration
 {
     public function up(): void
     {
         if (Schema::hasTable('tallcms_sites')) {
-            // Table exists (from multisite plugin or prior install)
-            // Ensure a default site exists
+            // Table exists (from multisite plugin or prior install).
+            // Ensure user_id column exists (may be missing on upgrades from core-only).
+            if (! Schema::hasColumn('tallcms_sites', 'user_id')) {
+                Schema::table('tallcms_sites', function (Blueprint $table) {
+                    $table->unsignedBigInteger('user_id')->nullable()->after('uuid');
+                    $table->index('user_id');
+                });
+            }
+
             $this->ensureDefaultSite();
 
             return;
@@ -33,6 +39,7 @@ return new class extends Migration
             $table->string('theme')->nullable();
             $table->string('locale')->nullable();
             $table->string('uuid')->unique()->nullable();
+            $table->unsignedBigInteger('user_id')->nullable()->index();
             $table->boolean('is_default')->default(false);
             $table->boolean('is_active')->default(true);
             $table->json('metadata')->nullable();
