@@ -1204,46 +1204,40 @@ class PluginManager
     }
 
     /**
-     * Clear all caches after plugin operations
+     * Clear all caches after plugin operations.
+     *
+     * Uses optimize:clear to wipe all compiled caches (routes, config,
+     * views, events, compiled manifests). This prevents stale references
+     * to uninstalled plugin classes from breaking the application.
      */
     public function clearAllCaches(): void
     {
         // Clear plugin discovery cache
         $this->clearCache();
 
-        // Clear general application cache
+        // Clear all compiled caches (routes, config, views, events, manifests)
         try {
-            Artisan::call('cache:clear');
+            Artisan::call('optimize:clear');
         } catch (\Throwable $e) {
-            Log::debug('Could not clear application cache: '.$e->getMessage());
-        }
+            Log::debug('Could not run optimize:clear: '.$e->getMessage());
 
-        // Clear config cache
-        try {
-            Artisan::call('config:clear');
-        } catch (\Throwable $e) {
-            Log::debug('Could not clear config cache: '.$e->getMessage());
-        }
-
-        // Clear view cache (compiled views)
-        try {
-            Artisan::call('view:clear');
-        } catch (\Throwable $e) {
-            Log::debug('Could not clear view cache: '.$e->getMessage());
-        }
-
-        // Flush view finder cache (in-memory namespace resolution)
-        try {
-            View::flushFinderCache();
-        } catch (\Throwable $e) {
-            Log::debug('Could not flush view finder cache: '.$e->getMessage());
-        }
-
-        // Clear route cache
-        try {
-            Artisan::call('route:clear');
-        } catch (\Throwable $e) {
-            Log::debug('Could not clear route cache: '.$e->getMessage());
+            // Fallback: clear individually if optimize:clear fails
+            try {
+                Artisan::call('cache:clear');
+            } catch (\Throwable) {
+            }
+            try {
+                Artisan::call('config:clear');
+            } catch (\Throwable) {
+            }
+            try {
+                Artisan::call('route:clear');
+            } catch (\Throwable) {
+            }
+            try {
+                Artisan::call('view:clear');
+            } catch (\Throwable) {
+            }
         }
 
         // Clear Filament component cache (pages, resources, widgets)
@@ -1251,6 +1245,13 @@ class PluginManager
             Artisan::call('filament:clear-cached-components');
         } catch (\Throwable $e) {
             Log::debug('Could not clear Filament cache: '.$e->getMessage());
+        }
+
+        // Flush view finder cache (in-memory namespace resolution)
+        try {
+            View::flushFinderCache();
+        } catch (\Throwable $e) {
+            Log::debug('Could not flush view finder cache: '.$e->getMessage());
         }
 
         // Clear opcache if available
