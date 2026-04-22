@@ -12,6 +12,7 @@ class TallcmsMenu extends Model
     protected $table = 'tallcms_menus';
 
     protected $fillable = [
+        'site_id',
         'name',
         'location',
         'description',

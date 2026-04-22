@@ -50,6 +50,7 @@ class CmsPage extends Model implements HasRichContent
     ];
 
     protected $fillable = [
+        'site_id',
         'title',
         'slug',
         'content',

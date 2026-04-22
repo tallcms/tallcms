@@ -14,7 +14,6 @@ use TallCms\Cms\Models\MediaCollection;
 use TallCms\Cms\Models\TallcmsMedia;
 use TallCms\Cms\Rules\SiteAwareUnique;
 use Tallcms\Multisite\Models\Site;
-use Tallcms\Multisite\Services\CurrentSiteResolver;
 use Tallcms\Multisite\Services\SiteCloneService;
 use Tests\TestCase;
 
@@ -54,20 +53,6 @@ class SiteContentScopingTest extends TestCase
             'is_active' => true,
             'user_id' => $this->superAdmin->id,
         ]);
-    }
-
-    protected function setSiteContext(Site $site): void
-    {
-        session(['multisite_admin_site_id' => $site->id]);
-        request()->attributes->set('tallcms.admin_context', true);
-        app(CurrentSiteResolver::class)->reset();
-    }
-
-    protected function setAllSitesMode(): void
-    {
-        session(['multisite_admin_site_id' => CurrentSiteResolver::ALL_SITES_SENTINEL]);
-        request()->attributes->set('tallcms.admin_context', true);
-        app(CurrentSiteResolver::class)->reset();
     }
 
     protected function insertPost(int $siteId, string $title, int $authorId): int
@@ -496,8 +481,24 @@ class SiteContentScopingTest extends TestCase
     // Comments scoped by site
     // -------------------------------------------------------
 
-    public function test_comments_scoped_to_current_site(): void
+    // -------------------------------------------------------
+    // Admin queries are unfiltered
+    //
+    // In the new model, admin uses explicit ownership via the Site resource
+    // and its RelationManagers. SiteScope is frontend-only — it never filters
+    // admin queries. Previously, ambient session-based scoping limited what
+    // admin queries returned; those tests have been removed because the
+    // behavior they covered no longer exists.
+    //
+    // Frontend scoping (domain → site) continues to be enforced by the
+    // resolver + scope and is covered by higher-level HTTP tests that hit
+    // a real domain (see frontend route tests).
+    // -------------------------------------------------------
+
+    public function test_admin_queries_return_rows_from_all_sites(): void
     {
+        $this->actingAs($this->superAdmin);
+
         $postA = $this->insertPost($this->siteA->id, 'Post A', $this->superAdmin->id);
         $postB = $this->insertPost($this->siteB->id, 'Post B', $this->superAdmin->id);
 
@@ -519,118 +520,15 @@ class SiteContentScopingTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $this->setSiteContext($this->siteA);
-        $comments = \TallCms\Cms\Models\CmsComment::withTrashed()->pluck('id')->all();
+        $comments = \TallCms\Cms\Models\CmsComment::pluck('id')->all();
 
         $this->assertContains($commentA, $comments);
-        $this->assertNotContains($commentB, $comments);
-    }
-
-    // -------------------------------------------------------
-    // Revisions scoped by site
-    // -------------------------------------------------------
-
-    public function test_revisions_scoped_to_current_site(): void
-    {
-        $revA = DB::table('tallcms_revisions')->insertGetId([
-            'site_id' => $this->siteA->id,
-            'revisionable_type' => 'TallCms\Cms\Models\CmsPage',
-            'revisionable_id' => 1,
-            'user_id' => $this->superAdmin->id,
-            'title' => 'Rev A',
-            'revision_number' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $revB = DB::table('tallcms_revisions')->insertGetId([
-            'site_id' => $this->siteB->id,
-            'revisionable_type' => 'TallCms\Cms\Models\CmsPage',
-            'revisionable_id' => 2,
-            'user_id' => $this->superAdmin->id,
-            'title' => 'Rev B',
-            'revision_number' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $this->setSiteContext($this->siteA);
-        $revisions = \TallCms\Cms\Models\CmsRevision::pluck('id')->all();
-
-        $this->assertContains($revA, $revisions);
-        $this->assertNotContains($revB, $revisions);
-    }
-
-    // -------------------------------------------------------
-    // Contact submissions scoped by site
-    // -------------------------------------------------------
-
-    public function test_contact_submissions_scoped_to_current_site(): void
-    {
-        $subA = DB::table('tallcms_contact_submissions')->insertGetId([
-            'site_id' => $this->siteA->id,
-            'name' => 'Alice',
-            'email' => 'alice@test.com',
-            'form_data' => json_encode(['message' => 'Hello from A']),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $subB = DB::table('tallcms_contact_submissions')->insertGetId([
-            'site_id' => $this->siteB->id,
-            'name' => 'Bob',
-            'email' => 'bob@test.com',
-            'form_data' => json_encode(['message' => 'Hello from B']),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $this->setSiteContext($this->siteA);
-        $subs = \TallCms\Cms\Models\TallcmsContactSubmission::pluck('id')->all();
-
-        $this->assertContains($subA, $subs);
-        $this->assertNotContains($subB, $subs);
-    }
-
-    // -------------------------------------------------------
-    // Preview tokens scoped by site
-    // -------------------------------------------------------
-
-    public function test_preview_tokens_scoped_to_current_site(): void
-    {
-        $tokenA = DB::table('tallcms_preview_tokens')->insertGetId([
-            'site_id' => $this->siteA->id,
-            'token' => Str::random(64),
-            'tokenable_type' => 'TallCms\Cms\Models\CmsPage',
-            'tokenable_id' => 1,
-            'created_by' => $this->superAdmin->id,
-            'expires_at' => now()->addDay(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $tokenB = DB::table('tallcms_preview_tokens')->insertGetId([
-            'site_id' => $this->siteB->id,
-            'token' => Str::random(64),
-            'tokenable_type' => 'TallCms\Cms\Models\CmsPage',
-            'tokenable_id' => 2,
-            'created_by' => $this->superAdmin->id,
-            'expires_at' => now()->addDay(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $this->setSiteContext($this->siteA);
-        $tokens = \TallCms\Cms\Models\CmsPreviewToken::pluck('id')->all();
-
-        $this->assertContains($tokenA, $tokens);
-        $this->assertNotContains($tokenB, $tokens);
+        $this->assertContains($commentB, $comments);
     }
 
     public function test_preview_token_derives_site_id_from_parent(): void
     {
         $this->actingAs($this->superAdmin);
-        $this->setSiteContext($this->siteA);
 
         // Create a page on site A
         $pageId = DB::table('tallcms_pages')->insertGetId([
@@ -663,7 +561,6 @@ class SiteContentScopingTest extends TestCase
     public function test_comment_derives_site_id_from_post(): void
     {
         $this->actingAs($this->superAdmin);
-        $this->setSiteContext($this->siteA);
 
         $postId = $this->insertPost($this->siteA->id, 'Parent Post', $this->superAdmin->id);
 
@@ -732,5 +629,64 @@ class SiteContentScopingTest extends TestCase
         $this->get("/{$panelPath}/cms-pages")->assertOk();
         $this->get("/{$panelPath}/site-settings")->assertOk();
         $this->get("/{$panelPath}/cms-posts")->assertOk();
+    }
+
+    // -------------------------------------------------------
+    // Regression: editing a page without ambient site session
+    //
+    // Pre-refactor, the CmsPage edit route relied on session-based SiteScope
+    // filtering to resolve the record. Navigating from the Site → Pages
+    // relation manager without first mutating session produced a 404 because
+    // the scope filtered the route-model-binding lookup. In the new model,
+    // route-binding goes straight to the DB (no ambient scope), so editing
+    // any page succeeds as long as the user has permission.
+    // -------------------------------------------------------
+
+    public function test_create_page_via_site_query_param_assigns_site_id(): void
+    {
+        $this->actingAs($this->superAdmin);
+        session()->forget('multisite_admin_site_id');
+
+        // Use Livewire to simulate the full create flow: mount on the
+        // create page (URL includes ?site=<id>), fill the form, submit.
+        \Livewire\Livewire::withQueryParams(['site' => $this->siteB->id])
+            ->test(\TallCms\Cms\Filament\Resources\CmsPages\Pages\CreateCmsPage::class)
+            ->fillForm([
+                'title' => 'New Page On Site B',
+                'slug' => 'new-page-site-b',
+                'status' => 'draft',
+            ])
+            ->call('create');
+
+        $created = DB::table('tallcms_pages')
+            ->whereRaw("JSON_EXTRACT(slug, '$.en') = ?", ['new-page-site-b'])
+            ->first();
+
+        $this->assertNotNull($created, 'Page should have been created');
+        $this->assertEquals($this->siteB->id, $created->site_id);
+    }
+
+    public function test_edit_page_without_session_site_does_not_404(): void
+    {
+        $panelPath = config('tallcms.filament.panel_path', 'admin');
+
+        $pageId = DB::table('tallcms_pages')->insertGetId([
+            'site_id' => $this->siteB->id,
+            'title' => json_encode(['en' => 'Belongs to Site B']),
+            'slug' => json_encode(['en' => 'site-b-page']),
+            'status' => 'published',
+            'is_homepage' => false,
+            'sort_order' => 0,
+            'author_id' => $this->superAdmin->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // No session mutation — simulate arriving via the Pages relation
+        // manager's plain-URL edit link.
+        session()->forget('multisite_admin_site_id');
+
+        $this->actingAs($this->superAdmin);
+        $this->get("/{$panelPath}/cms-pages/{$pageId}/edit")->assertOk();
     }
 }
