@@ -232,13 +232,14 @@ class MenuItemsManager extends NestedsetPage
             ->fillForm(function (Model $record): array {
                 $data = $record->toArray();
 
-                // Get label for current locale (with fallback to default)
-                if (tallcms_i18n_enabled()) {
-                    $activeLocale = $this->activeLocale ?? $this->getDefaultTranslatableLocale();
-                    $data['label'] = $record->getTranslation('label', $activeLocale, false)
-                        ?? $record->getTranslation('label', $this->getDefaultTranslatableLocale(), false)
-                        ?? '';
-                }
+                // Label is always stored as translatable JSON (Spatie normalizes the column).
+                // Always extract a string for the text input — otherwise toArray() returns
+                // the full translations array and the field renders as "[object Object]".
+                $locale = tallcms_i18n_enabled()
+                    ? ($this->activeLocale ?? $this->getDefaultTranslatableLocale())
+                    : $this->getDefaultTranslatableLocale();
+
+                $data['label'] = $record->getTranslation('label', $locale, true) ?: '';
 
                 return $data;
             })
@@ -304,7 +305,33 @@ class MenuItemsManager extends NestedsetPage
 
             Select::make('page_id')
                 ->label('Select Page')
-                ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
+                ->options(function () use ($arguments): array {
+                    // Scope to the menu being edited, not the session site — the user
+                    // may have navigated here from a site context that doesn't match.
+                    $menuId = $arguments['tab'] ?? request()->get('activeTab') ?? $this->activeTab;
+                    $menu = $menuId
+                        ? TallcmsMenu::withoutGlobalScopes()->find($menuId)
+                        : null;
+
+                    $pagesHaveSiteId = \Illuminate\Support\Facades\Schema::hasColumn('tallcms_pages', 'site_id');
+
+                    $query = CmsPage::withoutGlobalScopes()
+                        ->where('status', 'published');
+
+                    if ($pagesHaveSiteId) {
+                        // Multisite is active — restrict to the menu's site. If the menu
+                        // has no site_id (orphan), show nothing rather than leak cross-site.
+                        $query->where('site_id', $menu?->site_id ?? 0);
+                    }
+
+                    // Resolve titles through the accessor (with fallback locale) so
+                    // translatable JSON columns render as strings, not "[object Object]".
+                    return $query->get()
+                        ->mapWithKeys(fn (CmsPage $page) => [
+                            $page->id => (string) ($page->title ?: __('Untitled')),
+                        ])
+                        ->all();
+                })
                 ->searchable()
                 ->required()
                 ->visible(fn (Get $get): bool => $get('type') === 'page'),
