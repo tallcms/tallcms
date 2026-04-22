@@ -666,6 +666,64 @@ class SiteContentScopingTest extends TestCase
         $this->assertEquals($this->siteB->id, $created->site_id);
     }
 
+    // -------------------------------------------------------
+    // Regression: Site::pages() / Site::menus() relation must ignore SiteScope
+    //
+    // SiteScope's admin-context detection relies on a Referer header that
+    // browsers may strip on Livewire /livewire/update requests. When that
+    // happens, the resolver classifies the request as frontend, resolves
+    // the Host to a site, and the scope filters every CmsPage query to that
+    // site's id. A user editing Site B would then get an empty pages
+    // relation manager because `WHERE site_id = B AND site_id = A` matches
+    // nothing. The relation explicitly bypasses the scope to stay correct
+    // regardless of how the resolver classifies the request.
+    // -------------------------------------------------------
+
+    public function test_site_pages_relation_returns_rows_even_when_resolver_picks_a_different_site(): void
+    {
+        // Put a page in site B.
+        $pageInB = DB::table('tallcms_pages')->insertGetId([
+            'site_id' => $this->siteB->id,
+            'title' => json_encode(['en' => 'Belongs to B']),
+            'slug' => json_encode(['en' => 'belongs-b']),
+            'status' => 'published',
+            'is_homepage' => false,
+            'sort_order' => 0,
+            'author_id' => $this->superAdmin->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Force the resolver into a frontend-ish state pointing at site A —
+        // this simulates the Livewire-without-Referer case where the scope
+        // would otherwise add `WHERE site_id = siteA` to every CmsPage query.
+        app(\Tallcms\Multisite\Services\CurrentSiteResolver::class)->reset();
+        app(\Tallcms\Multisite\Services\CurrentSiteResolver::class)->overrideForRequest($this->siteA);
+
+        $pagesOnB = $this->siteB->pages()->pluck('id')->all();
+
+        $this->assertContains($pageInB, $pagesOnB, 'Relation must return its own site\'s pages regardless of resolver state.');
+    }
+
+    public function test_site_menus_relation_returns_rows_even_when_resolver_picks_a_different_site(): void
+    {
+        $menuInB = DB::table('tallcms_menus')->insertGetId([
+            'site_id' => $this->siteB->id,
+            'name' => 'B Menu',
+            'location' => 'footer',
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        app(\Tallcms\Multisite\Services\CurrentSiteResolver::class)->reset();
+        app(\Tallcms\Multisite\Services\CurrentSiteResolver::class)->overrideForRequest($this->siteA);
+
+        $menusOnB = $this->siteB->menus()->pluck('id')->all();
+
+        $this->assertContains($menuInB, $menusOnB);
+    }
+
     public function test_edit_page_without_session_site_does_not_404(): void
     {
         $panelPath = config('tallcms.filament.panel_path', 'admin');
