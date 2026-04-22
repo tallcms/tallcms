@@ -102,7 +102,7 @@ class CallToActionBlock extends RichContentCustomBlock
 
                                         Select::make('button_page_id')
                                             ->label('Select Page')
-                                            ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
+                                            ->options(fn ($livewire) => \TallCms\Cms\Filament\Forms\OwnerSitePicker::publishedPages($livewire))
                                             ->searchable()
                                             ->visible(fn (Get $get): bool => $get('button_link_type') === 'page')
                                             ->columnSpanFull(),
@@ -146,7 +146,7 @@ class CallToActionBlock extends RichContentCustomBlock
 
                                         Select::make('secondary_button_page_id')
                                             ->label('Select Page')
-                                            ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
+                                            ->options(fn ($livewire) => \TallCms\Cms\Filament\Forms\OwnerSitePicker::publishedPages($livewire))
                                             ->searchable()
                                             ->visible(fn (Get $get): bool => $get('secondary_button_link_type') === 'page' && filled($get('secondary_button_text')))
                                             ->columnSpanFull(),

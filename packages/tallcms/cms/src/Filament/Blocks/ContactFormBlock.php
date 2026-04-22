@@ -181,7 +181,7 @@ class ContactFormBlock extends RichContentCustomBlock
 
                                         Select::make('redirect_page_id')
                                             ->label('Redirect After Submission')
-                                            ->options(CmsPage::where('status', 'published')->pluck('title', 'id'))
+                                            ->options(fn ($livewire) => \TallCms\Cms\Filament\Forms\OwnerSitePicker::publishedPages($livewire))
                                             ->searchable()
                                             ->placeholder('Stay on page (show success message)')
                                             ->helperText('Optionally redirect to a page after successful submission'),

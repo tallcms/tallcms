@@ -199,9 +199,7 @@ class CmsPageForm
 
                                         Select::make('parent_id')
                                             ->label('Parent Page')
-                                            ->options(CmsPage::query()
-                                                ->whereNull('parent_id')
-                                                ->pluck('title', 'id'))
+                                            ->options(fn ($livewire) => \TallCms\Cms\Filament\Forms\OwnerSitePicker::parentPageOptions($livewire))
                                             ->searchable()
                                             ->nullable()
                                             ->columnSpan(1),
