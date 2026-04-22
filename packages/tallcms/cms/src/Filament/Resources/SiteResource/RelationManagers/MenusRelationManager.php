@@ -64,12 +64,24 @@ class MenusRelationManager extends RelationManager
                     ->label('Manage Items')
                     ->icon('heroicon-o-bars-3')
                     ->color('primary')
-                    ->url(fn ($record) => \TallCms\Cms\Filament\Pages\MenuItemsManager::getUrl(['activeTab' => $record->id])),
+                    ->action(function ($record) {
+                        // Switch admin context to this site before navigating so
+                        // SiteScope doesn't filter out the menu or its pages.
+                        session(['multisite_admin_site_id' => $this->getOwnerRecord()->id]);
+
+                        $this->redirect(\TallCms\Cms\Filament\Pages\MenuItemsManager::getUrl(['activeTab' => $record->id]));
+                    }),
 
                 Action::make('edit')
                     ->label('Edit')
                     ->icon('heroicon-m-pencil-square')
-                    ->url(fn ($record) => TallcmsMenuResource::getUrl('edit', ['record' => $record])),
+                    ->action(function ($record) {
+                        // Switch admin context to this site before navigating so
+                        // SiteScope doesn't 404 the menu during route-model-binding.
+                        session(['multisite_admin_site_id' => $this->getOwnerRecord()->id]);
+
+                        $this->redirect(TallcmsMenuResource::getUrl('edit', ['record' => $record]));
+                    }),
             ]);
     }
 }
