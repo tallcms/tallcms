@@ -7,9 +7,11 @@ namespace TallCms\Cms\Policies;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Contracts\Auth\Authenticatable;
 use TallCms\Cms\Models\CmsPage;
+use TallCms\Cms\Policies\Concerns\ChecksSiteOwnership;
 
 class CmsPagePolicy
 {
+    use ChecksSiteOwnership;
     use HandlesAuthorization;
 
     public function viewAny(Authenticatable $user): bool
@@ -19,7 +21,8 @@ class CmsPagePolicy
 
     public function view(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $user->can('View:CmsPage');
+        return $user->can('View:CmsPage')
+            && $this->userOwnsContentSite($user, $cmsPage->site_id);
     }
 
     public function create(Authenticatable $user): bool
@@ -29,22 +32,26 @@ class CmsPagePolicy
 
     public function update(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $user->can('Update:CmsPage');
+        return $user->can('Update:CmsPage')
+            && $this->userOwnsContentSite($user, $cmsPage->site_id);
     }
 
     public function delete(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $user->can('Delete:CmsPage');
+        return $user->can('Delete:CmsPage')
+            && $this->userOwnsContentSite($user, $cmsPage->site_id);
     }
 
     public function restore(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $user->can('Restore:CmsPage');
+        return $user->can('Restore:CmsPage')
+            && $this->userOwnsContentSite($user, $cmsPage->site_id);
     }
 
     public function forceDelete(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $user->can('ForceDelete:CmsPage');
+        return $user->can('ForceDelete:CmsPage')
+            && $this->userOwnsContentSite($user, $cmsPage->site_id);
     }
 
     public function forceDeleteAny(Authenticatable $user): bool
@@ -59,7 +66,8 @@ class CmsPagePolicy
 
     public function replicate(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $user->can('Replicate:CmsPage');
+        return $user->can('Replicate:CmsPage')
+            && $this->userOwnsContentSite($user, $cmsPage->site_id);
     }
 
     public function reorder(Authenticatable $user): bool
@@ -72,7 +80,9 @@ class CmsPagePolicy
      */
     public function approve(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $user->can('Approve:CmsPage') && $cmsPage->canBeApproved();
+        return $user->can('Approve:CmsPage')
+            && $cmsPage->canBeApproved()
+            && $this->userOwnsContentSite($user, $cmsPage->site_id);
     }
 
     /**
@@ -80,7 +90,9 @@ class CmsPagePolicy
      */
     public function submitForReview(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $user->can('SubmitForReview:CmsPage') && $cmsPage->canSubmitForReview();
+        return $user->can('SubmitForReview:CmsPage')
+            && $cmsPage->canSubmitForReview()
+            && $this->userOwnsContentSite($user, $cmsPage->site_id);
     }
 
     /**
@@ -88,7 +100,8 @@ class CmsPagePolicy
      */
     public function viewRevisions(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $user->can('ViewRevisions:CmsPage');
+        return $user->can('ViewRevisions:CmsPage')
+            && $this->userOwnsContentSite($user, $cmsPage->site_id);
     }
 
     /**
@@ -96,7 +109,8 @@ class CmsPagePolicy
      */
     public function restoreRevision(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $user->can('RestoreRevision:CmsPage');
+        return $user->can('RestoreRevision:CmsPage')
+            && $this->userOwnsContentSite($user, $cmsPage->site_id);
     }
 
     /**
@@ -104,6 +118,7 @@ class CmsPagePolicy
      */
     public function generatePreviewLink(Authenticatable $user, CmsPage $cmsPage): bool
     {
-        return $user->can('GeneratePreviewLink:CmsPage');
+        return $user->can('GeneratePreviewLink:CmsPage')
+            && $this->userOwnsContentSite($user, $cmsPage->site_id);
     }
 }
