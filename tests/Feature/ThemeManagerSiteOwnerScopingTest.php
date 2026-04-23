@@ -133,6 +133,113 @@ class ThemeManagerSiteOwnerScopingTest extends TestCase
         $this->assertNull($this->callGetMultisiteContext());
     }
 
+    public function test_manageable_sites_lists_only_users_own_sites_for_non_super_admin(): void
+    {
+        $ownerA = User::factory()->create();
+        $ownerA->assignRole('site_owner');
+        $ownerB = User::factory()->create();
+        $ownerB->assignRole('site_owner');
+
+        \DB::table('tallcms_sites')->insert([
+            'name' => 'Alice Site',
+            'domain' => 'alice.test',
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'is_active' => true,
+            'user_id' => $ownerA->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        \DB::table('tallcms_sites')->insert([
+            'name' => 'Bob Site',
+            'domain' => 'bob.test',
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'is_active' => true,
+            'user_id' => $ownerB->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($ownerA);
+
+        $page = new ThemeManager;
+        $manageable = $page->manageableSites();
+
+        $this->assertCount(1, $manageable);
+        $this->assertStringContainsString('Alice', implode(' ', array_values($manageable)));
+    }
+
+    public function test_manageable_sites_lists_all_sites_for_super_admin(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('super_admin');
+
+        \DB::table('tallcms_sites')->insert([
+            'name' => 'Alice Site',
+            'domain' => 'alice.test',
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'is_active' => true,
+            'user_id' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        \DB::table('tallcms_sites')->insert([
+            'name' => 'Bob Site',
+            'domain' => 'bob.test',
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'is_active' => true,
+            'user_id' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($admin);
+
+        $page = new ThemeManager;
+        $manageable = $page->manageableSites();
+
+        // Core migration seeds a default site too; super_admin sees all active
+        // sites on the install. We only care that the two new ones are included.
+        $this->assertGreaterThanOrEqual(2, count($manageable));
+        $names = implode(' ', array_values($manageable));
+        $this->assertStringContainsString('Alice', $names);
+        $this->assertStringContainsString('Bob', $names);
+    }
+
+    public function test_switch_site_rejects_a_site_the_user_does_not_own(): void
+    {
+        $ownerA = User::factory()->create();
+        $ownerA->assignRole('site_owner');
+        $ownerB = User::factory()->create();
+        $ownerB->assignRole('site_owner');
+
+        $aliceSite = \DB::table('tallcms_sites')->insertGetId([
+            'name' => 'Alice Site',
+            'domain' => 'alice.test',
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'is_active' => true,
+            'user_id' => $ownerA->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $bobSite = \DB::table('tallcms_sites')->insertGetId([
+            'name' => 'Bob Site',
+            'domain' => 'bob.test',
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'is_active' => true,
+            'user_id' => $ownerB->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($ownerB);
+
+        $page = new ThemeManager;
+        $page->switchSite((string) $aliceSite);
+
+        // Session must NOT have been set to Alice's site.
+        $this->assertNotSame($aliceSite, session('multisite_admin_site_id'));
+    }
+
     protected function callGetMultisiteContext()
     {
         $page = new ThemeManager;

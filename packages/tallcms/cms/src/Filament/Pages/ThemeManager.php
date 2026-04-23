@@ -160,6 +160,75 @@ class ThemeManager extends Page implements HasForms
         }
     }
 
+    /**
+     * Sites the current user can manage themes for, as a list for the site
+     * switcher dropdown. super_admins see every active site; non-super-admins
+     * see only their own.
+     *
+     * @return array<int, string> [site_id => "Name (domain)"]
+     */
+    public function manageableSites(): array
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return [];
+        }
+
+        try {
+            $query = DB::table('tallcms_sites')->where('is_active', true);
+
+            if (! (method_exists($user, 'hasRole') && $user->hasRole('super_admin'))) {
+                $query->where('user_id', $user->getAuthIdentifier());
+            }
+
+            return $query->orderBy('name')
+                ->get(['id', 'name', 'domain'])
+                ->mapWithKeys(fn ($site) => [
+                    (int) $site->id => "{$site->name} ({$site->domain})",
+                ])
+                ->all();
+        } catch (QueryException) {
+            return [];
+        }
+    }
+
+    /**
+     * Set the current session's multisite context to the given site.
+     *
+     * Wired to the site-switcher dropdown on the Theme Manager page. Validates
+     * that the user is actually allowed to manage that site (super_admin or
+     * the owner). Full reload after switching so the page re-evaluates every
+     * cached computed property against the new context.
+     */
+    public function switchSite(?string $siteId): void
+    {
+        $siteId = $siteId !== null && $siteId !== '' ? (int) $siteId : null;
+        $user = auth()->user();
+
+        if (! $user || ! $siteId) {
+            return;
+        }
+
+        $siteQuery = DB::table('tallcms_sites')->where('id', $siteId)->where('is_active', true);
+
+        if (! (method_exists($user, 'hasRole') && $user->hasRole('super_admin'))) {
+            $siteQuery->where('user_id', $user->getAuthIdentifier());
+        }
+
+        if (! $siteQuery->exists()) {
+            Notification::make()
+                ->title('Cannot switch to that site')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        session(['multisite_admin_site_id' => $siteId]);
+
+        $this->redirect(static::getUrl(), navigate: false);
+    }
+
     public function getSubheading(): ?string
     {
         $context = $this->getMultisiteContext();

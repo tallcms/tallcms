@@ -1,4 +1,45 @@
 <x-filament-panels::page>
+    {{-- Site switcher: super_admins see every site; site_owners see their own.
+         Without this, a user with multiple managed sites has no way to pick
+         which one they're configuring the theme for. --}}
+    @php($manageableSites = $this->manageableSites())
+    @php($currentContext = $this->getMultisiteContext())
+    @if(count($manageableSites) > 1)
+        <x-filament::section>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div class="flex-1">
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                        Managing theme for:
+                        <span class="font-semibold">
+                            {{ $currentContext?->name ?? 'Select a site' }}
+                            @if($currentContext)
+                                <span class="text-gray-500 dark:text-gray-400 font-normal text-xs">
+                                    ({{ $currentContext->domain }})
+                                </span>
+                            @endif
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Switch sites to configure a different site's theme and preset.
+                    </p>
+                </div>
+                <div class="sm:w-80">
+                    <select
+                        wire:change="switchSite($event.target.value)"
+                        class="block w-full rounded-lg border border-gray-200 bg-white text-sm text-gray-900 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                    >
+                        <option value="">— Select a site —</option>
+                        @foreach($manageableSites as $siteId => $label)
+                            <option value="{{ $siteId }}" @selected($currentContext?->id === $siteId)>
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+        </x-filament::section>
+    @endif
+
     {{-- From the Marketplace --}}
     @if($this->availableMarketplaceThemes->isNotEmpty())
         <x-filament::section>
