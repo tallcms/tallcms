@@ -100,11 +100,20 @@ class ThemeManager extends Page implements HasForms
     }
 
     /**
-     * Get multisite admin context by reading the session directly.
+     * Get multisite admin context by reading the session, with a role-based
+     * fallback for users who haven't explicitly switched sites.
      *
-     * Bypasses the CurrentSiteResolver singleton entirely — no dependency on
-     * middleware timing, request attributes, or boot-time lazy resolution.
-     * Returns null when multisite is not active or "All Sites" is selected.
+     * Resolution order:
+     *   1. Explicit session site selected via the Site Switcher.
+     *   2. "__all_sites__" sentinel → null (caller treats as global).
+     *   3. No session value AND user is not super_admin → their first owned
+     *      site. Critical for site_owners on SaaS: they own exactly one
+     *      (or a handful of) sites and would never touch the Site Switcher.
+     *      Without this fallback, theme activation, preset changes, etc.
+     *      all write to the GLOBAL config/theme.php instead of scoping to
+     *      their own site.
+     *   4. No session value and user is super_admin → null (caller treats
+     *      as global — super_admins manage installation-wide defaults).
      *
      * @return ?stdClass with columns: id, name, domain, theme, etc.
      */
@@ -112,21 +121,43 @@ class ThemeManager extends Page implements HasForms
     {
         $sessionValue = session('multisite_admin_site_id');
 
-        if (! $sessionValue || $sessionValue === '__all_sites__') {
+        // Explicit "All Sites" selection
+        if ($sessionValue === '__all_sites__') {
             return null;
         }
 
         try {
+            if ($sessionValue && is_numeric($sessionValue)) {
+                $site = DB::table('tallcms_sites')
+                    ->where('id', $sessionValue)
+                    ->where('is_active', true)
+                    ->first();
+
+                return $site ?: null;
+            }
+
+            // No session value — fall back based on role.
+            $user = auth()->user();
+            if (! $user) {
+                return null;
+            }
+
+            if (method_exists($user, 'hasRole') && $user->hasRole('super_admin')) {
+                // Super-admins manage global defaults; null = global.
+                return null;
+            }
+
             $site = DB::table('tallcms_sites')
-                ->where('id', $sessionValue)
+                ->where('user_id', $user->getAuthIdentifier())
                 ->where('is_active', true)
+                ->orderBy('created_at')
                 ->first();
+
+            return $site ?: null;
         } catch (QueryException) {
             // Table doesn't exist (multisite plugin not installed)
             return null;
         }
-
-        return $site;
     }
 
     public function getSubheading(): ?string
