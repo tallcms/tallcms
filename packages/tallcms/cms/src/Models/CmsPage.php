@@ -179,6 +179,35 @@ class CmsPage extends Model implements HasRichContent
         return $this->belongsTo(CmsPage::class, 'parent_id');
     }
 
+    /**
+     * Get the full URL slug by concatenating ancestor slugs with this page's slug.
+     *
+     * A child page "team" under parent "services" returns "services/team".
+     * The leaf slug stored in the database is never modified — the full path
+     * is computed on the fly by walking the parent chain.
+     *
+     * @param  string|null  $locale  Locale for translatable slugs (null = current app locale)
+     */
+    public function getFullSlug(?string $locale = null): string
+    {
+        $slug = tallcms_i18n_enabled() && $locale
+            ? ($this->getTranslation('slug', $locale, false) ?? $this->slug)
+            : $this->slug;
+
+        if ($this->parent_id && $this->relationLoaded('parent') && $this->parent) {
+            return $this->parent->getFullSlug($locale).'/'.$slug;
+        }
+
+        if ($this->parent_id) {
+            $parent = $this->parent()->first();
+            if ($parent) {
+                return $parent->getFullSlug($locale).'/'.$slug;
+            }
+        }
+
+        return $slug;
+    }
+
     public function children(): HasMany
     {
         return $this->hasMany(CmsPage::class, 'parent_id')->orderBy('sort_order');
@@ -220,14 +249,14 @@ class CmsPage extends Model implements HasRichContent
         foreach (array_reverse($ancestors) as $ancestor) {
             $breadcrumbs[] = [
                 'name' => $ancestor->title,
-                'url' => url(tallcms_localized_url($ancestor->slug)),
+                'url' => url(tallcms_localized_url($ancestor->getFullSlug())),
             ];
         }
 
         // Add current page (last item, canonical URL without query params)
         $breadcrumbs[] = [
             'name' => $this->title,
-            'url' => url(tallcms_localized_url($this->slug)),
+            'url' => url(tallcms_localized_url($this->getFullSlug())),
         ];
 
         return $breadcrumbs;
@@ -323,6 +352,28 @@ class CmsPage extends Model implements HasRichContent
     }
 
     /**
+     * Override trait's localizedSlugExists to scope uniqueness within the same parent.
+     * Sibling pages must have unique slugs, but the same slug is allowed under different parents.
+     */
+    public function localizedSlugExists(string $slug, string $locale): bool
+    {
+        $query = static::query();
+        $this->whereJsonLocale($query, 'slug', $locale, $slug);
+
+        if ($this->exists) {
+            $query->where('id', '!=', $this->id);
+        }
+
+        if ($this->parent_id) {
+            $query->where('parent_id', $this->parent_id);
+        } else {
+            $query->whereNull('parent_id');
+        }
+
+        return $query->exists();
+    }
+
+    /**
      * Check if slug already exists (excluding current record).
      * Used when i18n is disabled, but data is still stored as JSON.
      */
@@ -340,6 +391,13 @@ class CmsPage extends Model implements HasRichContent
 
         if ($this->exists) {
             $query->where('id', '!=', $this->id);
+        }
+
+        // Scope to the same parent so sibling-unique slugs don't conflict across the tree
+        if ($this->parent_id) {
+            $query->where('parent_id', $this->parent_id);
+        } else {
+            $query->whereNull('parent_id');
         }
 
         return $query->exists();

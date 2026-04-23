@@ -125,54 +125,71 @@ class CmsPageRenderer extends Component
      */
     protected function resolveNestedSlug(string $slug): bool
     {
-        // Split into parent and child segments
+        // Walk segments one by one, scoping each lookup to the parent found in the previous step.
+        // This handles arbitrary depth (a/b/c/d) and correctly resolves pages that store only
+        // their leaf slug — e.g. page "team" with parent_id pointing to "services".
         $segments = explode('/', $slug);
-        $childSlug = array_pop($segments);
-        $parentSlug = implode('/', $segments);
+        $parentId = null;
 
-        // Try to find parent page (use localized lookup when i18n enabled)
-        $parentPage = tallcms_i18n_enabled()
-            ? CmsPage::withLocalizedSlug($parentSlug)->published()->first()
-            : CmsPage::withSlug($parentSlug)->published()->first();
+        foreach ($segments as $i => $segment) {
+            $isLast = ($i === count($segments) - 1);
 
-        if (! $parentPage) {
-            return false;
-        }
+            // Build a query scoped to the current parent level
+            $query = tallcms_i18n_enabled()
+                ? CmsPage::withLocalizedSlug($segment)
+                : CmsPage::withSlug($segment);
 
-        // Check if parent page has a PostsBlock
-        if ($this->pageHasPostsBlock($parentPage)) {
-            // Try to find the post (use localized lookup when i18n enabled)
-            $post = tallcms_i18n_enabled()
-                ? CmsPost::withLocalizedSlug($childSlug)->with(['categories', 'author'])->first()
-                : CmsPost::withSlug($childSlug)->with(['categories', 'author'])->first();
+            $query->published();
 
-            if ($post) {
-                // Check publish status (allow drafts for authenticated users in preview)
-                $canView = $post->isPublished() ||
-                    (auth()->check() && request()->has('preview'));
-
-                if ($canView) {
-                    $this->page = $parentPage;
-                    $this->post = $post;
-                    $this->parentSlug = $parentSlug;
-                    $this->postsBlockConfig = $this->getPostsBlockConfig($parentPage);
-                    $this->renderedContent = 'POST_DETAIL';
-
-                    return true;
-                }
+            if ($parentId !== null) {
+                $query->where('parent_id', $parentId);
+            } else {
+                $query->whereNull('parent_id');
             }
-        }
 
-        // Not a post - try to find a page with the full nested slug
-        $nestedPage = tallcms_i18n_enabled()
-            ? CmsPage::withLocalizedSlug($slug)->published()->first()
-            : CmsPage::withSlug($slug)->published()->first();
+            $currentPage = $query->first();
 
-        if ($nestedPage) {
-            $this->page = $nestedPage;
-            $this->renderPageContent();
+            if (! $currentPage) {
+                // Segment didn't match a page — if this is the last segment and we found
+                // a valid parent page with a PostsBlock, treat it as a post URL.
+                if ($isLast && $parentId !== null) {
+                    $parentPage = CmsPage::find($parentId);
 
-            return true;
+                    if ($parentPage && $this->pageHasPostsBlock($parentPage)) {
+                        $post = tallcms_i18n_enabled()
+                            ? CmsPost::withLocalizedSlug($segment)->with(['categories', 'author'])->first()
+                            : CmsPost::withSlug($segment)->with(['categories', 'author'])->first();
+
+                        if ($post) {
+                            $canView = $post->isPublished() ||
+                                (auth()->check() && request()->has('preview'));
+
+                            if ($canView) {
+                                $parentSlug = implode('/', array_slice($segments, 0, $i));
+                                $this->page = $parentPage;
+                                $this->post = $post;
+                                $this->parentSlug = $parentSlug;
+                                $this->postsBlockConfig = $this->getPostsBlockConfig($parentPage);
+                                $this->renderedContent = 'POST_DETAIL';
+
+                                return true;
+                            }
+                        }
+                    }
+                }
+
+                return false;
+            }
+
+            if ($isLast) {
+                $this->page = $currentPage;
+                $this->renderPageContent();
+
+                return true;
+            }
+
+            // Intermediate segment matched — continue deeper with this page as the new parent
+            $parentId = $currentPage->id;
         }
 
         return false;

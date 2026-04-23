@@ -6,7 +6,6 @@ namespace TallCms\Cms\Services;
 
 use TallCms\Cms\Models\SiteSetting;
 use TallCms\Cms\Models\TallcmsMenuItem;
-use TallCms\Cms\Services\LocaleRegistry;
 
 class MenuUrlResolver
 {
@@ -36,14 +35,14 @@ class MenuUrlResolver
         }
 
         // Multi-page mode - use localized URL helper (includes routes prefix and locale)
-        // Get the localized slug for the current locale with fallback
-        $slug = tallcms_i18n_enabled()
-            ? ($page->getTranslation('slug', app()->getLocale(), false) ?? $page->getTranslation('slug', app(LocaleRegistry::class)->getDefaultLocale()))
-            : $page->slug;
-
+        // Build the full hierarchical path (parent/child) so the URL reflects the page tree.
         if ($page->is_homepage) {
             return tallcms_localized_url('/');
         }
+
+        $slug = tallcms_i18n_enabled()
+            ? $page->getFullSlug(app()->getLocale())
+            : $page->getFullSlug();
 
         return tallcms_localized_url($slug);
     }
