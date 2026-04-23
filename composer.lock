@@ -8993,11 +8993,11 @@
         },
         {
             "name": "tallcms/cms",
-            "version": "4.0.24",
+            "version": "4.1.0",
             "dist": {
                 "type": "path",
                 "url": "./packages/tallcms/cms",
-                "reference": "155141c88ab7aa584cc4a7d7af1d7d12a8ff467d"
+                "reference": "0b12232f65f7ef5ec612bc62ee511b450c7c0c39"
             },
             "require": {
                 "bezhansalleh/filament-shield": "^4.0",
