@@ -39,6 +39,15 @@ class GlobalDefaults extends Page implements HasForms
 
     public static function canAccess(): bool
     {
+        // Standalone (single-site) installs only have one site, so per-site
+        // overrides and "global defaults to inherit from" are the same thing.
+        // Showing both pages confuses users about which to edit. Only expose
+        // GlobalDefaults when the multisite plugin is active and inheritance
+        // actually matters across multiple sites.
+        if (! app()->bound('tallcms.multisite.resolver')) {
+            return false;
+        }
+
         return auth()->user()?->hasRole('super_admin') ?? false;
     }
 

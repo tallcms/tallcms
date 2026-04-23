@@ -283,6 +283,21 @@ class TallCmsUpdate extends Command
             Artisan::call('view:clear');
             Artisan::call('cache:clear');
 
+            // Republish Filament's CSS/JS to match the now-installed package
+            // version. Without this, a Filament upgrade between TallCMS releases
+            // can leave stale public/css/filament/* and public/js/filament/*
+            // assets that mismatch the installed component versions, breaking
+            // FileUpload thumbnails, modal animations, etc. The command is
+            // optional (try/catch) so a stripped-down install without the
+            // command registered doesn't fail the whole update.
+            try {
+                Artisan::call('filament:assets');
+            } catch (\Throwable $e) {
+                Log::warning('TallCmsUpdate: filament:assets failed; admin assets may be stale', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
             if (function_exists('opcache_reset')) {
                 opcache_reset();
             }

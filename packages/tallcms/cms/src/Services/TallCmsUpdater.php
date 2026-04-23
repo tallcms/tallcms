@@ -898,13 +898,45 @@ class TallCmsUpdater
             return null;
         }
 
-        $release = Cache::remember('tallcms_latest_release', config('tallcms.updates.cache_ttl', 3600), function () {
-            return $this->fetchLatestRelease();
-        });
+        $cached = Cache::get('tallcms_latest_release');
+        if ($cached !== null) {
+            Cache::put('tallcms_last_update_check', now()->timestamp);
+
+            return $cached;
+        }
+
+        $release = $this->fetchLatestRelease();
+
+        // Only cache releases whose assets are ready. The release.yml workflow
+        // creates the GitHub release first and then takes 1-2 minutes to attach
+        // the zip + checksums + signature. If we cache the release object during
+        // that window, every subsequent tallcms:update for the next hour will
+        // fail with "Missing required release files" — even though the assets
+        // have since uploaded — because the cached object has empty assets.
+        if ($release !== null && static::releaseHasRequiredAssets($release)) {
+            Cache::put(
+                'tallcms_latest_release',
+                $release,
+                config('tallcms.updates.cache_ttl', 3600),
+            );
+        }
 
         Cache::put('tallcms_last_update_check', now()->timestamp);
 
         return $release;
+    }
+
+    /**
+     * A release is "complete" only when GitHub Actions has finished attaching
+     * the release zip, the checksums manifest, and the signature.
+     */
+    public static function releaseHasRequiredAssets(array $release): bool
+    {
+        $names = collect($release['assets'] ?? [])->pluck('name');
+
+        return $names->contains('checksums.json')
+            && $names->contains('checksums.json.sig')
+            && $names->contains(fn (string $n) => str_ends_with($n, '.zip'));
     }
 
     /**

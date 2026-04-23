@@ -53,7 +53,7 @@ class MergeTagService
             'current_date' => now()->format('F j, Y'),
 
             // Contact info from settings
-            'contact_email' => SiteSetting::get('contact_email', config('mail.from.address', 'hello@example.com')),
+            'contact_email' => SiteSetting::get('contact_email', config('mail.from.address', '')),
             'contact_phone' => SiteSetting::get('contact_phone', ''),
             'company_name' => SiteSetting::get('company_name', SiteSetting::get('site_name', config('app.name', 'TallCMS'))),
             'company_address' => SiteSetting::get('company_address', ''),

@@ -36,7 +36,7 @@ if (! function_exists('contact_email')) {
      */
     function contact_email(): string
     {
-        return settings('contact_email', config('mail.from.address', 'hello@example.com'));
+        return settings('contact_email', config('mail.from.address', ''));
     }
 }
 
