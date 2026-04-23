@@ -1,0 +1,20 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@plugin "daisyui" {
+  themes: luxury --default;
+}
+
+/* Scan paths for class discovery */
+@source '../views/**/*.blade.php';
+@source '../../../../resources/views/**/*.blade.php';
+/* TallCMS Core package views (breadcrumbs, menu, etc.) */
+@source '../../../../packages/tallcms/cms/resources/views/**/*.blade.php';
+/* TallCMS Block PHP files (contains daisyUI class definitions) */
+@source '../../../../packages/tallcms/cms/src/Filament/Blocks/**/*.php';
+/* All plugin frontend views — auto-includes current and future plugins */
+@source '../../../../plugins/**/resources/views/**/*.blade.php';
+
+/* TallCMS Core Styles */
+@import "../../../../resources/css/tallcms.css";
+
+/* Theme-specific styles */

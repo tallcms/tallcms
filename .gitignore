@@ -33,6 +33,7 @@ installer.lock
 !/themes/corporate/
 !/themes/creative/
 !/themes/minimal/
+!/themes/luxury/
 /public/themes/*
 !/public/themes/default
 !/public/themes/talldaisy
@@ -42,6 +43,7 @@ installer.lock
 !/public/themes/corporate
 !/public/themes/creative
 !/public/themes/minimal
+!/public/themes/luxury
 Homestead.json
 Homestead.yaml
 Thumbs.db
