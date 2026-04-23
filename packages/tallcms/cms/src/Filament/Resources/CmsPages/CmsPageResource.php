@@ -133,7 +133,7 @@ class CmsPageResource extends Resource
     public static function getGlobalSearchResultDetails(Model $record): array
     {
         return [
-            __('Type') => __('Page'),
+            __('Type') => static::getModelLabel(),
             __('Status') => __(ucfirst($record->status ?? 'draft')),
         ];
     }

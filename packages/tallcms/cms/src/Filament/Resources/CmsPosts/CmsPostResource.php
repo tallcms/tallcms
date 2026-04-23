@@ -130,7 +130,7 @@ class CmsPostResource extends Resource
     public static function getGlobalSearchResultDetails(Model $record): array
     {
         return [
-            __('Type') => __('Post'),
+            __('Type') => static::getModelLabel(),
             __('Status') => __(ucfirst($record->status ?? 'draft')),
             __('Author') => $record->author?->name ?? __('Unknown'),
         ];

@@ -647,16 +647,27 @@ class TallCmsPlugin implements Plugin
 
     /**
      * Store label overrides for a resource key.
-     * $navigation defaults to $plural when not provided.
-     * $singular defaults to $plural when not provided.
+     *
+     * Only provided (non-null) values are written; omitted ones preserve
+     * the existing config default. This matters because the default
+     * navigation label is intentionally different from plural for some
+     * resources (e.g. media -> "Media Library", site_settings ->
+     * "Site Settings"), and the singular form is usually not the same
+     * word as the plural ("Article" vs "Articles").
      */
     protected function setResourceLabels(string $key, string $plural, ?string $singular, ?string $navigation): static
     {
-        $this->labelOverrides[$key] = [
-            'plural' => $plural,
-            'singular' => $singular ?? $plural,
-            'navigation' => $navigation ?? $plural,
-        ];
+        $overrides = ['plural' => $plural];
+
+        if ($singular !== null) {
+            $overrides['singular'] = $singular;
+        }
+
+        if ($navigation !== null) {
+            $overrides['navigation'] = $navigation;
+        }
+
+        $this->labelOverrides[$key] = $overrides;
 
         return $this;
     }
