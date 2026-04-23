@@ -81,7 +81,7 @@
 
         <p>Hello{{ $submission->name ? ' ' . e($submission->name) : '' }},</p>
 
-        <p>Thank you for contacting {{ config('app.name') }}. This email confirms that we have received your submission. Our team will review your message and respond within 1-2 business days.</p>
+        <p>Thank you for contacting {{ $siteName ?? config('app.name') }}. This email confirms that we have received your submission. Our team will review your message and respond within 1-2 business days.</p>
 
         <div class="summary">
             <h3>Your Submission Summary</h3>
@@ -96,7 +96,7 @@
 
         <div class="footer">
             <p>This is an automated response. Please do not reply to this email.</p>
-            <p>&copy; {{ date('Y') }} {{ config('app.name') }}</p>
+            <p>&copy; {{ date('Y') }} {{ $siteName ?? config('app.name') }}</p>
         </div>
     </div>
 </body>
