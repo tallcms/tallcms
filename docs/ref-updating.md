@@ -54,7 +54,11 @@ Every update runs these steps in order:
 9. **Apply** the file updates, respecting preserved paths (see below).
 10. **Run `migrate --force`** to apply schema changes.
 11. **Run `composer install --no-dev --optimize-autoloader`** to sync dependencies.
-12. **Clear caches** — `config:clear`, `route:clear`, `view:clear`, `cache:clear`, and `opcache_reset()` if enabled.
+12. **Clear caches and re-sync shipped assets/roles**:
+    - `config:clear`, `route:clear`, `view:clear`, `cache:clear`
+    - `filament:assets` — republishes Filament CSS/JS to match the installed component versions
+    - `tallcms:shield-sync-site-owner` — ensures the `site_owner` role (introduced in v4.0.14) exists on the install. Idempotent; no-op on installs that already have it.
+    - `opcache_reset()` if the extension is enabled
 13. **Save the new manifest** and release the update lock.
 
 ### Preserved Paths

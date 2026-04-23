@@ -298,6 +298,24 @@ class TallCmsUpdate extends Command
                 ]);
             }
 
+            // Ensure core-defined Shield roles introduced in later releases
+            // exist on the current install. ShieldSeeder only runs on fresh
+            // installs; when we add a new role (e.g. site_owner in v4.0.14),
+            // existing installs need an idempotent sync so user-role
+            // assignments — and any plugins that reference the role, like
+            // Registration — don't hit a missing-role error. The sync commands
+            // are idempotent and safe to run every update.
+            foreach (['tallcms:shield-sync-site-owner'] as $syncCommand) {
+                try {
+                    Artisan::call($syncCommand);
+                } catch (\Throwable $e) {
+                    Log::warning('TallCmsUpdate: shield role sync failed', [
+                        'command' => $syncCommand,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
             if (function_exists('opcache_reset')) {
                 opcache_reset();
             }
