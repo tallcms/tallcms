@@ -111,11 +111,45 @@ class ShieldSeeder extends Seeder
             'View:TemplateGallery',
         ];
 
+        // Site Owner: Manages their own site end-to-end (SaaS-flow role).
+        //
+        // The permissions here grant access to the resource; site ownership is
+        // enforced separately by the policies (ChecksSiteOwnership trait on
+        // CmsPagePolicy, TallcmsMenuPolicy, CmsCommentPolicy, and
+        // TallcmsContactSubmissionPolicy). Without the policy layer, a
+        // site_owner would see every tenant's records — shield alone is not
+        // sufficient for per-tenant isolation in multisite.
+        $siteOwnerPermissions = [
+            // CmsPage — full CRUD + publishing workflow
+            'ViewAny:CmsPage', 'View:CmsPage', 'Create:CmsPage', 'Update:CmsPage', 'Delete:CmsPage',
+            'SubmitForReview:CmsPage', 'ViewRevisions:CmsPage', 'RestoreRevision:CmsPage', 'GeneratePreviewLink:CmsPage',
+            // CmsPost — full CRUD + publishing workflow
+            'ViewAny:CmsPost', 'View:CmsPost', 'Create:CmsPost', 'Update:CmsPost', 'Delete:CmsPost',
+            'SubmitForReview:CmsPost', 'ViewRevisions:CmsPost', 'RestoreRevision:CmsPost', 'GeneratePreviewLink:CmsPost',
+            // CmsCategory — owners manage their own taxonomies
+            'ViewAny:CmsCategory', 'View:CmsCategory', 'Create:CmsCategory', 'Update:CmsCategory', 'Delete:CmsCategory',
+            // TallcmsMedia — full CRUD
+            'ViewAny:TallcmsMedia', 'View:TallcmsMedia', 'Create:TallcmsMedia', 'Update:TallcmsMedia', 'Delete:TallcmsMedia',
+            // TallcmsMenu — full CRUD
+            'ViewAny:TallcmsMenu', 'View:TallcmsMenu', 'Create:TallcmsMenu', 'Update:TallcmsMenu', 'Delete:TallcmsMenu',
+            // CmsComment — moderation on their own site
+            'ViewAny:CmsComment', 'View:CmsComment', 'Update:CmsComment', 'Delete:CmsComment',
+            'Approve:CmsComment', 'Reject:CmsComment', 'MarkAsSpam:CmsComment',
+            // TallcmsContactSubmission — see and manage their own site's form submissions
+            'ViewAny:TallcmsContactSubmission', 'View:TallcmsContactSubmission',
+            'Update:TallcmsContactSubmission', 'Delete:TallcmsContactSubmission',
+            // Admin-panel pages — wiring to let them use menus and site settings
+            'View:MenuItemsManager', 'View:SiteSettings',
+            // Template gallery — choose a template when spinning up new sites
+            'View:TemplateGallery',
+        ];
+
         $rolesWithPermissions = json_encode([
             ['name' => 'super_admin', 'guard_name' => 'web', 'permissions' => $superAdminPermissions],
             ['name' => 'administrator', 'guard_name' => 'web', 'permissions' => $administratorPermissions],
             ['name' => 'editor', 'guard_name' => 'web', 'permissions' => $editorPermissions],
             ['name' => 'author', 'guard_name' => 'web', 'permissions' => $authorPermissions],
+            ['name' => 'site_owner', 'guard_name' => 'web', 'permissions' => $siteOwnerPermissions],
         ]);
         $directPermissions = '[]';
 
