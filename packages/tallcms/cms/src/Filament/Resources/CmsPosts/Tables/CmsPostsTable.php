@@ -48,7 +48,7 @@ class CmsPostsTable
                     ->label('Featured'),
 
                 TagsColumn::make('categories.name')
-                    ->label('Categories')
+                    ->label(config('tallcms.labels.categories.plural', 'Categories'))
                     ->limit(3),
 
                 TextColumn::make('author.name')
@@ -88,6 +88,7 @@ class CmsPostsTable
                     ]),
 
                 SelectFilter::make('categories')
+                    ->label(config('tallcms.labels.categories.plural', 'Categories'))
                     ->relationship('categories', 'name')
                     ->multiple(),
 

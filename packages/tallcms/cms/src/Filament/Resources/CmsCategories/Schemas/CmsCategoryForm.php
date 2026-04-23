@@ -77,7 +77,7 @@ class CmsCategoryForm
                     ->helperText('Used in the URL. Only letters, numbers, hyphens and underscores allowed.'),
 
                 Select::make('parent_id')
-                    ->label('Parent Category')
+                    ->label('Parent '.config('tallcms.labels.categories.singular', 'Category'))
                     ->options(function () {
                         $query = CmsCategory::query()->whereNull('parent_id');
                         if (auth()->check() && ! auth()->user()->hasRole('super_admin')
@@ -91,7 +91,7 @@ class CmsCategoryForm
                     ->nullable(),
 
                 ColorPicker::make('color')
-                    ->label('Category Color')
+                    ->label(config('tallcms.labels.categories.singular', 'Category').' Color')
                     ->nullable()
                     ->helperText('Optional color for visual organization'),
 
