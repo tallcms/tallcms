@@ -56,7 +56,7 @@ Full documentation lives in the [docs/](docs/) directory. Highlights:
 
 ## Commercial add-ons
 
-- **[Multisite](https://tallcms.com/multisite)** — run multiple sites (each with its own domain, theme, settings, and content) from a single TallCMS install. Built for agencies and SaaS operators.
+- **[Multisite](https://tallcms.com/saas-multisite-plugin)** — run multiple sites (each with its own domain, theme, settings, and content) from a single TallCMS install. Built for agencies and SaaS operators.
 
 Browse the full catalog at [tallcms.com/marketplace](https://tallcms.com/marketplace).
 
