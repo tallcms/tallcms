@@ -54,6 +54,12 @@ Full documentation lives in the [docs/](docs/) directory. Highlights:
 - [Plugins](https://github.com/tallcms/tallcms/blob/main/docs/dev-plugins.md)
 - [API](https://github.com/tallcms/tallcms/blob/main/docs/dev-api.md)
 
+## Commercial add-ons
+
+- **[Multisite](https://tallcms.com/multisite)** — run multiple sites (each with its own domain, theme, settings, and content) from a single TallCMS install. Built for agencies and SaaS operators.
+
+Browse the full catalog at [tallcms.com/marketplace](https://tallcms.com/marketplace).
+
 ## Need Help?
 
 🐞 Bug? [Open an issue](https://github.com/tallcms/tallcms/issues/new).
