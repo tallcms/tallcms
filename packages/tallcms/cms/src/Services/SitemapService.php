@@ -155,10 +155,11 @@ class SitemapService
             $baseUrl = tallcms_base_url();
 
             return CmsPage::published()
+                ->with('parent.parent.parent')
                 ->orderBy('updated_at', 'desc')
                 ->get()
                 ->map(function ($page) use ($baseUrl, $prefix) {
-                    $slug = $page->is_homepage ? '' : '/'.$page->slug;
+                    $slug = $page->is_homepage ? '' : '/'.$page->getFullSlug();
 
                     return [
                         'loc' => $baseUrl.$prefix.$slug,

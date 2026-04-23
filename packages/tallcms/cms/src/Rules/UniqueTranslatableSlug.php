@@ -33,6 +33,8 @@ class UniqueTranslatableSlug implements ValidationRule
         protected string $locale,
         protected ?int $ignoreId = null,
         protected ?int $siteId = null,
+        protected ?int $parentId = null,
+        protected bool $parentIdSet = false,
     ) {
         // Normalize locale to lowercase
         $this->locale = strtolower($this->locale);
@@ -78,6 +80,16 @@ class UniqueTranslatableSlug implements ValidationRule
         // - User-owned tables (posts, categories): scope by user_id
         // - Site-owned tables (pages): scope by site_id
         $this->applyScopeFilter($query);
+
+        // For hierarchical tables (pages): scope slug uniqueness within the same parent.
+        // Siblings must have unique slugs, but the same slug is allowed under different parents.
+        if ($this->parentIdSet) {
+            if ($this->parentId !== null) {
+                $query->where('parent_id', $this->parentId);
+            } else {
+                $query->whereNull('parent_id');
+            }
+        }
 
         if ($query->exists()) {
             $fail("This slug is already used by another item in {$this->locale}.");
