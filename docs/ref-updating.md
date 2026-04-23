@@ -77,7 +77,7 @@ The updater never overwrites these — they contain your data and customizations
 | `--dry-run` | Show what would happen without making changes. Useful for previewing a risky update. |
 | `--force` | Skip the interactive confirmation prompt. Useful in CI. |
 | `--skip-backup` | Skip both file and database backups. **Not recommended** outside of CI/testing. |
-| `--skip-db-backup` | Skip only the database backup (file backup still runs). Use when backing up a large DB externally. |
+| `--skip-db-backup` | Skip only the database backup. Use when `mysqldump`/`pg_dump` isn't on the server's PATH or you back up externally. See [troubleshooting](#database-backup-not-available-mysqldump-not-available-on-this-server). |
 
 ### Pre-Update Checklist
 
@@ -216,6 +216,59 @@ Then restart PHP-FPM / your web server.
 ### Files in `tallcms-backups/quarantine/`
 
 Every update moves locally modified core files here rather than overwriting them. If you see files you didn't intentionally modify, the previous update may have been applied to a dirty working copy. Review them; either re-apply your edits upstream or delete them.
+
+### "Database backup not available: mysqldump not available on this server"
+
+The updater shells out to `mysqldump` (MySQL/MariaDB) or `pg_dump` (PostgreSQL) for the database backup step. If the binary isn't in the web server's PATH, the update aborts with this error.
+
+**Two ways to resolve:**
+
+#### 1. Make the binary available
+
+Find the existing binary (it often ships with your MySQL client but isn't symlinked):
+
+```bash
+# Laravel Herd — MySQL lives in Herd's Resources bundle
+ls /Applications/Herd.app/Contents/Resources/mysql/bin/mysqldump
+
+# DBngin
+ls /Applications/DBngin.app/Contents/Resources/mysql-*/bin/mysqldump
+
+# Homebrew
+which mysqldump || ls $(brew --prefix mysql-client)/bin/mysqldump
+```
+
+Then either symlink to `/usr/local/bin/mysqldump` or add the directory to your shell's PATH in `~/.zshrc`. If PHP-FPM is caching the old environment, restart it (`herd restart` or the equivalent).
+
+#### 2. Use `--skip-db-backup`
+
+When it's safe:
+- **Local/dev installs** — you can drop and re-seed the database.
+- **You've already backed up externally** — e.g., via a managed provider's snapshot, a nightly cron, or `mysqldump` run by hand before the update.
+- **CI pipelines** — each run uses an ephemeral database.
+
+When it's not safe:
+- **Production installs with no other backup strategy.** The updater's DB backup is the only rollback lifeline if a migration breaks your schema. If you skip it, you'd better have external backups.
+
+```bash
+php artisan tallcms:update --skip-db-backup
+```
+
+The file backup (`storage/app/tallcms-backups/files/<timestamp>/`) still runs — only the database backup is skipped.
+
+#### Verify before trusting the skip
+
+Before running with `--skip-db-backup` in production, take a manual dump:
+
+```bash
+# MySQL
+mysqldump -u <user> -p <dbname> > backup-pre-update.sql
+
+# PostgreSQL
+pg_dump -U <user> <dbname> > backup-pre-update.sql
+```
+
+Then proceed. Keep the dump until the update is confirmed working.
 
 ### Update appears stuck
 
