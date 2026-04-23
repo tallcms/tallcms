@@ -78,21 +78,33 @@ class CmsPageForm
                                                     $reserved = app(LocaleRegistry::class)->getReservedSlugs();
                                                     $rules[] = 'not_in:'.implode(',', $reserved);
 
+                                                    // Record's site_id is authoritative. For creates, fall
+                                                    // back to the CreateCmsPage Livewire ownerSiteId
+                                                    // (populated from ?site=X in the relation-manager URL).
+                                                    // The rule's session/resolver fallback doesn't work for
+                                                    // site_owners who haven't explicitly switched sites —
+                                                    // passing the id directly guarantees per-site scoping.
+                                                    $siteId = $record?->site_id ?? (data_get($livewire, 'ownerSiteId') ?: null);
+
                                                     // Unique per locale
                                                     $activeLocale = $livewire->activeLocale ?? app()->getLocale();
                                                     $rules[] = new UniqueTranslatableSlug(
                                                         table: 'tallcms_pages',
                                                         column: 'slug',
                                                         locale: $activeLocale,
-                                                        ignoreId: $record?->id
+                                                        ignoreId: $record?->id,
+                                                        siteId: $siteId ? (int) $siteId : null,
                                                     );
                                                 } else {
+                                                    $siteId = $record?->site_id ?? (data_get($livewire, 'ownerSiteId') ?: null);
+
                                                     // Unique per default locale (site-aware when multisite active)
                                                     $rules[] = new UniqueTranslatableSlug(
                                                         table: 'tallcms_pages',
                                                         column: 'slug',
                                                         locale: app()->getLocale(),
-                                                        ignoreId: $record?->id
+                                                        ignoreId: $record?->id,
+                                                        siteId: $siteId ? (int) $siteId : null,
                                                     );
                                                 }
 

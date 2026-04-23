@@ -19,12 +19,20 @@ class UniqueTranslatableSlug implements ValidationRule
 {
     /**
      * Create a new rule instance.
+     *
+     * $siteId (optional): when the caller already knows the owning site — e.g.
+     * the form passes `$record?->site_id` for an edit or `$livewire->ownerSiteId`
+     * for a create — pass it here. This is authoritative and bypasses the
+     * session/resolver fallback, which doesn't work for site_owners who
+     * haven't used the site switcher. Without an explicit siteId, the rule
+     * falls back to session/resolver resolution.
      */
     public function __construct(
         protected string $table,
         protected string $column,
         protected string $locale,
-        protected ?int $ignoreId = null
+        protected ?int $ignoreId = null,
+        protected ?int $siteId = null,
     ) {
         // Normalize locale to lowercase
         $this->locale = strtolower($this->locale);
@@ -94,12 +102,16 @@ class UniqueTranslatableSlug implements ValidationRule
             return;
         }
 
-        // Site-owned: scope by site_id
-        $siteId = null;
+        // Site-owned: scope by site_id. Prefer an explicit siteId passed into
+        // the rule — authoritative when the form knows which site the record
+        // belongs to (existing record's site_id, or create form's ownerSiteId).
+        $siteId = $this->siteId;
 
-        $sessionValue = session('multisite_admin_site_id');
-        if ($sessionValue && $sessionValue !== '__all_sites__' && is_numeric($sessionValue)) {
-            $siteId = (int) $sessionValue;
+        if (! $siteId) {
+            $sessionValue = session('multisite_admin_site_id');
+            if ($sessionValue && $sessionValue !== '__all_sites__' && is_numeric($sessionValue)) {
+                $siteId = (int) $sessionValue;
+            }
         }
 
         if (! $siteId && app()->bound('tallcms.multisite.resolver')) {
