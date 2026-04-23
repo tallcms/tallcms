@@ -58,7 +58,7 @@ Full documentation lives in the [docs/](docs/) directory. Highlights:
 
 🐞 Bug? [Open an issue](https://github.com/tallcms/tallcms/issues/new).
 🤔 Question or feature request? [Start a discussion](https://github.com/tallcms/tallcms/discussions).
-🔐 Security issue? Email security@tallcms.com. Do not file publicly.
+🔐 Security issue? Email hello@tallcms.com. Do not file publicly.
 
 ## License
 
