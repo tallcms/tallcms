@@ -121,6 +121,17 @@ class ThemeServiceProvider extends ServiceProvider
             return "<?php echo app(\TallCms\Cms\Services\ThemeManager::class)->getCoreJsTag(); ?>";
         });
 
+        // @tallcmsDaisyUIBoot directive — renders the daisyUI preset boot script.
+        // Themes used to copy-paste this script into their layout, which meant
+        // bugs in it (e.g. the localStorage-key collision with Filament's admin
+        // dark-mode toggle) couldn't be fixed by a regular tallcms:update —
+        // themes/ is preserved across updates. By shipping the script as a
+        // directive, the canonical boot logic lives in core and gets patched
+        // automatically. Themes just call @tallcmsDaisyUIBoot.
+        Blade::directive('tallcmsDaisyUIBoot', function () {
+            return "<?php echo view('tallcms::components.daisyui-boot')->render(); ?>";
+        });
+
         // @theme directive to get current theme info
         Blade::directive('theme', function ($property = null) {
             if ($property) {

@@ -1,27 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ daisyui_default_preset() }}" data-default-theme="{{ daisyui_default_preset() }}">
 <head>
-    <script>
-        // Apply saved theme immediately to prevent flash of wrong theme.
-        // Namespaced under tallcms-* to avoid colliding with Filament's admin
-        // light/dark toggle, which writes localStorage.theme on the same origin.
-        // Without namespacing, visiting /admin would leak 'light'/'dark' into the
-        // frontend daisyUI preset, overriding any coffee/dracula/etc the admin
-        // had chosen.
-        (function() {
-            var serverDefault = document.documentElement.getAttribute('data-default-theme');
-            var storedDefault = localStorage.getItem('tallcms-theme-default');
-            if (storedDefault !== serverDefault) {
-                // Admin changed the default — clear visitor's override
-                localStorage.removeItem('tallcms-theme');
-                localStorage.setItem('tallcms-theme-default', serverDefault);
-            }
-            var savedTheme = localStorage.getItem('tallcms-theme');
-            if (savedTheme) {
-                document.documentElement.setAttribute('data-theme', savedTheme);
-            }
-        })();
-    </script>
+    @tallcmsDaisyUIBoot
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
