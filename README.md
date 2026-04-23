@@ -211,10 +211,9 @@ Use the built-in update system in **Admin > System > Updates**, or via CLI:
 
 ```bash
 php artisan tallcms:update
-php artisan migrate
 ```
 
-The updater downloads the new release and replaces package files. Always run `migrate` after updating to apply any database changes.
+The command handles migrations, composer install, and cache clearing for you. **Never** run `composer update tallcms/cms` in standalone mode — the updater verifies signed release bundles, preserves your `.env`/themes/plugins/storage, and tracks a file manifest that direct composer updates would bypass.
 
 ### Plugin Mode
 
@@ -223,6 +222,8 @@ composer update tallcms/cms
 php artisan migrate
 php artisan view:clear
 ```
+
+See the full [Updating Reference](https://github.com/tallcms/tallcms/blob/main/docs/ref-updating.md) for preserved paths, rollback procedure, CLI options, and troubleshooting.
 
 ## Troubleshooting
 
