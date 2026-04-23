@@ -71,10 +71,22 @@ class ContactFormController extends Controller
 
         // Verify config signature to prevent tampering and replay attacks
         if (! $this->verifyConfigSignature($config, $signature, $pageUrl)) {
+            // TEMP DEBUG: capture both signatures and the signed payload so we
+            // can diff render-time vs verify-time when investigating reports.
+            $verifyPayload = json_encode([
+                'v' => self::SCHEMA_VERSION,
+                'url' => $pageUrl,
+                'config' => $config,
+            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
             Log::warning('Contact form submission with invalid signature', [
                 'ip' => $request->ip(),
                 'referer' => $request->header('Referer'),
                 'claimed_page_url' => $pageUrl,
+                'submitted_signature' => $signature,
+                'computed_signature' => self::signConfig($config, $pageUrl),
+                'signed_payload' => $verifyPayload,
+                'config_keys_in_order' => array_keys($config),
             ]);
 
             return response()->json([
