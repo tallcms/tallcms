@@ -497,7 +497,7 @@ class TallCmsUpdate extends Command
 
         foreach ($paths as $path) {
             if (is_executable($path)) {
-                return $path;
+                return $this->resolveComposerCommand($path);
             }
         }
 
@@ -508,7 +508,7 @@ class TallCmsUpdate extends Command
             exec("command -v {$cmd} 2>/dev/null", $output, $exitCode);
 
             if ($exitCode === 0 && ! empty($output[0]) && is_executable($output[0])) {
-                return $output[0];
+                return $this->resolveComposerCommand($output[0]);
             }
         }
 
@@ -519,14 +519,19 @@ class TallCmsUpdate extends Command
     }
 
     /**
-     * Resolve the composer command, handling .phar files.
+     * Resolve the composer command, escaping the path for shell execution.
+     *
+     * Returns a string ready to interpolate into an exec() command. .phar
+     * files get prefixed with the PHP binary; both forms shell-escape the
+     * path so installs at locations with spaces (e.g. macOS Herd's
+     * "Application Support") don't break the eventual exec() call.
      */
     private function resolveComposerCommand(string $path): string
     {
         if (str_ends_with($path, '.phar')) {
-            return PHP_BINARY . ' ' . escapeshellarg($path);
+            return escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($path);
         }
 
-        return $path;
+        return escapeshellarg($path);
     }
 }
