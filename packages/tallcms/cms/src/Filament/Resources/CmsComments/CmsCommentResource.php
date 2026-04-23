@@ -18,18 +18,24 @@ class CmsCommentResource extends Resource
 
     protected static ?string $model = CmsComment::class;
 
-    protected static ?string $modelLabel = 'Comment';
-
-    protected static ?string $pluralModelLabel = 'Comments';
-
     public static function getNavigationIcon(): string
     {
         return 'heroicon-o-chat-bubble-left-right';
     }
 
+    public static function getModelLabel(): string
+    {
+        return config('tallcms.labels.comments.singular', 'Comment');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return config('tallcms.labels.comments.plural', 'Comments');
+    }
+
     public static function getNavigationLabel(): string
     {
-        return 'Comments';
+        return config('tallcms.labels.comments.navigation', 'Comments');
     }
 
     public static function getNavigationGroup(): ?string

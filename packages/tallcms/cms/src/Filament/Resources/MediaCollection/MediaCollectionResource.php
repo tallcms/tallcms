@@ -27,13 +27,25 @@ class MediaCollectionResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedFolderOpen;
 
-    protected static ?string $navigationLabel = 'Collections';
+    public static function getNavigationLabel(): string
+    {
+        return config('tallcms.labels.media_collections.navigation', 'Collections');
+    }
 
-    protected static ?string $modelLabel = 'Collection';
+    public static function getModelLabel(): string
+    {
+        return config('tallcms.labels.media_collections.singular', 'Collection');
+    }
 
-    protected static ?string $pluralModelLabel = 'Collections';
+    public static function getPluralModelLabel(): string
+    {
+        return config('tallcms.labels.media_collections.plural', 'Collections');
+    }
 
-    protected static ?string $navigationParentItem = 'Media Library';
+    public static function getNavigationParentItem(): ?string
+    {
+        return config('tallcms.labels.media.navigation', 'Media Library');
+    }
 
     public static function getNavigationGroup(): ?string
     {

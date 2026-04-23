@@ -22,11 +22,22 @@ class SiteResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cog-8-tooth';
 
-    protected static ?string $navigationLabel = 'Site Settings';
-
-    protected static ?string $modelLabel = 'Site';
-
     protected static ?int $navigationSort = 40;
+
+    public static function getNavigationLabel(): string
+    {
+        return config('tallcms.labels.site_settings.navigation', 'Site Settings');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return config('tallcms.labels.site_settings.singular', 'Site');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return config('tallcms.labels.site_settings.plural', 'Sites');
+    }
 
     public static function getNavigationGroup(): ?string
     {

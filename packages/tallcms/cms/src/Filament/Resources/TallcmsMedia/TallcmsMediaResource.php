@@ -21,11 +21,20 @@ class TallcmsMediaResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $navigationLabel = 'Media Library';
+    public static function getNavigationLabel(): string
+    {
+        return config('tallcms.labels.media.navigation', 'Media Library');
+    }
 
-    protected static ?string $modelLabel = 'Media File';
+    public static function getModelLabel(): string
+    {
+        return config('tallcms.labels.media.singular', 'Media File');
+    }
 
-    protected static ?string $pluralModelLabel = 'Media Files';
+    public static function getPluralModelLabel(): string
+    {
+        return config('tallcms.labels.media.plural', 'Media Files');
+    }
 
     public static function getNavigationGroup(): ?string
     {
