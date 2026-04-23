@@ -179,6 +179,13 @@ class ContactFormBlock extends RichContentCustomBlock
                                             ->maxLength(500)
                                             ->helperText('Shown after successful form submission'),
 
+                                        Textarea::make('auto_reply_message')
+                                            ->label('Auto-Reply Message')
+                                            ->rows(4)
+                                            ->maxLength(2000)
+                                            ->placeholder('Thank you for contacting us. We have received your submission and will respond within 1-2 business days.')
+                                            ->helperText('Custom body text for the auto-reply email sent to submitters. Leave blank to use the default. Submitter and site name are added automatically.'),
+
                                         Select::make('redirect_page_id')
                                             ->label('Redirect After Submission')
                                             ->options(fn ($livewire) => \TallCms\Cms\Filament\Forms\OwnerSitePicker::publishedPages($livewire))
@@ -249,6 +256,7 @@ class ContactFormBlock extends RichContentCustomBlock
             'fields' => self::getDefaultFields(),
             'submit_button_text' => 'Send Message',
             'success_message' => 'Thank you for your message! We\'ll be in touch soon.',
+            'auto_reply_message' => null,
             'button_style' => 'btn-primary',
             'background' => 'bg-base-100',
             'padding' => 'py-16',

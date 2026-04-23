@@ -19,7 +19,8 @@ class ContactFormAutoReply extends Mailable implements ShouldQueue
     use Queueable, SerializesModels;
 
     public function __construct(
-        public TallcmsContactSubmission $submission
+        public TallcmsContactSubmission $submission,
+        public ?string $customMessage = null,
     ) {}
 
     public function envelope(): Envelope
@@ -35,6 +36,7 @@ class ContactFormAutoReply extends Mailable implements ShouldQueue
             view: 'tallcms::emails.contact-form-auto-reply',
             with: [
                 'siteName' => $this->resolveSiteName(),
+                'customMessage' => $this->customMessage,
             ],
         );
     }

@@ -184,9 +184,19 @@ class ContactFormController extends Controller
             ]);
         }
 
-        // Queue auto-reply only if submitter provided a valid email
+        // Queue auto-reply only if submitter provided a valid email.
+        // Pass the per-block custom message so each contact form can carry
+        // its own response copy (release-window language, compliance text,
+        // listing-specific wording, etc.). Falls back to the default when
+        // the block config didn't set one.
         if ($submitterEmail) {
-            Mail::to($submitterEmail)->queue(new ContactFormAutoReply($submission));
+            $customMessage = ! empty($config['auto_reply_message'])
+                ? (string) $config['auto_reply_message']
+                : null;
+
+            Mail::to($submitterEmail)->queue(
+                new ContactFormAutoReply($submission, $customMessage),
+            );
         }
 
         // Resolve redirect URL if configured

@@ -133,9 +133,16 @@ class ContactForm extends Component
             Mail::to($adminEmail)->queue(new ContactFormAdminNotification($submission));
         }
 
-        // Queue auto-reply if submitter provided email
+        // Queue auto-reply if submitter provided email. Pass per-block
+        // custom message when the contact form block defined one.
         if ($submitterEmail) {
-            Mail::to($submitterEmail)->queue(new ContactFormAutoReply($submission));
+            $customMessage = ! empty($this->config['auto_reply_message'])
+                ? (string) $this->config['auto_reply_message']
+                : null;
+
+            Mail::to($submitterEmail)->queue(
+                new ContactFormAutoReply($submission, $customMessage),
+            );
         }
 
         // Reset form and show success

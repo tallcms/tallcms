@@ -81,7 +81,11 @@
 
         <p>Hello{{ $submission->name ? ' ' . e($submission->name) : '' }},</p>
 
-        <p>Thank you for contacting {{ $siteName ?? config('app.name') }}. This email confirms that we have received your submission. Our team will review your message and respond within 1-2 business days.</p>
+        @if(!empty($customMessage))
+            <p>{!! nl2br(e($customMessage)) !!}</p>
+        @else
+            <p>Thank you for contacting {{ $siteName ?? config('app.name') }}. This email confirms that we have received your submission. Our team will review your message and respond within 1-2 business days.</p>
+        @endif
 
         <div class="summary">
             <h3>Your Submission Summary</h3>
