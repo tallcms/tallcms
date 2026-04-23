@@ -2,8 +2,10 @@
     {{-- Site switcher: super_admins see every site; site_owners see their own.
          Without this, a user with multiple managed sites has no way to pick
          which one they're configuring the theme for. --}}
-    @php($manageableSites = $this->manageableSites())
-    @php($currentContext = $this->getMultisiteContext())
+    @php
+        $manageableSites = $this->manageableSites();
+        $currentContext = $this->getMultisiteContext();
+    @endphp
     @if(count($manageableSites) > 1)
         <x-filament::section>
             <div class="flex flex-col sm:flex-row sm:items-center gap-3">
