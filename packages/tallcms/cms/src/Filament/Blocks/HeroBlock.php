@@ -354,10 +354,10 @@ class HeroBlock extends RichContentCustomBlock
                                                 TextInput::make('name')
                                                     ->label('Field Name')
                                                     ->required()
-                                                    ->alphaNum()
+                                                    ->alphaDash()
                                                     ->maxLength(50)
                                                     ->distinct()
-                                                    ->helperText('Unique identifier (no spaces)'),
+                                                    ->helperText('Unique identifier — letters, numbers, underscores, or dashes.'),
 
                                                 TextInput::make('label')
                                                     ->label('Display Label')

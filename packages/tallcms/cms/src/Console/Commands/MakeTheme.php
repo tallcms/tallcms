@@ -677,12 +677,15 @@ GITIGNORE;
                     </ul>
                 </div>
                 <!-- Logo -->
-                @php \$logo = \\TallCms\\Cms\\Models\\SiteSetting::get('logo'); @endphp
+                @php
+                    \$logo = \\TallCms\\Cms\\Models\\SiteSetting::get('logo');
+                    \$siteName = \\TallCms\\Cms\\Models\\SiteSetting::get('site_name', config('app.name'));
+                @endphp
                 <a href="{{ tallcms_home_url() }}" class="btn btn-ghost text-xl font-bold">
                     @if(\$logo)
-                        <img src="{{ Storage::disk(cms_media_disk())->url(\$logo) }}" alt="{{ config('app.name') }}" class="h-8 w-auto">
+                        <img src="{{ Storage::disk(cms_media_disk())->url(\$logo) }}" alt="{{ \$siteName }}" class="h-8 w-auto">
                     @endif
-                    {{ config('app.name') }}
+                    {{ \$siteName }}
                 </a>
             </div>
 
@@ -712,16 +715,17 @@ GITIGNORE;
     </main>
 
     <!-- Footer -->
+    @php \$footerSiteName = \\TallCms\\Cms\\Models\\SiteSetting::get('site_name', config('app.name')); @endphp
     <footer class="footer footer-center bg-base-200 text-base-content p-10">
         <aside>
-            <p class="font-bold text-lg">{{ config('app.name') }}</p>
+            <p class="font-bold text-lg">{{ \$footerSiteName }}</p>
             <p>{$studlyName} theme for TallCMS</p>
         </aside>
         <nav>
             <x-menu location="footer" style="footer" />
         </nav>
         <aside>
-            <p>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+            <p>&copy; {{ date('Y') }} {{ \$footerSiteName }}. All rights reserved.</p>
             <x-tallcms::powered-by />
         </aside>
     </footer>

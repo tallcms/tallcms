@@ -318,8 +318,10 @@ class ContactFormController extends Controller
             $name = $field['name'];
             $type = $field['type'];
 
-            // Validate field name format (alphanumeric only, matching editor's alphaNum rule)
-            if (! preg_match('/^[a-zA-Z][a-zA-Z0-9]{0,49}$/', $name)) {
+            // Validate field name format — letters, digits, underscores, and
+            // dashes, starting with a letter. Must match the editor's
+            // alphaDash rule so config accepted in the form passes here too.
+            if (! preg_match('/^[a-zA-Z][a-zA-Z0-9_-]{0,49}$/', $name)) {
                 return "Invalid form configuration: field name '{$name}' contains invalid characters.";
             }
 

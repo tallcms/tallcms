@@ -903,6 +903,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
             Console\Commands\SeedInkTemplate::class,
             Console\Commands\SeedKeystoneTemplate::class,
             Console\Commands\SeedLaunchpadTemplate::class,
+            Console\Commands\SeedSpotlightTemplate::class,
             Console\Commands\ShieldSyncSiteOwner::class,
             Console\Commands\TallCmsInstall::class,
             Console\Commands\TallCmsPostInstall::class,
