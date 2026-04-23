@@ -153,11 +153,13 @@ class SiteSetting extends Model
      * Context-aware: uses different sources based on request type.
      * - Admin requests (tallcms.admin_context attribute): session is authoritative
      * - Frontend requests: resolver singleton is authoritative (domain-based)
-     * - Boot/console (no request): returns null (global settings)
+     * - Single-site installs (no multisite resolver bound): default site is current
      *
-     * This separation prevents admin session state from leaking into frontend
-     * settings reads (e.g., visiting tallcms.test after selecting portal.test
-     * in the admin switcher).
+     * The default-site fallback closes a gap in single-site mode where the
+     * Site edit page writes overrides keyed on the default site's id, but the
+     * frontend reader has no resolver to map "current request" back to that
+     * site id. Without the fallback, site-scoped settings saved in the admin
+     * never surface on the frontend.
      */
     protected static function resolveCurrentSiteId(): ?int
     {
@@ -173,7 +175,7 @@ class SiteSetting extends Model
             return null; // "All Sites" or no selection
         }
 
-        // Frontend / non-admin: resolver is the source of truth (domain-based)
+        // Frontend / non-admin with multisite plugin: resolver is authoritative (domain-based)
         if (app()->bound('tallcms.multisite.resolver')) {
             try {
                 $resolver = app('tallcms.multisite.resolver');
@@ -183,9 +185,50 @@ class SiteSetting extends Model
             } catch (\Throwable) {
                 // Resolver not functional
             }
+
+            return null;
         }
 
-        return null;
+        // Single-site install: default site is always the current site.
+        return static::defaultSiteId();
+    }
+
+    /**
+     * Resolve the default site's id, memoized per request.
+     *
+     * Used as the last-resort fallback for resolveCurrentSiteId() when no
+     * multisite resolver is bound (i.e., the multisite plugin is not installed).
+     */
+    protected static ?int $memoizedDefaultSiteId = null;
+
+    protected static bool $defaultSiteIdMemoized = false;
+
+    protected static function defaultSiteId(): ?int
+    {
+        if (static::$defaultSiteIdMemoized) {
+            return static::$memoizedDefaultSiteId;
+        }
+
+        try {
+            $id = DB::table('tallcms_sites')->where('is_default', true)->value('id')
+                ?? DB::table('tallcms_sites')->orderBy('id')->value('id');
+            static::$memoizedDefaultSiteId = $id ? (int) $id : null;
+        } catch (\Throwable) {
+            static::$memoizedDefaultSiteId = null;
+        }
+
+        static::$defaultSiteIdMemoized = true;
+
+        return static::$memoizedDefaultSiteId;
+    }
+
+    /**
+     * Reset the memoized default-site id. Used by tests between site mutations.
+     */
+    public static function forgetMemoizedDefaultSiteId(): void
+    {
+        static::$memoizedDefaultSiteId = null;
+        static::$defaultSiteIdMemoized = false;
     }
 
     /**
@@ -400,18 +443,25 @@ class SiteSetting extends Model
      */
     public static function clearCache(): void
     {
+        static::forgetMemoizedDefaultSiteId();
+
         try {
             $settings = static::all();
             foreach ($settings as $setting) {
                 Cache::forget("site_setting_{$setting->key}");
             }
 
-            // Also clear site-specific override caches if multisite is active
-            $siteId = static::resolveCurrentSiteId();
-            if ($siteId) {
-                foreach ($settings as $setting) {
-                    Cache::forget("site_setting_{$siteId}_{$setting->key}");
+            // Clear site-specific override caches for every known site so the
+            // frontend picks up changes regardless of which site is "current".
+            try {
+                $siteIds = DB::table('tallcms_sites')->pluck('id');
+                foreach ($siteIds as $siteId) {
+                    foreach ($settings as $setting) {
+                        Cache::forget("site_setting_{$siteId}_{$setting->key}");
+                    }
                 }
+            } catch (\Throwable) {
+                // tallcms_sites table may not exist yet
             }
         } catch (QueryException) {
             // Table doesn't exist yet

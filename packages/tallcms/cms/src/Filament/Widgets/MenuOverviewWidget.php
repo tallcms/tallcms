@@ -6,6 +6,7 @@ use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class MenuOverviewWidget extends BaseWidget
 {
@@ -14,6 +15,13 @@ class MenuOverviewWidget extends BaseWidget
         $siteId = $this->getMultisiteSiteId();
         $siteName = $this->getMultisiteName($siteId);
 
+        // site_id is only added to content tables when the multisite plugin
+        // is installed. On standalone installs the column does not exist,
+        // so we must guard every filter — the default-site fallback in
+        // getMultisiteSiteId() will still hand us an id even in single-site mode.
+        $pagesHaveSiteId = Schema::hasColumn('tallcms_pages', 'site_id');
+        $menusHaveSiteId = Schema::hasColumn('tallcms_menus', 'site_id');
+
         // Use direct DB queries scoped by site — avoids reliance on SiteScope
         // which may not be resolved at widget render time in admin context.
         $pageQuery = DB::table('tallcms_pages')->whereNull('deleted_at');
@@ -21,9 +29,12 @@ class MenuOverviewWidget extends BaseWidget
         $menuQuery = DB::table('tallcms_menus');
         $activeMenuQuery = DB::table('tallcms_menus')->where('is_active', true);
 
-        if ($siteId) {
+        if ($siteId && $pagesHaveSiteId) {
             $pageQuery->where('site_id', $siteId);
             $publishedPageQuery->where('site_id', $siteId);
+        }
+
+        if ($siteId && $menusHaveSiteId) {
             $menuQuery->where('site_id', $siteId);
             $activeMenuQuery->where('site_id', $siteId);
         }
@@ -34,7 +45,9 @@ class MenuOverviewWidget extends BaseWidget
         $activeMenus = $activeMenuQuery->count();
 
         // Menu items: scope through menus
-        $menuIds = ($siteId ? DB::table('tallcms_menus')->where('site_id', $siteId) : DB::table('tallcms_menus'))
+        $menuIds = ($siteId && $menusHaveSiteId
+            ? DB::table('tallcms_menus')->where('site_id', $siteId)
+            : DB::table('tallcms_menus'))
             ->pluck('id');
         $totalItems = $menuIds->isNotEmpty()
             ? DB::table('tallcms_menu_items')->whereIn('menu_id', $menuIds)->count()
