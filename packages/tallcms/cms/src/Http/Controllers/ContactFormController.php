@@ -71,22 +71,10 @@ class ContactFormController extends Controller
 
         // Verify config signature to prevent tampering and replay attacks
         if (! $this->verifyConfigSignature($config, $signature, $pageUrl)) {
-            // TEMP DEBUG: capture both signatures and the signed payload so we
-            // can diff render-time vs verify-time when investigating reports.
-            $verifyPayload = json_encode([
-                'v' => self::SCHEMA_VERSION,
-                'url' => $pageUrl,
-                'config' => $config,
-            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-
             Log::warning('Contact form submission with invalid signature', [
                 'ip' => $request->ip(),
                 'referer' => $request->header('Referer'),
                 'claimed_page_url' => $pageUrl,
-                'submitted_signature' => $signature,
-                'computed_signature' => self::signConfig($config, $pageUrl),
-                'signed_payload' => $verifyPayload,
-                'config_keys_in_order' => array_keys($config),
             ]);
 
             return response()->json([
@@ -229,19 +217,43 @@ class ContactFormController extends Controller
     }
 
     /**
-     * Generate HMAC signature for config to prevent tampering
+     * Generate HMAC signature for config to prevent tampering.
      *
-     * Includes schema version for forward compatibility and page URL to prevent replay attacks
+     * Includes schema version for forward compatibility and page URL to prevent
+     * replay attacks. Strings are recursively trimmed before hashing because
+     * Laravel's TrimStrings middleware strips leading/trailing whitespace from
+     * every string in the request body, including values inside _config. Without
+     * matching trim on both sides, a config value that carried a trailing space
+     * at render time (e.g. a site owner typed "Thanks! " into the Auto-Reply
+     * Message textarea) hashes differently on each side and every submission
+     * fails with "Invalid form configuration."
      */
     public static function signConfig(array $config, string $pageUrl = ''): string
     {
         $payload = json_encode([
             'v' => self::SCHEMA_VERSION,
             'url' => $pageUrl,
-            'config' => $config,
+            'config' => self::normalizeConfigForSigning($config),
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
         return hash_hmac('sha256', $payload, config('app.key'));
+    }
+
+    /**
+     * Recursively trim string values so render-time signing matches the
+     * post-TrimStrings representation the controller sees on submit.
+     */
+    protected static function normalizeConfigForSigning(array $config): array
+    {
+        foreach ($config as $key => $value) {
+            if (is_string($value)) {
+                $config[$key] = trim($value);
+            } elseif (is_array($value)) {
+                $config[$key] = self::normalizeConfigForSigning($value);
+            }
+        }
+
+        return $config;
     }
 
     /**
