@@ -610,14 +610,16 @@ GITIGNORE;
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ daisyui_default_preset() }}" data-default-theme="{{ daisyui_default_preset() }}">
 <head>
     <script>
-        // Apply saved theme; reset localStorage when admin changes the default
+        // Apply saved theme; reset localStorage when admin changes the default.
+        // Namespaced under tallcms-* to avoid colliding with Filament's admin
+        // light/dark toggle, which writes localStorage.theme on the same origin.
         (function() {
             var d = document.documentElement.getAttribute('data-default-theme');
-            if (localStorage.getItem('theme-default') !== d) {
-                localStorage.removeItem('theme');
-                localStorage.setItem('theme-default', d);
+            if (localStorage.getItem('tallcms-theme-default') !== d) {
+                localStorage.removeItem('tallcms-theme');
+                localStorage.setItem('tallcms-theme-default', d);
             }
-            var s = localStorage.getItem('theme');
+            var s = localStorage.getItem('tallcms-theme');
             if (s) document.documentElement.setAttribute('data-theme', s);
         })();
     </script>

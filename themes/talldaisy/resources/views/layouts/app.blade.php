@@ -2,17 +2,21 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ daisyui_default_preset() }}" data-default-theme="{{ daisyui_default_preset() }}">
 <head>
     <script>
-        // Apply saved theme immediately to prevent flash of wrong theme
-        // When admin changes the default preset, localStorage is cleared so the new default wins
+        // Apply saved theme immediately to prevent flash of wrong theme.
+        // Namespaced under tallcms-* to avoid colliding with Filament's admin
+        // light/dark toggle, which writes localStorage.theme on the same origin.
+        // Without namespacing, visiting /admin would leak 'light'/'dark' into the
+        // frontend daisyUI preset, overriding any coffee/dracula/etc the admin
+        // had chosen.
         (function() {
             var serverDefault = document.documentElement.getAttribute('data-default-theme');
-            var storedDefault = localStorage.getItem('theme-default');
+            var storedDefault = localStorage.getItem('tallcms-theme-default');
             if (storedDefault !== serverDefault) {
                 // Admin changed the default — clear visitor's override
-                localStorage.removeItem('theme');
-                localStorage.setItem('theme-default', serverDefault);
+                localStorage.removeItem('tallcms-theme');
+                localStorage.setItem('tallcms-theme-default', serverDefault);
             }
-            var savedTheme = localStorage.getItem('theme');
+            var savedTheme = localStorage.getItem('tallcms-theme');
             if (savedTheme) {
                 document.documentElement.setAttribute('data-theme', savedTheme);
             }
@@ -306,7 +310,7 @@
         (function() {
             function setTheme(theme) {
                 document.documentElement.setAttribute('data-theme', theme);
-                localStorage.setItem('theme', theme);
+                localStorage.setItem('tallcms-theme', theme);
                 // Update active button styling
                 document.querySelectorAll('.theme-btn').forEach(btn => {
                     btn.classList.toggle('btn-active', btn.dataset.themeValue === theme);
@@ -357,7 +361,7 @@
                     main.classList.remove('page-transitioning');
                 }
                 // Re-apply theme: localStorage override or current data-theme (already set by boot script)
-                var savedTheme = localStorage.getItem('theme');
+                var savedTheme = localStorage.getItem('tallcms-theme');
                 if (savedTheme) {
                     document.documentElement.setAttribute('data-theme', savedTheme);
                 }
