@@ -222,6 +222,7 @@ class CmsPageForm
                                             ->options(fn ($livewire) => \TallCms\Cms\Filament\Forms\OwnerSitePicker::parentPageOptions($livewire))
                                             ->searchable()
                                             ->nullable()
+                                            ->live()
                                             ->columnSpan(1),
 
                                         TextInput::make('sort_order')

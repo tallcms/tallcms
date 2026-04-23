@@ -180,28 +180,44 @@ class CmsPage extends Model implements HasRichContent
     }
 
     /**
-     * Get the full URL slug by concatenating ancestor slugs with this page's slug.
+     * Get the URL slug for this page.
      *
-     * A child page "team" under parent "services" returns "services/team".
-     * The leaf slug stored in the database is never modified — the full path
-     * is computed on the fly by walking the parent chain.
+     * When tallcms.pages.hierarchical_urls is enabled, returns the full
+     * ancestor path (e.g. "services/team"). When disabled (default), returns
+     * just the leaf slug stored in the database ("team"), preserving the
+     * pre-hierarchical URL behavior for existing installs.
      *
-     * @param  string|null  $locale  Locale for translatable slugs (null = current app locale)
+     * @param  string|null  $locale   Locale for translatable slugs (null = current app locale)
+     * @param  array<int>   $visited  Internal cycle guard — do not pass from call sites
      */
-    public function getFullSlug(?string $locale = null): string
+    public function getFullSlug(?string $locale = null, array $visited = []): string
     {
         $slug = tallcms_i18n_enabled() && $locale
             ? ($this->getTranslation('slug', $locale, false) ?? $this->slug)
             : $this->slug;
 
+        // When hierarchical URLs are disabled, return the leaf slug only.
+        // This preserves exact pre-feature behavior for existing installs.
+        if (! config('tallcms.pages.hierarchical_urls', false)) {
+            return $slug;
+        }
+
+        // Cycle guard: a circular parent_id reference in the database would
+        // recurse forever — break out by returning the leaf slug.
+        if (in_array($this->id, $visited, true)) {
+            return $slug;
+        }
+
+        $visited[] = $this->id;
+
         if ($this->parent_id && $this->relationLoaded('parent') && $this->parent) {
-            return $this->parent->getFullSlug($locale).'/'.$slug;
+            return $this->parent->getFullSlug($locale, $visited).'/'.$slug;
         }
 
         if ($this->parent_id) {
             $parent = $this->parent()->first();
             if ($parent) {
-                return $parent->getFullSlug($locale).'/'.$slug;
+                return $parent->getFullSlug($locale, $visited).'/'.$slug;
             }
         }
 

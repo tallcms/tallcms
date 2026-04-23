@@ -68,12 +68,16 @@ class CmsPageRenderer extends Component
             $cleanSlug = str_replace('page/', '', $cleanSlug);
         }
 
-        // Check for nested slug (potential post URL like "blog/my-post")
-        if (str_contains($cleanSlug, '/')) {
+        // When hierarchical URLs are enabled, resolve multi-segment paths
+        // (e.g. /services/team) by walking the page tree segment by segment.
+        // This also handles post URLs nested under a page (e.g. /blog/my-post).
+        // When disabled (default), flat slug lookup is used — identical to
+        // pre-feature behavior, so existing installs are unaffected on upgrade.
+        if (config('tallcms.pages.hierarchical_urls', false) && str_contains($cleanSlug, '/')) {
             $resolved = $this->resolveNestedSlug($cleanSlug);
 
             if ($resolved) {
-                return; // Post or nested page was found and rendered
+                return;
             }
         }
 
@@ -121,7 +125,14 @@ class CmsPageRenderer extends Component
     }
 
     /**
-     * Resolve nested slugs to either a post within a page or a nested page
+     * Resolve nested slugs to either a post within a page or a nested page.
+     *
+     * Each path segment is looked up as a published page scoped to the parent
+     * found in the previous step. This means every intermediate segment in the
+     * path must be a published page — a draft or pending parent page makes its
+     * entire subtree unreachable via the hierarchical URL. This is intentional:
+     * an unpublished parent acts as an invisible node and its children are
+     * inaccessible until the parent is also published.
      */
     protected function resolveNestedSlug(string $slug): bool
     {
@@ -139,6 +150,8 @@ class CmsPageRenderer extends Component
                 ? CmsPage::withLocalizedSlug($segment)
                 : CmsPage::withSlug($segment);
 
+            // NOTE: published() is intentionally required for every segment —
+            // see method docblock above for the rationale.
             $query->published();
 
             if ($parentId !== null) {
