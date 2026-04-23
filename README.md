@@ -241,10 +241,6 @@ Common issues and solutions are documented in the [Installation Guide](https://g
 
 ## Credits
 
-### Built with AI
-
-TallCMS is co-developed with [Claude AI](https://claude.ai) (Anthropic) and code-reviewed by [Codex](https://openai.com/index/openai-codex/) (OpenAI).
-
 ### Core Technologies
 
 - [Laravel](https://laravel.com/) — The PHP framework
