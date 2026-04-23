@@ -11,6 +11,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
 use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
 use TallCms\Cms\Models\CmsPage;
 use TallCms\Cms\Models\TallcmsMenu;
@@ -105,6 +106,13 @@ class MenuItemsManager extends NestedsetPage
         }
 
         return app(LocaleRegistry::class)->getDefaultLocale();
+    }
+
+    public function getRecordLabel(Model $record): HtmlString|string
+    {
+        $locale = $this->activeLocale ?? $this->getDefaultTranslatableLocale();
+
+        return $record->getTranslation(static::getRecordTitleAttribute(), $locale, true) ?: ' ';
     }
 
     /**
