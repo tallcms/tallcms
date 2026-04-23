@@ -196,6 +196,71 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Resource Labels
+    |--------------------------------------------------------------------------
+    |
+    | Admin panel singular, plural, and navigation labels for each resource.
+    | Override any key to rename a resource without touching package files.
+    | In plugin mode, prefer the TallCmsPlugin fluent API:
+    |   TallCmsPlugin::make()->categoryLabel('Tags', 'Tag')
+    | Direct config overrides in your app's config/tallcms.php also work.
+    |
+    */
+    'labels' => [
+        'categories' => [
+            'singular'   => 'Category',
+            'plural'     => 'Categories',
+            'navigation' => 'Categories',
+        ],
+        'pages' => [
+            'singular'   => 'Page',
+            'plural'     => 'Pages',
+            'navigation' => 'Pages',
+        ],
+        'posts' => [
+            'singular'   => 'Post',
+            'plural'     => 'Posts',
+            'navigation' => 'Posts',
+        ],
+        'menus' => [
+            'singular'   => 'Menu',
+            'plural'     => 'Menus',
+            'navigation' => 'Menus',
+        ],
+        'media' => [
+            'singular'   => 'Media File',
+            'plural'     => 'Media Files',
+            'navigation' => 'Media Library',
+        ],
+        'media_collections' => [
+            'singular'   => 'Collection',
+            'plural'     => 'Collections',
+            'navigation' => 'Collections',
+        ],
+        'comments' => [
+            'singular'   => 'Comment',
+            'plural'     => 'Comments',
+            'navigation' => 'Comments',
+        ],
+        'contact_submissions' => [
+            'singular'   => 'Contact Submission',
+            'plural'     => 'Contact Submissions',
+            'navigation' => 'Contact Submissions',
+        ],
+        'users' => [
+            'singular'   => 'User',
+            'plural'     => 'Users',
+            'navigation' => 'Users',
+        ],
+        'site_settings' => [
+            'singular'   => 'Site',
+            'plural'     => 'Sites',
+            'navigation' => 'Site Settings',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Contact Information
     |--------------------------------------------------------------------------
     |

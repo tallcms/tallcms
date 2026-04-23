@@ -17,18 +17,24 @@ class TallcmsContactSubmissionResource extends Resource
 
     protected static ?string $model = TallcmsContactSubmission::class;
 
-    protected static ?string $modelLabel = 'Contact Submission';
-
-    protected static ?string $pluralModelLabel = 'Contact Submissions';
-
     public static function getNavigationIcon(): string
     {
         return 'heroicon-o-envelope';
     }
 
+    public static function getModelLabel(): string
+    {
+        return config('tallcms.labels.contact_submissions.singular', 'Contact Submission');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return config('tallcms.labels.contact_submissions.plural', 'Contact Submissions');
+    }
+
     public static function getNavigationLabel(): string
     {
-        return 'Contact Submissions';
+        return config('tallcms.labels.contact_submissions.navigation', 'Contact Submissions');
     }
 
     public static function getNavigationGroup(): ?string

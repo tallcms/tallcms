@@ -21,8 +21,6 @@ class CmsCategoryResource extends Resource
 
     protected static ?string $model = CmsCategory::class;
 
-    protected static ?string $pluralModelLabel = 'Categories';
-
     public static function form(Schema $schema): Schema
     {
         return CmsCategoryForm::configure($schema);
@@ -59,9 +57,19 @@ class CmsCategoryResource extends Resource
         return config('tallcms.navigation.groups.content', 'Content');
     }
 
+    public static function getModelLabel(): string
+    {
+        return config('tallcms.labels.categories.singular', 'Category');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return config('tallcms.labels.categories.plural', 'Categories');
+    }
+
     public static function getNavigationLabel(): string
     {
-        return 'Categories';
+        return config('tallcms.labels.categories.navigation', 'Categories');
     }
 
     public static function getNavigationSort(): ?int

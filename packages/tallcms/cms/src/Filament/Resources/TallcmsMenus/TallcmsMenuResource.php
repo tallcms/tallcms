@@ -20,11 +20,20 @@ class TallcmsMenuResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $navigationLabel = 'Menus';
+    public static function getNavigationLabel(): string
+    {
+        return config('tallcms.labels.menus.navigation', 'Menus');
+    }
 
-    protected static ?string $modelLabel = 'Menu';
+    public static function getModelLabel(): string
+    {
+        return config('tallcms.labels.menus.singular', 'Menu');
+    }
 
-    protected static ?string $pluralModelLabel = 'Menus';
+    public static function getPluralModelLabel(): string
+    {
+        return config('tallcms.labels.menus.plural', 'Menus');
+    }
 
     public static function shouldRegisterNavigation(): bool
     {

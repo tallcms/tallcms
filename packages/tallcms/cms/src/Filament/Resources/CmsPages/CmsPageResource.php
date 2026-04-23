@@ -22,8 +22,6 @@ class CmsPageResource extends Resource
 
     protected static ?string $model = CmsPage::class;
 
-    protected static ?string $pluralModelLabel = 'Pages';
-
     // Title attribute enables global search automatically
     protected static ?string $recordTitleAttribute = 'title';
 
@@ -85,9 +83,19 @@ class CmsPageResource extends Resource
         return config('tallcms.navigation.groups.content', 'Content');
     }
 
+    public static function getModelLabel(): string
+    {
+        return config('tallcms.labels.pages.singular', 'Page');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return config('tallcms.labels.pages.plural', 'Pages');
+    }
+
     public static function getNavigationLabel(): string
     {
-        return 'Pages';
+        return config('tallcms.labels.pages.navigation', 'Pages');
     }
 
     public static function getNavigationSort(): ?int
@@ -125,7 +133,7 @@ class CmsPageResource extends Resource
     public static function getGlobalSearchResultDetails(Model $record): array
     {
         return [
-            __('Type') => __('Page'),
+            __('Type') => static::getModelLabel(),
             __('Status') => __(ucfirst($record->status ?? 'draft')),
         ];
     }

@@ -19,9 +19,20 @@ class UserResource extends Resource
 {
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;
 
-    protected static ?string $modelLabel = 'User';
+    public static function getModelLabel(): string
+    {
+        return config('tallcms.labels.users.singular', 'User');
+    }
 
-    protected static ?string $pluralModelLabel = 'Users';
+    public static function getPluralModelLabel(): string
+    {
+        return config('tallcms.labels.users.plural', 'Users');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return config('tallcms.labels.users.navigation', 'Users');
+    }
 
     public static function getModel(): string
     {

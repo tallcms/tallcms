@@ -7,6 +7,7 @@ namespace TallCms\Cms;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use LaraZeus\SpatieTranslatable\SpatieTranslatablePlugin;
 use TallCms\Cms\Filament\Pages\ApiTokens;
@@ -72,6 +73,9 @@ class TallCmsPlugin implements Plugin
 
     protected ?string $shieldNavigationGroup = null; // Set dynamically from config
 
+    /** @var array<string, array{singular?: string, plural?: string, navigation?: string}> */
+    protected array $labelOverrides = [];
+
     public static function make(): static
     {
         return app(static::class);
@@ -92,6 +96,12 @@ class TallCmsPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
+        foreach ($this->labelOverrides as $key => $labels) {
+            foreach ($labels as $type => $value) {
+                Config::set("tallcms.labels.{$key}.{$type}", $value);
+            }
+        }
+
         $panel
             ->resources($this->getResources())
             ->pages($this->getPages())
@@ -545,6 +555,119 @@ class TallCmsPlugin implements Plugin
     public function shieldNavigationGroup(?string $group): static
     {
         $this->shieldNavigationGroup = $group;
+
+        return $this;
+    }
+
+    /**
+     * Rename the Categories resource labels.
+     *
+     * Example: ->categoryLabel('Tags', 'Tag')
+     */
+    public function categoryLabel(string $plural, ?string $singular = null, ?string $navigation = null): static
+    {
+        return $this->setResourceLabels('categories', $plural, $singular, $navigation);
+    }
+
+    /**
+     * Rename the Pages resource labels.
+     *
+     * Example: ->pageLabel('Website Pages', 'Website Page')
+     */
+    public function pageLabel(string $plural, ?string $singular = null, ?string $navigation = null): static
+    {
+        return $this->setResourceLabels('pages', $plural, $singular, $navigation);
+    }
+
+    /**
+     * Rename the Posts resource labels.
+     *
+     * Example: ->postLabel('Articles', 'Article')
+     */
+    public function postLabel(string $plural, ?string $singular = null, ?string $navigation = null): static
+    {
+        return $this->setResourceLabels('posts', $plural, $singular, $navigation);
+    }
+
+    /**
+     * Rename the Menus resource labels.
+     */
+    public function menuLabel(string $plural, ?string $singular = null, ?string $navigation = null): static
+    {
+        return $this->setResourceLabels('menus', $plural, $singular, $navigation);
+    }
+
+    /**
+     * Rename the Media resource labels.
+     */
+    public function mediaLabel(string $plural, ?string $singular = null, ?string $navigation = null): static
+    {
+        return $this->setResourceLabels('media', $plural, $singular, $navigation);
+    }
+
+    /**
+     * Rename the Media Collections resource labels.
+     */
+    public function mediaCollectionLabel(string $plural, ?string $singular = null, ?string $navigation = null): static
+    {
+        return $this->setResourceLabels('media_collections', $plural, $singular, $navigation);
+    }
+
+    /**
+     * Rename the Comments resource labels.
+     */
+    public function commentLabel(string $plural, ?string $singular = null, ?string $navigation = null): static
+    {
+        return $this->setResourceLabels('comments', $plural, $singular, $navigation);
+    }
+
+    /**
+     * Rename the Contact Submissions resource labels.
+     */
+    public function contactSubmissionLabel(string $plural, ?string $singular = null, ?string $navigation = null): static
+    {
+        return $this->setResourceLabels('contact_submissions', $plural, $singular, $navigation);
+    }
+
+    /**
+     * Rename the Users resource labels.
+     */
+    public function userLabel(string $plural, ?string $singular = null, ?string $navigation = null): static
+    {
+        return $this->setResourceLabels('users', $plural, $singular, $navigation);
+    }
+
+    /**
+     * Rename the Site Settings resource labels.
+     */
+    public function siteSettingsLabel(string $plural, ?string $singular = null, ?string $navigation = null): static
+    {
+        return $this->setResourceLabels('site_settings', $plural, $singular, $navigation);
+    }
+
+    /**
+     * Store label overrides for a resource key.
+     *
+     * Only provided (non-null) values are written; omitted ones preserve
+     * the existing config default. This matters because the default
+     * navigation label is intentionally different from plural for some
+     * resources (e.g. media -> "Media Library", site_settings ->
+     * "Site Settings"), and the singular form is usually not the same
+     * word as the plural ("Article" vs "Articles").
+     */
+    protected function setResourceLabels(string $key, string $plural, ?string $singular, ?string $navigation): static
+    {
+        $overrides = ['plural' => $plural];
+
+        if ($singular !== null) {
+            $overrides['singular'] = $singular;
+        }
+
+        if ($navigation !== null) {
+            $overrides['navigation'] = $navigation;
+        }
+
+        $this->labelOverrides[$key] = $overrides;
 
         return $this;
     }

@@ -22,8 +22,6 @@ class CmsPostResource extends Resource
 
     protected static ?string $model = CmsPost::class;
 
-    protected static ?string $pluralModelLabel = 'Posts';
-
     // Title attribute enables global search automatically
     protected static ?string $recordTitleAttribute = 'title';
 
@@ -66,9 +64,19 @@ class CmsPostResource extends Resource
         return config('tallcms.navigation.groups.content', 'Content');
     }
 
+    public static function getModelLabel(): string
+    {
+        return config('tallcms.labels.posts.singular', 'Post');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return config('tallcms.labels.posts.plural', 'Posts');
+    }
+
     public static function getNavigationLabel(): string
     {
-        return 'Posts';
+        return config('tallcms.labels.posts.navigation', 'Posts');
     }
 
     public static function getNavigationSort(): ?int
@@ -122,7 +130,7 @@ class CmsPostResource extends Resource
     public static function getGlobalSearchResultDetails(Model $record): array
     {
         return [
-            __('Type') => __('Post'),
+            __('Type') => static::getModelLabel(),
             __('Status') => __(ucfirst($record->status ?? 'draft')),
             __('Author') => $record->author?->name ?? __('Unknown'),
         ];
