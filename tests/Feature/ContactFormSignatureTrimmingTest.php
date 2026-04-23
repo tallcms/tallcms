@@ -70,4 +70,31 @@ class ContactFormSignatureTrimmingTest extends TestCase
             'semantically significant and must not change the signature.',
         );
     }
+
+    public function test_empty_string_matches_null_to_mirror_convert_empty_strings_to_null_middleware(): void
+    {
+        // Block defaults often carry empty strings ("description" => "") that
+        // Laravel's ConvertEmptyStringsToNull middleware rewrites to null on
+        // the request body. Sign-time normalization must match that behavior
+        // so render-time and verify-time hashes agree.
+        $withEmptyString = ['description' => '', 'title' => 'Form'];
+        $withNull = ['description' => null, 'title' => 'Form'];
+
+        $this->assertSame(
+            ContactFormController::signConfig($withEmptyString, 'https://x'),
+            ContactFormController::signConfig($withNull, 'https://x'),
+        );
+    }
+
+    public function test_whitespace_only_string_matches_null(): void
+    {
+        // TrimStrings then ConvertEmptyStringsToNull composed: "   " -> "" -> null.
+        $withWhitespace = ['description' => '   ', 'title' => 'Form'];
+        $withNull = ['description' => null, 'title' => 'Form'];
+
+        $this->assertSame(
+            ContactFormController::signConfig($withWhitespace, 'https://x'),
+            ContactFormController::signConfig($withNull, 'https://x'),
+        );
+    }
 }

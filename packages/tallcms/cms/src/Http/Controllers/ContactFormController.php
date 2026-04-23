@@ -240,14 +240,23 @@ class ContactFormController extends Controller
     }
 
     /**
-     * Recursively trim string values so render-time signing matches the
-     * post-TrimStrings representation the controller sees on submit.
+     * Recursively normalize strings so render-time signing matches the
+     * post-middleware representation the controller sees on submit.
+     *
+     * Mirrors two Laravel middleware transformations that run on every
+     * request body: TrimStrings (trims whitespace) and ConvertEmptyStrings
+     * ToNull (empty string -> null). If the render-side config has
+     * "description" => "" from a block default, the browser submits
+     * "description" => "", middleware rewrites it to null, and the
+     * controller re-signs with null -> different hash -> rejection.
+     * Normalizing both sides identically keeps the signature stable.
      */
     protected static function normalizeConfigForSigning(array $config): array
     {
         foreach ($config as $key => $value) {
             if (is_string($value)) {
-                $config[$key] = trim($value);
+                $trimmed = trim($value);
+                $config[$key] = $trimmed === '' ? null : $trimmed;
             } elseif (is_array($value)) {
                 $config[$key] = self::normalizeConfigForSigning($value);
             }
