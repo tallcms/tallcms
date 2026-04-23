@@ -332,11 +332,14 @@ class ThemeManager extends Page implements HasForms
             $fallback = $activeThemeModel?->getDaisyUIPreset() ?? 'light';
             $presets = $activeThemeModel?->getDaisyUIPresets() ?? [];
 
-            // Site-selected: read site-specific preset. Global: read global preset.
-            $context = $this->getMultisiteContext();
-            $stored = $context
-                ? SiteSetting::get('theme_default_preset')
-                : SiteSetting::getGlobal('theme_default_preset');
+            // SiteSetting::get() resolves to the active site's override (or the
+            // default site's override on standalone installs, post-4.0.8), and
+            // falls back to the global value when no override exists. The older
+            // branching on getMultisiteContext() predates the default-site
+            // resolver fallback and silently skipped the override on standalone
+            // installs — save went to the override table, read hit the globals
+            // table, so the preset never persisted.
+            $stored = SiteSetting::get('theme_default_preset');
 
             $theme['defaultPreset'] = ($stored && in_array($stored, $presets)) ? $stored : $fallback;
         }
