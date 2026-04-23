@@ -900,6 +900,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
             Console\Commands\CleanExpiredPreviewTokens::class,
             Console\Commands\MakeTallCmsBlock::class,
             Console\Commands\SearchIndex::class,
+            Console\Commands\SeedKeystoneTemplate::class,
             Console\Commands\ShieldSyncSiteOwner::class,
             Console\Commands\TallCmsInstall::class,
             Console\Commands\TallCmsPostInstall::class,
