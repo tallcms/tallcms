@@ -123,8 +123,12 @@ class ContactForm extends Component
             'page_url' => request()->header('Referer', request()->url()),
         ]);
 
-        // Queue admin notification (Site Settings with config fallback)
-        $adminEmail = SiteSetting::get('contact_email') ?: config('tallcms.contact_email');
+        // Queue admin notification using the SaaS-friendly resolution chain
+        // (site override → site owner email → global). Avoids routing
+        // submissions to a global "dummy" default that cloned sites would
+        // otherwise inherit as their admin recipient.
+        $adminEmail = \TallCms\Cms\Http\Controllers\ContactFormController::resolveAdminRecipient()
+            ?: config('tallcms.contact_email');
         if ($adminEmail) {
             Mail::to($adminEmail)->queue(new ContactFormAdminNotification($submission));
         }

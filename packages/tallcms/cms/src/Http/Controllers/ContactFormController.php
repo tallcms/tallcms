@@ -7,13 +7,16 @@ namespace TallCms\Cms\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use TallCms\Cms\Mail\ContactFormAdminNotification;
 use TallCms\Cms\Mail\ContactFormAutoReply;
+use TallCms\Cms\Models\SiteSetting;
 use TallCms\Cms\Models\TallcmsContactSubmission;
 use TallCms\Cms\Services\BlockLinkResolver;
 
@@ -171,12 +174,12 @@ class ContactFormController extends Controller
             'page_url' => $request->header('Referer', $request->url()),
         ]);
 
-        // Queue admin notification (uses site settings with fallback to mail config)
-        $adminEmail = \TallCms\Cms\Models\SiteSetting::get('contact_email');
+        // Queue admin notification using the SaaS-friendly resolution chain.
+        $adminEmail = static::resolveAdminRecipient();
         if ($adminEmail) {
             Mail::to($adminEmail)->queue(new ContactFormAdminNotification($submission));
         } else {
-            Log::warning('Contact form submission received but no admin email configured in Site Settings', [
+            Log::warning('Contact form submission received but no admin email could be resolved', [
                 'submission_id' => $submission->id,
             ]);
         }
@@ -327,5 +330,77 @@ class ContactFormController extends Controller
         }
 
         return true;
+    }
+
+    /**
+     * Resolve where a contact-form admin notification should go, for the
+     * site that owns the current request.
+     *
+     * Chain, most-specific first:
+     *   1. Site-specific override (the site_owner set contact_email in Site Settings).
+     *   2. Site owner's user email (SaaS default: submissions route to the person
+     *      who owns the site, even before they've configured anything).
+     *   3. Global contact_email setting (the installation-wide fallback).
+     *   4. null — caller should skip the send.
+     *
+     * The previous implementation used SiteSetting::get('contact_email'),
+     * which only checks the override→global pair. On SaaS installs that had
+     * a "dummy" global contact_email (e.g., noreply@the-install.test), every
+     * cloned site inherited that dummy as its admin recipient — so the site
+     * owner never saw their own form submissions. Inserting the site owner's
+     * user email between the override and the global closes that gap.
+     */
+    public static function resolveAdminRecipient(): ?string
+    {
+        $siteId = null;
+
+        if (app()->bound('tallcms.multisite.resolver')) {
+            try {
+                $resolver = app('tallcms.multisite.resolver');
+                if ($resolver->isResolved() && $resolver->id()) {
+                    $siteId = (int) $resolver->id();
+                }
+            } catch (\Throwable) {
+                // Resolver not functional — fall through
+            }
+        }
+
+        // 1. Site-specific override
+        if ($siteId && Schema::hasTable('tallcms_site_setting_overrides')) {
+            try {
+                $override = DB::table('tallcms_site_setting_overrides')
+                    ->where('site_id', $siteId)
+                    ->where('key', 'contact_email')
+                    ->value('value');
+                if ($override) {
+                    return $override;
+                }
+            } catch (\Throwable) {
+                // Ignore and fall through
+            }
+        }
+
+        // 2. Site owner's user email (SaaS-friendly default)
+        if ($siteId && Schema::hasTable('tallcms_sites') && Schema::hasTable('users')) {
+            try {
+                $ownerEmail = DB::table('tallcms_sites')
+                    ->join('users', 'users.id', '=', 'tallcms_sites.user_id')
+                    ->where('tallcms_sites.id', $siteId)
+                    ->value('users.email');
+                if ($ownerEmail) {
+                    return $ownerEmail;
+                }
+            } catch (\Throwable) {
+                // Ignore and fall through
+            }
+        }
+
+        // 3. Global fallback
+        $global = SiteSetting::getGlobal('contact_email');
+        if ($global) {
+            return $global;
+        }
+
+        return null;
     }
 }
