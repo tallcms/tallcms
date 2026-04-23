@@ -120,7 +120,7 @@ class ShieldSyncSiteOwner extends Command
             'ViewAny:TallcmsContactSubmission', 'View:TallcmsContactSubmission',
             'Update:TallcmsContactSubmission', 'Delete:TallcmsContactSubmission',
             // Admin pages
-            'View:MenuItemsManager', 'View:SiteSettings',
+            'View:MenuItemsManager', 'View:SiteSettings', 'View:ThemeManager',
             // Template gallery
             'View:TemplateGallery',
         ];

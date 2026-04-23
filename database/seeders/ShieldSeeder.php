@@ -138,8 +138,8 @@ class ShieldSeeder extends Seeder
             // TallcmsContactSubmission — see and manage their own site's form submissions
             'ViewAny:TallcmsContactSubmission', 'View:TallcmsContactSubmission',
             'Update:TallcmsContactSubmission', 'Delete:TallcmsContactSubmission',
-            // Admin-panel pages — wiring to let them use menus and site settings
-            'View:MenuItemsManager', 'View:SiteSettings',
+            // Admin-panel pages — wiring to let them use menus, site settings, and theme manager
+            'View:MenuItemsManager', 'View:SiteSettings', 'View:ThemeManager',
             // Template gallery — choose a template when spinning up new sites
             'View:TemplateGallery',
         ];
