@@ -150,6 +150,65 @@ Restart queue workers if you run them:
 php artisan queue:restart
 ```
 
+---
+
+## Standalone via Git Deploy
+
+If you're deploying a standalone TallCMS via `git pull` + `composer install` (Ploi, Forge, Envoyer, custom CI), the built-in `tallcms:update` command is bypassed — so the niceties it runs (Shield role sync, Filament asset republish) won't happen automatically. Run them explicitly in your post-deploy script.
+
+Suggested script (adapt paths):
+
+```bash
+#!/bin/bash
+set -e
+
+cd /path/to/app
+
+# Code & deps
+git stash
+git pull origin main
+composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+
+# Frontend assets
+npm install
+npm run build
+
+# Schema & role sync (must run AFTER composer so new commands are registered)
+php artisan migrate --force
+php artisan tallcms:shield-sync-site-owner
+
+# Republish Filament assets to match the installed component versions.
+# Without this, Filament minor bumps between releases leave stale
+# public/css/filament/* and public/js/filament/* that mismatch the
+# installed components and break FileUpload previews, modal animations, etc.
+php artisan filament:assets
+
+# Caches: clear old, rebuild fresh (don't trailing-clear after caching)
+php artisan optimize:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache
+
+# Queue & PHP-FPM
+php artisan queue:restart
+sudo service php8.5-fpm reload
+
+echo "🚀 Application deployed!"
+```
+
+### Why the order matters
+
+- **Composer before migrate** — new migration classes must exist on disk before `artisan migrate` can find them.
+- **Migrate before `tallcms:shield-sync-site-owner`** — the `permissions` and `roles` tables must exist before the sync command writes to them.
+- **Shield sync before caching** — the permissions cache should reflect any new permissions the sync introduced.
+- **`filament:assets` before caching views** — the view cache references the asset manifest.
+- **Queue & FPM last** — both signal running processes to pick up the new code and caches.
+
+### `set -e` guards against partial deploys
+
+The `set -e` flag aborts on the first failed step. Without it, a failed `migrate` might be followed by a successful `queue:restart`, leaving you with new code running against an old schema.
+
 ### Pinning Versions
 
 To update only to a specific version (e.g., stay on the `4.x` line):

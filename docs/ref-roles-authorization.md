@@ -34,6 +34,23 @@ TallCMS uses [Filament Shield](https://filamentphp.com/plugins/bezhansalleh-shie
 | `administrator` | Content and settings management | Site manager |
 | `editor` | Content editing and publishing | Content team lead |
 | `author` | Content creation, submit for review | Content contributor |
+| `site_owner` | End-to-end management of their own site(s) in a SaaS flow | New signups via the Registration plugin |
+
+### The `site_owner` Role
+
+Introduced in v4.0.14 for the SaaS / site-builder flow. A `site_owner` gets full CRUD on pages, posts, categories, menus, media, comments, contact submissions, and the Template Gallery — but scoped to **their own site(s)** via policy (`ChecksSiteOwnership` trait + resource query scoping). They never see another tenant's records.
+
+**Syncing the role onto an existing install:**
+
+```bash
+php artisan tallcms:shield-sync-site-owner
+```
+
+Idempotent — safe to run repeatedly. Creates the role + any missing permissions, doesn't touch other roles or existing user-role assignments.
+
+- **Fresh installs** get the role automatically via `ShieldSeeder` during `tallcms:setup`.
+- **Updates via `php artisan tallcms:update`** auto-sync it in the cache-clearing step.
+- **Git-based deploys** (where the built-in updater doesn't run) must call this command manually in the post-deploy script, after `migrate`.
 
 ---
 
