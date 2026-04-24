@@ -15,6 +15,8 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema as DbSchema;
 use Illuminate\Support\Str;
 use TallCms\Cms\Enums\ContentStatus;
@@ -195,14 +197,16 @@ class CmsPageForm
 
                                         Select::make('author_id')
                                             ->label('Author')
-                                            ->options(function () {
-                                                $userModel = config('tallcms.plugin_mode.user_model', 'App\\Models\\User');
-
-                                                return $userModel::query()->pluck('name', 'id');
-                                            })
+                                            ->relationship(
+                                                name: 'author',
+                                                titleAttribute: 'name',
+                                                modifyQueryUsing: fn (Builder $query) => $query->orderBy('name'),
+                                            )
+                                            ->getOptionLabelFromRecordUsing(fn (Model $record): string => $record->name)
+                                            ->searchable()
+                                            ->preload()
                                             ->default(auth()->id())
-                                            ->nullable()
-                                            ->searchable(),
+                                            ->nullable(),
 
                                         Toggle::make('is_homepage')
                                             ->label('Set as Homepage')

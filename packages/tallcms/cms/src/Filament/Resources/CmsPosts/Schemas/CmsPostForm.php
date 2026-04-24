@@ -14,6 +14,8 @@ use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema as DbSchema;
 use Illuminate\Support\Str;
 use TallCms\Cms\Enums\ContentStatus;
@@ -180,11 +182,14 @@ class CmsPostForm
 
                                         Select::make('author_id')
                                             ->label('Author')
-                                            ->options(function () {
-                                                $userModel = config('tallcms.plugin_mode.user_model', 'App\\Models\\User');
-
-                                                return $userModel::query()->pluck('name', 'id');
-                                            })
+                                            ->relationship(
+                                                name: 'author',
+                                                titleAttribute: 'name',
+                                                modifyQueryUsing: fn (Builder $query) => $query->orderBy('name'),
+                                            )
+                                            ->getOptionLabelFromRecordUsing(fn (Model $record): string => $record->name)
+                                            ->searchable()
+                                            ->preload()
                                             ->default(auth()->id())
                                             ->required(),
 
@@ -193,7 +198,7 @@ class CmsPostForm
                                             ->helperText('Featured posts appear prominently'),
                                     ]),
 
-                                Section::make('Categories')
+                                Section::make(config('tallcms.labels.categories.plural', 'Categories'))
                                     ->schema([
                                         Select::make('categories')
                                             ->multiple()
@@ -245,7 +250,7 @@ class CmsPostForm
                                                 Textarea::make('description')
                                                     ->rows(2),
                                             ])
-                                            ->helperText('Select existing categories or create new ones for this post'),
+                                            ->helperText('Select existing '.config('tallcms.labels.categories.plural', 'categories').' or create new ones for this post'),
                                     ]),
                             ]),
 
