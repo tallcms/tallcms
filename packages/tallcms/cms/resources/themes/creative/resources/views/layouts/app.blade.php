@@ -109,14 +109,14 @@
     <!-- Footer -->
     <footer class="footer footer-center bg-base-200 text-base-content p-10">
         <aside>
-            <p class="font-bold text-lg">{{ config('app.name') }}</p>
+            <p class="font-bold text-lg">{{ \TallCms\Cms\Models\SiteSetting::get('site_name', config('app.name')) }}</p>
             <p>Creative theme for TallCMS</p>
         </aside>
         <nav>
             <x-menu location="footer" style="footer" />
         </nav>
         <aside>
-            <p>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+            <p>&copy; {{ date('Y') }} {{ \TallCms\Cms\Models\SiteSetting::get('site_name', config('app.name')) }}. All rights reserved.</p>
             <x-tallcms::powered-by />
         </aside>
     </footer>

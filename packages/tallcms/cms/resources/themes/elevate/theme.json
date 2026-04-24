@@ -18,7 +18,7 @@
         "animations": true
     },
     "screenshots": {
-        "primary": "screenshot.png"
+        "primary": null
     },
     "build": {
         "entries": [
