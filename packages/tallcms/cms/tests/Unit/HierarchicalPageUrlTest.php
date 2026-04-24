@@ -36,6 +36,28 @@ class HierarchicalPageUrlTest extends TestCase
             $table->timestamps();
             $table->softDeletes();
         });
+
+        // CmsPage uses the HasRevisions trait, which writes to tallcms_revisions
+        // on every save. Without this table, even a bare ::create() fails.
+        // Schema mirrors the package migration; see HasRevisionsRestoreTest for
+        // the established inline-schema pattern in the package test suite.
+        Schema::create('tallcms_revisions', function (Blueprint $table) {
+            $table->id();
+            $table->morphs('revisionable');
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->text('title');
+            $table->text('excerpt')->nullable();
+            $table->json('content')->nullable();
+            $table->text('meta_title')->nullable();
+            $table->text('meta_description')->nullable();
+            $table->string('featured_image')->nullable();
+            $table->json('additional_data')->nullable();
+            $table->unsignedInteger('revision_number');
+            $table->text('notes')->nullable();
+            $table->string('content_hash')->nullable();
+            $table->boolean('is_manual')->default(false);
+            $table->timestamps();
+        });
     }
 
     protected function setUp(): void
