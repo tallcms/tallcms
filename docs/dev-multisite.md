@@ -345,6 +345,60 @@ $value = SiteSetting::getGlobal('my_plugin_setting', $default);
 
 ---
 
+## SaaS Flow: Tenant Onboarding
+
+When combining Multisite with the [Registration plugin](https://github.com/tallcms/user-registration-plugin), you get a self-serve SaaS stack: a visitor hits `/register`, gets a user account with the `site_owner` role, is auto-assigned the default site plan, and lands in their own scoped Filament admin.
+
+### The `site_owner` role is required
+
+The Registration plugin creates new users with the `site_owner` role by default. That role must exist in the Spatie `roles` table before the first registration attempt, or the controller aborts with a 500 ("role does not exist").
+
+**When it's already there:**
+- **Fresh installs** via `tallcms:setup` — seeded by `ShieldSeeder`.
+- **Upgrades** via `php artisan tallcms:update` — auto-synced in the cache-clearing step.
+
+**When you need to sync it manually:**
+
+```bash
+php artisan tallcms:shield-sync-site-owner
+```
+
+Run this once after:
+- Installing the Registration plugin on a TallCMS install that predates v4.0.14.
+- A git-based deploy where `tallcms:update` didn't run (CI/CD, Forge, Ploi, etc.) — call it in the post-deploy script, after `migrate`.
+- Any time you suspect the role is missing (e.g. registration returning 500).
+
+The command is idempotent: it creates the role and any missing permissions, but never touches other roles or existing user-role assignments. See [Roles & Authorization](roles-authorization) for the full permission set and scoping behavior.
+
+### Plan assignment at registration
+
+If the Multisite plugin is present, the Registration plugin auto-listens for Laravel's `Registered` event and calls `SitePlanService::ensureAssignment($user)` — giving the new tenant their default plan without any manual wiring. If Multisite isn't installed, the listener simply isn't registered (no errors, no overhead).
+
+### Auto-onboarding to Template Gallery (Registration ≥ 1.2.0)
+
+When Registration plugin v1.2.0+ is installed alongside Multisite, the plugin's `EnsureOnboardingRedirect` middleware (registered on the Filament panel) automatically steers a freshly-verified user with no sites to the Template Gallery on their first hit to the panel root. The off-ramp uses `SitePlanService::siteCount($user)` and `canCreateSite($user)` to honour plan quotas, and stops as soon as the user owns at least one site.
+
+To wire this up in a host project, add the middleware to your panel provider:
+
+```php
+use Tallcms\Registration\Http\Middleware\EnsureOnboardingRedirect;
+use Tallcms\Registration\Services\OnboardingResolver;
+
+return $panel
+    ->emailVerification(isRequired: fn () => (bool) config('registration.email_verification.enabled'))
+    ->homeUrl(fn () => auth()->user()
+        ? app(OnboardingResolver::class)->resolveFor(auth()->user()) ?? filament()->getPanel('app')->getUrl()
+        : filament()->getPanel('app')->getUrl())
+    ->middleware([
+        // ...standard panel middleware...
+        EnsureOnboardingRedirect::class,
+    ]);
+```
+
+Override the redirect target with `REGISTRATION_ONBOARDING_REDIRECT_URL=/somewhere`, or disable the off-ramp with `REGISTRATION_ONBOARDING_ENABLED=false`. The plugin and middleware short-circuit silently when Multisite isn't installed.
+
+---
+
 ## Remaining Cleanup (Post-Refactor)
 
 The following are known architectural items deferred for future work:
