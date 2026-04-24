@@ -94,6 +94,14 @@ class TallCmsInstall extends Command
             $this->runSetup();
         }
 
+        // Step 9: Clear stale caches before the user opens the admin.
+        // The Plugin Manager (and other parts of TallCMS / Filament) cache
+        // plugin and config metadata, which can include serialized objects
+        // (Carbon dates, etc). After a fresh install or upgrade, leftover
+        // entries from a prior state can deserialize as __PHP_Incomplete_Class
+        // and TypeError on the first admin page render.
+        $this->clearCaches();
+
         // Show completion message
         $this->showCompletionMessage();
 
@@ -411,6 +419,42 @@ class TallCmsInstall extends Command
     {
         $this->components->task('Running database migrations', function () {
             $this->callSilently('migrate', ['--force' => true]);
+
+            return true;
+        });
+    }
+
+    /**
+     * Clear the application and config caches. Runs after the install
+     * pipeline so any stale serialized state from a prior install (e.g.
+     * Plugin Manager metadata containing Carbon dates) doesn't deserialize
+     * as __PHP_Incomplete_Class on the first admin page load.
+     *
+     * Targeted clears rather than `optimize:clear` because the latter
+     * chains subcommands (e.g. `icons:clear`) that may not be registered
+     * in every host environment. cache:clear + config:clear cover the
+     * actual reported failure mode.
+     */
+    protected function clearCaches(): void
+    {
+        $this->components->task('Clearing stale caches', function () {
+            // Artisan::call resolves through the container, so this works
+            // both when the install command runs normally and when it's
+            // instantiated in isolation (the regression test path).
+            // Each clear is wrapped so a misconfigured driver doesn't
+            // abort the install — degrade silently and let the user
+            // re-clear manually if needed.
+            try {
+                \Illuminate\Support\Facades\Artisan::call('cache:clear');
+            } catch (\Throwable) {
+                // ignore
+            }
+
+            try {
+                \Illuminate\Support\Facades\Artisan::call('config:clear');
+            } catch (\Throwable) {
+                // ignore
+            }
 
             return true;
         });
