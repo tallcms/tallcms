@@ -42,6 +42,11 @@ Full guide: [Installation](https://github.com/tallcms/tallcms/blob/main/docs/gs-
 - Laravel 11 or 12, Filament 5
 - MySQL 8 / MariaDB 10.3 / SQLite
 
+> **Laravel 13 is not yet supported.** Blocked upstream on
+> [`lazychaser/laravel-nestedset`](https://github.com/lazychaser/laravel-nestedset)
+> (caps at `illuminate/support <=12.0`). Tracking in
+> [tallcms/tallcms#61](https://github.com/tallcms/tallcms/issues/61).
+
 ## Documentation
 
 Documentation lives in the monorepo's [docs/](https://github.com/tallcms/tallcms/tree/main/docs) directory. Highlights:

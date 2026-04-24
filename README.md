@@ -42,6 +42,11 @@ Full guide: [Installation](https://github.com/tallcms/tallcms/blob/main/docs/gs-
 - MySQL 8 / MariaDB 10.3 / SQLite
 - Node 20+ (for building assets)
 
+> **Laravel 13 is not yet supported.** Blocked upstream on
+> [`lazychaser/laravel-nestedset`](https://github.com/lazychaser/laravel-nestedset)
+> (caps at `illuminate/support <=12.0`). Tracking in
+> [#61](https://github.com/tallcms/tallcms/issues/61).
+
 ## Documentation
 
 Full documentation lives in the [docs/](docs/) directory. Highlights:
