@@ -92,7 +92,7 @@ class MergeTagService
 
         return [
             'page_title' => $page->title ?? '',
-            'page_url' => url($prefix.'/'.ltrim($page->slug, '/')),
+            'page_url' => url($prefix.'/'.ltrim($page->getFullSlug(), '/')),
             'page_author' => 'Admin', // Pages don't have authors, could be site admin
         ];
     }

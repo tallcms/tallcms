@@ -452,9 +452,12 @@ class CmsPageRenderer extends Component
 
     protected function renderPageContent(): void
     {
-        // Share page slug with all views so blocks can generate correct URLs
-        // For homepage, slug is empty string; for other pages, use the full slug
-        $pageSlug = $this->page->slug === '/' ? '' : $this->page->slug;
+        // Share page slug with all views so blocks can generate correct URLs.
+        // For homepage, slug is empty string; for other pages, use the full
+        // hierarchical path so blocks (posts, links) build /parent/child URLs
+        // when tallcms.pages.hierarchical_urls is on. Falls back to the leaf
+        // slug when off — getFullSlug() handles both modes internally.
+        $pageSlug = $this->page->slug === '/' ? '' : $this->page->getFullSlug();
         View::share('cmsPageSlug', $pageSlug);
 
         // Share page content width with blocks so they can inherit it
@@ -473,9 +476,11 @@ class CmsPageRenderer extends Component
      */
     protected function renderSinglePageContent(CmsPage $page): string
     {
-        // Temporarily set cmsPageSlug for this section (for posts block URLs)
+        // Temporarily set cmsPageSlug for this section (for posts block URLs).
+        // getFullSlug() honors tallcms.pages.hierarchical_urls so SPA-mode
+        // section blocks build URLs consistent with non-SPA rendering.
         $previousSlug = View::shared('cmsPageSlug');
-        View::share('cmsPageSlug', $page->slug);
+        View::share('cmsPageSlug', $page->getFullSlug());
 
         // Temporarily set content width for this page's blocks
         $previousWidth = View::shared('cmsPageContentWidth');
