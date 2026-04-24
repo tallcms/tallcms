@@ -138,6 +138,59 @@ Or `npm run dev` during development for hot reload.
 
 > **Note on block previews:** TallCMS ships a pre-built `tallcms-preview.css` automatically registered through Filament's asset system, so the daisyUI block previews in the page editor work out of the box without touching your `vite.config.js`. If you want to customise the block-preview styles (e.g. for plugin blocks you've authored), copy `vendor/tallcms/cms/resources/css/preview.css` into your host app, add it to your `vite.config.js` input array, and rebuild — the host build wins over the package's pre-built copy when both are present.
 
+At this point the **admin panel** is functional. Visit `/admin`, log in, and you can already create Pages and Posts. The next steps wire up the **frontend** so visitors can see them.
+
+### Step 7: Publish TallCMS Frontend Assets
+
+For frontend page styling, publish the TallCMS assets:
+
+```bash
+php artisan vendor:publish --tag=tallcms-assets
+```
+
+This writes CSS/JS to `public/vendor/tallcms/`. The frontend loads them automatically once published.
+
+### Step 8: Enable Frontend Routes
+
+Frontend routes are **disabled by default** in plugin mode so TallCMS doesn't override your existing routes. To serve CMS pages on the frontend, add this to your `.env`:
+
+```env
+TALLCMS_ROUTES_ENABLED=true
+```
+
+This registers two routes:
+- `/` — homepage (whichever Page you mark as Homepage in the admin)
+- `/{slug}` — CMS pages by slug
+
+Common app paths (`/admin`, `/api`, `/livewire`, `/storage`, etc.) are automatically excluded from CMS routing.
+
+#### Resolve the homepage conflict
+
+A fresh Laravel app ships with `Route::get('/', fn () => view('welcome'))` in `routes/web.php`. Laravel loads `routes/web.php` **after** package routes, so this default route wins over TallCMS's `/`. Pick one:
+
+**Option A — Remove the welcome route** (recommended if you want CMS pages at `/`):
+
+```php
+// In routes/web.php — remove or comment out:
+// Route::get('/', function () {
+//     return view('welcome');
+// });
+```
+
+**Option B — Prefix the CMS routes** (keeps your welcome page at `/`):
+
+```env
+TALLCMS_ROUTES_PREFIX=cms
+```
+
+CMS pages are then served at `/cms` (homepage) and `/cms/{slug}`.
+
+> **Alpine.js requirement:** TallCMS frontend pages need Alpine.js. Most Laravel apps already include it via Livewire. If you load Alpine separately, ensure it loads **before** `tallcms.js` — components use `alpine:init`.
+
+### Step 9: Set Your Homepage
+
+In the admin panel, edit any Page and toggle **Set as Homepage**. That page becomes the default at `/` (or `/cms` if you set a route prefix). Until you mark a homepage, `/` will 404.
+
 ### Theme Configuration
 
 The installer automatically activates the **TallDaisy** theme, which provides daisyUI-powered styling for all frontend pages. If your frontend pages appear unstyled after installation:
@@ -233,63 +286,6 @@ Log in with the admin credentials you created during setup. From here you can:
 5. Manage roles and permissions in **Settings > Shield**
 
 > **Tip:** The default admin path is `/admin`. If you changed the panel path during setup, use that instead.
-
----
-
-## Frontend Routes (Plugin Mode)
-
-Frontend routes are **disabled by default** in plugin mode to avoid conflicts with your existing routes.
-
-### Enable CMS Routes
-
-Add to your `.env` file:
-
-```env
-TALLCMS_ROUTES_ENABLED=true
-```
-
-This registers:
-- `/` - Homepage (if a page is marked as homepage)
-- `/{slug}` - CMS pages by slug
-
-Routes automatically exclude common paths: your panel path (default `/admin`), `/api`, `/livewire`, `/storage`, etc.
-
-### Homepage Conflict
-
-When `TALLCMS_ROUTES_ENABLED=true` without a prefix, TallCMS registers the `/` route. Laravel loads your app's `routes/web.php` after package routes, so you must either:
-
-**Option A:** Remove the default `/` route from `routes/web.php`:
-
-```php
-// Remove or comment out:
-// Route::get('/', function () {
-//     return view('welcome');
-// });
-```
-
-**Option B:** Use a route prefix:
-
-```env
-TALLCMS_ROUTES_PREFIX=cms
-```
-
-This changes routes to `/cms` (homepage) and `/cms/{slug}` (pages).
-
-### Configure Homepage
-
-In the admin panel, edit a CMS page and check "Set as Homepage" to serve it at the root URL.
-
-### Publish Assets
-
-For frontend styling, publish the TallCMS assets:
-
-```bash
-php artisan vendor:publish --tag=tallcms-assets
-```
-
-### Alpine.js Requirement
-
-TallCMS frontend pages require Alpine.js. Most Laravel apps include it via Livewire. If loading Alpine separately, ensure it loads before `tallcms.js` (components use `alpine:init`).
 
 ---
 
