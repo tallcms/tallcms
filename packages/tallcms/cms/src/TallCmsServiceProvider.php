@@ -412,6 +412,20 @@ class TallCmsServiceProvider extends PackageServiceProvider
             ], 'tallcms/cms');
         }
 
+        // Block-preview daisyUI scoping (.cms-blocks). Standalone gets this
+        // via @vite() in cms-rich-editor.blade.php; plugin-mode adopters
+        // don't have the source file in their host vite.config.js, so the
+        // package ships a pre-built copy and registers it here. Gated on
+        // !standalone to avoid double-loading alongside the @vite-built copy.
+        if (! $this->isStandaloneMode()) {
+            $previewCssPath = __DIR__.'/../resources/dist/tallcms-preview.css';
+            if (file_exists($previewCssPath)) {
+                FilamentAsset::register([
+                    Css::make('tallcms-preview', $previewCssPath),
+                ], 'tallcms/cms');
+            }
+        }
+
         // Register frontend assets if published (optional)
         $cssPath = public_path('vendor/tallcms/tallcms.css');
         $jsPath = public_path('vendor/tallcms/tallcms.js');
