@@ -68,15 +68,13 @@ class CmsPageRenderer extends Component
             $cleanSlug = str_replace('page/', '', $cleanSlug);
         }
 
-        // When hierarchical URLs are enabled, resolve multi-segment paths
-        // (e.g. /services/team) by walking the page tree segment by segment.
-        // This also handles post URLs nested under a page (e.g. /blog/my-post).
-        // When disabled (default), flat slug lookup is used — identical to
-        // pre-feature behavior, so existing installs are unaffected on upgrade.
-        if (config('tallcms.pages.hierarchical_urls', false) && str_contains($cleanSlug, '/')) {
-            $resolved = $this->resolveNestedSlug($cleanSlug);
-
-            if ($resolved) {
+        // Multi-segment slugs (anything with "/") need nested resolution. The
+        // resolver branches internally on the hierarchical_urls flag: when off
+        // it preserves the pre-PR behavior (post-under-page-with-PostsBlock,
+        // and falling back to a literal "parent/child" page slug); when on it
+        // also walks the parent_id chain to resolve hierarchical page paths.
+        if (str_contains($cleanSlug, '/')) {
+            if ($this->resolveNestedSlug($cleanSlug)) {
                 return;
             }
         }
@@ -125,33 +123,109 @@ class CmsPageRenderer extends Component
     }
 
     /**
-     * Resolve nested slugs to either a post within a page or a nested page.
+     * Resolve a multi-segment slug.
      *
-     * Each path segment is looked up as a published page scoped to the parent
-     * found in the previous step. This means every intermediate segment in the
-     * path must be a published page — a draft or pending parent page makes its
-     * entire subtree unreachable via the hierarchical URL. This is intentional:
-     * an unpublished parent acts as an invisible node and its children are
-     * inaccessible until the parent is also published.
+     * Branches on the `tallcms.pages.hierarchical_urls` flag:
+     *   - off (default): pre-PR behavior — single-level "parent_page/post_slug"
+     *     where the parent has a PostsBlock, with a fallback to looking up the
+     *     full "parent/child" string as a single page slug.
+     *   - on: walks the parent_id chain segment by segment so child pages
+     *     resolve at their full ancestor path, with the same post-under-page
+     *     fallback at the leaf.
+     *
+     * Splitting on the flag is intentional: the legacy post-under-page case
+     * was load-bearing for existing installs and must keep working when the
+     * new feature is opt-out (default). See PR #59 review for context.
      */
     protected function resolveNestedSlug(string $slug): bool
     {
-        // Walk segments one by one, scoping each lookup to the parent found in the previous step.
-        // This handles arbitrary depth (a/b/c/d) and correctly resolves pages that store only
-        // their leaf slug — e.g. page "team" with parent_id pointing to "services".
+        if (! config('tallcms.pages.hierarchical_urls', false)) {
+            return $this->resolveLegacyNestedSlug($slug);
+        }
+
+        return $this->walkHierarchicalSegments($slug);
+    }
+
+    /**
+     * Pre-PR-59 nested-slug resolution, preserved for the flag-off path.
+     *
+     * 1. Treat /parent_page/post_slug as a post under a page that has a
+     *    PostsBlock (the most common existing usage).
+     * 2. Fall back to looking up the full "parent/child" string as a single
+     *    page slug — covers installs that historically stored slashes in
+     *    the slug column directly.
+     */
+    protected function resolveLegacyNestedSlug(string $slug): bool
+    {
+        $segments = explode('/', $slug);
+        $childSlug = array_pop($segments);
+        $parentSlug = implode('/', $segments);
+
+        $parentPage = tallcms_i18n_enabled()
+            ? CmsPage::withLocalizedSlug($parentSlug)->published()->first()
+            : CmsPage::withSlug($parentSlug)->published()->first();
+
+        if ($parentPage && $this->pageHasPostsBlock($parentPage)) {
+            $post = tallcms_i18n_enabled()
+                ? CmsPost::withLocalizedSlug($childSlug)->with(['categories', 'author'])->first()
+                : CmsPost::withSlug($childSlug)->with(['categories', 'author'])->first();
+
+            if ($post) {
+                $canView = $post->isPublished() ||
+                    (auth()->check() && request()->has('preview'));
+
+                if ($canView) {
+                    $this->page = $parentPage;
+                    $this->post = $post;
+                    $this->parentSlug = $parentSlug;
+                    $this->postsBlockConfig = $this->getPostsBlockConfig($parentPage);
+                    $this->renderedContent = 'POST_DETAIL';
+
+                    return true;
+                }
+            }
+        }
+
+        // Fallback: page whose stored slug literally contains "/".
+        $nestedPage = tallcms_i18n_enabled()
+            ? CmsPage::withLocalizedSlug($slug)->published()->first()
+            : CmsPage::withSlug($slug)->published()->first();
+
+        if ($nestedPage) {
+            $this->page = $nestedPage;
+            $this->renderPageContent();
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Walk multi-segment paths via the parent_id chain — the hierarchical_urls
+     * code path.
+     *
+     * Each segment is looked up as a published page scoped to the parent found
+     * in the previous step. Every intermediate segment must be published — a
+     * draft or pending parent makes its entire subtree unreachable via the
+     * hierarchical URL. This is intentional: an unpublished parent acts as an
+     * invisible node and its children are inaccessible until the parent is
+     * also published.
+     */
+    protected function walkHierarchicalSegments(string $slug): bool
+    {
         $segments = explode('/', $slug);
         $parentId = null;
 
         foreach ($segments as $i => $segment) {
             $isLast = ($i === count($segments) - 1);
 
-            // Build a query scoped to the current parent level
             $query = tallcms_i18n_enabled()
                 ? CmsPage::withLocalizedSlug($segment)
                 : CmsPage::withSlug($segment);
 
-            // NOTE: published() is intentionally required for every segment —
-            // see method docblock above for the rationale.
+            // published() is intentionally required for every segment — see
+            // method docblock above for the rationale.
             $query->published();
 
             if ($parentId !== null) {
