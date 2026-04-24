@@ -125,6 +125,19 @@ This command will:
 - Activate the TallDaisy theme (styled frontend out of the box)
 - Create your admin user interactively
 
+### Step 6: Build Frontend Assets
+
+Filament admin pages reference your host app's Vite manifest. Without a built manifest, every admin page returns a 500 (`Illuminate\Foundation\ViteManifestNotFoundException`).
+
+```bash
+npm install
+npm run build
+```
+
+Or `npm run dev` during development for hot reload.
+
+> **Note on block previews:** TallCMS ships a pre-built `tallcms-preview.css` automatically registered through Filament's asset system, so the daisyUI block previews in the page editor work out of the box without touching your `vite.config.js`. If you want to customise the block-preview styles (e.g. for plugin blocks you've authored), copy `vendor/tallcms/cms/resources/css/preview.css` into your host app, add it to your `vite.config.js` input array, and rebuild — the host build wins over the package's pre-built copy when both are present.
+
 ### Theme Configuration
 
 The installer automatically activates the **TallDaisy** theme, which provides daisyUI-powered styling for all frontend pages. If your frontend pages appear unstyled after installation:
@@ -600,6 +613,12 @@ Clear permission cache: `php artisan permission:cache-reset`. Verify user has ap
 
 **"CMS resources not appearing"**
 Ensure `TallCmsPlugin::make()` is registered in your panel provider. Run `php artisan migrate` to create the CMS tables. Clear config cache: `php artisan config:clear`.
+
+**"Vite manifest not found at: .../public/build/manifest.json" (500 on every admin page)**
+Your host app's frontend assets haven't been built. Run `npm install && npm run build` from the project root. This is required after a fresh `tallcms:install` and after any time the `public/build/` directory gets cleared.
+
+**"Unable to locate file in Vite manifest: resources/css/filament/admin/preview.css" (500 in the page editor)**
+This was a regression in earlier TallCMS releases when running in plugin mode — the rich editor view tried to load a CSS entry only present in standalone's `vite.config.js`. As of v4.2 the package ships `tallcms-preview.css` pre-built and registered through Filament's asset system, so the daisyUI block-preview styles load automatically without touching your `vite.config.js`. Update with `composer update tallcms/cms` if you're seeing this on an older version.
 
 ---
 

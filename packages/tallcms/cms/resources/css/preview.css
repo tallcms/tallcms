@@ -1,0 +1,47 @@
+/**
+ * Block Preview CSS — daisyUI scoped for RichEditor previews
+ *
+ * Compiled to resources/dist/tallcms-preview.css and registered via
+ * FilamentAsset (see TallCmsServiceProvider) so plugin-mode adopters
+ * get the same block-preview styling that standalone gets through
+ * its Vite-built copy of this file.
+ *
+ * Why this exists separately from admin.css: this stylesheet provides
+ * daisyUI styling scoped to the .cms-blocks wrapper to prevent it from
+ * interfering with Filament's admin UI. Bundling it into admin.css would
+ * leak daisyUI utility classes into Filament panels.
+ *
+ * Dark mode: keys off Filament's .dark class (not prefers-color-scheme)
+ * so the preview matches the admin's chosen mode.
+ */
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Load DaisyUI with explicit theme selection (not prefers-color-scheme) */
+@plugin "daisyui" {
+  themes: light --default, dark;
+}
+
+/*
+ * Sync Filament's dark mode class with DaisyUI's data-theme attribute.
+ * DaisyUI uses [data-theme="dark"] while Filament uses .dark class.
+ * This CSS ensures DaisyUI dark theme activates when Filament dark mode is on.
+ */
+:root.dark {
+  color-scheme: dark;
+}
+
+/* Scope DaisyUI base styles to block preview areas only */
+.cms-blocks {
+  /* DaisyUI components work here */
+}
+
+/* Scan block templates for class discovery.
+ * Paths are relative to this file: packages/tallcms/cms/resources/css/preview.css
+ *
+ * NOTE: standalone's preview.css also scans plugins/tallcms/pro/... — that line
+ * is intentionally NOT carried over. Plugin-mode adopters with the Pro plugin
+ * installed need to compile their own preview asset (or wait for a Pro-side
+ * fix). This package CSS only covers the package's own block library. */
+@source '../views/cms/blocks/**/*.blade.php';
+@source '../views/filament/**/*.blade.php';

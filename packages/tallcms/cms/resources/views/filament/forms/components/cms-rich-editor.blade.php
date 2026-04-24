@@ -22,9 +22,24 @@
     Last synced with: Filament Forms v4.x (January 2026)
     Modified section: Lines ~180-295 (customBlocks panel)
 --}}
-{{-- Load daisyUI preview styles only on pages with the CMS editor --}}
+{{-- Load daisyUI preview styles only on pages with the CMS editor.
+
+     Standalone TallCMS ships preview.css as a Vite entry; plugin-mode
+     adopters typically don't have it in their host vite.config.js, so
+     calling @vite unconditionally would crash every admin page that
+     renders the rich editor with `Illuminate\Foundation\ViteException`.
+
+     ViteManifest::hasEntry() returns true if the entry is in the
+     manifest (built mode) or if Vite is hot (dev mode), and false
+     otherwise — silently skipping the directive in plugin mode where
+     the basics are already covered by the package's pre-built
+     tallcms-admin.css registered via FilamentAsset. To opt in to full
+     preview styles in plugin mode, add the file to your vite.config.js
+     and rebuild. --}}
 @pushOnce('styles')
-    @vite('resources/css/filament/admin/preview.css')
+    @if (\TallCms\Cms\Support\ViteManifest::hasEntry('resources/css/filament/admin/preview.css'))
+        @vite('resources/css/filament/admin/preview.css')
+    @endif
 @endPushOnce
 
 @php

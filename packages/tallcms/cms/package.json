@@ -4,8 +4,9 @@
   "type": "module",
   "scripts": {
     "build:admin": "npx @tailwindcss/cli@4 -i ./resources/css/admin.css -o ./resources/dist/tallcms-admin.css --minify",
+    "build:preview": "npx @tailwindcss/cli@4 -i ./resources/css/preview.css -o ./resources/dist/tallcms-preview.css --minify",
     "build:frontend": "npx @tailwindcss/cli@4 -i ./resources/css/frontend.css -o ./resources/dist/tallcms.css --minify",
-    "build": "npm run build:admin && npm run build:frontend"
+    "build": "npm run build:admin && npm run build:preview && npm run build:frontend"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.0",
