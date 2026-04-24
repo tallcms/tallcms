@@ -60,6 +60,14 @@
 <body class="min-h-screen bg-base-100 text-base-content">
     <x-tallcms::code-injection zone="body_start" />
 
+    {{-- Site-wide variables. Defined at layout scope so both the header
+         (whichever branch renders) and the footer can use them without
+         falling back to config('app.name'). --}}
+    @php
+        $logo = \TallCms\Cms\Models\SiteSetting::get('logo');
+        $siteName = \TallCms\Cms\Models\SiteSetting::get('site_name', config('app.name'));
+    @endphp
+
     <!-- Header -->
     @if(function_exists('mega_menu_header_active') && mega_menu_header_active('header'))
         {{-- Mega Menu Full Header --}}
@@ -84,10 +92,6 @@
                         </ul>
                     </div>
                     <!-- Logo -->
-                    @php
-                        $logo = \TallCms\Cms\Models\SiteSetting::get('logo');
-                        $siteName = \TallCms\Cms\Models\SiteSetting::get('site_name', config('app.name'));
-                    @endphp
                     <a href="{{ tallcms_home_url() }}" class="flex items-center gap-2.5 px-2">
                         @if($logo)
                             <img src="{{ Storage::disk(cms_media_disk())->url($logo) }}" alt="{{ $siteName }}" class="h-8 w-auto">
@@ -157,12 +161,12 @@
                 <!-- Brand -->
                 <div class="col-span-2 md:col-span-1">
                     <div class="flex items-center gap-2 mb-4">
-                        @if($logo ?? false)
-                            <img src="{{ Storage::disk(cms_media_disk())->url($logo) }}" alt="{{ $siteName ?? config('app.name') }}" class="h-6 w-auto">
+                        @if($logo)
+                            <img src="{{ Storage::disk(cms_media_disk())->url($logo) }}" alt="{{ $siteName }}" class="h-6 w-auto">
                         @else
                             <div class="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-secondary"></div>
                         @endif
-                        <span class="font-bold">{{ $siteName ?? config('app.name') }}</span>
+                        <span class="font-bold">{{ $siteName }}</span>
                     </div>
                     <p class="text-neutral-content/50 text-sm leading-relaxed mb-5">
                         {{ \TallCms\Cms\Models\SiteSetting::get('site_tagline', 'Building the future, one feature at a time.') }}
