@@ -53,17 +53,18 @@ jobs:
       - name: Build frontend assets
         run: npm run build
 
-      - name: Build talldaisy theme
-        working-directory: themes/talldaisy
-        run: |
-          npm install
-          npm run build
-
-      - name: Build tallcms/cms package assets
+      - name: Build tallcms/cms package assets + all bundled themes
         working-directory: packages/tallcms/cms
         run: |
           npm install
+          # Package dist first — validates package CSS before themes depend on it via @import.
           npm run build
+          # Bundled themes resolve Node deps via NODE_PATH=../../../node_modules
+          # (configured in each theme's package.json), so no per-theme npm install.
+          for theme in resources/themes/*/; do
+            echo "--- building $(basename "$theme") ---"
+            (cd "$theme" && npm run build)
+          done
 
       - name: Get version from tag
         id: version

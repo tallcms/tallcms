@@ -294,6 +294,49 @@ If dark mode styling is inconsistent:
 
 ---
 
+## Upgrading to v4.2: Default Themes Moved Into the Package
+
+v4.2 moves all eight default themes (`autumn`, `blog`, `corporate`, `creative`, `elevate`, `luxury`, `minimal`, `talldaisy`) into the `tallcms/cms` package at `packages/tallcms/cms/resources/themes/`. This gives standalone and plugin-mode installs the same theme catalogue (previously plugin-mode only got `talldaisy` + `minimal`).
+
+### Before upgrading — back up customized root themes
+
+**If you've edited any of the default themes in place** (e.g. customized `themes/talldaisy/` to tweak colors or add custom sections), copy your customizations to a new slug **before running `composer update tallcms/cms`**:
+
+```bash
+# Preserve your customized theme as a user theme with a unique slug
+cp -r themes/talldaisy themes/talldaisy-custom
+# edit themes/talldaisy-custom/theme.json → change "slug" to "talldaisy-custom"
+# then re-activate from the admin: Themes → talldaisy-custom → Activate
+```
+
+Themes under `base_path('themes')` with unique slugs are preserved as user themes and never overwritten. The bundled `talldaisy` in the package is now the authoritative default copy.
+
+### Post-upgrade — **required** republish step
+
+`public/themes/<slug>` is a symlink. Before v4.2 it pointed at `themes/<slug>/public/` (standalone root). After upgrading, that target is gone until the symlink is repointed at the new package location. **Every install needs this one-time command**:
+
+```bash
+# Substitute with YOUR active theme slug (check admin Theme Manager or config/theme.php's `active` key)
+php artisan theme:activate talldaisy
+```
+
+Until you run this, the active theme's frontend CSS/JS return 404 and the site renders unstyled.
+
+> **Don't use `php artisan tallcms:install --force`** for this step — it unconditionally activates `talldaisy`, which would switch you off any other theme you've already activated.
+
+### What changed structurally
+
+- `tallcms/cms` package now ships all eight default themes at `packages/tallcms/cms/resources/themes/<name>/` (with pre-built `public/build/` assets committed for fresh-clone convenience, rebuilt on every release via CI)
+- The standalone `tallcms/tallcms` skeleton's `/themes/` directory becomes user-custom-theme territory only; the defaults are deleted from the skeleton in a follow-up release
+- `ThemeManager::discoverThemes()` scans both `base_path('themes')` (user) and the package-bundled path — no code change needed, already supported
+- Admin CSS (`tallcms-admin.css`, `tallcms-preview.css`) now inline-safelists the responsive grid classes that Filament pages use (`md:grid-cols-*`, `lg:grid-cols-*`, `md:col-span-*`). Previously these were only compiled in when the host app ran `viteTheme(...)`; now they're in the pre-built package bundle, so plugin-mode admin pages render with proper responsive layouts out of the box.
+
+### Package size impact
+
+The eight bundled themes add ~1 MB to the package (measured: `du -sh packages/tallcms/cms/resources/themes` went from 0.9 MB → 1.9 MB). This is the cost of the parity win — both install modes now get the same theme catalogue from a single source of truth, so drift can't silently accumulate.
+
+---
+
 ## Upgrading to v3.1: Plugin Config Consolidation
 
 ### `config/plugin.php` Removed

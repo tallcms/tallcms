@@ -1,0 +1,35 @@
+{
+    "name": "Blog",
+    "slug": "blog",
+    "version": "1.0.0",
+    "description": "Warm, readable theme optimized for long-form content",
+    "author": "TallCMS",
+    "daisyui": {
+        "preset": "autumn",
+        "prefersDark": "coffee"
+    },
+    "tags": ["blog", "personal"],
+    "supports": {
+        "dark_mode": true,
+        "theme_controller": false,
+        "responsive": true,
+        "animations": true
+    },
+    "screenshots": {
+        "primary": null
+    },
+    "build": {
+        "entries": [
+            "resources/css/app.css",
+            "resources/js/app.js"
+        ]
+    },
+    "templates": {
+        "example": {
+            "label": "Example Template",
+            "description": "A custom example template for this theme",
+            "has_sidebar": false,
+            "minimal_chrome": false
+        }
+    }
+}
