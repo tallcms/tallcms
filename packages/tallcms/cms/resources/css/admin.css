@@ -13,13 +13,28 @@
   themes: light --default, dark;
 }
 
-/* Scan block templates for class discovery */
-@source "../views/cms/blocks/**/*.blade.php";
-@source "../views/filament/**/*.blade.php";
-@source "../views/components/**/*.blade.php";
+/* Scan Blade + PHP sources for class discovery. Broad globs are defensively
+   correct: any file at the path is scanned, absent paths silently ignored. */
+@source "../views/**/*.blade.php";
 
-/* Scan PHP files that define dynamic class options (button variants, colors, etc.) */
-@source "../../src/Filament/Blocks/**/*.php";
+/* Filament PHP sources — block schemas, resource forms/tables, pages where
+   responsive grid classes (md:grid-cols-2, lg:col-span-*) appear as literals
+   in the Blade templates those classes ultimately render. */
+@source "../../src/Filament/**/*.php";
+
+/* Livewire components that emit class strings (search results, page renderer) */
+@source "../../src/Livewire/**/*.php";
+
+/* Blade view components that compose class attributes */
+@source "../../src/View/Components/**/*.php";
+
+/* Safelist: responsive grid/column classes used by admin-page blade templates
+   (notably theme-manager.blade.php's theme gallery). Tailwind v4's auto-scan
+   doesn't reliably pick these up from filament/pages/**/*.blade.php in every
+   environment, so we inline-source them to guarantee coverage. */
+@source inline("md:grid-cols-2 md:grid-cols-3 md:grid-cols-4 lg:grid-cols-2 lg:grid-cols-3 lg:grid-cols-4 lg:grid-cols-5 lg:grid-cols-6");
+@source inline("sm:col-span-2 md:col-span-2 md:col-span-3 md:col-span-4 lg:col-span-2 lg:col-span-3 lg:col-span-4 lg:col-span-6");
+@source inline("sm:flex-row md:flex-row lg:flex-row sm:flex-col md:flex-col lg:flex-col");
 
 /*
  * DaisyUI Dark Mode Support for Filament

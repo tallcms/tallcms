@@ -1,0 +1,21 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@plugin "daisyui" {
+  themes: synthwave --default;
+}
+
+/* Scan paths for class discovery.
+   Paths are relative to this file: packages/tallcms/cms/resources/themes/<slug>/resources/css/app.css
+   - 4 up  = packages/tallcms/cms/resources/
+   - 5 up  = packages/tallcms/cms/
+*/
+@source '../views/**/*.blade.php';
+/* TallCMS package Blade templates (blocks, filament pages, components) */
+@source '../../../../views/**/*.blade.php';
+/* TallCMS package PHP sources where classes may appear (Filament block schemas, Livewire components) */
+@source '../../../../../src/Filament/**/*.php';
+@source '../../../../../src/Livewire/**/*.php';
+
+/* TallCMS Core Styles — shared animations, .cms-content, block-specific styles */
+@import "../../../../css/tallcms.css";
+/* Theme-specific styles */

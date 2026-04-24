@@ -8,17 +8,28 @@
         "preset": "lofi",
         "prefersDark": "nord"
     },
-    "screenshots": {
-        "primary": "screenshot.png"
-    },
+    "tags": ["starter", "minimal"],
     "supports": {
         "dark_mode": true,
-        "theme_controller": false
+        "theme_controller": false,
+        "responsive": true,
+        "animations": true
+    },
+    "screenshots": {
+        "primary": null
     },
     "build": {
         "entries": [
             "resources/css/app.css",
             "resources/js/app.js"
         ]
+    },
+    "templates": {
+        "example": {
+            "label": "Example Template",
+            "description": "A custom example template for this theme",
+            "has_sidebar": false,
+            "minimal_chrome": false
+        }
     }
 }

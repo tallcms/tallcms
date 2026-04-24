@@ -1,0 +1,1 @@
+(function(){const l=document.querySelector(".nav-bar"),e=document.querySelector(".nav-shell");if(!l||!e)return;const n=()=>{const o=window.scrollY>10;l.classList.toggle("nav-bar-scrolled",o),e.classList.toggle("nav-shell-scrolled",o)};window.addEventListener("scroll",n,{passive:!0}),n()})();

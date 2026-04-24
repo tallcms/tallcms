@@ -1,0 +1,35 @@
+{
+    "name": "Corporate",
+    "slug": "corporate",
+    "version": "1.0.0",
+    "description": "Clean, professional look for businesses and agencies",
+    "author": "TallCMS",
+    "daisyui": {
+        "preset": "corporate",
+        "prefersDark": "business"
+    },
+    "tags": ["business", "professional"],
+    "supports": {
+        "dark_mode": true,
+        "theme_controller": false,
+        "responsive": true,
+        "animations": true
+    },
+    "screenshots": {
+        "primary": null
+    },
+    "build": {
+        "entries": [
+            "resources/css/app.css",
+            "resources/js/app.js"
+        ]
+    },
+    "templates": {
+        "example": {
+            "label": "Example Template",
+            "description": "A custom example template for this theme",
+            "has_sidebar": false,
+            "minimal_chrome": false
+        }
+    }
+}

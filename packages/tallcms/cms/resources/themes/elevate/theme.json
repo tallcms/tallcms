@@ -1,0 +1,37 @@
+{
+    "name": "Elevate",
+    "slug": "elevate",
+    "version": "1.0.0",
+    "description": "Premium SaaS & product landing theme with gradient accents, frosted glass navbar, and conversion-optimized layouts",
+    "author": "TallCMS",
+    "tags": ["saas", "product", "landing-page", "startup", "premium"],
+    "daisyui": {
+        "preset": "elevate",
+        "prefersDark": "elevate-dark",
+        "presets": ["elevate", "elevate-dark", "nord", "winter", "corporate", "silk", "light", "dark"],
+        "custom": true
+    },
+    "supports": {
+        "dark_mode": true,
+        "theme_controller": true,
+        "responsive": true,
+        "animations": true
+    },
+    "screenshots": {
+        "primary": null
+    },
+    "build": {
+        "entries": [
+            "resources/css/app.css",
+            "resources/js/app.js"
+        ]
+    },
+    "templates": {
+        "saas-landing": {
+            "label": "SaaS Landing",
+            "description": "Full-width conversion page — no sidebar, no page title, blocks stack edge-to-edge",
+            "has_sidebar": false,
+            "minimal_chrome": false
+        }
+    }
+}

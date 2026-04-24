@@ -1,0 +1,35 @@
+{
+    "name": "Autumn",
+    "slug": "autumn",
+    "version": "1.0.0",
+    "description": "Warm autumn colors with cozy dark mode",
+    "author": "TallCMS",
+    "daisyui": {
+        "preset": "autumn",
+        "prefersDark": "black"
+    },
+    "tags": ["blog", "editorial"],
+    "supports": {
+        "dark_mode": true,
+        "theme_controller": false,
+        "responsive": true,
+        "animations": true
+    },
+    "screenshots": {
+        "primary": null
+    },
+    "build": {
+        "entries": [
+            "resources/css/app.css",
+            "resources/js/app.js"
+        ]
+    },
+    "templates": {
+        "example": {
+            "label": "Example Template",
+            "description": "A custom example template for this theme",
+            "has_sidebar": false,
+            "minimal_chrome": false
+        }
+    }
+}
