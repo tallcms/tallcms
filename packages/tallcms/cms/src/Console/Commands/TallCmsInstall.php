@@ -441,6 +441,13 @@ class TallCmsInstall extends Command
         $this->components->info('TallCMS installed successfully!');
         $this->newLine();
 
+        // Frontend assets check — Filament admin pages reference @vite() in
+        // the host app's base layout, so an unbuilt manifest crashes every
+        // admin page render with Illuminate\Foundation\ViteManifestNotFoundException.
+        // Surface this proactively so plugin-mode adopters don't hit it on
+        // the first click into the admin.
+        $this->checkFrontendAssets();
+
         // Short reminder when --skip-checks was used (plugin validation was skipped)
         if ($this->option('skip-checks')) {
             $this->components->warn('Reminder: Ensure TallCmsPlugin::make() is registered in your panel provider.');
@@ -493,6 +500,34 @@ class TallCmsInstall extends Command
 
             $this->components->info('Thank you! Your support means a lot to us.');
         }
+    }
+
+    /**
+     * Warn the user if the host app's Vite manifest hasn't been built yet.
+     *
+     * Filament admin layouts call @vite() on the host's resources/css/app.css
+     * etc., so without a built manifest every admin page returns
+     * `Illuminate\Foundation\ViteManifestNotFoundException`. This is a
+     * generic Laravel/Filament friction point, but plugin-mode adopters
+     * land on it immediately after `tallcms:install` because the next
+     * thing they do is open the admin.
+     */
+    protected function checkFrontendAssets(): void
+    {
+        if (file_exists(public_path('build/manifest.json'))) {
+            return;
+        }
+
+        $this->components->warn('Frontend assets are not built yet.');
+        $this->line('  Filament admin pages reference <fg=cyan>@vite()</> in the host app\'s base layout —');
+        $this->line('  without a built manifest, every admin page returns a 500.');
+        $this->newLine();
+        $this->line('  Build before opening the admin:');
+        $this->line('    <fg=green>npm install && npm run build</>');
+        $this->newLine();
+        $this->line('  Or for development with hot reload:');
+        $this->line('    <fg=green>npm run dev</>');
+        $this->newLine();
     }
 
     /**
