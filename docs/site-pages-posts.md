@@ -42,7 +42,25 @@ Pages can have parent-child relationships:
 3. Select a **Parent Page**
 4. Set **Sort Order** to control position among siblings
 
-Child pages inherit breadcrumb structure and can have nested URLs depending on your theme.
+Child pages inherit breadcrumb structure. Their URL shape depends on the **Hierarchical URLs** setting below.
+
+### Hierarchical URLs (opt-in)
+
+By default, every page resolves at the top level — `yourdomain.com/sarah` — even when it has a parent. Turn on hierarchical URLs and child pages resolve along their parent chain instead:
+
+| Setting | URL for "Sarah" (child of "Team", child of "About") |
+|---|---|
+| Off (default) | `/sarah` |
+| On | `/about/team/sarah` |
+
+The flag also updates the sitemap, internal menu links, and block link pickers — anywhere the page URL is rendered, it follows the same shape.
+
+**To enable:**
+
+1. In your `.env`, add `TALLCMS_HIERARCHICAL_URLS=true` (or set `tallcms.pages.hierarchical_urls` to `true` in `config/tallcms.php`).
+2. Clear caches: `php artisan optimize:clear`.
+
+Existing top-level pages keep working — only pages with a parent change. If you've already linked to child pages by their flat slug from external sources, set up redirects for those before flipping the flag.
 
 ### Setting a Homepage
 
