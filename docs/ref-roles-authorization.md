@@ -104,8 +104,9 @@ Permissions follow the pattern: `{Action}:{Resource}`
 | `User` | Users | User accounts |
 | `Role` | Roles | Role management |
 | `SiteSettings` | Settings | Site configuration |
-| `Manage:CodeInjection` | Code Injection | Analytics, tracking scripts, chat widgets |
 | `TallcmsContactSubmission` | Contact | Form submissions |
+
+> **Embed code (analytics, tracking, chat widgets)** — access follows Site edit permission via `SitePolicy`. There is no dedicated `Manage:CodeInjection` permission anymore; if a user can edit a Site, they can set its embed code. See [Embed Code](code-injection).
 
 ### Standalone Features
 

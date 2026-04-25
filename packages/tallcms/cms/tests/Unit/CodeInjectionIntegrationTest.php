@@ -4,15 +4,33 @@ namespace TallCms\Cms\Tests\Unit;
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Str;
 use Spatie\Permission\PermissionRegistrar;
 use Spatie\Permission\PermissionServiceProvider;
-use TallCms\Cms\Filament\Pages\CodeInjection;
+use TallCms\Cms\Filament\Resources\SiteResource\Pages\EditSite;
+use TallCms\Cms\Filament\Resources\SiteResource\SiteForm;
 use TallCms\Cms\Models\SiteSetting;
+use TallCms\Cms\Services\SiteSettingsService;
 use TallCms\Cms\Tests\Fixtures\User;
 use TallCms\Cms\Tests\TestCase;
 
+/**
+ * Embed code (a.k.a. code injection) integration tests.
+ *
+ * Covers:
+ *   - Layout placement: every bundled layout has the head/body_start/body_end
+ *     code-injection zones in the correct positions (the View Component is the
+ *     frontend renderer; placement determines where each zone shows up).
+ *   - Admin views guard: the frontend code-injection component never bleeds
+ *     into admin templates.
+ *   - EditSite save flow: embed code is written as a per-site override using
+ *     the explicit site_id from the edited record — never the ambient
+ *     SiteSetting::set() path that would otherwise resolve to global when no
+ *     session selection is present (the v2.x multisite plugin removed ambient
+ *     session-based site context entirely; saves must be explicit).
+ */
 class CodeInjectionIntegrationTest extends TestCase
 {
     private string $layoutPath;
@@ -51,7 +69,7 @@ class CodeInjectionIntegrationTest extends TestCase
     {
         parent::defineDatabaseMigrations();
 
-        // Create Spatie Permission tables
+        // Spatie Permission tables (User model relations require them)
         Schema::create('permissions', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -94,7 +112,7 @@ class CodeInjectionIntegrationTest extends TestCase
             $table->primary(['permission_id', 'role_id']);
         });
 
-        // Create site_settings table
+        // Settings tables (global + per-site overrides)
         Schema::create('tallcms_site_settings', function (Blueprint $table) {
             $table->id();
             $table->string('key')->unique();
@@ -105,14 +123,47 @@ class CodeInjectionIntegrationTest extends TestCase
             $table->timestamps();
             $table->index(['key', 'group']);
         });
+
+        Schema::create('tallcms_sites', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('domain')->unique();
+            $table->string('theme')->nullable();
+            $table->string('locale')->nullable();
+            $table->string('uuid')->unique()->nullable();
+            $table->unsignedBigInteger('user_id')->nullable()->index();
+            $table->boolean('is_default')->default(false);
+            $table->boolean('is_active')->default(true);
+            $table->json('metadata')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('tallcms_site_setting_overrides', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('site_id')->constrained('tallcms_sites')->cascadeOnDelete();
+            $table->string('key');
+            $table->longText('value')->nullable();
+            $table->string('type')->default('text');
+            $table->timestamps();
+            $table->unique(['site_id', 'key']);
+        });
     }
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->layoutPath = __DIR__ . '/../../resources/views/layouts/app.blade.php';
+        $this->layoutPath = __DIR__.'/../../resources/views/layouts/app.blade.php';
         Cache::flush();
+        SiteSetting::forgetMemoizedDefaultSiteId();
         $this->app->make(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    protected function tearDown(): void
+    {
+        // Reset the static default-site memoization so seeded site rows don't
+        // leak into later test classes that don't create tallcms_sites.
+        SiteSetting::forgetMemoizedDefaultSiteId();
+        parent::tearDown();
     }
 
     // --- Layout placement tests (package + all bundled themes) ---
@@ -129,9 +180,9 @@ class CodeInjectionIntegrationTest extends TestCase
             'package' => $this->layoutPath,
         ];
 
-        $themesDir = $projectRoot . '/themes';
+        $themesDir = $projectRoot.'/themes';
         if (is_dir($themesDir)) {
-            foreach (glob($themesDir . '/*/resources/views/layouts/app.blade.php') as $themeLayout) {
+            foreach (glob($themesDir.'/*/resources/views/layouts/app.blade.php') as $themeLayout) {
                 $themeName = basename(dirname($themeLayout, 4));
                 $layouts["theme:{$themeName}"] = $themeLayout;
             }
@@ -197,11 +248,11 @@ class CodeInjectionIntegrationTest extends TestCase
         }
     }
 
-    // --- Frontend-only rendering tests ---
+    // --- Frontend-only rendering guard ---
 
     public function test_code_injection_component_is_not_in_admin_views(): void
     {
-        $filamentViewsPath = __DIR__ . '/../../resources/views/filament';
+        $filamentViewsPath = __DIR__.'/../../resources/views/filament';
         $errors = [];
 
         $iterator = new \RecursiveIteratorIterator(
@@ -214,11 +265,7 @@ class CodeInjectionIntegrationTest extends TestCase
             }
 
             $content = file_get_contents($file->getPathname());
-            $relativePath = str_replace(__DIR__ . '/../../resources/views/', '', $file->getPathname());
-
-            if (str_contains($relativePath, 'code-injection.blade.php')) {
-                continue;
-            }
+            $relativePath = str_replace(__DIR__.'/../../resources/views/', '', $file->getPathname());
 
             if (str_contains($content, '<x-tallcms::code-injection')) {
                 $errors[] = "{$relativePath}: Contains code-injection component (should only be in frontend layout)";
@@ -227,156 +274,187 @@ class CodeInjectionIntegrationTest extends TestCase
 
         $this->assertEmpty(
             $errors,
-            "Code injection component found in admin views:\n" . implode("\n", $errors)
+            "Code injection component found in admin views:\n".implode("\n", $errors)
         );
     }
 
-    // --- Permission authorization tests (real user + real permissions) ---
+    // --- EditSite save flow (the canonical write path post-v2 multisite) ---
+    //
+    // The v2.x multisite plugin removed ambient session-based site context.
+    // SiteSetting::set() with no session/no resolver is no longer a reliable
+    // way to write per-site values from admin — it falls through to global.
+    // The only correct write path is explicit: SiteSettingsService::setForSite()
+    // with the site_id from the edited record. EditSite uses exactly that.
 
-    public function test_can_access_returns_false_without_permission(): void
+    public function test_embed_code_keys_are_wired_into_edit_site_setting_keys(): void
     {
-        $user = User::create([
-            'name' => 'Editor',
-            'email' => 'editor@test.com',
-            'password' => 'password',
-        ]);
+        // Reflection check: regression guard against removing the embed code keys.
+        $reflection = new \ReflectionClass(EditSite::class);
+        $property = $reflection->getProperty('settingKeys');
+        $property->setAccessible(true);
 
-        $this->actingAs($user);
+        // The default value lives on the class definition.
+        $defaults = $reflection->getDefaultProperties();
+        $keys = $defaults['settingKeys'] ?? [];
 
-        $this->assertFalse(CodeInjection::canAccess());
+        $this->assertArrayHasKey('code_head', $keys, 'EditSite must include code_head in $settingKeys');
+        $this->assertArrayHasKey('code_body_start', $keys, 'EditSite must include code_body_start in $settingKeys');
+        $this->assertArrayHasKey('code_body_end', $keys, 'EditSite must include code_body_end in $settingKeys');
+
+        $this->assertEquals('text', $keys['code_head']);
+        $this->assertEquals('text', $keys['code_body_start']);
+        $this->assertEquals('text', $keys['code_body_end']);
     }
 
-    public function test_can_access_returns_true_with_permission(): void
+    /**
+     * The headline regression test the bug report asked for.
+     *
+     * Setup mirrors a real Filament admin Livewire request from a non-super_admin
+     * site owner: tallcms.admin_context = true, no multisite_admin_site_id session
+     * (the v2.x plugin removed that), authenticated user owns one Site. We invoke
+     * the same SiteSettingsService::setForSite() the EditSite afterSave() path
+     * uses, with the explicit site_id from the record.
+     *
+     * Asserts: per-site override row created for the right site_id, and the
+     * global tallcms_site_settings table is untouched (proving the save did
+     * not slip through SiteSetting::set() and write global).
+     */
+    public function test_edit_site_save_writes_per_site_override_without_session_state(): void
     {
-        Permission::create(['name' => 'Manage:CodeInjection', 'guard_name' => 'web']);
-
-        $user = User::create([
-            'name' => 'Admin',
-            'email' => 'admin@test.com',
-            'password' => 'password',
+        $owner = User::create([
+            'name' => 'Site Owner',
+            'email' => 'owner@test.com',
+            'password' => 'pw',
         ]);
-        $user->givePermissionTo('Manage:CodeInjection');
 
-        $this->actingAs($user);
-        $this->app->make(PermissionRegistrar::class)->forgetCachedPermissions();
-
-        $this->assertTrue(CodeInjection::canAccess());
-    }
-
-    public function test_can_access_returns_false_when_not_authenticated(): void
-    {
-        $this->assertFalse(CodeInjection::canAccess());
-    }
-
-    public function test_should_register_navigation_matches_can_access(): void
-    {
-        $this->assertFalse(CodeInjection::canAccess());
-        $this->assertFalse(CodeInjection::shouldRegisterNavigation());
-
-        Permission::create(['name' => 'Manage:CodeInjection', 'guard_name' => 'web']);
-
-        $user = User::create([
-            'name' => 'Admin',
-            'email' => 'admin@test.com',
-            'password' => 'password',
+        $siteId = DB::table('tallcms_sites')->insertGetId([
+            'name' => 'Owned Site',
+            'domain' => 'owned.test',
+            'uuid' => (string) Str::uuid(),
+            'user_id' => $owner->id,
+            'is_default' => false,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
-        $user->givePermissionTo('Manage:CodeInjection');
 
-        $this->actingAs($user);
-        $this->app->make(PermissionRegistrar::class)->forgetCachedPermissions();
+        $this->actingAs($owner);
+        request()->attributes->set('tallcms.admin_context', true);
+        // Deliberately do NOT set session('multisite_admin_site_id') — v2.x
+        // multisite navigation no longer mutates that session.
 
-        $this->assertTrue(CodeInjection::canAccess());
-        $this->assertTrue(CodeInjection::shouldRegisterNavigation());
-    }
+        $service = app(SiteSettingsService::class);
 
-    // --- Audit recording tests (real DB writes) ---
-
-    public function test_save_records_audit_metadata_for_each_zone(): void
-    {
-        $user = User::create([
-            'name' => 'Test Admin',
-            'email' => 'audit@test.com',
-            'password' => 'password',
-        ]);
-        $this->actingAs($user);
-
-        foreach (['code_head', 'code_body_start', 'code_body_end'] as $key) {
-            SiteSetting::set($key, '<!-- test -->', 'text', 'code-injection');
-            SiteSetting::set("{$key}_audit", [
-                'user_id' => $user->id,
-                'name' => $user->name,
-                'at' => now()->toIso8601String(),
-            ], 'json', 'code-injection');
+        // Replicate EditSite::afterSave() for the embed code keys: explicit
+        // site_id, never ambient SiteSetting::set().
+        foreach (['code_head' => '<!-- head -->', 'code_body_start' => '<!-- start -->', 'code_body_end' => '<!-- end -->'] as $key => $value) {
+            $service->setForSite($siteId, $key, $value, 'text');
         }
 
-        Cache::flush();
+        // Each key landed in the override table, scoped to the right site.
+        foreach (['code_head' => '<!-- head -->', 'code_body_start' => '<!-- start -->', 'code_body_end' => '<!-- end -->'] as $key => $expected) {
+            $row = DB::table('tallcms_site_setting_overrides')
+                ->where('site_id', $siteId)
+                ->where('key', $key)
+                ->first();
 
+            $this->assertNotNull($row, "Override row missing for {$key}");
+            $this->assertEquals($expected, $row->value);
+        }
+
+        // Global table for these keys is untouched — no leakage from the
+        // per-site save path to the All-Sites default.
         foreach (['code_head', 'code_body_start', 'code_body_end'] as $key) {
-            $audit = SiteSetting::get("{$key}_audit");
-            $this->assertIsArray($audit, "Audit for {$key} must be an array");
-            $this->assertEquals($user->id, $audit['user_id']);
-            $this->assertEquals('Test Admin', $audit['name']);
-            $this->assertArrayHasKey('at', $audit);
+            $this->assertNull(
+                DB::table('tallcms_site_settings')->where('key', $key)->first(),
+                "Global tallcms_site_settings.{$key} must not be written by per-site save"
+            );
         }
     }
 
-    public function test_audit_metadata_stores_correct_user(): void
+    /**
+     * Cross-site isolation: site A's override does not bleed into site B's
+     * read via the explicit getForSite() lookup that EditSite uses on mount.
+     */
+    public function test_edit_site_per_site_overrides_do_not_leak_across_sites(): void
     {
-        $user = User::create([
-            'name' => 'Jane Doe',
-            'email' => 'jane@test.com',
-            'password' => 'password',
+        $owner = User::create(['name' => 'Owner', 'email' => 'o@t.com', 'password' => 'pw']);
+
+        $siteA = DB::table('tallcms_sites')->insertGetId([
+            'name' => 'A', 'domain' => 'a.test', 'uuid' => (string) Str::uuid(),
+            'user_id' => $owner->id, 'is_default' => false, 'is_active' => true,
+            'created_at' => now(), 'updated_at' => now(),
         ]);
-        $this->actingAs($user);
+        $siteB = DB::table('tallcms_sites')->insertGetId([
+            'name' => 'B', 'domain' => 'b.test', 'uuid' => (string) Str::uuid(),
+            'user_id' => $owner->id, 'is_default' => false, 'is_active' => true,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
 
-        SiteSetting::set('code_head_audit', [
-            'user_id' => $user->id,
-            'name' => $user->name,
-            'at' => now()->toIso8601String(),
-        ], 'json', 'code-injection');
+        $service = app(SiteSettingsService::class);
+        $service->setForSite($siteA, 'code_head', '<!-- A -->', 'text');
 
-        Cache::flush();
-
-        $audit = SiteSetting::get('code_head_audit');
-        $this->assertEquals('Jane Doe', $audit['name']);
-        $this->assertEquals($user->id, $audit['user_id']);
+        $this->assertEquals('<!-- A -->', $service->getForSite($siteA, 'code_head'));
+        $this->assertNull($service->getForSite($siteB, 'code_head'),
+            'Site B must not inherit Site A\'s override; should fall back to (empty) global default');
     }
 
-    // --- Permission merged into Shield config at runtime ---
+    // --- Form schema drift guards ---
+    //
+    // The unit tests above exercise the *write path* (SiteSettingsService).
+    // These tests guard the *form schema* — the Embed Code tab must keep the
+    // three textarea fields wired to the right names, otherwise EditSite's
+    // settingKeys-based save loop would silently skip them.
+    //
+    // Filament's runtime component tree requires container binding to walk
+    // (`getChildComponents()` throws without a parent), so these guards inspect
+    // the SiteForm method source directly. This is brittle to formatting but
+    // robust to the only failure mode that matters: someone renaming or
+    // removing a textarea name.
 
-    public function test_manage_code_injection_is_in_shield_custom_permissions(): void
+    public function test_embed_code_tab_method_references_three_textarea_field_names(): void
     {
-        $permissions = config('filament-shield.custom_permissions', []);
+        $source = $this->getMethodSource(SiteForm::class, 'embedCodeTab');
 
-        $this->assertContains(
-            'Manage:CodeInjection',
-            $permissions,
-            'Manage:CodeInjection must be merged into Shield custom_permissions at runtime'
-        );
+        $this->assertStringContainsString("Textarea::make('code_head')", $source,
+            'embedCodeTab() must define a Textarea named code_head');
+        $this->assertStringContainsString("Textarea::make('code_body_start')", $source,
+            'embedCodeTab() must define a Textarea named code_body_start');
+        $this->assertStringContainsString("Textarea::make('code_body_end')", $source,
+            'embedCodeTab() must define a Textarea named code_body_end');
     }
 
-    // --- Page does not use HasPageShield ---
-
-    public function test_code_injection_page_does_not_use_has_page_shield(): void
+    public function test_site_form_schema_method_includes_embed_code_tab(): void
     {
-        $traits = class_uses_recursive(CodeInjection::class);
+        $source = $this->getMethodSource(SiteForm::class, 'schema');
 
-        $this->assertArrayNotHasKey(
-            'BezhanSalleh\FilamentShield\Traits\HasPageShield',
-            $traits,
-            'CodeInjection must NOT use HasPageShield trait'
-        );
+        $this->assertStringContainsString('embedCodeTab()', $source,
+            'SiteForm::schema() must wire embedCodeTab() into the Tabs list');
     }
 
-    // --- Plugin opt-out ---
-
-    public function test_without_code_injection_removes_page_from_plugin(): void
+    private function getMethodSource(string $class, string $method): string
     {
-        $plugin = \TallCms\Cms\TallCmsPlugin::make();
+        $reflection = new \ReflectionMethod($class, $method);
+        $file = file($reflection->getFileName());
 
-        $this->assertContains(CodeInjection::class, $plugin->getPages());
-
-        $plugin->withoutCodeInjection();
-        $this->assertNotContains(CodeInjection::class, $plugin->getPages());
+        return implode('', array_slice(
+            $file,
+            $reflection->getStartLine() - 1,
+            $reflection->getEndLine() - $reflection->getStartLine() + 1
+        ));
     }
+
+    // --- Test gap note ---
+    //
+    // What's *not* covered: a true page-level Livewire test of EditSite that
+    // fills the form and calls save() through Filament's form lifecycle. That
+    // would require bootstrapping a Filament panel + LivewireServiceProvider
+    // in the package test environment, which neither core nor the multisite
+    // plugin currently does. The structural guards above (settingKeys
+    // reflection + form schema introspection + service-level write path)
+    // collectively catch the regression class identified in the bug report
+    // (form/schema drift, ambient session writes), but a future PR should
+    // wire up Filament panel bootstrap in this test class so we can drive
+    // EditSite through `Livewire::test(EditSite::class, ['record' => ...])`.
+    // See https://filamentphp.com/docs/5.x/panels/testing for the pattern.
 }

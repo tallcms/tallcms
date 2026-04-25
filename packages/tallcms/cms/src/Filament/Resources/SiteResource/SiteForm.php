@@ -37,6 +37,7 @@ class SiteForm
                     static::brandingTab(),
                     static::contactTab(),
                     static::socialTab(),
+                    static::embedCodeTab(),
                     static::publishingTab(),
                     static::maintenanceTab(),
                 ])
@@ -233,6 +234,61 @@ class SiteForm
                         TextInput::make('newsletter_signup_url')->label('Newsletter Signup URL')->url(),
                     ])
                     ->columns(2),
+            ]);
+    }
+
+    /**
+     * Embed code tab: per-site `<head>`/body code injection (analytics,
+     * tracking pixels, chat widgets, etc.).
+     *
+     * Authorization model: access follows Site edit permission via SitePolicy.
+     * Anyone allowed to edit a Site is allowed to set its embed code — there
+     * is no separate `Manage:CodeInjection` permission. This is a deliberate
+     * simplification: in a SaaS multisite context, site owners are expected
+     * to be able to add scripts for the sites they own. If you need stricter
+     * gating (e.g. super-admin-only embed code), gate this tab with
+     * `->visible(fn() => auth()->user()->hasRole('super_admin'))`.
+     */
+    public static function embedCodeTab(): Tabs\Tab
+    {
+        return Tabs\Tab::make('Embed Code')
+            ->icon('heroicon-o-code-bracket')
+            ->schema([
+                Section::make('Warning')
+                    ->icon('heroicon-o-exclamation-triangle')
+                    ->iconColor('danger')
+                    ->description('Site owners can add scripts for this site only. Embed code runs on every page of this site for all visitors — only paste code from sources you trust.')
+                    ->schema([]),
+
+                Section::make('Head Code')
+                    ->description('Embedded inside <head> before </head> (analytics, meta tags, CSS)')
+                    ->schema([
+                        Textarea::make('code_head')
+                            ->label('Head Code')
+                            ->rows(8)
+                            ->extraInputAttributes(['class' => 'font-mono text-sm'])
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('Body Start Code')
+                    ->description('Embedded right after the <body> open tag (GTM noscript, early scripts)')
+                    ->schema([
+                        Textarea::make('code_body_start')
+                            ->label('Body Start Code')
+                            ->rows(8)
+                            ->extraInputAttributes(['class' => 'font-mono text-sm'])
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('Body End Code')
+                    ->description('Embedded before </body> (tracking pixels, chat widgets, deferred JS)')
+                    ->schema([
+                        Textarea::make('code_body_end')
+                            ->label('Body End Code')
+                            ->rows(8)
+                            ->extraInputAttributes(['class' => 'font-mono text-sm'])
+                            ->columnSpanFull(),
+                    ]),
             ]);
     }
 

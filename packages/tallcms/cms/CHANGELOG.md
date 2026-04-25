@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.3.2] - 2026-04-25
+
+### Added
+
+- Per-site embed code via a new "Embed Code" tab on the Site edit page
+  (Sites → {site} → Edit → Embed Code). Three zones: head, body start,
+  body end. Saves write per-site overrides through `SiteSettingsService::setForSite()`
+  with the explicit site_id, so multi-site installs no longer share a single
+  installation-wide block.
+
+### Changed
+
+- Embed code keys (`code_head`, `code_body_start`, `code_body_end`) are no
+  longer hard-coded as global-only in `SiteSetting::$globalOnlyKeys`; they
+  now follow the standard per-site override pattern with global fallback.
+- Authorization for embed code now follows Site edit permission via
+  `SitePolicy`; there is no longer a dedicated `Manage:CodeInjection`
+  permission.
+
+### Removed
+
+- Standalone `/admin/code-injection` Filament page. The form moved into
+  the Site edit page as the "Embed Code" tab.
+- `Manage:CodeInjection` permission references in the Shield config and
+  installer. The permission migration is now a no-op for fresh installs;
+  upgraded installs keep their existing (now orphan, harmless) permission
+  row in the DB and may delete it manually if desired.
+
+### Deprecated
+
+- `TallCmsPlugin::make()->withoutCodeInjection()` is kept as a no-op shim
+  for backwards compatibility but does nothing — the standalone page no
+  longer exists.
+
+### Fixed
+
+- High-severity bug where saves on the standalone page could write to the
+  installation-wide global table even when the UI implied a specific site
+  was selected. Eliminated by removing ambient session-based site
+  resolution from the embed code save path entirely; saves now use
+  explicit site_id from the edited record.
+
 ## [2.4.1] - 2026-01-24
 
 ### Added

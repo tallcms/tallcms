@@ -356,9 +356,6 @@ class TallCmsSetup extends Command
             // Preview link generation
             'GeneratePreviewLink:CmsPage' => 'Generate shareable preview links for pages',
             'GeneratePreviewLink:CmsPost' => 'Generate shareable preview links for posts',
-
-            // Code injection
-            'Manage:CodeInjection' => 'Manage code injection settings (analytics, scripts)',
         ];
 
         foreach ($customPermissions as $name => $description) {

@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use LaraZeus\SpatieTranslatable\SpatieTranslatablePlugin;
 use TallCms\Cms\Filament\Pages\ApiTokens;
-use TallCms\Cms\Filament\Pages\CodeInjection;
 use TallCms\Cms\Filament\Pages\GlobalDefaults;
 use TallCms\Cms\Filament\Pages\MenuItemsManager;
 use TallCms\Cms\Filament\Pages\PluginLicenses;
@@ -60,8 +59,6 @@ class TallCmsPlugin implements Plugin
     protected bool $hasGlobalDefaults = true;
 
     protected bool $hasSeoSettings = true;
-
-    protected bool $hasCodeInjection = true;
 
     protected bool $hasPluginManager = true;
 
@@ -231,10 +228,6 @@ class TallCmsPlugin implements Plugin
 
         if ($this->hasSeoSettings) {
             $pages[] = SeoSettings::class;
-        }
-
-        if ($this->hasCodeInjection) {
-            $pages[] = CodeInjection::class;
         }
 
         // MenuItemsManager is always included when menus are enabled
@@ -465,12 +458,13 @@ class TallCmsPlugin implements Plugin
     }
 
     /**
-     * Disable code injection page.
+     * @deprecated The standalone Code Injection page was removed in v4.4. Embed code
+     *             now lives as a tab on the Site edit page (Sites → {site} → Embed Code)
+     *             and authorization follows Site edit permission. This method is kept
+     *             as a no-op shim so existing panel providers don't fatal on upgrade.
      */
     public function withoutCodeInjection(): static
     {
-        $this->hasCodeInjection = false;
-
         return $this;
     }
 

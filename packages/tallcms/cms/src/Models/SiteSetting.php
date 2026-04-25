@@ -37,13 +37,6 @@ class SiteSetting extends Model
         'default_locale',
         'hide_default_locale',
         'i18n_locale_overrides',
-        // Code injection: installation-scoped, runs on every page.
-        'code_head',
-        'code_body_start',
-        'code_body_end',
-        'code_head_audit',
-        'code_body_start_audit',
-        'code_body_end_audit',
     ];
 
     /**

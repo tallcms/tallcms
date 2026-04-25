@@ -176,7 +176,7 @@ Custom domains must be verified before TLS certificates are issued. Managed subd
 | **Publishing workflow** | Per-site | Enable/disable review workflow per site |
 | **"Powered by" badge** | Per-site | Show or hide per site |
 | **SEO** (RSS, sitemap) | Global | Installation-wide feed/index settings |
-| **Embed code** (head, body) | Global | Installation-wide code injection |
+| **Embed code** (head, body) | Per-site | Each site has its own analytics, chat widgets, tracking scripts |
 | **Language settings** (i18n) | Global | URL routing is installation-wide |
 
 ### System

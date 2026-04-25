@@ -66,6 +66,10 @@ class EditSite extends Page implements HasForms
         // Maintenance
         'maintenance_mode' => 'boolean',
         'maintenance_message' => 'text',
+        // Embed code (per-site overrides; global default writable in single-site EditSite)
+        'code_head' => 'text',
+        'code_body_start' => 'text',
+        'code_body_end' => 'text',
     ];
 
     public function mount(): void
