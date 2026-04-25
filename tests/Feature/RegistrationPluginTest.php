@@ -21,6 +21,12 @@ class RegistrationPluginTest extends TestCase
 
         config(['registration.enabled' => true]);
         config(['registration.default_role' => 'author']);
+        // These tests cover registration mechanics, not the post-registration
+        // onboarding redirect introduced in v1.3.2. Disabling onboarding +
+        // pinning `redirect_after` keeps them focused and decoupled from
+        // multisite + Filament panel-id assumptions.
+        config(['registration.onboarding.enabled' => false]);
+        config(['registration.redirect_after' => '/registered']);
 
         Role::findOrCreate('author', 'web');
     }
@@ -82,13 +88,14 @@ class RegistrationPluginTest extends TestCase
             ->get('/registered')
             ->assertOk()
             ->assertSee('Account Created')
-            ->assertSee('Go to Admin Panel');
+            ->assertSee('Set up your first site');
     }
 
     public function test_success_page_redirects_unauthenticated_user(): void
     {
-        $this->get('/registered')
-            ->assertRedirect(config('registration.redirect_after', '/admin'));
+        // v1.3.2 sends unauthenticated visitors back to the register form,
+        // not the configured post-register redirect.
+        $this->get('/registered')->assertRedirect('/register');
     }
 
     // -------------------------------------------------------
