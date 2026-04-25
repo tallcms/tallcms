@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
 use Filament\Models\Contracts\FilamentUser;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -13,7 +14,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use TallCms\Cms\Models\CmsPost;
 
-class User extends Authenticatable implements FilamentUser, HasAppAuthentication
+class User extends Authenticatable implements FilamentUser, HasAppAuthentication, MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, HasRoles, Notifiable;
@@ -114,17 +115,21 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
 
     public function canAccessPanel(\Filament\Panel $panel): bool
     {
-        // Check if user is active
         if (! ($this->is_active ?? true)) {
             return false;
         }
 
-        // First-time setup: Allow access if this is the first user created
+        // First-user safety net (role/setup): the install command marks the
+        // first user verified, so this short-circuit is for the role-less
+        // case on a fresh install — NOT an email-verification bypass.
         if ($this->isFirstUser()) {
             return true;
         }
 
-        // Allow access if user has any role — Shield handles specific permissions
+        if (config('registration.email_verification.enabled') && ! $this->hasVerifiedEmail()) {
+            return false;
+        }
+
         return $this->roles->isNotEmpty();
     }
 

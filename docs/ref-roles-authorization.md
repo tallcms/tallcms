@@ -452,5 +452,6 @@ Run `php artisan shield:generate --resource=YourResource` to generate permission
 
 - [API Permissions Reference](api-permissions) - API-specific permission mapping
 - [REST API Development](api) - API architecture
+- [Email Verification](email-verification) - opt-in email verification + email-change verification
 - [Shield Documentation](https://filamentphp.com/plugins/bezhansalleh-shield) - Full Shield reference
 - [Spatie Permission Docs](https://spatie.be/docs/laravel-permission) - Underlying package

@@ -59,6 +59,8 @@ class AdminPanelProvider extends PanelProvider
             )
             ->login()
             ->passwordReset()
+            ->emailVerification(isRequired: fn () => (bool) config('registration.email_verification.enabled'))
+            ->emailChangeVerification(fn () => (bool) config('registration.email_verification.enabled'))
             ->profile(isSimple: false)
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')

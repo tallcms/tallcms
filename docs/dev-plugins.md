@@ -598,4 +598,5 @@ Verify view namespace registration in your service provider's `boot()` method.
 - [Block development](block-development)
 - [Theme development](themes)
 - [Architecture reference](architecture)
+- [Email Verification](email-verification) — for hosts that fire `event(new Registered)` from custom signup code
 - [Filament plugin ecosystem](filament-ecosystem) — use any of the hundreds of Filament community plugins alongside TallCMS plugins

@@ -1,5 +1,41 @@
 # Upgrade Guide
 
+## Opting into email verification (4.x)
+
+TallCMS 4.x ships native Filament 5 email-verification + email-change-verification wiring in the **standalone skeleton** (`app/Models/User.php`, `app/Providers/Filament/AdminPanelProvider.php`). The wiring is **off by default** — controlled by the `REGISTRATION_EMAIL_VERIFICATION` env var. Existing installs are not auto-modified by `tallcms:update`; user-app files only change in fresh installs.
+
+If you want to enable verification on an existing install, follow [docs/ref-email-verification.md](../../../docs/ref-email-verification.md). Two pre-flight steps are mandatory before flipping `REGISTRATION_EMAIL_VERIFICATION=true`:
+
+**1. Backfill all unverified users.** Filament's `verified` middleware will lock out everyone with `email_verified_at = NULL` — including admin-created users (Filament's `UserResource` does not set the timestamp), historical signups, and anyone created by custom code that fires `event(new Registered($user))` without first calling `markEmailAsVerified()`.
+
+```bash
+php artisan tinker
+>>> App\Models\User::whereNull('email_verified_at')->get()->each->markEmailAsVerified();
+```
+
+If you have the registration plugin installed, you can use its dedicated command instead:
+
+```bash
+php artisan tallcms:registration-backfill-verified
+```
+
+**2. Audit role-less users.** The shipped `canAccessPanel()` requires `$this->roles->isNotEmpty()` (except for the first user). If your install has any users currently accessing the panel without a role assigned, they'll be locked out.
+
+```bash
+php artisan tinker
+>>> App\Models\User::doesntHave('roles')->pluck('email')
+```
+
+Either backfill roles for those users or accept the lockouts intentionally before deploying.
+
+**3. Configure mail.** The verification flow is useless without a working mailer. `MAIL_MAILER=log` will silently swallow verification emails into `storage/logs/laravel.log`. Switch to `smtp` (Mailtrap for staging) or `postmark`/`resend`/`ses` for production before flipping the env.
+
+**4. Custom signup code warning.** If your install fires `event(new Registered($user))` from your own code (custom registration controllers, OAuth handlers, import scripts), adding `MustVerifyEmail` to the User contract activates Laravel's stock `SendEmailVerificationNotification` listener. With verification intentionally OFF, you must either skip the `Registered` event or call `$user->markEmailAsVerified()` before firing it. The registration plugin already handles this correctly; other code paths don't get it for free.
+
+---
+
+## v1.x → v2.0
+
 This guide covers upgrading from TallCMS v1.x (skeleton-based) to v2.0 (package-based).
 
 ## Overview
