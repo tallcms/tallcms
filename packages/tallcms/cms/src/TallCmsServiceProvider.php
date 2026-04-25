@@ -932,6 +932,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
             Console\Commands\ThemeCacheClear::class,
             Console\Commands\ThemeInstallCommand::class,
             Console\Commands\ThemeList::class,
+            Console\Commands\ThemePublishAll::class,
 
             // Plugin commands
             Console\Commands\MakePluginCommand::class,
