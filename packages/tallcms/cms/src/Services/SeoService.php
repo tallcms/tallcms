@@ -412,7 +412,10 @@ class SeoService
 
         foreach ($pages as $page) {
             if (static::pageHasPostsBlock($page)) {
-                return $cache[$cacheKey] = $page->slug;
+                // getFullSlug() returns the hierarchical path when
+                // tallcms.pages.hierarchical_urls is on, and the leaf slug
+                // when off — keeps post URLs consistent with the page tree.
+                return $cache[$cacheKey] = $page->getFullSlug();
             }
         }
 

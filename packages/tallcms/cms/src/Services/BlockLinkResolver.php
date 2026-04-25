@@ -27,12 +27,16 @@ class BlockLinkResolver
                             return $page->is_homepage ? '#top' : '#'.tallcms_slug_to_anchor($page->slug, $page->id);
                         }
 
-                        // Use localized URL helper which handles routes prefix and locale
-                        $slug = tallcms_i18n_enabled()
-                            ? ($page->getTranslation('slug', app()->getLocale(), false) ?? $page->getTranslation('slug', app(LocaleRegistry::class)->getDefaultLocale()))
-                            : $page->slug;
+                        if ($page->is_homepage) {
+                            return tallcms_localized_url('/');
+                        }
 
-                        return $page->is_homepage ? tallcms_localized_url('/') : tallcms_localized_url($slug);
+                        // Build full hierarchical path (parent/child) for the URL
+                        $slug = tallcms_i18n_enabled()
+                            ? $page->getFullSlug(app()->getLocale())
+                            : $page->getFullSlug();
+
+                        return tallcms_localized_url($slug);
                     }
                 }
 

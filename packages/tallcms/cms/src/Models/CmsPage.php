@@ -179,6 +179,51 @@ class CmsPage extends Model implements HasRichContent
         return $this->belongsTo(CmsPage::class, 'parent_id');
     }
 
+    /**
+     * Get the URL slug for this page.
+     *
+     * When tallcms.pages.hierarchical_urls is enabled, returns the full
+     * ancestor path (e.g. "services/team"). When disabled (default), returns
+     * just the leaf slug stored in the database ("team"), preserving the
+     * pre-hierarchical URL behavior for existing installs.
+     *
+     * @param  string|null  $locale   Locale for translatable slugs (null = current app locale)
+     * @param  array<int>   $visited  Internal cycle guard — do not pass from call sites
+     */
+    public function getFullSlug(?string $locale = null, array $visited = []): string
+    {
+        $slug = tallcms_i18n_enabled() && $locale
+            ? ($this->getTranslation('slug', $locale, false) ?? $this->slug)
+            : $this->slug;
+
+        // When hierarchical URLs are disabled, return the leaf slug only.
+        // This preserves exact pre-feature behavior for existing installs.
+        if (! config('tallcms.pages.hierarchical_urls', false)) {
+            return $slug;
+        }
+
+        // Cycle guard: a circular parent_id reference in the database would
+        // recurse forever — break out by returning the leaf slug.
+        if (in_array($this->id, $visited, true)) {
+            return $slug;
+        }
+
+        $visited[] = $this->id;
+
+        if ($this->parent_id && $this->relationLoaded('parent') && $this->parent) {
+            return $this->parent->getFullSlug($locale, $visited).'/'.$slug;
+        }
+
+        if ($this->parent_id) {
+            $parent = $this->parent()->first();
+            if ($parent) {
+                return $parent->getFullSlug($locale, $visited).'/'.$slug;
+            }
+        }
+
+        return $slug;
+    }
+
     public function children(): HasMany
     {
         return $this->hasMany(CmsPage::class, 'parent_id')->orderBy('sort_order');
@@ -220,14 +265,14 @@ class CmsPage extends Model implements HasRichContent
         foreach (array_reverse($ancestors) as $ancestor) {
             $breadcrumbs[] = [
                 'name' => $ancestor->title,
-                'url' => url(tallcms_localized_url($ancestor->slug)),
+                'url' => url(tallcms_localized_url($ancestor->getFullSlug())),
             ];
         }
 
         // Add current page (last item, canonical URL without query params)
         $breadcrumbs[] = [
             'name' => $this->title,
-            'url' => url(tallcms_localized_url($this->slug)),
+            'url' => url(tallcms_localized_url($this->getFullSlug())),
         ];
 
         return $breadcrumbs;
@@ -323,6 +368,28 @@ class CmsPage extends Model implements HasRichContent
     }
 
     /**
+     * Override trait's localizedSlugExists to scope uniqueness within the same parent.
+     * Sibling pages must have unique slugs, but the same slug is allowed under different parents.
+     */
+    public function localizedSlugExists(string $slug, string $locale): bool
+    {
+        $query = static::query();
+        $this->whereJsonLocale($query, 'slug', $locale, $slug);
+
+        if ($this->exists) {
+            $query->where('id', '!=', $this->id);
+        }
+
+        if ($this->parent_id) {
+            $query->where('parent_id', $this->parent_id);
+        } else {
+            $query->whereNull('parent_id');
+        }
+
+        return $query->exists();
+    }
+
+    /**
      * Check if slug already exists (excluding current record).
      * Used when i18n is disabled, but data is still stored as JSON.
      */
@@ -340,6 +407,13 @@ class CmsPage extends Model implements HasRichContent
 
         if ($this->exists) {
             $query->where('id', '!=', $this->id);
+        }
+
+        // Scope to the same parent so sibling-unique slugs don't conflict across the tree
+        if ($this->parent_id) {
+            $query->where('parent_id', $this->parent_id);
+        } else {
+            $query->whereNull('parent_id');
         }
 
         return $query->exists();

@@ -68,12 +68,14 @@ class CmsPageRenderer extends Component
             $cleanSlug = str_replace('page/', '', $cleanSlug);
         }
 
-        // Check for nested slug (potential post URL like "blog/my-post")
+        // Multi-segment slugs (anything with "/") need nested resolution. The
+        // resolver branches internally on the hierarchical_urls flag: when off
+        // it preserves the pre-PR behavior (post-under-page-with-PostsBlock,
+        // and falling back to a literal "parent/child" page slug); when on it
+        // also walks the parent_id chain to resolve hierarchical page paths.
         if (str_contains($cleanSlug, '/')) {
-            $resolved = $this->resolveNestedSlug($cleanSlug);
-
-            if ($resolved) {
-                return; // Post or nested page was found and rendered
+            if ($this->resolveNestedSlug($cleanSlug)) {
+                return;
             }
         }
 
@@ -121,33 +123,54 @@ class CmsPageRenderer extends Component
     }
 
     /**
-     * Resolve nested slugs to either a post within a page or a nested page
+     * Resolve a multi-segment slug.
+     *
+     * Branches on the `tallcms.pages.hierarchical_urls` flag:
+     *   - off (default): pre-PR behavior — single-level "parent_page/post_slug"
+     *     where the parent has a PostsBlock, with a fallback to looking up the
+     *     full "parent/child" string as a single page slug.
+     *   - on: walks the parent_id chain segment by segment so child pages
+     *     resolve at their full ancestor path, with the same post-under-page
+     *     fallback at the leaf.
+     *
+     * Splitting on the flag is intentional: the legacy post-under-page case
+     * was load-bearing for existing installs and must keep working when the
+     * new feature is opt-out (default). See PR #59 review for context.
      */
     protected function resolveNestedSlug(string $slug): bool
     {
-        // Split into parent and child segments
+        if (! config('tallcms.pages.hierarchical_urls', false)) {
+            return $this->resolveLegacyNestedSlug($slug);
+        }
+
+        return $this->walkHierarchicalSegments($slug);
+    }
+
+    /**
+     * Pre-PR-59 nested-slug resolution, preserved for the flag-off path.
+     *
+     * 1. Treat /parent_page/post_slug as a post under a page that has a
+     *    PostsBlock (the most common existing usage).
+     * 2. Fall back to looking up the full "parent/child" string as a single
+     *    page slug — covers installs that historically stored slashes in
+     *    the slug column directly.
+     */
+    protected function resolveLegacyNestedSlug(string $slug): bool
+    {
         $segments = explode('/', $slug);
         $childSlug = array_pop($segments);
         $parentSlug = implode('/', $segments);
 
-        // Try to find parent page (use localized lookup when i18n enabled)
         $parentPage = tallcms_i18n_enabled()
             ? CmsPage::withLocalizedSlug($parentSlug)->published()->first()
             : CmsPage::withSlug($parentSlug)->published()->first();
 
-        if (! $parentPage) {
-            return false;
-        }
-
-        // Check if parent page has a PostsBlock
-        if ($this->pageHasPostsBlock($parentPage)) {
-            // Try to find the post (use localized lookup when i18n enabled)
+        if ($parentPage && $this->pageHasPostsBlock($parentPage)) {
             $post = tallcms_i18n_enabled()
                 ? CmsPost::withLocalizedSlug($childSlug)->with(['categories', 'author'])->first()
                 : CmsPost::withSlug($childSlug)->with(['categories', 'author'])->first();
 
             if ($post) {
-                // Check publish status (allow drafts for authenticated users in preview)
                 $canView = $post->isPublished() ||
                     (auth()->check() && request()->has('preview'));
 
@@ -163,7 +186,7 @@ class CmsPageRenderer extends Component
             }
         }
 
-        // Not a post - try to find a page with the full nested slug
+        // Fallback: page whose stored slug literally contains "/".
         $nestedPage = tallcms_i18n_enabled()
             ? CmsPage::withLocalizedSlug($slug)->published()->first()
             : CmsPage::withSlug($slug)->published()->first();
@@ -173,6 +196,87 @@ class CmsPageRenderer extends Component
             $this->renderPageContent();
 
             return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Walk multi-segment paths via the parent_id chain — the hierarchical_urls
+     * code path.
+     *
+     * Each segment is looked up as a published page scoped to the parent found
+     * in the previous step. Every intermediate segment must be published — a
+     * draft or pending parent makes its entire subtree unreachable via the
+     * hierarchical URL. This is intentional: an unpublished parent acts as an
+     * invisible node and its children are inaccessible until the parent is
+     * also published.
+     */
+    protected function walkHierarchicalSegments(string $slug): bool
+    {
+        $segments = explode('/', $slug);
+        $parentId = null;
+
+        foreach ($segments as $i => $segment) {
+            $isLast = ($i === count($segments) - 1);
+
+            $query = tallcms_i18n_enabled()
+                ? CmsPage::withLocalizedSlug($segment)
+                : CmsPage::withSlug($segment);
+
+            // published() is intentionally required for every segment — see
+            // method docblock above for the rationale.
+            $query->published();
+
+            if ($parentId !== null) {
+                $query->where('parent_id', $parentId);
+            } else {
+                $query->whereNull('parent_id');
+            }
+
+            $currentPage = $query->first();
+
+            if (! $currentPage) {
+                // Segment didn't match a page — if this is the last segment and we found
+                // a valid parent page with a PostsBlock, treat it as a post URL.
+                if ($isLast && $parentId !== null) {
+                    $parentPage = CmsPage::find($parentId);
+
+                    if ($parentPage && $this->pageHasPostsBlock($parentPage)) {
+                        $post = tallcms_i18n_enabled()
+                            ? CmsPost::withLocalizedSlug($segment)->with(['categories', 'author'])->first()
+                            : CmsPost::withSlug($segment)->with(['categories', 'author'])->first();
+
+                        if ($post) {
+                            $canView = $post->isPublished() ||
+                                (auth()->check() && request()->has('preview'));
+
+                            if ($canView) {
+                                $parentSlug = implode('/', array_slice($segments, 0, $i));
+                                $this->page = $parentPage;
+                                $this->post = $post;
+                                $this->parentSlug = $parentSlug;
+                                $this->postsBlockConfig = $this->getPostsBlockConfig($parentPage);
+                                $this->renderedContent = 'POST_DETAIL';
+
+                                return true;
+                            }
+                        }
+                    }
+                }
+
+                return false;
+            }
+
+            if ($isLast) {
+                $this->page = $currentPage;
+                $this->renderPageContent();
+
+                return true;
+            }
+
+            // Intermediate segment matched — continue deeper with this page as the new parent
+            $parentId = $currentPage->id;
         }
 
         return false;
@@ -348,9 +452,12 @@ class CmsPageRenderer extends Component
 
     protected function renderPageContent(): void
     {
-        // Share page slug with all views so blocks can generate correct URLs
-        // For homepage, slug is empty string; for other pages, use the full slug
-        $pageSlug = $this->page->slug === '/' ? '' : $this->page->slug;
+        // Share page slug with all views so blocks can generate correct URLs.
+        // For homepage, slug is empty string; for other pages, use the full
+        // hierarchical path so blocks (posts, links) build /parent/child URLs
+        // when tallcms.pages.hierarchical_urls is on. Falls back to the leaf
+        // slug when off — getFullSlug() handles both modes internally.
+        $pageSlug = $this->page->slug === '/' ? '' : $this->page->getFullSlug();
         View::share('cmsPageSlug', $pageSlug);
 
         // Share page content width with blocks so they can inherit it
@@ -369,9 +476,11 @@ class CmsPageRenderer extends Component
      */
     protected function renderSinglePageContent(CmsPage $page): string
     {
-        // Temporarily set cmsPageSlug for this section (for posts block URLs)
+        // Temporarily set cmsPageSlug for this section (for posts block URLs).
+        // getFullSlug() honors tallcms.pages.hierarchical_urls so SPA-mode
+        // section blocks build URLs consistent with non-SPA rendering.
         $previousSlug = View::shared('cmsPageSlug');
-        View::share('cmsPageSlug', $page->slug);
+        View::share('cmsPageSlug', $page->getFullSlug());
 
         // Temporarily set content width for this page's blocks
         $previousWidth = View::shared('cmsPageContentWidth');

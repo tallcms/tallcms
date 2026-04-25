@@ -510,6 +510,27 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Pages
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for the CMS page system.
+    |
+    */
+    'pages' => [
+        // Enable hierarchical page URLs.
+        //
+        // When enabled, child pages are resolved and linked by their full
+        // ancestor path (e.g. /services/team instead of /team). The sitemap
+        // also generates hierarchical URLs.
+        //
+        // Default: false — existing installs are unaffected on upgrade.
+        // Set to true once you are ready to adopt hierarchical URLs and have
+        // updated any external links or sitemaps that reference the old flat URLs.
+        'hierarchical_urls' => env('TALLCMS_HIERARCHICAL_URLS', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Comments
     |--------------------------------------------------------------------------
     |

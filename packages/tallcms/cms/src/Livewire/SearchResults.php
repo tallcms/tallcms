@@ -111,7 +111,7 @@ class SearchResults extends Component
             'type' => $type,
             'excerpt' => $model->search_excerpt ?? $model->excerpt ?? $model->meta_description ?? '',
             'url' => $type === 'page'
-                ? url(tallcms_localized_url($model->slug))
+                ? url(tallcms_localized_url($model->getFullSlug()))
                 : SeoService::getPostUrl($model),
         ];
     }

@@ -72,8 +72,11 @@ class CmsPageForm
                                                 return $activeLocale === $defaultLocale;
                                             })
                                             ->maxLength(255)
-                                            ->rules(function (?CmsPage $record, $livewire) {
+                                            ->rules(function (?CmsPage $record, $livewire, Get $get) {
                                                 $rules = ['alpha_dash'];
+
+                                                // Get current parent_id from form state (works for both create and edit)
+                                                $parentId = $get('parent_id');
 
                                                 if (tallcms_i18n_enabled()) {
                                                     // Block locale codes as slugs
@@ -88,7 +91,7 @@ class CmsPageForm
                                                     // passing the id directly guarantees per-site scoping.
                                                     $siteId = $record?->site_id ?? (data_get($livewire, 'ownerSiteId') ?: null);
 
-                                                    // Unique per locale
+                                                    // Unique per locale, scoped to siblings (same parent_id)
                                                     $activeLocale = $livewire->activeLocale ?? app()->getLocale();
                                                     $rules[] = new UniqueTranslatableSlug(
                                                         table: 'tallcms_pages',
@@ -96,17 +99,22 @@ class CmsPageForm
                                                         locale: $activeLocale,
                                                         ignoreId: $record?->id,
                                                         siteId: $siteId ? (int) $siteId : null,
+                                                        parentId: $parentId ? (int) $parentId : null,
+                                                        parentIdSet: true,
                                                     );
                                                 } else {
                                                     $siteId = $record?->site_id ?? (data_get($livewire, 'ownerSiteId') ?: null);
 
-                                                    // Unique per default locale (site-aware when multisite active)
+                                                    // Unique per default locale (site-aware when multisite active),
+                                                    // scoped to siblings (same parent_id)
                                                     $rules[] = new UniqueTranslatableSlug(
                                                         table: 'tallcms_pages',
                                                         column: 'slug',
                                                         locale: app()->getLocale(),
                                                         ignoreId: $record?->id,
                                                         siteId: $siteId ? (int) $siteId : null,
+                                                        parentId: $parentId ? (int) $parentId : null,
+                                                        parentIdSet: true,
                                                     );
                                                 }
 
@@ -115,7 +123,7 @@ class CmsPageForm
                                             ->validationMessages([
                                                 'not_in' => 'This slug is reserved (matches a language code).',
                                             ])
-                                            ->helperText('Used in the URL. Keep it simple and SEO-friendly.')
+                                            ->helperText('Used as the URL segment. The full URL includes parent page slugs automatically.')
                                             ->columnSpan(1),
                                     ]),
                                 CmsRichEditor::make('content')
@@ -218,6 +226,7 @@ class CmsPageForm
                                             ->options(fn ($livewire) => \TallCms\Cms\Filament\Forms\OwnerSitePicker::parentPageOptions($livewire))
                                             ->searchable()
                                             ->nullable()
+                                            ->live()
                                             ->columnSpan(1),
 
                                         TextInput::make('sort_order')

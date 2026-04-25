@@ -154,19 +154,23 @@ class SitemapService
             $prefix = self::getPrefix();
             $baseUrl = tallcms_base_url();
 
-            return CmsPage::published()
-                ->orderBy('updated_at', 'desc')
-                ->get()
-                ->map(function ($page) use ($baseUrl, $prefix) {
-                    $slug = $page->is_homepage ? '' : '/'.$page->slug;
+            // Load all pages in one query, then wire parent relations in PHP.
+            // This handles arbitrary hierarchy depth with zero N+1 queries.
+            $pages = CmsPage::published()->orderBy('updated_at', 'desc')->get()->keyBy('id');
+            $pages->each(function ($page) use ($pages) {
+                $page->setRelation('parent', $pages->get($page->parent_id));
+            });
 
-                    return [
-                        'loc' => $baseUrl.$prefix.$slug,
-                        'lastmod' => $page->updated_at?->toIso8601String(),
-                        'changefreq' => $page->is_homepage ? 'daily' : 'weekly',
-                        'priority' => $page->is_homepage ? '1.0' : '0.8',
-                    ];
-                });
+            return $pages->values()->map(function ($page) use ($baseUrl, $prefix) {
+                $slug = $page->is_homepage ? '' : '/'.$page->getFullSlug();
+
+                return [
+                    'loc' => $baseUrl.$prefix.$slug,
+                    'lastmod' => $page->updated_at?->toIso8601String(),
+                    'changefreq' => $page->is_homepage ? 'daily' : 'weekly',
+                    'priority' => $page->is_homepage ? '1.0' : '0.8',
+                ];
+            });
         });
     }
 
