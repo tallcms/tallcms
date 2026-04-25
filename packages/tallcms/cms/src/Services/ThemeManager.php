@@ -845,20 +845,33 @@ class ThemeManager
         $entrypoint = 'resources/js/tallcms-core.js';
         $hotFile = public_path('hot');
 
-        // Dev server
+        // Dev server (Vite hot)
         if (file_exists($hotFile)) {
             $devUrl = rtrim(trim(file_get_contents($hotFile)), '/');
 
             return '<script type="module" src="'.$devUrl.'/'.$entrypoint.'"></script>';
         }
 
-        // Production manifest
+        // Standalone install: host's Vite manifest contains the entry because
+        // the standalone scaffold's vite.config.js sources it.
         $manifestPath = public_path('build/manifest.json');
         if (file_exists($manifestPath)) {
             $manifest = json_decode(file_get_contents($manifestPath), true);
             if (isset($manifest[$entrypoint])) {
                 return '<script type="module" src="'.asset('build/'.$manifest[$entrypoint]['file']).'"></script>';
             }
+        }
+
+        // Plugin-mode fallback: the package ships a pre-built copy of the
+        // CMS runtime as `tallcms.js`, published to public/vendor/tallcms/
+        // by `vendor:publish --tag=tallcms-assets`. Without this fallback,
+        // plugin-mode installs got an empty <script> emission and the
+        // contact-form / comments Alpine components never registered — the
+        // frontend logged `Alpine Expression Error: contactForm is not defined`
+        // and the form rendered as a hidden / broken shell.
+        $vendorPublishedJs = public_path('vendor/tallcms/tallcms.js');
+        if (file_exists($vendorPublishedJs)) {
+            return '<script src="'.asset('vendor/tallcms/tallcms.js').'"></script>';
         }
 
         return '';
