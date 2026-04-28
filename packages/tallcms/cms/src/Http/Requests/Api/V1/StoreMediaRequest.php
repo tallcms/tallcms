@@ -28,7 +28,6 @@ class StoreMediaRequest extends FormRequest
         return [
             'file' => ['required', 'file', 'max:102400'], // 100MB max
             'name' => ['sometimes', 'string', 'max:255'],
-            'disk' => ['sometimes', 'string', 'in:public,s3,local'],
             'alt_text' => ['sometimes', 'nullable', 'string', 'max:255'],
             'caption' => ['sometimes', 'nullable', 'string', 'max:1000'],
             'collection_ids' => ['sometimes', 'array'],

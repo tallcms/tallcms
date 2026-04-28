@@ -26,6 +26,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Media Library
+    |--------------------------------------------------------------------------
+    |
+    | Set 'disk' to any filesystem disk defined in config/filesystems.php.
+    | Leave null to let TallCMS auto-detect: 's3' when S3 is configured,
+    | otherwise 'public'.
+    |
+    | Example: TALLCMS_MEDIA_DISK=my-s3-bucket
+    |
+    */
+    'media' => [
+        'disk' => env('TALLCMS_MEDIA_DISK'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Publishing Workflow
     |--------------------------------------------------------------------------
     |

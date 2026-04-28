@@ -310,7 +310,13 @@ if (! function_exists('cms_media_disk')) {
      */
     function cms_media_disk(): string
     {
-        // First, check if FILESYSTEM_DISK is explicitly set to s3
+        // Explicit package-level override takes highest priority
+        $configured = config('tallcms.media.disk');
+        if (! empty($configured)) {
+            return $configured;
+        }
+
+        // Auto-detect: check if FILESYSTEM_DISK is explicitly set to s3
         $defaultDisk = config('filesystems.default');
         if ($defaultDisk === 's3') {
             return 's3';
@@ -346,7 +352,10 @@ if (! function_exists('cms_uses_s3')) {
      */
     function cms_uses_s3(): bool
     {
-        return cms_media_disk() === 's3';
+        $disk = cms_media_disk();
+
+        return $disk === 's3'
+            || config("filesystems.disks.{$disk}.driver") === 's3';
     }
 }
 

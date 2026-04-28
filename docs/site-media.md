@@ -265,28 +265,104 @@ Posts and pages can have featured images:
 
 ---
 
-## Cloud Storage
+## File Storage
 
-TallCMS can store media in cloud storage instead of locally.
+### How TallCMS Stores Files
 
-### Supported Providers
+By default, TallCMS saves uploaded files to your server's local disk at `storage/app/public/media`, served via a symlink at `public/storage`. This works out of the box with no configuration required.
 
+Each media record stores the disk name it was uploaded to, so files are always read from the correct location regardless of future configuration changes.
+
+### Switching to Cloud Storage
+
+TallCMS automatically uses S3-compatible storage when it detects a valid S3 configuration in your `.env`. No other change is needed:
+
+```env
+# Your storage credentials
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=your-bucket-name
+
+# Tell Laravel (and TallCMS) to use S3
+FILESYSTEM_DISK=s3
+```
+
+Once set, all new uploads go to S3. Existing local files are not migrated automatically.
+
+**Supported providers:**
 - Amazon S3
 - DigitalOcean Spaces
 - Cloudflare R2
+- Backblaze B2
+- Wasabi
+- MinIO (self-hosted)
 - Any S3-compatible service
 
-### Benefits
+### Using a Dedicated Media Disk
 
-- **Scalability**: No local disk limits
-- **Performance**: CDN delivery for faster loading
-- **Reliability**: Cloud provider handles redundancy
+If you want TallCMS media on a separate disk — without changing your app's default filesystem — define a named disk in `config/filesystems.php` and point TallCMS at it with `TALLCMS_MEDIA_DISK`.
 
-### Setup
+**Step 1** — add the disk to `config/filesystems.php`:
 
-Cloud storage is configured during installation or in your `.env` file. See the [installation guide](installation) for details.
+```php
+'disks' => [
+    // ... your existing disks ...
 
-Image optimization works with cloud storage—variants are generated locally and uploaded to your configured storage.
+    'cms-media' => [
+        'driver' => 's3',
+        'key'    => env('CMS_MEDIA_KEY'),
+        'secret' => env('CMS_MEDIA_SECRET'),
+        'region' => env('CMS_MEDIA_REGION', 'us-east-1'),
+        'bucket' => env('CMS_MEDIA_BUCKET'),
+        'url'    => env('CMS_MEDIA_URL'),         // optional CDN URL
+        'visibility' => 'public',
+    ],
+],
+```
+
+**Step 2** — set the disk name in `.env`:
+
+```env
+TALLCMS_MEDIA_DISK=cms-media
+```
+
+`TALLCMS_MEDIA_DISK` takes priority over the auto-detection logic. Any disk registered in `config/filesystems.php` works — local, S3, or any custom driver.
+
+### Provider Quick-Reference
+
+**DigitalOcean Spaces:**
+```env
+AWS_ACCESS_KEY_ID=your-spaces-key
+AWS_SECRET_ACCESS_KEY=your-spaces-secret
+AWS_DEFAULT_REGION=nyc3
+AWS_BUCKET=my-space-name
+AWS_ENDPOINT=https://nyc3.digitaloceanspaces.com
+FILESYSTEM_DISK=s3
+```
+
+**Cloudflare R2:**
+```env
+AWS_ACCESS_KEY_ID=your-r2-access-key
+AWS_SECRET_ACCESS_KEY=your-r2-secret-key
+AWS_DEFAULT_REGION=auto
+AWS_BUCKET=my-bucket
+AWS_ENDPOINT=https://YOUR_ACCOUNT_ID.r2.cloudflarestorage.com
+FILESYSTEM_DISK=s3
+```
+
+**MinIO (self-hosted):**
+```env
+AWS_ACCESS_KEY_ID=minioadmin
+AWS_SECRET_ACCESS_KEY=minioadmin
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=my-bucket
+AWS_ENDPOINT=http://localhost:9000
+AWS_USE_PATH_STYLE_ENDPOINT=true
+FILESYSTEM_DISK=s3
+```
+
+> Image optimization works with all storage backends — variants are generated locally and uploaded to your configured disk.
 
 ---
 
@@ -303,6 +379,12 @@ Verify the collection contains images (not videos/documents). Check that images 
 
 **"Optimization not running"**
 Image optimization runs in the background queue. Ensure your queue worker is running: `php artisan queue:work`
+
+**"Images uploaded to the wrong disk after changing storage config"**
+Each media record stores the disk it was uploaded to. Changing `TALLCMS_MEDIA_DISK` or `FILESYSTEM_DISK` only affects new uploads — existing records still reference their original disk. To move existing files, re-upload them after updating the configuration.
+
+**"Uploaded file is inaccessible after setting TALLCMS_MEDIA_DISK"**
+The disk name in `TALLCMS_MEDIA_DISK` must match a key in the `disks` array in `config/filesystems.php`. Check for typos and run `php artisan config:clear` after any config change.
 
 **"Can't delete image"**
 Images used in published content may be protected. Remove the image from content first.

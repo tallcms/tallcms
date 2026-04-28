@@ -41,13 +41,27 @@ class EditTallcmsMedia extends EditRecord
             $size = Storage::disk($disk)->size($newFilePath);
 
             // Get image dimensions if it's an image
-            // Note: For S3, we can't use getimagesize directly, so we skip dimensions for remote storage
             $meta = $record->meta ?? [];
-            if (str_starts_with($mimeType, 'image/') && $disk === 'public') {
-                $fullPath = Storage::disk($disk)->path($newFilePath);
-                if (file_exists($fullPath)) {
-                    [$width, $height] = getimagesize($fullPath);
-                    $meta = array_merge($meta, ['width' => $width, 'height' => $height]);
+            if (str_starts_with($mimeType, 'image/')) {
+                if ($disk === 'public') {
+                    $fullPath = Storage::disk($disk)->path($newFilePath);
+                    if (file_exists($fullPath)) {
+                        [$width, $height] = @getimagesize($fullPath);
+                        if ($width && $height) {
+                            $meta = array_merge($meta, ['width' => $width, 'height' => $height]);
+                        }
+                    }
+                } else {
+                    $tempPath = sys_get_temp_dir().'/'.uniqid('media_dim_').'.'.pathinfo($newFilePath, PATHINFO_EXTENSION);
+                    try {
+                        file_put_contents($tempPath, Storage::disk($disk)->get($newFilePath));
+                        [$width, $height] = @getimagesize($tempPath);
+                        if ($width && $height) {
+                            $meta = array_merge($meta, ['width' => $width, 'height' => $height]);
+                        }
+                    } finally {
+                        @unlink($tempPath);
+                    }
                 }
             }
 
