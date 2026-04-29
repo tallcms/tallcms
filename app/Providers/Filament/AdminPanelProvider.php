@@ -2,9 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use TallCms\Cms\Services\PluginLicenseService;
-use TallCms\Cms\Services\ThemeResolver;
-use TallCms\Cms\TallCmsPlugin;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -15,7 +12,6 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\View\PanelsRenderHook;
-use Illuminate\Support\HtmlString;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -23,7 +19,13 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use TallCms\Cms\Services\PluginLicenseService;
+use TallCms\Cms\Services\ThemeResolver;
+use TallCms\Cms\TallCmsPlugin;
+use Tallcms\FilamentRegistration\Filament\Pages\Register;
+use Tallcms\Registration\Filament\RegistrationPlugin as TallcmsRegistrationBridge;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -58,6 +60,7 @@ class AdminPanelProvider extends PanelProvider
                 HTML)
             )
             ->login()
+            ->registration(Register::class)
             ->passwordReset()
             ->emailVerification(isRequired: fn () => (bool) config('registration.email_verification.enabled'))
             ->emailChangeVerification(fn () => (bool) config('registration.email_verification.enabled'))
@@ -94,6 +97,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->plugins([
                 TallCmsPlugin::make(),
+                TallcmsRegistrationBridge::make(),
             ])
             ->authMiddleware([
                 Authenticate::class,
@@ -116,5 +120,4 @@ class AdminPanelProvider extends PanelProvider
                 }
             });
     }
-
 }

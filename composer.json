@@ -36,7 +36,8 @@
         "league/flysystem-aws-s3-v3": "^3.30",
         "livewire/livewire": "^4.0",
         "symfony/yaml": "^7.4",
-        "tallcms/cms": "^4.0"
+        "tallcms/cms": "^4.0",
+        "tallcms/filament-registration": "^1.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

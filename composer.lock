@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "991945b341dfd3bfef8bc9b81eb3bbf2",
+    "content-hash": "bd40f330ca8fc3064fd4d3b12a7bcc9b",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -9079,6 +9079,76 @@
                 "symlink": true,
                 "relative": true
             }
+        },
+        {
+            "name": "tallcms/filament-registration",
+            "version": "1.1.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tallcms/filament-registration.git",
+                "reference": "7a050ef77e655faeadec6291ed17f71bb927ef36"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tallcms/filament-registration/zipball/7a050ef77e655faeadec6291ed17f71bb927ef36",
+                "reference": "7a050ef77e655faeadec6291ed17f71bb927ef36",
+                "shasum": ""
+            },
+            "require": {
+                "filament/filament": "^5.0",
+                "illuminate/support": "^11.0|^12.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.0",
+                "orchestra/testbench": "^9.0|^10.0",
+                "phpunit/phpunit": "^11.0",
+                "spatie/laravel-permission": "^6.0"
+            },
+            "suggest": {
+                "bezhansalleh/filament-shield": "If you use Shield, subclass RegistrationSettings and add the HasPageShield trait to gate the captcha admin page through Shield permissions.",
+                "spatie/laravel-permission": "Required only if you set FilamentRegistrationPlugin::make()->defaultRole(...) to auto-assign a role on registration. Without it, role assignment is silently skipped."
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Tallcms\\FilamentRegistration\\Providers\\FilamentRegistrationServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Tallcms\\FilamentRegistration\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "TallCMS",
+                    "email": "support@tallcms.com",
+                    "homepage": "https://tallcms.com"
+                }
+            ],
+            "description": "Filament-native user registration with pluggable captcha (Cloudflare Turnstile, Google reCAPTCHA v3) and configurable default-role assignment.",
+            "homepage": "https://github.com/tallcms/filament-registration",
+            "keywords": [
+                "auth",
+                "captcha",
+                "filament",
+                "filament-plugin",
+                "recaptcha",
+                "registration",
+                "turnstile"
+            ],
+            "support": {
+                "issues": "https://github.com/tallcms/filament-registration/issues",
+                "source": "https://github.com/tallcms/filament-registration"
+            },
+            "time": "2026-04-27T06:49:31+00:00"
         },
         {
             "name": "tijsverkoyen/css-to-inline-styles",
