@@ -129,6 +129,20 @@ class AccentColor
         };
     }
 
+    public static function badge(string $token = 'primary'): string
+    {
+        return match ($token) {
+            'secondary' => 'badge-secondary',
+            'accent' => 'badge-accent',
+            'neutral' => 'badge-neutral',
+            'info' => 'badge-info',
+            'success' => 'badge-success',
+            'warning' => 'badge-warning',
+            'error' => 'badge-error',
+            default => 'badge-primary',
+        };
+    }
+
     /**
      * Dispatch by variant key. Used by the @accent Blade directive.
      * Unknown variants fall through to text() (defensive against typos).
@@ -143,6 +157,7 @@ class AccentColor
             'bg' => self::bg($token),
             'border' => self::border($token),
             'shadow10' => self::shadow10($token),
+            'badge' => self::badge($token),
             default => self::text($token),
         };
     }
