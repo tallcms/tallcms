@@ -183,6 +183,12 @@ class StatsBlock extends RichContentCustomBlock
                                             ->options(static::getBackgroundOptions())
                                             ->default('bg-base-100'),
 
+                                        Select::make('accent_color')
+                                            ->label('Accent Color')
+                                            ->options(static::getAccentColorOptions())
+                                            ->default('primary')
+                                            ->helperText('Color used for stat icons and values'),
+
                                         Select::make('padding')
                                             ->label('Section Padding')
                                             ->options(static::getPaddingOptions())
@@ -239,6 +245,7 @@ class StatsBlock extends RichContentCustomBlock
             'contentWidthClass' => $widthConfig['class'],
             'contentPadding' => $widthConfig['padding'],
             'background' => $config['background'] ?? 'bg-base-100',
+            'accent_color' => $config['accent_color'] ?? 'primary',
             'padding' => $config['padding'] ?? 'py-16',
             'animate' => $config['animate'] ?? false,
             'first_section' => $config['first_section'] ?? false,

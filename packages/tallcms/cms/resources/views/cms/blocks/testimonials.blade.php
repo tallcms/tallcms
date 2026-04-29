@@ -65,7 +65,7 @@
                         >
                             <div class="card-body">
                                 @if($isQuoteMarks)
-                                    <div class="absolute top-4 left-6 text-6xl text-primary/20 font-serif leading-none">"</div>
+                                    <div class="absolute top-4 left-6 text-6xl @accent('text20', $accent_color ?? 'primary') font-serif leading-none">"</div>
                                 @endif
 
                                 {{-- Rating --}}
@@ -101,7 +101,7 @@
                                         </div>
                                     @else
                                         <div class="avatar placeholder">
-                                            <div class="w-14 rounded-full bg-primary/10 text-primary">
+                                            <div class="w-14 rounded-full @accent('tint10', $accent_color ?? 'primary') @accent('text', $accent_color ?? 'primary')">
                                                 <span class="text-xl font-semibold">
                                                     {{ substr($testimonial['author_name'] ?? 'A', 0, 1) }}
                                                 </span>
@@ -147,7 +147,7 @@
                         >
                             <div class="card-body">
                                 @if($isQuoteMarks)
-                                    <div class="absolute top-4 left-6 text-5xl text-primary/20 font-serif leading-none">"</div>
+                                    <div class="absolute top-4 left-6 text-5xl @accent('text20', $accent_color ?? 'primary') font-serif leading-none">"</div>
                                 @endif
 
                                 {{-- Rating --}}
@@ -183,7 +183,7 @@
                                         </div>
                                     @else
                                         <div class="avatar placeholder">
-                                            <div class="w-10 rounded-full bg-primary/10 text-primary">
+                                            <div class="w-10 rounded-full @accent('tint10', $accent_color ?? 'primary') @accent('text', $accent_color ?? 'primary')">
                                                 <span class="text-sm font-semibold">
                                                     {{ substr($testimonial['author_name'] ?? 'A', 0, 1) }}
                                                 </span>

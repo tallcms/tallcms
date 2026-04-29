@@ -93,7 +93,7 @@
                     >
                         {{-- Icon --}}
                         @if(!empty($stat['icon']))
-                            <div class="stat-figure text-primary">
+                            <div class="stat-figure @accent('text', $accent_color ?? 'primary')">
                                 @php
                                     $iconName = str_replace(['heroicon-o-', 'heroicon-s-', 'heroicon-m-'], '', $stat['icon']);
                                     $iconStyle = str_starts_with($stat['icon'], 'heroicon-s-') ? 's' : 'o';
@@ -106,7 +106,7 @@
                         @endif
 
                         {{-- Value --}}
-                        <div class="stat-value text-primary">
+                        <div class="stat-value @accent('text', $accent_color ?? 'primary')">
                             @if(!empty($stat['prefix']))
                                 <span>{{ $stat['prefix'] }}</span>
                             @endif

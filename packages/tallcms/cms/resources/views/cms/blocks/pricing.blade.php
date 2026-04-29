@@ -29,6 +29,10 @@
     $animationDuration = $animation_duration ?? 'anim-duration-500';
     $animationStagger = $animation_stagger ?? false;
     $staggerDelay = (int) ($animation_stagger_delay ?? 100);
+
+    $accent = $accent_color ?? 'primary';
+    $accentTint5 = \TallCms\Cms\Filament\Blocks\Support\AccentColor::tint5($accent);
+    $accentBorder = \TallCms\Cms\Filament\Blocks\Support\AccentColor::border($accent);
 @endphp
 
 <x-tallcms::animation-wrapper
@@ -84,13 +88,13 @@
                         // Card classes using daisyUI
                         $cardClasses = match($card_style) {
                             'bordered' => $isPopular
-                                ? 'card bg-primary/5 border-2 border-primary'
+                                ? "card $accentTint5 border-2 $accentBorder"
                                 : 'card bg-base-100 border-2 border-base-300',
                             'elevated' => $isPopular
-                                ? 'card bg-primary/5 shadow-2xl scale-105 border-2 border-primary'
+                                ? "card $accentTint5 shadow-2xl scale-105 border-2 $accentBorder"
                                 : 'card bg-base-200 shadow-lg',
                             default => $isPopular
-                                ? 'card bg-primary/5 shadow-xl border-2 border-primary'
+                                ? "card $accentTint5 shadow-xl border-2 $accentBorder"
                                 : 'card bg-base-200 shadow-lg',
                         };
 

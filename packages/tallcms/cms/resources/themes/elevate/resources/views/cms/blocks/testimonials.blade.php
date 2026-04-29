@@ -116,7 +116,7 @@
                                     </div>
                                 @else
                                     <div class="avatar placeholder">
-                                        <div class="w-14 rounded-full bg-primary/10 text-primary">
+                                        <div class="w-14 rounded-full @accent('tint10', $accent_color ?? 'primary') @accent('text', $accent_color ?? 'primary')">
                                             <span class="text-xl font-semibold">
                                                 {{ substr($testimonial['author_name'] ?? 'A', 0, 1) }}
                                             </span>
@@ -201,7 +201,7 @@
                                     </div>
                                 @else
                                     <div class="avatar placeholder">
-                                        <div class="w-12 h-12 rounded-full bg-primary/10 text-primary">
+                                        <div class="w-12 h-12 rounded-full @accent('tint10', $accent_color ?? 'primary') @accent('text', $accent_color ?? 'primary')">
                                             <span class="text-sm font-semibold">
                                                 {{ substr($testimonial['author_name'] ?? 'A', 0, 1) }}
                                             </span>

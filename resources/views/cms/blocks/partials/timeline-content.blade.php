@@ -6,7 +6,7 @@
     <div class="card-body p-5 sm:p-6">
         {{-- Date shown in content regardless of numbered mode (number only affects node display) --}}
         @if(!empty($item['date']))
-            <span class="inline-block text-xs font-semibold text-primary mb-2">
+            <span class="inline-block text-xs font-semibold @accent('text', $accent_color ?? 'primary') mb-2">
                 {{ $item['date'] }}
             </span>
         @endif
