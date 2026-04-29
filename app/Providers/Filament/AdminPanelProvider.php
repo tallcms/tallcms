@@ -95,10 +95,13 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            ->plugins([
+            ->plugins(array_filter([
                 TallCmsPlugin::make(),
-                TallcmsRegistrationBridge::make(),
-            ])
+                // Registration bridge ships as a local plugin under /plugins/tallcms/registration/.
+                // Guard so fresh checkouts (CI release builds, plugin-mode users) without the
+                // plugin installed don't crash on a missing class reference.
+                class_exists(TallcmsRegistrationBridge::class) ? TallcmsRegistrationBridge::make() : null,
+            ]))
             ->authMiddleware([
                 Authenticate::class,
             ])
