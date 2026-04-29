@@ -23,6 +23,9 @@
 
     // Elevate: first card gets subtle visual emphasis when 6+ features in 3 columns
     $useEmphasis = (string) ($columns ?? '3') === '3' && !empty($features) && count($features) >= 6;
+
+    $accent = $accent_color ?? 'primary';
+    $accentTint5 = \TallCms\Cms\Filament\Blocks\Support\AccentColor::tint5($accent);
 @endphp
 
 <x-tallcms::animation-wrapper
@@ -71,7 +74,7 @@
                         $isEmphasized = $useEmphasis && $index === 0;
                         $elevateCardClass = ($card_style ?? 'card shadow-xl bg-base-100') . ' transition-all duration-300 hover:scale-[1.02]';
                         if ($isEmphasized) {
-                            $elevateCardClass .= ' bg-primary/5';
+                            $elevateCardClass .= ' ' . $accentTint5;
                         }
                     @endphp
 
@@ -95,7 +98,7 @@
                                         @if($isValidHeroicon)
                                             <x-dynamic-component
                                                 :component="$iconName"
-                                                class="{{ $icon_size ?? 'w-10 h-10' }} text-primary"
+                                                class="{{ $icon_size ?? 'w-10 h-10' }} {{ \TallCms\Cms\Filament\Blocks\Support\AccentColor::text($accent) }}"
                                             />
                                         @elseif($iconType === 'image' && !empty($feature['icon_image']))
                                             <img
@@ -107,7 +110,7 @@
                                         @elseif($iconType === 'emoji' && !empty($feature['emoji']))
                                             <span class="text-3xl">{{ $feature['emoji'] }}</span>
                                         @else
-                                            <x-heroicon-o-star class="{{ $icon_size ?? 'w-10 h-10' }} text-primary" />
+                                            <x-heroicon-o-star class="{{ $icon_size ?? 'w-10 h-10' }} {{ \TallCms\Cms\Filament\Blocks\Support\AccentColor::text($accent) }}" />
                                         @endif
                                     </div>
                                 </div>

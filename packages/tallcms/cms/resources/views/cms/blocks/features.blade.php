@@ -81,11 +81,11 @@
                             <div class="card-body {{ $isIconLeft ? 'flex-row items-start gap-4' : '' }}">
                                 {{-- Icon --}}
                                 <div class="{{ $isIconLeft ? 'flex-shrink-0' : 'flex justify-center mb-4' }}">
-                                    <div class="{{ $iconContainerClass }} rounded-xl bg-primary/10 flex items-center justify-center">
+                                    <div class="{{ $iconContainerClass }} rounded-xl @accent('tint10', $accent_color ?? 'primary') flex items-center justify-center">
                                         @if($isValidHeroicon)
                                             <x-dynamic-component
                                                 :component="$iconName"
-                                                class="{{ $icon_size ?? 'w-10 h-10' }} text-primary"
+                                                class="{{ $icon_size ?? 'w-10 h-10' }} {{ \TallCms\Cms\Filament\Blocks\Support\AccentColor::text($accent_color ?? 'primary') }}"
                                             />
                                         @elseif($iconType === 'image' && !empty($feature['icon_image']))
                                             <img
@@ -97,7 +97,7 @@
                                         @elseif($iconType === 'emoji' && !empty($feature['emoji']))
                                             <span class="text-3xl">{{ $feature['emoji'] }}</span>
                                         @else
-                                            <x-heroicon-o-star class="{{ $icon_size ?? 'w-10 h-10' }} text-primary" />
+                                            <x-heroicon-o-star class="{{ $icon_size ?? 'w-10 h-10' }} {{ \TallCms\Cms\Filament\Blocks\Support\AccentColor::text($accent_color ?? 'primary') }}" />
                                         @endif
                                     </div>
                                 </div>
