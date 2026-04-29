@@ -33,7 +33,7 @@ class MediaResource extends JsonResource
             'height' => $this->height,
             'url' => $this->url,
             'is_image' => $this->isImage,
-            'variants' => $this->when($this->variants, $this->variants),
+            'variants' => $this->when(isset($this->meta['variants']), $this->meta['variants'] ?? null),
             'download_url' => $this->downloadUrl,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

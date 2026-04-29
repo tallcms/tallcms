@@ -82,11 +82,7 @@ class MediaController extends Controller
         if ($field === 'has_variants') {
             $hasVariants = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 
-            return $hasVariants
-                ? $query->whereNotNull('variants')->where('variants', '!=', '[]')
-                : $query->where(function ($q) {
-                    $q->whereNull('variants')->orWhere('variants', '[]');
-                });
+            return $query->where('has_variants', $hasVariants);
         }
 
         // Handle mime_type filter with wildcard support (e.g., image/*)

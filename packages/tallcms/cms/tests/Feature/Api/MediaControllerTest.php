@@ -321,4 +321,127 @@ class MediaControllerTest extends TestCase
         $this->deleteJson('/api/v1/tallcms/media/99999')
             ->assertStatus(404);
     }
+
+    // -------------------------------------------------------------------------
+    // index — has_variants filter
+    // -------------------------------------------------------------------------
+
+    public function test_index_filter_has_variants_true_returns_only_optimized_items(): void
+    {
+        Storage::fake('public');
+        $this->actingAsMediaUser();
+
+        $withVariants = TallcmsMedia::create([
+            'name' => 'optimized',
+            'file_name' => 'photo.jpg',
+            'mime_type' => 'image/jpeg',
+            'path' => 'media/photo.jpg',
+            'disk' => 'public',
+            'size' => 1000,
+            'has_variants' => true,
+            'meta' => ['variants' => ['thumbnail' => 'media/photo-thumbnail.webp']],
+        ]);
+
+        TallcmsMedia::create([
+            'name' => 'raw',
+            'file_name' => 'raw.jpg',
+            'mime_type' => 'image/jpeg',
+            'path' => 'media/raw.jpg',
+            'disk' => 'public',
+            'size' => 1000,
+            'has_variants' => false,
+        ]);
+
+        $response = $this->getJson('/api/v1/tallcms/media?filter[has_variants]=true');
+
+        $response->assertStatus(200);
+        $ids = collect($response->json('data'))->pluck('id');
+        $this->assertTrue($ids->contains($withVariants->id));
+        $this->assertCount(1, $ids);
+    }
+
+    public function test_index_filter_has_variants_false_excludes_optimized_items(): void
+    {
+        Storage::fake('public');
+        $this->actingAsMediaUser();
+
+        TallcmsMedia::create([
+            'name' => 'optimized',
+            'file_name' => 'photo.jpg',
+            'mime_type' => 'image/jpeg',
+            'path' => 'media/photo.jpg',
+            'disk' => 'public',
+            'size' => 1000,
+            'has_variants' => true,
+            'meta' => ['variants' => ['thumbnail' => 'media/photo-thumbnail.webp']],
+        ]);
+
+        $raw = TallcmsMedia::create([
+            'name' => 'raw',
+            'file_name' => 'raw.jpg',
+            'mime_type' => 'image/jpeg',
+            'path' => 'media/raw.jpg',
+            'disk' => 'public',
+            'size' => 1000,
+            'has_variants' => false,
+        ]);
+
+        $response = $this->getJson('/api/v1/tallcms/media?filter[has_variants]=false');
+
+        $response->assertStatus(200);
+        $ids = collect($response->json('data'))->pluck('id');
+        $this->assertTrue($ids->contains($raw->id));
+        $this->assertCount(1, $ids);
+    }
+
+    // -------------------------------------------------------------------------
+    // show — resource includes variants from meta
+    // -------------------------------------------------------------------------
+
+    public function test_show_resource_includes_variants_when_meta_variants_populated(): void
+    {
+        Storage::fake('public');
+        $this->actingAsMediaUser();
+
+        $media = TallcmsMedia::create([
+            'name' => 'photo',
+            'file_name' => 'photo.jpg',
+            'mime_type' => 'image/jpeg',
+            'path' => 'media/photo.jpg',
+            'disk' => 'public',
+            'size' => 1000,
+            'has_variants' => true,
+            'meta' => [
+                'variants' => [
+                    'thumbnail' => 'media/photo-thumbnail.webp',
+                    'medium' => 'media/photo-medium.webp',
+                ],
+            ],
+        ]);
+
+        $this->getJson("/api/v1/tallcms/media/{$media->id}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.variants.thumbnail', 'media/photo-thumbnail.webp')
+            ->assertJsonPath('data.variants.medium', 'media/photo-medium.webp');
+    }
+
+    public function test_show_resource_omits_variants_key_when_none_exist(): void
+    {
+        Storage::fake('public');
+        $this->actingAsMediaUser();
+
+        $media = TallcmsMedia::create([
+            'name' => 'raw',
+            'file_name' => 'raw.jpg',
+            'mime_type' => 'image/jpeg',
+            'path' => 'media/raw.jpg',
+            'disk' => 'public',
+            'size' => 1000,
+            'has_variants' => false,
+        ]);
+
+        $response = $this->getJson("/api/v1/tallcms/media/{$media->id}");
+        $response->assertStatus(200);
+        $this->assertArrayNotHasKey('variants', $response->json('data'));
+    }
 }
