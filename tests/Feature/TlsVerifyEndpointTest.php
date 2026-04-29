@@ -23,7 +23,8 @@ class TlsVerifyEndpointTest extends TestCase
 
     protected function createSite(array $attributes = []): void
     {
-        \Illuminate\Support\Facades\DB::table('tallcms_sites')->insert(array_merge([
+        // Sync domain_status with domain_verified for backward compat
+        $defaults = [
             'name' => 'Test Site',
             'domain' => 'test.example.com',
             'uuid' => \Illuminate\Support\Str::uuid()->toString(),
@@ -32,7 +33,13 @@ class TlsVerifyEndpointTest extends TestCase
             'domain_verified' => true,
             'created_at' => now(),
             'updated_at' => now(),
-        ], $attributes));
+        ];
+
+        $merged = array_merge($defaults, $attributes);
+        $merged['domain_status'] = $merged['domain_status']
+            ?? ($merged['domain_verified'] ? 'verified' : 'pending');
+
+        \Illuminate\Support\Facades\DB::table('tallcms_sites')->insert($merged);
     }
 
     public function test_returns_200_for_active_verified_site(): void
