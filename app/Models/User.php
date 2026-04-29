@@ -121,15 +121,20 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
 
         // First-user safety net (role/setup): the install command marks the
         // first user verified, so this short-circuit is for the role-less
-        // case on a fresh install — NOT an email-verification bypass.
+        // case on a fresh install.
         if ($this->isFirstUser()) {
             return true;
         }
 
-        if (config('registration.email_verification.enabled') && ! $this->hasVerifiedEmail()) {
-            return false;
-        }
-
+        // NOTE: do NOT add a hasVerifiedEmail() check here. Filament's
+        // Authenticate middleware (vendor/filament/filament/src/Http/
+        // Middleware/Authenticate.php:35-40) calls canAccessPanel() on every
+        // authenticated panel route, including the email-verification
+        // controller and prompt page. Rejecting unverified users here aborts
+        // those routes with 403 before they can run, locking newly-registered
+        // users out of the very pages that would let them verify. Filament's
+        // `verified` middleware (added by ->emailVerification(isRequired: true))
+        // already handles that gating correctly by routing to the prompt page.
         return $this->roles->isNotEmpty();
     }
 
