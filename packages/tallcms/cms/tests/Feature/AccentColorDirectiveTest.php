@@ -61,6 +61,14 @@ class AccentColorDirectiveTest extends TestCase
         );
     }
 
+    public function test_directive_emits_badge_class(): void
+    {
+        $this->assertSame(
+            'badge-success',
+            Blade::render("@accent('badge', 'success')")
+        );
+    }
+
     public function test_directive_emits_text20_class(): void
     {
         $this->assertSame(

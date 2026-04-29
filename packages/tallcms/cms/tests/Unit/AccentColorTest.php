@@ -91,6 +91,16 @@ class AccentColorTest extends TestCase
             ['shadow10', 'success', 'shadow-success/10'],
             ['shadow10', 'warning', 'shadow-warning/10'],
             ['shadow10', 'error', 'shadow-error/10'],
+
+            // badge (daisyUI badge-* modifier)
+            ['badge', 'primary', 'badge-primary'],
+            ['badge', 'secondary', 'badge-secondary'],
+            ['badge', 'accent', 'badge-accent'],
+            ['badge', 'neutral', 'badge-neutral'],
+            ['badge', 'info', 'badge-info'],
+            ['badge', 'success', 'badge-success'],
+            ['badge', 'warning', 'badge-warning'],
+            ['badge', 'error', 'badge-error'],
         ];
     }
 
@@ -117,6 +127,7 @@ class AccentColorTest extends TestCase
         $this->assertSame('bg-primary/10', AccentColor::tint10('typo'));
         $this->assertSame('bg-primary text-primary-content', AccentColor::fill(''));
         $this->assertSame('shadow-primary/10', AccentColor::shadow10('garbage'));
+        $this->assertSame('badge-primary', AccentColor::badge('made-up'));
     }
 
     public function test_unknown_variant_in_resolve_falls_back_to_text(): void
