@@ -96,6 +96,27 @@ trait HasDaisyUIOptions
     }
 
     /**
+     * Get accent color options (semantic daisyUI tokens, no `text-`/`bg-` prefix).
+     *
+     * Returned values are bare token names — block views pair them with the
+     * AccentColor helper (or the @accent Blade directive) to map to concrete
+     * Tailwind classes for icons, markers, popular indicators, etc.
+     */
+    protected static function getAccentColorOptions(): array
+    {
+        return [
+            'primary' => 'Primary',
+            'secondary' => 'Secondary',
+            'accent' => 'Accent',
+            'neutral' => 'Neutral',
+            'info' => 'Info',
+            'success' => 'Success',
+            'warning' => 'Warning',
+            'error' => 'Error',
+        ];
+    }
+
+    /**
      * Get text alignment options
      */
     protected static function getTextAlignmentOptions(): array

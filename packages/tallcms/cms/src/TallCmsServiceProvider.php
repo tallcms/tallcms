@@ -401,6 +401,14 @@ class TallCmsServiceProvider extends PackageServiceProvider
         // Register Blade component namespace for <x-tallcms::*> syntax
         Blade::componentNamespace('TallCms\\Cms\\View\\Components', 'tallcms');
 
+        // Register @accent Blade directive: maps a daisyUI semantic token to
+        // a literal Tailwind class via AccentColor::resolve(). Used by blocks
+        // to surface accent-color choice without hardcoding text-primary etc.
+        Blade::directive(
+            'accent',
+            fn ($expression) => "<?php echo \\TallCms\\Cms\\Filament\\Blocks\\Support\\AccentColor::resolve({$expression}); ?>"
+        );
+
         // Register admin CSS for block previews (DaisyUI components)
         // This is loaded from the package directly, no publishing required
         $adminCssPath = __DIR__.'/../resources/dist/tallcms-admin.css';

@@ -214,6 +214,12 @@ class FeaturesBlock extends RichContentCustomBlock
                                             ])
                                             ->default('w-10 h-10'),
 
+                                        Select::make('accent_color')
+                                            ->label('Accent Color')
+                                            ->options(static::getAccentColorOptions())
+                                            ->default('primary')
+                                            ->helperText('Color used for icons and highlights'),
+
                                         Select::make('padding')
                                             ->label('Section Padding')
                                             ->options(static::getPaddingOptions())
@@ -260,6 +266,7 @@ class FeaturesBlock extends RichContentCustomBlock
             'icon_position' => $config['icon_position'] ?? 'top',
             'text_alignment' => $config['text_alignment'] ?? 'text-center',
             'icon_size' => $config['icon_size'] ?? 'w-10 h-10',
+            'accent_color' => $config['accent_color'] ?? 'primary',
             'contentWidthClass' => $widthConfig['class'],
             'contentPadding' => $widthConfig['padding'],
             'padding' => $config['padding'] ?? 'py-16',
