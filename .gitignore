@@ -15,6 +15,7 @@
 /node_modules
 /vendor
 themes/*/node_modules
+themes/*/public/build
 /public/build
 /public/hot
 /public/storage
@@ -65,3 +66,15 @@ ROADMAP.md
 .scribe/
 resources/views/scribe/
 storage/app/private/scribe/
+
+# Local SQLite databases
+/database.sqlite
+/database/*.sqlite
+/database/*.sqlite-journal
+
+# Core CMS package — installed dependencies and caches
+/packages/tallcms/cms/vendor/
+/packages/tallcms/cms/node_modules/
+/packages/tallcms/cms/composer.lock
+/packages/tallcms/cms/package-lock.json
+/packages/tallcms/cms/.phpunit.cache/
