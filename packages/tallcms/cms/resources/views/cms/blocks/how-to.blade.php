@@ -60,7 +60,7 @@
                     >
                         <div class="card-body">
                             <div class="flex items-start gap-4">
-                                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-primary-content flex items-center justify-center font-bold text-lg">
+                                <div class="flex-shrink-0 w-10 h-10 rounded-full @accent('fill', $accent_color ?? 'primary') flex items-center justify-center font-bold text-lg">
                                     {{ $stepNumber }}
                                 </div>
                                 <div class="flex-1 min-w-0">

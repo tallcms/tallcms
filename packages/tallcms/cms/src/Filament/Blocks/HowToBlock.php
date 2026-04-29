@@ -159,6 +159,12 @@ class HowToBlock extends RichContentCustomBlock
                                             ->options(static::getBackgroundOptions())
                                             ->default('bg-base-100'),
 
+                                        Select::make('accent_color')
+                                            ->label('Accent Color')
+                                            ->options(static::getAccentColorOptions())
+                                            ->default('primary')
+                                            ->helperText('Color used for step number circles'),
+
                                         Select::make('padding')
                                             ->label('Section Padding')
                                             ->options(static::getPaddingOptions())
@@ -223,6 +229,7 @@ class HowToBlock extends RichContentCustomBlock
             'contentWidthClass' => $widthConfig['class'],
             'contentPadding' => $widthConfig['padding'],
             'background' => $config['background'] ?? 'bg-base-100',
+            'accent_color' => $config['accent_color'] ?? 'primary',
             'padding' => $config['padding'] ?? 'py-16',
             'show_schema' => $config['show_schema'] ?? true,
             'first_section' => $config['first_section'] ?? false,

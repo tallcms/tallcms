@@ -199,6 +199,12 @@ class TestimonialsBlock extends RichContentCustomBlock
                                             ->options(static::getBackgroundOptions())
                                             ->default('bg-base-100'),
 
+                                        Select::make('accent_color')
+                                            ->label('Accent Color')
+                                            ->options(static::getAccentColorOptions())
+                                            ->default('primary')
+                                            ->helperText('Color used for quote marks and avatar accents'),
+
                                         Select::make('padding')
                                             ->label('Section Padding')
                                             ->options(static::getPaddingOptions())
@@ -264,6 +270,7 @@ class TestimonialsBlock extends RichContentCustomBlock
             'contentWidthClass' => $widthConfig['class'],
             'contentPadding' => $widthConfig['padding'],
             'background' => $config['background'] ?? 'bg-base-100',
+            'accent_color' => $config['accent_color'] ?? 'primary',
             'padding' => $config['padding'] ?? 'py-16',
             'show_rating' => $config['show_rating'] ?? true,
             'show_company_logo' => $config['show_company_logo'] ?? false,

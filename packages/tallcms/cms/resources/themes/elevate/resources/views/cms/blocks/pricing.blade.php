@@ -29,6 +29,11 @@
     $animationDuration = $animation_duration ?? 'anim-duration-500';
     $animationStagger = $animation_stagger ?? false;
     $staggerDelay = (int) ($animation_stagger_delay ?? 100);
+
+    $accent = $accent_color ?? 'primary';
+    $accentTint5 = \TallCms\Cms\Filament\Blocks\Support\AccentColor::tint5($accent);
+    $accentBorder = \TallCms\Cms\Filament\Blocks\Support\AccentColor::border($accent);
+    $accentShadow10 = \TallCms\Cms\Filament\Blocks\Support\AccentColor::shadow10($accent);
 @endphp
 
 <x-tallcms::animation-wrapper
@@ -85,13 +90,13 @@
                             // Card classes using daisyUI
                             $cardClasses = match($card_style) {
                                 'bordered' => $isPopular
-                                    ? 'card rounded-2xl bg-primary/5 scale-105 transform -translate-y-3 relative z-10 border-t-4 border-primary shadow-2xl shadow-primary/10'
+                                    ? "card rounded-2xl $accentTint5 scale-105 transform -translate-y-3 relative z-10 border-t-4 $accentBorder shadow-2xl $accentShadow10"
                                     : 'card rounded-2xl bg-base-100 border-2 border-base-300',
                                 'elevated' => $isPopular
-                                    ? 'card rounded-2xl bg-primary/5 scale-105 transform -translate-y-3 relative z-10 border-t-4 border-primary shadow-2xl shadow-primary/10'
+                                    ? "card rounded-2xl $accentTint5 scale-105 transform -translate-y-3 relative z-10 border-t-4 $accentBorder shadow-2xl $accentShadow10"
                                     : 'card rounded-2xl bg-base-200 shadow-lg',
                                 default => $isPopular
-                                    ? 'card rounded-2xl bg-primary/5 scale-105 transform -translate-y-3 relative z-10 border-t-4 border-primary shadow-2xl shadow-primary/10'
+                                    ? "card rounded-2xl $accentTint5 scale-105 transform -translate-y-3 relative z-10 border-t-4 $accentBorder shadow-2xl $accentShadow10"
                                     : 'card rounded-2xl bg-base-200 shadow-lg',
                             };
 
@@ -161,7 +166,7 @@
                                             @if($featureText)
                                                 <li class="flex items-start gap-3">
                                                     @if($isIncluded)
-                                                        <x-heroicon-s-check class="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                                                        <x-heroicon-s-check class="w-5 h-5 {{ \TallCms\Cms\Filament\Blocks\Support\AccentColor::text($accent) }} flex-shrink-0 mt-0.5" />
                                                     @else
                                                         <x-heroicon-s-x-mark class="w-5 h-5 text-base-content/40 flex-shrink-0 mt-0.5" />
                                                     @endif

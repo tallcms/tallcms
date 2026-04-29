@@ -275,6 +275,12 @@ class PricingBlock extends RichContentCustomBlock
                                             ->options(static::getBackgroundOptions())
                                             ->default('bg-base-100'),
 
+                                        Select::make('accent_color')
+                                            ->label('Accent Color')
+                                            ->options(static::getAccentColorOptions())
+                                            ->default('primary')
+                                            ->helperText('Color used for popular plan highlight'),
+
                                         Select::make('padding')
                                             ->label('Section Padding')
                                             ->options(static::getPaddingOptions())
@@ -329,6 +335,7 @@ class PricingBlock extends RichContentCustomBlock
             'contentWidthClass' => $widthConfig['class'],
             'contentPadding' => $widthConfig['padding'],
             'background' => $config['background'] ?? 'bg-base-100',
+            'accent_color' => $config['accent_color'] ?? 'primary',
             'padding' => $config['padding'] ?? 'py-16',
             'first_section' => $config['first_section'] ?? false,
             'anchor_id' => static::getAnchorId($config, $config['section_title'] ?? null),
