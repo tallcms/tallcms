@@ -163,6 +163,24 @@ Switch to live keys + live webhook only after the test-mode flow works end-to-en
 
 Past-due users keep their plan and Portal access during retries — removing quota mid-Smart-Retry would be a worse UX than letting them keep the plan for a few days. Eventual `canceled` arrives only if all retries fail.
 
+## Troubleshooting
+
+### `Route [filament.admin.pages.billing] not defined`
+
+Symptom: 500 error after clicking a plan button. Log shows `RouteNotFoundException` with the offending route name.
+
+Cause: your Filament panel uses a non-default panel ID (e.g. `'app'` from `make:filament-panel app`, or any multi-panel install). The Billing plugin v1.0.1 and earlier hardcoded `'admin'` as the panel ID via the cms's `tallcms_panel_route()` helper.
+
+Fix: **upgrade the plugin to v1.0.2 or later** — that release switched all three URL-generation call sites (checkout success, checkout cancel, portal return) to Filament's own `Billing::getUrl()`, which auto-resolves the panel from where the page was actually registered.
+
+If you can't upgrade immediately, the workaround is to set in `.env`:
+
+```
+TALLCMS_PANEL_ID=app   # or whatever your panel id is
+```
+
+Then `php artisan config:clear`. This makes the v1.0.1 helper resolve correctly.
+
 ## Out of scope (v1.0.x)
 
 - Promo codes / coupons

@@ -591,6 +591,19 @@ Implement `CustomBlockInterface` and use the `HasBlockMetadata` trait.
 **"Views not found"**
 Verify view namespace registration in your service provider's `boot()` method.
 
+**"Route [filament.admin.pages.X] not defined"**
+Don't hardcode the panel ID when generating URLs to a Filament page. The cms helper `tallcms_panel_route('pages.X')` reads the panel ID from `config('tallcms.filament.panel_id', 'admin')` — fine for the default `'admin'` panel, but hosts that register their panel under a different ID (e.g. `'app'` from `make:filament-panel app`, or any multi-panel install) will hit `RouteNotFoundException`. Use Filament's own `Page::getUrl(...)` static helper instead — it auto-resolves the panel from wherever the page is actually registered, regardless of the host's panel ID:
+
+```php
+// Instead of:
+$url = tallcms_panel_route('pages.billing', ['checkout' => 'success']);
+
+// Use:
+$url = \Acme\MyPlugin\Filament\Pages\Billing::getUrl(['checkout' => 'success']);
+```
+
+This bit `tallcms/billing` 1.0.1 — fixed in 1.0.2. Reserve `tallcms_panel_route()` for cms-internal route names that genuinely belong to the cms's own admin panel, not for plugin-defined Filament pages.
+
 ---
 
 ## Next Steps
