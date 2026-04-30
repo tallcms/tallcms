@@ -4,12 +4,22 @@ namespace TallCms\Cms\Filament\Widgets;
 
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Livewire\Attributes\On;
+use TallCms\Cms\Filament\Widgets\Concerns\HasMultisiteWidgetContext;
 
 class MenuOverviewWidget extends BaseWidget
 {
+    use HasMultisiteWidgetContext;
+
+    #[On('dashboard.site-changed')]
+    public function onSiteChanged(): void
+    {
+        // Empty body — Livewire re-renders the widget on event receipt,
+        // which re-runs getStats() against the new session value.
+    }
+
     protected function getStats(): array
     {
         $siteId = $this->getMultisiteSiteId();
@@ -84,67 +94,4 @@ class MenuOverviewWidget extends BaseWidget
         return $siteName ? "Content Overview — {$siteName}" : 'Content Overview';
     }
 
-    /**
-     * Get the current admin-selected site ID from session.
-     * Returns null when multisite is not active or "All Sites" is selected.
-     */
-    protected function getMultisiteSiteId(): ?int
-    {
-        $sessionValue = session('multisite_admin_site_id');
-
-        // Explicit "All Sites" selection
-        if ($sessionValue === '__all_sites__') {
-            return null;
-        }
-
-        // Specific site selected
-        if ($sessionValue && is_numeric($sessionValue)) {
-            return (int) $sessionValue;
-        }
-
-        // No session yet (first login) — fall back based on role
-        try {
-            if (auth()->check() && ! auth()->user()->hasRole('super_admin')) {
-                // Non-super-admin: first owned site (deterministic: oldest)
-                $firstOwned = DB::table('tallcms_sites')
-                    ->where('user_id', auth()->id())
-                    ->where('is_active', true)
-                    ->orderBy('created_at')
-                    ->value('id');
-
-                return $firstOwned ? (int) $firstOwned : null;
-            }
-
-            // Super-admin: global default site
-            $default = DB::table('tallcms_sites')->where('is_default', true)->value('id');
-
-            return $default ? (int) $default : null;
-        } catch (QueryException) {
-            return null;
-        }
-    }
-
-    /**
-     * Get the display name for the current multisite context.
-     */
-    protected function getMultisiteName(?int $siteId): ?string
-    {
-        $sessionValue = session('multisite_admin_site_id');
-
-        if ($sessionValue === '__all_sites__') {
-            return 'All Sites';
-        }
-
-        if (! $siteId) {
-            return null;
-        }
-
-        try {
-            $site = DB::table('tallcms_sites')->where('id', $siteId)->first();
-
-            return $site?->name;
-        } catch (QueryException) {
-            return null;
-        }
-    }
 }
