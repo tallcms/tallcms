@@ -794,11 +794,24 @@ class ThemeManager extends Page implements HasForms
             ->label('Delete')
             ->icon('heroicon-o-trash')
             ->color('danger')
+            ->visible(fn () => auth()->user()?->hasRole('super_admin') ?? false)
+            ->authorize(fn () => auth()->user()?->hasRole('super_admin') ?? false)
             ->requiresConfirmation()
             ->modalHeading('Delete Theme')
             ->modalDescription(fn (array $arguments) => "Are you sure you want to delete the theme '{$arguments['name']}'? This action cannot be undone.")
             ->modalSubmitActionLabel('Yes, Delete Theme')
             ->action(function (array $arguments) {
+                // Server-side guard: themes are installation-wide, super_admin only.
+                if (! auth()->user()?->hasRole('super_admin')) {
+                    Notification::make()
+                        ->title('Not authorized')
+                        ->body('Only super admins can delete themes.')
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
                 $slug = $arguments['slug'];
                 $theme = Theme::find($slug);
 
@@ -1030,12 +1043,14 @@ class ThemeManager extends Page implements HasForms
                 ->color('gray')
                 ->action(fn () => $this->refreshThemes()),
 
-            // Theme Upload action
+            // Theme Upload action — gated to super_admin (installation-wide concern)
+            // AND the theme.allow_uploads config flag.
             Action::make('upload')
                 ->label('Upload Theme')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('primary')
-                ->visible(fn () => config('theme.allow_uploads', false))
+                ->visible(fn () => config('theme.allow_uploads', false) && (auth()->user()?->hasRole('super_admin') ?? false))
+                ->authorize(fn () => auth()->user()?->hasRole('super_admin') ?? false)
                 ->form([
                     FileUpload::make('theme_zip')
                         ->label('Theme Package (ZIP)')
@@ -1047,7 +1062,19 @@ class ThemeManager extends Page implements HasForms
                         ->helperText('Upload a theme package (.zip file). Maximum size: 50MB.'),
                 ])
                 ->action(function (array $data) {
-                    // Server-side guard: verify uploads are enabled (visible() is UI-only)
+                    // Server-side guards: super_admin only AND uploads enabled.
+                    // Both checks run regardless of UI state in case the action is
+                    // invoked via direct AJAX bypassing visible().
+                    if (! auth()->user()?->hasRole('super_admin')) {
+                        Notification::make()
+                            ->title('Not authorized')
+                            ->body('Only super admins can upload themes.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
                     if (! config('theme.allow_uploads', false)) {
                         Notification::make()
                             ->title('Uploads disabled')
