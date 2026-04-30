@@ -23,6 +23,13 @@ class AnalyticsOverviewWidgetTest extends TestCase
             $this->markTestSkipped('Pro plugin not installed.');
         }
 
+        // Skip when Pro is installed at a version that predates the multisite-
+        // aware refactor (v1.10.0+). Lets developers running older Pro builds
+        // not have these tests fail until they upgrade.
+        if (! property_exists(\Tallcms\Pro\Filament\Widgets\AnalyticsOverviewWidget::class, 'isAllSites')) {
+            $this->markTestSkipped('Pro plugin too old (need 1.10.0+ for multisite-aware widgets).');
+        }
+
         if (! class_exists(Site::class)) {
             $this->markTestSkipped('Multisite plugin not installed.');
         }

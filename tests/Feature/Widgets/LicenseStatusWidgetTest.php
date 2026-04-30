@@ -23,6 +23,12 @@ class LicenseStatusWidgetTest extends TestCase
             $this->markTestSkipped('Pro plugin not installed.');
         }
 
+        // Skip when Pro is installed at a version that predates the multisite-
+        // aware refactor (v1.10.0+) — older versions don't have getHeading() etc.
+        if (! method_exists(\Tallcms\Pro\Filament\Widgets\LicenseStatusWidget::class, 'getHeading')) {
+            $this->markTestSkipped('Pro plugin too old (need 1.10.0+ for multisite-aware widgets).');
+        }
+
         if (! class_exists(Site::class)) {
             $this->markTestSkipped('Multisite plugin not installed.');
         }
