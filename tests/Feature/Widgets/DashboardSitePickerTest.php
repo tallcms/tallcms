@@ -133,4 +133,120 @@ class DashboardSitePickerTest extends TestCase
 
         $this->assertTrue(DashboardSitePicker::canView());
     }
+
+    // -------------------------------------------------------------------------
+    // Authorization — server-side validation of Livewire-supplied selection
+    // -------------------------------------------------------------------------
+
+    public function test_regular_user_cannot_select_another_users_site(): void
+    {
+        // Insert a foreign-owned site directly via DB (bypassing the model's
+        // quota guard, which isn't what's under test here).
+        $owner = $this->makeRegularUser();
+        $foreignId = DB::table('tallcms_sites')->insertGetId([
+            'name' => 'Owner',
+            'domain' => uniqid('owner-').'.example.com',
+            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'user_id' => $owner->id,
+            'is_default' => false,
+            'is_active' => true,
+            'domain_verified' => true,
+            'domain_status' => 'verified',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $tamperer = $this->makeRegularUser();
+        $ownSite = $this->makeSite(['name' => 'Mine', 'user_id' => $tamperer->id]);
+        $this->actingAs($tamperer);
+
+        Livewire::test(DashboardSitePicker::class)
+            ->set('selected', (string) $foreignId)
+            ->assertNotDispatched('dashboard.site-changed');
+
+        $this->assertNotSame($foreignId, session('multisite_admin_site_id'));
+    }
+
+    public function test_regular_user_cannot_select_all_sites(): void
+    {
+        $user = $this->makeRegularUser();
+        $site = $this->makeSite(['user_id' => $user->id]);
+        $this->actingAs($user);
+
+        Livewire::test(DashboardSitePicker::class)
+            ->set('selected', '__all_sites__')
+            ->assertNotDispatched('dashboard.site-changed');
+
+        $this->assertNotSame('__all_sites__', session('multisite_admin_site_id'));
+    }
+
+    public function test_regular_user_cannot_select_inactive_site(): void
+    {
+        $user = $this->makeRegularUser();
+        $active = $this->makeSite(['name' => 'Active', 'user_id' => $user->id, 'is_active' => true]);
+        // Second site for same user — bypass quota guard via raw insert.
+        $inactiveId = DB::table('tallcms_sites')->insertGetId([
+            'name' => 'Inactive',
+            'domain' => uniqid('inactive-').'.example.com',
+            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'user_id' => $user->id,
+            'is_default' => false,
+            'is_active' => false,
+            'domain_verified' => true,
+            'domain_status' => 'verified',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $this->actingAs($user);
+
+        Livewire::test(DashboardSitePicker::class)
+            ->set('selected', (string) $inactiveId)
+            ->assertNotDispatched('dashboard.site-changed');
+
+        $this->assertNotSame($inactiveId, session('multisite_admin_site_id'));
+    }
+
+    public function test_mount_normalizes_stale_unauthorized_session_value(): void
+    {
+        $owner = $this->makeRegularUser();
+        $foreignId = DB::table('tallcms_sites')->insertGetId([
+            'name' => 'Owner',
+            'domain' => uniqid('owner-').'.example.com',
+            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'user_id' => $owner->id,
+            'is_default' => false,
+            'is_active' => true,
+            'domain_verified' => true,
+            'domain_status' => 'verified',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $user = $this->makeRegularUser();
+        $ownSite = $this->makeSite(['name' => 'Mine', 'user_id' => $user->id]);
+        $this->actingAs($user);
+
+        // Stale session (perhaps left over from a previous login) points at
+        // a site this user can't access. Picker mount should ignore it and
+        // fall back to the user's own site.
+        session(['multisite_admin_site_id' => $foreignId]);
+
+        Livewire::test(DashboardSitePicker::class)
+            ->assertSet('selected', (string) $ownSite->id);
+
+        $this->assertSame($ownSite->id, session('multisite_admin_site_id'));
+    }
+
+    public function test_mount_rejects_stale_all_sites_for_non_super_admin(): void
+    {
+        $user = $this->makeRegularUser();
+        $site = $this->makeSite(['name' => 'Mine', 'user_id' => $user->id]);
+        $this->actingAs($user);
+        session(['multisite_admin_site_id' => '__all_sites__']);
+
+        Livewire::test(DashboardSitePicker::class)
+            ->assertSet('selected', (string) $site->id);
+
+        $this->assertSame($site->id, session('multisite_admin_site_id'));
+    }
 }

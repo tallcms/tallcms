@@ -36,21 +36,27 @@ class DashboardSitePicker extends Widget
     public function mount(): void
     {
         $current = session('multisite_admin_site_id');
+        $authorized = $this->resolveAuthorizedSiteValue($current);
 
-        if ($current === '__all_sites__' || (is_string($current) && is_numeric($current))) {
-            $this->selected = (string) $current;
+        if ($authorized !== null) {
+            $this->selected = is_int($authorized) ? (string) $authorized : $authorized;
+
+            // Normalize stale/typed session value (e.g. coerce string id → int)
+            // so downstream consumers see a consistent shape.
+            if ($current !== $authorized) {
+                session(['multisite_admin_site_id' => $authorized]);
+            }
 
             return;
         }
 
-        if (is_int($current)) {
-            $this->selected = (string) $current;
+        // No valid session value yet (or a stale value the current user can't
+        // access) — clear it first so the trait's role-based fallback is reached.
+        // (The trait short-circuits on a session value of '__all_sites__' or any
+        // numeric id without validating ownership; for unauthorized values we
+        // need a fresh fallback resolution.)
+        session()->forget('multisite_admin_site_id');
 
-            return;
-        }
-
-        // First load: seed session using the same role-based fallback the trait
-        // resolves so first dashboard load matches pre-picker behaviour.
         $fallback = $this->getMultisiteSiteId();
         if ($fallback !== null) {
             $this->selected = (string) $fallback;
@@ -60,11 +66,65 @@ class DashboardSitePicker extends Widget
 
     public function updatedSelected(string|int $value): void
     {
-        $stored = $value === '__all_sites__' ? '__all_sites__' : (int) $value;
+        $authorized = $this->resolveAuthorizedSiteValue($value);
 
-        session(['multisite_admin_site_id' => $stored]);
+        if ($authorized === null) {
+            // Tampered or unauthorized value (e.g. non-super-admin trying to
+            // set __all_sites__, or any user trying to pick a site they don't
+            // own). Revert the picker UI to the current session value without
+            // dispatching, so other widgets don't refresh against bad scope.
+            $this->selected = is_string(session('multisite_admin_site_id'))
+                || is_int(session('multisite_admin_site_id'))
+                    ? (string) session('multisite_admin_site_id')
+                    : null;
 
-        $this->dispatch('dashboard.site-changed', siteId: $stored);
+            return;
+        }
+
+        session(['multisite_admin_site_id' => $authorized]);
+
+        $this->dispatch('dashboard.site-changed', siteId: $authorized);
+    }
+
+    /**
+     * Validate a candidate scope value against the current user's access.
+     * Returns the canonical value to write to session, or null if the value
+     * is not allowed for this user.
+     *
+     * - '__all_sites__' is only valid for super_admins.
+     * - A numeric site_id is only valid if the site exists, is active, and
+     *   either the user is super_admin or owns the site.
+     * - Anything else (null, garbage strings, expired ids) returns null.
+     */
+    protected function resolveAuthorizedSiteValue(mixed $value): null|int|string
+    {
+        if (! auth()->check()) {
+            return null;
+        }
+
+        if ($value === '__all_sites__') {
+            return $this->isSuperAdmin() ? '__all_sites__' : null;
+        }
+
+        if (! is_numeric($value)) {
+            return null;
+        }
+
+        $siteId = (int) $value;
+
+        try {
+            $query = DB::table('tallcms_sites')
+                ->where('id', $siteId)
+                ->where('is_active', true);
+
+            if (! $this->isSuperAdmin()) {
+                $query->where('user_id', auth()->id());
+            }
+
+            return $query->exists() ? $siteId : null;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**
