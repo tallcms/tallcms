@@ -15,6 +15,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ColorColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use TallCms\Cms\Filament\Resources\Concerns\ScopesQueryToOwnedSites;
 use TallCms\Cms\Filament\Resources\MediaCollection\Pages\CreateMediaCollection;
 use TallCms\Cms\Filament\Resources\MediaCollection\Pages\EditMediaCollection;
 use TallCms\Cms\Filament\Resources\MediaCollection\Pages\ListMediaCollections;
@@ -23,6 +24,8 @@ use TallCms\Cms\Rules\UserAwareUnique;
 
 class MediaCollectionResource extends Resource
 {
+    use ScopesQueryToOwnedSites;
+
     protected static ?string $model = MediaCollection::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedFolderOpen;
@@ -137,15 +140,7 @@ class MediaCollectionResource extends Resource
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
-        $query = parent::getEloquentQuery();
-
-        // User-owned: non-super-admins see only their own collections
-        if (auth()->check() && ! auth()->user()->hasRole('super_admin')
-            && \Illuminate\Support\Facades\Schema::hasColumn('tallcms_media_collections', 'user_id')) {
-            $query->where('tallcms_media_collections.user_id', auth()->id());
-        }
-
-        return $query;
+        return static::scopeQueryToOwnedTenants(parent::getEloquentQuery());
     }
 
     public static function getPages(): array
