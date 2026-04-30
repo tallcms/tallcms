@@ -32,6 +32,7 @@ use TallCms\Cms\Filament\Resources\TallcmsMedia\TallcmsMediaResource;
 use TallCms\Cms\Filament\Resources\TallcmsMenus\TallcmsMenuResource;
 use TallCms\Cms\Filament\Resources\Users\UserResource;
 use TallCms\Cms\Filament\Widgets\ContentHealthWidget;
+use TallCms\Cms\Filament\Widgets\DashboardSitePicker;
 use TallCms\Cms\Filament\Widgets\MenuOverviewWidget;
 use TallCms\Cms\Filament\Widgets\PluginUpdatesWidget;
 use TallCms\Cms\Services\LocaleRegistry;
@@ -307,7 +308,11 @@ class TallCmsPlugin implements Plugin
      */
     public function getWidgets(): array
     {
-        $widgets = [];
+        // Picker is registered unconditionally; its canView() guards on
+        // multisite plugin presence + user-accessible sites with try/catch
+        // so install / migration / DB-unavailable contexts can't blow up
+        // panel boot.
+        $widgets = [DashboardSitePicker::class];
 
         if ($this->hasPosts) {
             $widgets[] = ContentHealthWidget::class;

@@ -5,13 +5,23 @@ namespace TallCms\Cms\Filament\Widgets;
 use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Livewire\Attributes\On;
+use TallCms\Cms\Filament\Widgets\Concerns\HasMultisiteWidgetContext;
 
 class ContentHealthWidget extends BaseWidget
 {
+    use HasMultisiteWidgetContext;
+
     protected static ?int $sort = 1;
+
+    #[On('dashboard.site-changed')]
+    public function onSiteChanged(): void
+    {
+        // Empty body — Livewire re-renders the widget on event receipt,
+        // which re-runs getStats() against the new session value.
+    }
 
     protected function getStats(): array
     {
@@ -85,55 +95,4 @@ class ContentHealthWidget extends BaseWidget
         return $siteName ? "Content Health — {$siteName}" : 'Content Health';
     }
 
-    protected function getMultisiteSiteId(): ?int
-    {
-        $sessionValue = session('multisite_admin_site_id');
-
-        if ($sessionValue === '__all_sites__') {
-            return null;
-        }
-
-        if ($sessionValue && is_numeric($sessionValue)) {
-            return (int) $sessionValue;
-        }
-
-        try {
-            if (auth()->check() && ! auth()->user()->hasRole('super_admin')) {
-                $firstOwned = DB::table('tallcms_sites')
-                    ->where('user_id', auth()->id())
-                    ->where('is_active', true)
-                    ->orderBy('created_at')
-                    ->value('id');
-
-                return $firstOwned ? (int) $firstOwned : null;
-            }
-
-            $default = DB::table('tallcms_sites')->where('is_default', true)->value('id');
-
-            return $default ? (int) $default : null;
-        } catch (QueryException) {
-            return null;
-        }
-    }
-
-    protected function getMultisiteName(?int $siteId): ?string
-    {
-        $sessionValue = session('multisite_admin_site_id');
-
-        if ($sessionValue === '__all_sites__') {
-            return 'All Sites';
-        }
-
-        if (! $siteId) {
-            return null;
-        }
-
-        try {
-            $site = DB::table('tallcms_sites')->where('id', $siteId)->first();
-
-            return $site?->name;
-        } catch (QueryException) {
-            return null;
-        }
-    }
 }
