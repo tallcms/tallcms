@@ -6,7 +6,6 @@ namespace TallCms\Cms\Http\Controllers\Api\V1;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use TallCms\Cms\Http\Controllers\Api\V1\Concerns\HandlesFiltering;
 use TallCms\Cms\Http\Controllers\Api\V1\Concerns\HandlesIncludes;
 use TallCms\Cms\Http\Controllers\Api\V1\Concerns\HandlesPagination;
@@ -83,11 +82,7 @@ class MediaController extends Controller
         if ($field === 'has_variants') {
             $hasVariants = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 
-            return $hasVariants
-                ? $query->whereNotNull('variants')->where('variants', '!=', '[]')
-                : $query->where(function ($q) {
-                    $q->whereNull('variants')->orWhere('variants', '[]');
-                });
+            return $query->where('has_variants', $hasVariants);
         }
 
         // Handle mime_type filter with wildcard support (e.g., image/*)
@@ -206,20 +201,19 @@ class MediaController extends Controller
         $this->authorize('create', TallcmsMedia::class);
 
         $file = $request->file('file');
-        $disk = $request->input('disk', 'public');
+        $disk = cms_media_disk();
 
         // Store the file
         $path = $file->store('media', $disk);
 
         // Get image dimensions if it's an image
-        $width = null;
-        $height = null;
+        $meta = [];
 
         if (str_starts_with($file->getMimeType(), 'image/')) {
-            $imageInfo = getimagesize($file->getPathname());
+            $imageInfo = @getimagesize($file->getPathname());
             if ($imageInfo) {
-                $width = $imageInfo[0];
-                $height = $imageInfo[1];
+                $meta['width'] = $imageInfo[0];
+                $meta['height'] = $imageInfo[1];
             }
         }
 
@@ -230,10 +224,9 @@ class MediaController extends Controller
             'disk' => $disk,
             'mime_type' => $file->getMimeType(),
             'size' => $file->getSize(),
+            'meta' => $meta,
             'alt_text' => $request->input('alt_text'),
             'caption' => $request->input('caption'),
-            'width' => $width,
-            'height' => $height,
         ]);
 
         // Sync collections if provided (validate ownership)
@@ -282,16 +275,7 @@ class MediaController extends Controller
 
         $this->authorize('delete', $mediaModel);
 
-        // Delete the file from storage
-        Storage::disk($mediaModel->disk)->delete($mediaModel->path);
-
-        // Delete variants if any
-        if ($mediaModel->variants) {
-            foreach ($mediaModel->variants as $variant => $variantPath) {
-                Storage::disk($mediaModel->disk)->delete($variantPath);
-            }
-        }
-
+        // File and variant deletion is handled by the model's deleting hook
         $mediaModel->delete();
 
         return $this->respondWithMessage('Media deleted successfully');

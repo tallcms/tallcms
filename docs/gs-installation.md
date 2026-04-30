@@ -363,7 +363,7 @@ TallCMS supports S3-compatible cloud storage for media uploads.
 
 ### Configuration
 
-Add to your `.env` file:
+**Option A — use S3 as the default filesystem** (simplest):
 
 ```env
 # Storage credentials
@@ -378,6 +378,32 @@ FILESYSTEM_DISK=s3
 # For non-AWS providers, add endpoint:
 AWS_ENDPOINT=https://nyc3.digitaloceanspaces.com
 ```
+
+TallCMS detects `FILESYSTEM_DISK=s3` and routes all media uploads to S3 automatically.
+
+**Option B — dedicated media disk** (when your app's default filesystem stays local):
+
+Define a named disk in `config/filesystems.php`:
+
+```php
+'cms-media' => [
+    'driver'     => 's3',
+    'key'        => env('CMS_MEDIA_KEY'),
+    'secret'     => env('CMS_MEDIA_SECRET'),
+    'region'     => env('CMS_MEDIA_REGION', 'us-east-1'),
+    'bucket'     => env('CMS_MEDIA_BUCKET'),
+    'url'        => env('CMS_MEDIA_URL'),      // optional CDN URL
+    'visibility' => 'public',
+],
+```
+
+Then tell TallCMS to use it:
+
+```env
+TALLCMS_MEDIA_DISK=cms-media
+```
+
+`TALLCMS_MEDIA_DISK` takes priority over the auto-detection. It accepts any disk name registered in `config/filesystems.php`.
 
 ### Provider Examples
 

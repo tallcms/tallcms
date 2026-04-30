@@ -560,6 +560,11 @@ return [
     |
     */
     'media' => [
+        // Filesystem disk to use for media uploads.
+        // Set TALLCMS_MEDIA_DISK in your .env to any disk defined in config/filesystems.php.
+        // When null, TallCMS auto-detects: 's3' if S3 is configured, otherwise 'public'.
+        'disk' => env('TALLCMS_MEDIA_DISK'),
+
         'optimization' => [
             // Enable or disable automatic image optimization
             'enabled' => env('TALLCMS_MEDIA_OPTIMIZATION', true),
