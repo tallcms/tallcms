@@ -93,7 +93,7 @@ class CmsPostResource extends Resource
                 SoftDeletingScope::class,
             ]);
 
-        return static::scopeQueryToOwnedTenants($query);
+        return static::scopeQueryToOwnedByUser($query);
     }
 
     public static function getNavigationBadge(): ?string

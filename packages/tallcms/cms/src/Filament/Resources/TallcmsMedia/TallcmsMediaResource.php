@@ -68,7 +68,7 @@ class TallcmsMediaResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return static::scopeQueryToOwnedTenants(parent::getEloquentQuery());
+        return static::scopeQueryToOwnedByUser(parent::getEloquentQuery());
     }
 
     public static function getPages(): array
