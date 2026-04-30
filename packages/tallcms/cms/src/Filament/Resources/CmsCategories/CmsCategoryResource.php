@@ -13,10 +13,12 @@ use TallCms\Cms\Filament\Resources\CmsCategories\Pages\EditCmsCategory;
 use TallCms\Cms\Filament\Resources\CmsCategories\Pages\ListCmsCategories;
 use TallCms\Cms\Filament\Resources\CmsCategories\Schemas\CmsCategoryForm;
 use TallCms\Cms\Filament\Resources\CmsCategories\Tables\CmsCategoriesTable;
+use TallCms\Cms\Filament\Resources\Concerns\ScopesQueryToOwnedSites;
 use TallCms\Cms\Models\CmsCategory;
 
 class CmsCategoryResource extends Resource
 {
+    use ScopesQueryToOwnedSites;
     use Translatable;
 
     protected static ?string $model = CmsCategory::class;
@@ -84,13 +86,7 @@ class CmsCategoryResource extends Resource
                 SoftDeletingScope::class,
             ]);
 
-        // User-owned: non-super-admins see only their own categories
-        if (auth()->check() && ! auth()->user()->hasRole('super_admin')
-            && \Illuminate\Support\Facades\Schema::hasColumn('tallcms_categories', 'user_id')) {
-            $query->where('tallcms_categories.user_id', auth()->id());
-        }
-
-        return $query;
+        return static::scopeQueryToOwnedTenants($query);
     }
 
     public static function getNavigationBadge(): ?string

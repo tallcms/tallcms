@@ -14,10 +14,12 @@ use TallCms\Cms\Filament\Resources\CmsPages\Pages\EditCmsPage;
 use TallCms\Cms\Filament\Resources\CmsPages\Pages\ListCmsPages;
 use TallCms\Cms\Filament\Resources\CmsPages\Schemas\CmsPageForm;
 use TallCms\Cms\Filament\Resources\CmsPages\Tables\CmsPagesTable;
+use TallCms\Cms\Filament\Resources\Concerns\ScopesQueryToOwnedSites;
 use TallCms\Cms\Models\CmsPage;
 
 class CmsPageResource extends Resource
 {
+    use ScopesQueryToOwnedSites;
     use Translatable;
 
     protected static ?string $model = CmsPage::class;
@@ -56,10 +58,12 @@ class CmsPageResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+
+        return static::scopeQueryToOwnedSites($query);
     }
 
     public static function shouldRegisterNavigation(): bool

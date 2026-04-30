@@ -7,6 +7,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use TallCms\Cms\Filament\Resources\Concerns\ScopesQueryToOwnedSites;
 use TallCms\Cms\Filament\Resources\TallcmsMenus\Pages\CreateTallcmsMenu;
 use TallCms\Cms\Filament\Resources\TallcmsMenus\Pages\EditTallcmsMenu;
 use TallCms\Cms\Filament\Resources\TallcmsMenus\Pages\ListTallcmsMenus;
@@ -16,6 +18,8 @@ use TallCms\Cms\Models\TallcmsMenu;
 
 class TallcmsMenuResource extends Resource
 {
+    use ScopesQueryToOwnedSites;
+
     protected static ?string $model = TallcmsMenu::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
@@ -81,5 +85,10 @@ class TallcmsMenuResource extends Resource
             'create' => CreateTallcmsMenu::route('/create'),
             'edit' => EditTallcmsMenu::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return static::scopeQueryToOwnedSites(parent::getEloquentQuery());
     }
 }

@@ -8,6 +8,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use TallCms\Cms\Filament\Resources\Concerns\ScopesQueryToOwnedSites;
 use TallCms\Cms\Filament\Resources\TallcmsMedia\Pages\CreateTallcmsMedia;
 use TallCms\Cms\Filament\Resources\TallcmsMedia\Pages\EditTallcmsMedia;
 use TallCms\Cms\Filament\Resources\TallcmsMedia\Pages\ListTallcmsMedia;
@@ -17,6 +18,8 @@ use TallCms\Cms\Models\TallcmsMedia;
 
 class TallcmsMediaResource extends Resource
 {
+    use ScopesQueryToOwnedSites;
+
     protected static ?string $model = TallcmsMedia::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
@@ -65,15 +68,7 @@ class TallcmsMediaResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
-
-        // User-owned: non-super-admins see only their own media
-        if (auth()->check() && ! auth()->user()->hasRole('super_admin')
-            && \Illuminate\Support\Facades\Schema::hasColumn('tallcms_media', 'user_id')) {
-            $query->where('tallcms_media.user_id', auth()->id());
-        }
-
-        return $query;
+        return static::scopeQueryToOwnedTenants(parent::getEloquentQuery());
     }
 
     public static function getPages(): array

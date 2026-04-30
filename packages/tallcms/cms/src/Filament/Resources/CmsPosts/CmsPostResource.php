@@ -14,10 +14,12 @@ use TallCms\Cms\Filament\Resources\CmsPosts\Pages\EditCmsPost;
 use TallCms\Cms\Filament\Resources\CmsPosts\Pages\ListCmsPosts;
 use TallCms\Cms\Filament\Resources\CmsPosts\Schemas\CmsPostForm;
 use TallCms\Cms\Filament\Resources\CmsPosts\Tables\CmsPostsTable;
+use TallCms\Cms\Filament\Resources\Concerns\ScopesQueryToOwnedSites;
 use TallCms\Cms\Models\CmsPost;
 
 class CmsPostResource extends Resource
 {
+    use ScopesQueryToOwnedSites;
     use Translatable;
 
     protected static ?string $model = CmsPost::class;
@@ -91,13 +93,7 @@ class CmsPostResource extends Resource
                 SoftDeletingScope::class,
             ]);
 
-        // User-owned: non-super-admins see only their own posts
-        if (auth()->check() && ! auth()->user()->hasRole('super_admin')
-            && \Illuminate\Support\Facades\Schema::hasColumn('tallcms_posts', 'user_id')) {
-            $query->where('tallcms_posts.user_id', auth()->id());
-        }
-
-        return $query;
+        return static::scopeQueryToOwnedTenants($query);
     }
 
     public static function getNavigationBadge(): ?string
