@@ -99,8 +99,12 @@ class AdminPanelProvider extends PanelProvider
                 TallCmsPlugin::make(),
                 // Registration bridge ships as a local plugin under /plugins/tallcms/registration/.
                 // Guard so fresh checkouts (CI release builds, plugin-mode users) without the
-                // plugin installed don't crash on a missing class reference.
-                class_exists(TallcmsRegistrationBridge::class) ? TallcmsRegistrationBridge::make() : null,
+                // plugin installed don't crash on a missing class reference. settingsPage()
+                // swaps in the host-defined Shield-gated subclass so the panel page enforces
+                // View:RegistrationSettings instead of being open to anyone with admin access.
+                class_exists(TallcmsRegistrationBridge::class)
+                    ? TallcmsRegistrationBridge::make()->settingsPage(\App\Filament\Pages\RegistrationSettings::class)
+                    : null,
             ]))
             ->authMiddleware([
                 Authenticate::class,
