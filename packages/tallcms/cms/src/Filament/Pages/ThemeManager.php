@@ -794,11 +794,24 @@ class ThemeManager extends Page implements HasForms
             ->label('Delete')
             ->icon('heroicon-o-trash')
             ->color('danger')
+            ->visible(fn () => auth()->user()?->hasRole('super_admin') ?? false)
+            ->authorize(fn () => auth()->user()?->hasRole('super_admin') ?? false)
             ->requiresConfirmation()
             ->modalHeading('Delete Theme')
             ->modalDescription(fn (array $arguments) => "Are you sure you want to delete the theme '{$arguments['name']}'? This action cannot be undone.")
             ->modalSubmitActionLabel('Yes, Delete Theme')
             ->action(function (array $arguments) {
+                // Server-side guard: themes are installation-wide, super_admin only.
+                if (! auth()->user()?->hasRole('super_admin')) {
+                    Notification::make()
+                        ->title('Not authorized')
+                        ->body('Only super admins can delete themes.')
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
                 $slug = $arguments['slug'];
                 $theme = Theme::find($slug);
 
@@ -910,6 +923,8 @@ class ThemeManager extends Page implements HasForms
             ->label('Activate License')
             ->icon('heroicon-o-key')
             ->color('primary')
+            ->visible(fn () => auth()->user()?->hasRole('super_admin') ?? false)
+            ->authorize(fn () => auth()->user()?->hasRole('super_admin') ?? false)
             ->modalHeading(fn (array $arguments) => "Activate License — {$arguments['name']}")
             ->modalDescription('Enter your license key from your purchase email.')
             ->form([
@@ -919,6 +934,17 @@ class ThemeManager extends Page implements HasForms
                     ->required(),
             ])
             ->action(function (array $data, array $arguments) {
+                // Server-side guard: theme licenses are installation-wide, super_admin only.
+                if (! auth()->user()?->hasRole('super_admin')) {
+                    Notification::make()
+                        ->title('Not authorized')
+                        ->body('Only super admins can activate theme licenses.')
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
                 $result = app(PluginLicenseService::class)->activate(
                     $arguments['licenseSlug'],
                     $data['license_key']
@@ -959,11 +985,24 @@ class ThemeManager extends Page implements HasForms
             ->label('Deactivate')
             ->icon('heroicon-o-x-circle')
             ->color('danger')
+            ->visible(fn () => auth()->user()?->hasRole('super_admin') ?? false)
+            ->authorize(fn () => auth()->user()?->hasRole('super_admin') ?? false)
             ->requiresConfirmation()
             ->modalHeading(fn (array $arguments) => "Deactivate License — {$arguments['name']}")
             ->modalDescription('Are you sure you want to deactivate this license? The theme may lose access to updates and premium features.')
             ->modalSubmitActionLabel('Yes, Deactivate')
             ->action(function (array $arguments) {
+                // Server-side guard: theme licenses are installation-wide, super_admin only.
+                if (! auth()->user()?->hasRole('super_admin')) {
+                    Notification::make()
+                        ->title('Not authorized')
+                        ->body('Only super admins can deactivate theme licenses.')
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
                 $result = app(PluginLicenseService::class)->deactivate($arguments['licenseSlug']);
 
                 if ($result['success']) {
@@ -1005,7 +1044,20 @@ class ThemeManager extends Page implements HasForms
                 ->label('Refresh Licenses')
                 ->icon('heroicon-o-key')
                 ->color('gray')
+                ->visible(fn () => auth()->user()?->hasRole('super_admin') ?? false)
+                ->authorize(fn () => auth()->user()?->hasRole('super_admin') ?? false)
                 ->action(function () {
+                    // Server-side guard: cache-busting installation-wide license state, super_admin only.
+                    if (! auth()->user()?->hasRole('super_admin')) {
+                        Notification::make()
+                            ->title('Not authorized')
+                            ->body('Only super admins can refresh theme license status.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
                     $licenseService = app(PluginLicenseService::class);
                     $licenseService->clearCache();
 
@@ -1030,12 +1082,14 @@ class ThemeManager extends Page implements HasForms
                 ->color('gray')
                 ->action(fn () => $this->refreshThemes()),
 
-            // Theme Upload action
+            // Theme Upload action — gated to super_admin (installation-wide concern)
+            // AND the theme.allow_uploads config flag.
             Action::make('upload')
                 ->label('Upload Theme')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('primary')
-                ->visible(fn () => config('theme.allow_uploads', false))
+                ->visible(fn () => config('theme.allow_uploads', false) && (auth()->user()?->hasRole('super_admin') ?? false))
+                ->authorize(fn () => auth()->user()?->hasRole('super_admin') ?? false)
                 ->form([
                     FileUpload::make('theme_zip')
                         ->label('Theme Package (ZIP)')
@@ -1047,7 +1101,19 @@ class ThemeManager extends Page implements HasForms
                         ->helperText('Upload a theme package (.zip file). Maximum size: 50MB.'),
                 ])
                 ->action(function (array $data) {
-                    // Server-side guard: verify uploads are enabled (visible() is UI-only)
+                    // Server-side guards: super_admin only AND uploads enabled.
+                    // Both checks run regardless of UI state in case the action is
+                    // invoked via direct AJAX bypassing visible().
+                    if (! auth()->user()?->hasRole('super_admin')) {
+                        Notification::make()
+                            ->title('Not authorized')
+                            ->body('Only super admins can upload themes.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
                     if (! config('theme.allow_uploads', false)) {
                         Notification::make()
                             ->title('Uploads disabled')
