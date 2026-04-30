@@ -63,21 +63,21 @@ trait ScopesQueryToOwnedSites
     }
 
     /**
-     * Like scopeQueryToOwnedSites, but falls back to filtering by user_id
-     * (record creator) when the table has no site_id column.
+     * Filter a query by user_id (record creator), regardless of whether
+     * multisite is active.
      *
-     * Use this for resources that exist in both multisite and standalone:
-     *   - multisite install (site_id present) → scope by owned sites
-     *   - standalone install (site_id absent, user_id present) → scope by creator
-     *   - super_admin → bypass either way
+     * Use this for resources that the multisite plugin explicitly treats as
+     * USER-OWNED rather than site-bound — Posts, Categories, Media,
+     * MediaCollections. The plugin's MultisiteServiceProvider deliberately
+     * does NOT stamp site_id on these models on creation; ownership is
+     * carried by user_id. Filtering by site_id would make a user's freshly-
+     * created records invisible to themselves in multisite installs, since
+     * site_id is NULL by design.
      *
-     * scopeQueryToOwnedSites is a no-op in standalone, which is correct for
-     * resources that have no per-user notion of ownership outside multisite
-     * (Pages, Menus, Comments, Contact Submissions). For Posts/Categories/Media,
-     * the prior single-site behavior was a per-creator filter — this helper
-     * preserves it.
+     * super_admin → bypass. No user_id column → passthrough (model isn't
+     * user-owned, nothing to scope).
      */
-    protected static function scopeQueryToOwnedTenants(Builder $query): Builder
+    protected static function scopeQueryToOwnedByUser(Builder $query): Builder
     {
         $user = auth()->user();
 
@@ -90,22 +90,13 @@ trait ScopesQueryToOwnedSites
         }
 
         $table = $query->getModel()->getTable();
-        $multisiteActive = function_exists('tallcms_multisite_active') && tallcms_multisite_active();
 
         try {
-            if ($multisiteActive && Schema::hasColumn($table, 'site_id')) {
-                $ownedSiteIds = DB::table('tallcms_sites')
-                    ->where('user_id', $user->getAuthIdentifier())
-                    ->pluck('id');
-
-                return $query->whereIn($table.'.site_id', $ownedSiteIds);
-            }
-
             if (Schema::hasColumn($table, 'user_id')) {
                 return $query->where($table.'.user_id', $user->getAuthIdentifier());
             }
         } catch (\Throwable) {
-            // Schema not yet migrated; fall through to unfiltered query.
+            // Schema not yet migrated.
         }
 
         return $query;

@@ -47,6 +47,17 @@ class ScopesQueryToOwnedSitesTest extends TestCase
             $table->timestamps();
         });
 
+        // Both site_id and user_id (mimics tallcms_posts / categories / media
+        // shape). site_id is nullable because the multisite plugin
+        // intentionally leaves it NULL for these user-owned models.
+        Schema::create('multisite_records_with_user_id', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('site_id')->nullable();
+            $table->unsignedBigInteger('user_id');
+            $table->string('label');
+            $table->timestamps();
+        });
+
         // Standalone-shape table (only user_id).
         Schema::create('single_site_records', function (Blueprint $table) {
             $table->id();
@@ -223,7 +234,7 @@ class ScopesQueryToOwnedSitesTest extends TestCase
         $this->assertCount(2, GlobalScopedHost::scope(GlobalRecord::query())->get());
     }
 
-    public function test_owned_tenants_falls_back_to_user_id_when_site_id_absent(): void
+    public function test_owned_by_user_filters_by_user_id(): void
     {
         $user = $this->makeUser('alice');
         $this->actingAs($user);
@@ -233,33 +244,39 @@ class ScopesQueryToOwnedSitesTest extends TestCase
             ['user_id' => 999, 'label' => 'theirs', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
-        $labels = SingleSiteTenantHost::scope(SingleSiteRecord::query())->pluck('label')->all();
+        $labels = OwnedByUserHost::scope(SingleSiteRecord::query())->pluck('label')->all();
 
         $this->assertSame(['mine'], $labels);
     }
 
-    public function test_owned_tenants_uses_site_ownership_when_site_id_present(): void
+    public function test_owned_by_user_does_not_filter_by_site_id_in_multisite(): void
     {
+        // Regression guard for the multisite plugin's intentional design:
+        // Posts/Categories/Media/Collections are USER-OWNED, not site-bound,
+        // and site_id is deliberately left NULL on creation. A previous
+        // implementation filtered these by site_id IN (owned sites) when
+        // multisite was active, which made a user's own freshly-created
+        // records invisible to themselves (their own post had site_id=NULL).
         $this->activateFakeMultisite();
-        $owner = $this->makeUser('owner');
-        $other = $this->makeUser('other');
-        $this->actingAs($owner);
+        $user = $this->makeUser('alice');
+        $this->actingAs($user);
 
         DB::table('tallcms_sites')->insert([
-            ['id' => 10, 'user_id' => $owner->id, 'name' => 'Owner Site'],
-            ['id' => 20, 'user_id' => $other->id, 'name' => 'Other Site'],
+            ['id' => 10, 'user_id' => $user->id, 'name' => 'My Site'],
         ]);
-        DB::table('multisite_records')->insert([
-            ['site_id' => 10, 'label' => 'mine', 'created_at' => now(), 'updated_at' => now()],
-            ['site_id' => 20, 'label' => 'theirs', 'created_at' => now(), 'updated_at' => now()],
+        DB::table('multisite_records_with_user_id')->insert([
+            ['site_id' => null, 'user_id' => $user->id, 'label' => 'mine-no-site', 'created_at' => now(), 'updated_at' => now()],
+            ['site_id' => 10, 'user_id' => $user->id, 'label' => 'mine-with-site', 'created_at' => now(), 'updated_at' => now()],
+            ['site_id' => 10, 'user_id' => 999, 'label' => 'theirs', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
-        $labels = MultisiteTenantHost::scope(MultisiteRecord::query())->pluck('label')->all();
+        $labels = OwnedByUserHost::scope(MultisiteRecordWithUserId::query())->pluck('label')->all();
 
-        $this->assertSame(['mine'], $labels);
+        // Both of the user's records, regardless of site_id state.
+        $this->assertEqualsCanonicalizing(['mine-no-site', 'mine-with-site'], $labels);
     }
 
-    public function test_owned_tenants_passes_through_when_neither_column_present(): void
+    public function test_owned_by_user_passes_through_when_no_user_id_column(): void
     {
         $user = $this->makeUser('alice');
         $this->actingAs($user);
@@ -269,23 +286,20 @@ class ScopesQueryToOwnedSitesTest extends TestCase
             ['label' => 'b', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
-        $this->assertCount(2, GlobalTenantHost::scope(GlobalRecord::query())->get());
+        $this->assertCount(2, OwnedByUserHost::scope(GlobalRecord::query())->get());
     }
 
-    public function test_owned_tenants_falls_back_to_user_id_when_site_id_present_but_multisite_inactive(): void
+    public function test_owned_by_user_super_admin_bypasses_filter(): void
     {
-        // Same regression guard for the OwnedTenants helper: site_id column
-        // exists but multisite plugin isn't booted → fall back to user_id.
-        $user = $this->makeUser('alice');
-        $this->actingAs($user);
+        $admin = $this->makeUser('admin', superAdmin: true);
+        $this->actingAs($admin);
 
-        // multisite_records has site_id but no user_id, so the fallback
-        // can't find user_id and should pass the query through.
-        DB::table('multisite_records')->insert([
-            ['site_id' => 10, 'label' => 'x', 'created_at' => now(), 'updated_at' => now()],
+        DB::table('single_site_records')->insert([
+            ['user_id' => $admin->id, 'label' => 'mine', 'created_at' => now(), 'updated_at' => now()],
+            ['user_id' => 999, 'label' => 'theirs', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
-        $this->assertCount(1, MultisiteTenantHost::scope(MultisiteRecord::query())->get());
+        $this->assertCount(2, OwnedByUserHost::scope(SingleSiteRecord::query())->get());
     }
 
     public function test_cms_page_resource_filters_to_owned_sites(): void
@@ -350,6 +364,15 @@ class MultisiteRecord extends Model
     public $timestamps = false;
 }
 
+class MultisiteRecordWithUserId extends Model
+{
+    protected $table = 'multisite_records_with_user_id';
+
+    protected $guarded = [];
+
+    public $timestamps = false;
+}
+
 class SingleSiteRecord extends Model
 {
     protected $table = 'single_site_records';
@@ -388,32 +411,12 @@ class GlobalScopedHost
     }
 }
 
-class MultisiteTenantHost
+class OwnedByUserHost
 {
     use ScopesQueryToOwnedSites;
 
     public static function scope(Builder $q): Builder
     {
-        return static::scopeQueryToOwnedTenants($q);
-    }
-}
-
-class SingleSiteTenantHost
-{
-    use ScopesQueryToOwnedSites;
-
-    public static function scope(Builder $q): Builder
-    {
-        return static::scopeQueryToOwnedTenants($q);
-    }
-}
-
-class GlobalTenantHost
-{
-    use ScopesQueryToOwnedSites;
-
-    public static function scope(Builder $q): Builder
-    {
-        return static::scopeQueryToOwnedTenants($q);
+        return static::scopeQueryToOwnedByUser($q);
     }
 }
