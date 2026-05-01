@@ -1,5 +1,5 @@
 @php
-    $columnsClass = match($columns ?? '3') {
+    $columnsClass = match((string) ($columns ?? '3')) {
         '1' => 'grid-cols-1 max-w-2xl mx-auto',
         '2' => 'grid-cols-1 sm:grid-cols-2 max-w-4xl mx-auto',
         '3' => 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',

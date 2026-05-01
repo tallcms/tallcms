@@ -1,7 +1,7 @@
 @php
     $isGrid = ($layout ?? 'grid') === 'grid';
 
-    $columnsClass = match($columns ?? '5') {
+    $columnsClass = match((string) ($columns ?? '5')) {
         '2' => 'grid-cols-1 sm:grid-cols-2',
         '3' => 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
         '4' => 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
