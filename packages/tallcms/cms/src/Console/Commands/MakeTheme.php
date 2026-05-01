@@ -840,10 +840,14 @@ BLADE;
     {
         return <<<'BLADE'
 {{-- Minimal language dropdown. Visibility (theme support + i18n_enabled + admin toggle)
-     is enforced by tallcms_show_language_dropdown() before this partial is included. --}}
+     is enforced by tallcms_show_language_dropdown() before this partial is included.
+     Uses tallcms_current_slug() to strip the existing locale/route prefixes from the
+     request path so tallcms_localized_url() builds a clean URL for the target locale. --}}
 @php
-    $locales = collect(config('tallcms.i18n.locales', []))->keys()->all();
+    $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
     $current = app()->getLocale();
+    $locales = $registry->getLocales();
+    $cleanSlug = tallcms_current_slug();
 @endphp
 
 @if(count($locales) >= 2)
@@ -857,10 +861,12 @@ BLADE;
             <span class="uppercase text-xs">{{ $current }}</span>
         </div>
         <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-50 w-40 p-2 shadow">
-            @foreach($locales as $locale)
+            @foreach($locales as $code => $locale)
                 <li>
-                    <a href="{{ tallcms_localized_url(request()->path(), $locale) }}" @if($locale === $current) class="active" @endif>
-                        {{ strtoupper($locale) }}
+                    <a href="{{ url(tallcms_localized_url($cleanSlug, $code)) }}"
+                       hreflang="{{ \TallCms\Cms\Services\LocaleRegistry::toBcp47($code) }}"
+                       @if($code === $current) class="active" aria-current="true" @endif>
+                        {{ $locale['native'] ?? strtoupper($code) }}
                     </a>
                 </li>
             @endforeach

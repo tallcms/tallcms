@@ -13,6 +13,8 @@
     "supports": {
         "dark_mode": true,
         "theme_controller": true,
+        "search": true,
+        "language_switcher": true,
         "responsive": true,
         "animations": true
     },
