@@ -54,7 +54,7 @@
         return $fileTypeConfig[$mimeType] ?? [
             'icon' => 'heroicon-o-document',
             'label' => strtoupper(Str::afterLast($mimeType, '/')),
-            'color' => 'text-gray-500'
+            'color' => 'text-base-content/60'
         ];
     };
 @endphp

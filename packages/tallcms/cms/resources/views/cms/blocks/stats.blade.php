@@ -1,9 +1,9 @@
 @php
     $columnsClass = match($columns ?? '4') {
-        '2' => 'sm:grid-cols-2 max-w-3xl mx-auto',
-        '3' => 'sm:grid-cols-3 max-w-5xl mx-auto',
-        '4' => 'sm:grid-cols-2 lg:grid-cols-4',
-        default => 'sm:grid-cols-2 lg:grid-cols-4',
+        '2' => 'grid-cols-1 sm:grid-cols-2 max-w-3xl mx-auto',
+        '3' => 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto',
+        '4' => 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
+        default => 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
     };
 
     $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');

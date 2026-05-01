@@ -122,6 +122,7 @@
             {{-- Close Button --}}
             <button
                 @click="close()"
+                aria-label="Close gallery"
                 class="btn btn-circle btn-ghost text-white absolute top-4 right-4"
             >
                 <x-heroicon-o-x-mark class="w-8 h-8" />
@@ -130,6 +131,7 @@
             {{-- Previous Button --}}
             <button
                 @click="prev()"
+                aria-label="Previous image"
                 class="btn btn-circle btn-ghost text-white absolute left-4 top-1/2 -translate-y-1/2"
             >
                 <x-heroicon-o-chevron-left class="w-8 h-8" />
@@ -138,6 +140,7 @@
             {{-- Next Button --}}
             <button
                 @click="next()"
+                aria-label="Next image"
                 class="btn btn-circle btn-ghost text-white absolute right-4 top-1/2 -translate-y-1/2"
             >
                 <x-heroicon-o-chevron-right class="w-8 h-8" />
