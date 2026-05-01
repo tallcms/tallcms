@@ -58,7 +58,11 @@ const ICONS = {
     up: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 17a.75.75 0 0 1-.75-.75V5.612L5.29 9.77a.75.75 0 1 1-1.08-1.04l5.25-5.5a.75.75 0 0 1 1.08 0l5.25 5.5a.75.75 0 0 1-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0 1 10 17Z" clip-rule="evenodd"/></svg>',
     down: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 3a.75.75 0 0 1 .75.75v10.638l3.96-4.158a.75.75 0 1 1 1.08 1.04l-5.25 5.5a.75.75 0 0 1-1.08 0l-5.25-5.5a.75.75 0 1 1 1.08-1.04l3.96 4.158V3.75A.75.75 0 0 1 10 3Z" clip-rule="evenodd"/></svg>',
     duplicate: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7 3.5A1.5 1.5 0 0 1 8.5 2h3.879a1.5 1.5 0 0 1 1.06.44l3.122 3.12A1.5 1.5 0 0 1 17 6.622V12.5a1.5 1.5 0 0 1-1.5 1.5h-1v-3.379a3 3 0 0 0-.879-2.121L10.5 5.379A3 3 0 0 0 8.379 4.5H7v-1Z"/><path d="M4.5 6A1.5 1.5 0 0 0 3 7.5v9A1.5 1.5 0 0 0 4.5 18h7a1.5 1.5 0 0 0 1.5-1.5v-5.879a1.5 1.5 0 0 0-.44-1.06L9.44 6.439A1.5 1.5 0 0 0 8.378 6H4.5Z"/></svg>',
+    collapse: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M14.78 12.78a.75.75 0 0 1-1.06 0L10 9.06l-3.72 3.72a.75.75 0 1 1-1.06-1.06l4.25-4.25a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd"/></svg>',
+    expand: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>',
 }
+
+const COLLAPSED_CLASS = 'fi-cms-block-collapsed'
 
 function findTopLevelCustomBlockPos(view, blockDom) {
     let foundPos = -1
@@ -154,11 +158,32 @@ class BlockChromeView {
             },
         })
 
+        // Collapse swaps its own icon and toggles the class on the wrapper.
+        // State lives only in the DOM — survives tab switches and panel
+        // toggles, resets on page reload (per the "opt-in, see how it
+        // feels" Phase 2 decision).
+        const collapseBtn = makeButton({
+            className: 'fi-icon-btn fi-cms-block-chrome-btn',
+            title: 'Collapse block',
+            html: ICONS.collapse,
+            onClick: () => {
+                const willCollapse = !blockDom.classList.contains(COLLAPSED_CLASS)
+                blockDom.classList.toggle(COLLAPSED_CLASS, willCollapse)
+                collapseBtn.innerHTML = willCollapse ? ICONS.expand : ICONS.collapse
+                collapseBtn.title = willCollapse ? 'Expand block' : 'Collapse block'
+                collapseBtn.setAttribute(
+                    'aria-label',
+                    collapseBtn.title,
+                )
+            },
+        })
+
         const reorderGroup = document.createElement('div')
         reorderGroup.className = 'fi-cms-block-chrome-group'
         reorderGroup.appendChild(upBtn)
         reorderGroup.appendChild(downBtn)
         reorderGroup.appendChild(duplicateBtn)
+        reorderGroup.appendChild(collapseBtn)
 
         header.insertBefore(handle, header.firstChild)
 
