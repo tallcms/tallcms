@@ -1,9 +1,9 @@
 @php
-    $columnsClass = match($columns ?? '3') {
-        '1' => 'max-w-2xl mx-auto',
-        '2' => 'sm:grid-cols-2 max-w-4xl mx-auto',
-        '3' => 'sm:grid-cols-2 lg:grid-cols-3',
-        default => 'sm:grid-cols-2 lg:grid-cols-3',
+    $columnsClass = match((string) ($columns ?? '3')) {
+        '1' => 'grid-cols-1 max-w-2xl mx-auto',
+        '2' => 'grid-cols-1 sm:grid-cols-2 max-w-4xl mx-auto',
+        '3' => 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+        default => 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
     };
 
     $styleClasses = $card_style ?? 'card bg-base-200 shadow-lg';

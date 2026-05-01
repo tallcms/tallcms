@@ -1,9 +1,9 @@
 @php
-    $columnsClass = match($columns ?? '4') {
-        '2' => 'sm:grid-cols-2 max-w-3xl mx-auto',
-        '3' => 'sm:grid-cols-3 max-w-5xl mx-auto',
-        '4' => 'sm:grid-cols-2 lg:grid-cols-4',
-        default => 'sm:grid-cols-2 lg:grid-cols-4',
+    $columnsClass = match((string) ($columns ?? '4')) {
+        '2' => 'grid-cols-1 sm:grid-cols-2 max-w-3xl mx-auto',
+        '3' => 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto',
+        '4' => 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
+        default => 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
     };
 
     $sectionPadding = ($first_section ?? false) ? 'pb-16' : ($padding ?? 'py-16');
@@ -77,9 +77,10 @@
             </x-tallcms::animation-wrapper>
         @endif
 
-        {{-- Stats Grid using daisyUI stats component --}}
+        {{-- Stats Grid: plain Tailwind grid so $columnsClass actually controls column count.
+             daisyUI's .stats component uses grid-auto-flow:column which ignores grid-cols-N. --}}
         @if(!empty($stats))
-            <div class="stats stats-vertical lg:stats-horizontal shadow w-full {{ $columnsClass }} grid">
+            <div class="grid {{ $columnsClass }} gap-px bg-base-200 rounded-box shadow overflow-hidden w-full">
                 @foreach($stats as $index => $stat)
                     @php
                         $itemDelay = $animationStagger ? ($staggerDelay * ($index + 1)) : 0;
@@ -89,7 +90,7 @@
                         :duration="$animationDuration"
                         :use-parent="true"
                         :delay="$itemDelay"
-                        class="{{ $stat_style ?? 'stat' }} {{ $text_alignment ?? 'text-center' }} place-items-center"
+                        class="{{ $stat_style ?? 'stat' }} bg-base-100 {{ $text_alignment ?? 'text-center' }} place-items-center"
                     >
                         {{-- Icon --}}
                         @if(!empty($stat['icon']))

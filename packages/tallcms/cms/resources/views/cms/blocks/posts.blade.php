@@ -207,10 +207,11 @@
     $staggerDelay = (int) ($animation_stagger_delay ?? 100);
 
     // Grid column classes
-    $gridColumnClass = match($columns) {
-        '2' => 'sm:grid-cols-2',
-        '4' => 'sm:grid-cols-2 lg:grid-cols-4',
-        default => 'sm:grid-cols-2 lg:grid-cols-3'
+    $gridColumnClass = match((string) ($columns ?? '3')) {
+        '2' => 'grid-cols-1 sm:grid-cols-2',
+        '3' => 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+        '4' => 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
+        default => 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
     };
 
     // Helper to generate post URL (uses localized URL helper)

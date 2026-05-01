@@ -80,7 +80,7 @@
                 @if(!empty($cta_text) && !empty($cta_url))
                     <a
                         href="{{ e($cta_url) }}"
-                        class="btn btn-neutral bg-white text-gray-900 hover:bg-gray-100 border-white gap-2"
+                        class="btn btn-primary gap-2"
                     >
                         {{ $cta_text }}
                         <x-heroicon-m-arrow-right class="w-5 h-5" />
