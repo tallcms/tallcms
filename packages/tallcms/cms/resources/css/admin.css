@@ -91,3 +91,58 @@
         }
     }
 }
+
+/**
+ * Per-block hover chrome (drag handle, move up/down, duplicate)
+ *
+ * Buttons stay calm at rest and fade in on block hover/focus so the editor
+ * surface stays uncluttered. The drag handle is purely affordance — Filament's
+ * own draggable=true on the node still drives the actual drag-to-reorder.
+ */
+.fi-cms-block-chrome-host {
+    & .fi-cms-block-drag-handle,
+    & .fi-cms-block-chrome-group {
+        opacity: 0;
+        transition: opacity 120ms ease-out;
+    }
+
+    &:hover .fi-cms-block-drag-handle,
+    &:hover .fi-cms-block-chrome-group,
+    &:focus-within .fi-cms-block-drag-handle,
+    &:focus-within .fi-cms-block-chrome-group {
+        opacity: 1;
+    }
+}
+
+.fi-cms-block-drag-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-inline-end: 0.25rem;
+    color: var(--gray-400);
+    cursor: grab;
+    flex-shrink: 0;
+
+    &:active {
+        cursor: grabbing;
+    }
+
+    & svg {
+        width: 1rem;
+        height: 1rem;
+    }
+}
+
+.fi-cms-block-chrome-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.125rem;
+    flex-shrink: 0;
+}
+
+.fi-cms-block-chrome-btn svg {
+    width: 1rem;
+    height: 1rem;
+}
