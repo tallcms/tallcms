@@ -148,14 +148,51 @@
 }
 
 /**
+ * Truncation chain for the side panel.
+ *
  * Filament's .fi-fo-rich-editor-panel is display: grid, and grid items
- * default to min-width: auto (intrinsic minimum), so long content inside
- * forces the panel wider than its container — defeating any truncate
- * downstream. Explicit min-width: 0 lets the grid item respect the panel's
- * own max-width and propagates the constraint down the flex chain.
+ * default to min-width: auto. Worse, vendor CSS (rich-editor.css:138)
+ * @applies utilities directly to .fi-fo-rich-editor-custom-blocks-list,
+ * potentially loading after ours. Direct CSS on our own classes —
+ * scoped under .fi-cms-block-outline — sidesteps the cascade ambiguity
+ * entirely.
  */
 .fi-fo-rich-editor-custom-blocks-list {
     min-width: 0;
+}
+
+.fi-cms-block-outline {
+    min-width: 0;
+}
+
+.fi-cms-block-outline-list {
+    min-width: 0;
+    width: 100%;
+}
+
+.fi-cms-block-outline-item {
+    min-width: 0;
+    width: 100%;
+}
+
+.fi-cms-block-outline-target {
+    min-width: 0;
+    flex: 1 1 0%;
+    overflow: hidden;
+}
+
+.fi-cms-block-outline-target > span:not(.fi-cms-block-icon) {
+    min-width: 0;
+    flex: 1 1 0%;
+    overflow: hidden;
+}
+
+.fi-cms-block-outline-target > span:not(.fi-cms-block-icon) > span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
 }
 
 /**
