@@ -48,13 +48,13 @@
                                     {{-- Left side (even items): right-aligned text pointing toward center --}}
                                     <div class="flex-1 {{ $isEven ? 'pr-8 sm:pr-12' : 'order-2 pl-8 sm:pl-12' }}">
                                         @if($isEven)
-                                            @include('cms.blocks.partials.timeline-content', ['item' => $item, 'alignRight' => true, 'isNumbered' => $isNumbered])
+                                            @include('tallcms::cms.blocks.partials.timeline-content', ['item' => $item, 'alignRight' => true, 'isNumbered' => $isNumbered])
                                         @endif
                                     </div>
 
                                     {{-- Center Node --}}
                                     <div class="relative z-10 flex-shrink-0">
-                                        @include('cms.blocks.partials.timeline-node', [
+                                        @include('tallcms::cms.blocks.partials.timeline-node', [
                                             'index' => $index,
                                             'isNumbered' => $isNumbered,
                                             'isValidIcon' => $isValidIcon,
@@ -66,13 +66,13 @@
                                     {{-- Right side (odd items): left-aligned text pointing toward center --}}
                                     <div class="flex-1 {{ $isEven ? 'order-2 pl-8 sm:pl-12' : 'pr-8 sm:pr-12' }}">
                                         @if(!$isEven)
-                                            @include('cms.blocks.partials.timeline-content', ['item' => $item, 'alignRight' => false, 'isNumbered' => $isNumbered])
+                                            @include('tallcms::cms.blocks.partials.timeline-content', ['item' => $item, 'alignRight' => false, 'isNumbered' => $isNumbered])
                                         @endif
                                     </div>
                                 @else
                                     {{-- Left-aligned Layout --}}
                                     <div class="absolute left-0 z-10">
-                                        @include('cms.blocks.partials.timeline-node', [
+                                        @include('tallcms::cms.blocks.partials.timeline-node', [
                                             'index' => $index,
                                             'isNumbered' => $isNumbered,
                                             'isValidIcon' => $isValidIcon,
@@ -81,7 +81,7 @@
                                         ])
                                     </div>
 
-                                    @include('cms.blocks.partials.timeline-content', ['item' => $item, 'alignRight' => false, 'isNumbered' => $isNumbered])
+                                    @include('tallcms::cms.blocks.partials.timeline-content', ['item' => $item, 'alignRight' => false, 'isNumbered' => $isNumbered])
                                 @endif
                             </div>
                         @endforeach
@@ -100,7 +100,7 @@
 
                             <div class="relative flex flex-col items-center {{ !$isLast ? 'mr-8 sm:mr-16' : '' }}" style="min-width: 200px; max-width: 280px;">
                                 {{-- Node --}}
-                                @include('cms.blocks.partials.timeline-node', [
+                                @include('tallcms::cms.blocks.partials.timeline-node', [
                                     'index' => $index,
                                     'isNumbered' => $isNumbered,
                                     'isValidIcon' => $isValidIcon,

@@ -71,10 +71,25 @@ class ContactFormController extends Controller
 
         // Verify config signature to prevent tampering and replay attacks
         if (! $this->verifyConfigSignature($config, $signature, $pageUrl)) {
+            // Short fingerprints (no sensitive data) so operators can tell
+            // whether multiple rejected requests share the same payload —
+            // distinguishes intermittent tampering (varying hashes) from a
+            // systemic mismatch like APP_KEY rotation or stale page cache
+            // (stable hashes, but verification still fails).
+            $configFingerprint = substr(
+                hash('sha256', json_encode(self::normalizeConfigForSigning(is_array($config) ? $config : []))),
+                0, 12,
+            );
+            $expectedFingerprint = substr(self::signConfig(is_array($config) ? $config : [], (string) $pageUrl), 0, 12);
+            $receivedFingerprint = substr((string) $signature, 0, 12);
+
             Log::warning('Contact form submission with invalid signature', [
                 'ip' => $request->ip(),
                 'referer' => $request->header('Referer'),
                 'claimed_page_url' => $pageUrl,
+                'config_fingerprint' => $configFingerprint,
+                'expected_signature_prefix' => $expectedFingerprint,
+                'received_signature_prefix' => $receivedFingerprint,
             ]);
 
             return response()->json([
