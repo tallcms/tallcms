@@ -393,7 +393,7 @@
                                                                 isLoading = true;
                                                                 insertBlock(block.id, editorSelection);
                                                             "
-                                                            x-on:dragstart="$event.dataTransfer.setData('customBlock', block.id)"
+                                                            x-on:dragstart="$event.dataTransfer.setData('customBlock', block.id); rememberBlock(block.id)"
                                                             x-on:open-modal.window="isLoading = false"
                                                             x-on:run-rich-editor-commands.window="isLoading = false"
                                                             class="fi-fo-rich-editor-custom-block-btn fi-cms-block-btn flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-start text-sm transition-colors hover:bg-gray-100 dark:hover:bg-white/5"
