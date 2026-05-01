@@ -244,6 +244,22 @@
                                                 wrapper.addEventListener('cms-block-outline-changed', (event) => {
                                                     this.outlineItems = event.detail?.items ?? [];
                                                 });
+
+                                                // Slash command insert: the TipTap extension already deleted the
+                                                // /trigger range; we just route the chosen block into the same
+                                                // mountAction flow that the picker buttons use.
+                                                wrapper.addEventListener('cms-slash-insert', (event) => {
+                                                    const blockId = event.detail?.blockId;
+                                                    if (!blockId) return;
+                                                    if (typeof editorSelection === 'undefined') {
+                                                        if (!this.editorSelectionWarned) {
+                                                            console.warn('CmsRichEditor: editorSelection not found in parent scope');
+                                                            this.editorSelectionWarned = true;
+                                                        }
+                                                        return;
+                                                    }
+                                                    this.insertBlock(blockId, editorSelection);
+                                                });
                                             }
                                         },
 

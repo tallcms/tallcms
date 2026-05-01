@@ -9,10 +9,13 @@ window.tallcmsSortable = Sortable
 
 const PLUGIN_KEY = new PluginKey('cmsBlockChrome')
 const OUTLINE_PLUGIN_KEY = new PluginKey('cmsBlockOutline')
+const SLASH_PLUGIN_KEY = new PluginKey('cmsBlockSlash')
 const INJECTED_FLAG = 'cmsChromeInjected'
 const NODE_TYPE = 'customBlock'
 const OUTLINE_EVENT = 'cms-block-outline-changed'
 const ACTION_EVENT = 'cms-block-action'
+const SLASH_INSERT_EVENT = 'cms-slash-insert'
+const SLASH_TRIGGER = /(?:^|[\s ])(\/[a-zA-Z0-9-]*)$/
 
 const TITLE_KEYS = ['title', 'heading', 'headline', 'heading_text', 'name']
 
@@ -377,6 +380,21 @@ export default Extension.create({
                     return new OutlineSyncView(editorView, editor)
                 },
             }),
+            new Plugin({
+                key: SLASH_PLUGIN_KEY,
+                view(editorView) {
+                    const instance = new SlashCommandView(editorView)
+                    editorView._cmsSlashView = instance
+                    return instance
+                },
+                props: {
+                    handleKeyDown(view, event) {
+                        const slashView = view._cmsSlashView
+                        if (!slashView || !slashView.isOpen) return false
+                        return slashView.handleKeyDown(event)
+                    },
+                },
+            }),
         ]
     },
 })
@@ -430,5 +448,220 @@ class OutlineSyncView {
 
     destroy() {
         this.view.dom.removeEventListener(ACTION_EVENT, this.actionHandler)
+    }
+}
+
+// Notion-style "/" suggestion menu. Detects /<query> at the cursor (after
+// whitespace or start-of-line), shows a floating list of matching blocks
+// pulled from the side panel's Alpine state, and on select dispatches
+// SLASH_INSERT_EVENT for the panel to mount the customBlock action — same
+// flow as clicking a block in the picker.
+class SlashCommandView {
+    constructor(view) {
+        this.view = view
+        this.isOpen = false
+        this.query = ''
+        this.range = null
+        this.items = []
+        this.activeIndex = 0
+
+        this.popup = document.createElement('div')
+        this.popup.className = 'fi-cms-slash-popup'
+        this.popup.setAttribute('role', 'listbox')
+        this.popup.style.display = 'none'
+        document.body.appendChild(this.popup)
+
+        this.docClickHandler = (event) => {
+            if (!this.isOpen) return
+            if (this.popup.contains(event.target)) return
+            this.close()
+        }
+        document.addEventListener('mousedown', this.docClickHandler)
+    }
+
+    update(view, prevState) {
+        const trigger = this.detectTrigger(view.state)
+        if (!trigger) {
+            if (this.isOpen) this.close()
+            return
+        }
+
+        this.range = { from: trigger.from, to: trigger.to }
+        this.query = trigger.query
+
+        // Lazy-load blocks from the panel's Alpine state on first open.
+        // window.Alpine is exposed by Filament; the panel's x-data is on
+        // .fi-fo-rich-editor-custom-blocks-list inside the same wrapper.
+        if (!this.allBlocks) {
+            const wrapper = view.dom.closest('.fi-fo-rich-editor')
+            const panelEl = wrapper?.querySelector(
+                '.fi-fo-rich-editor-custom-blocks-list',
+            )
+            if (panelEl && window.Alpine) {
+                const data = window.Alpine.$data(panelEl)
+                this.allBlocks = data?.blocks
+                    ? Object.values(data.blocks).flat()
+                    : []
+            } else {
+                this.allBlocks = []
+            }
+        }
+
+        this.refresh()
+        if (!this.isOpen) this.open()
+        else this.position()
+    }
+
+    detectTrigger(state) {
+        const { selection } = state
+        if (!selection.empty) return null
+        const $from = selection.$from
+        if ($from.parent.type.name === NODE_TYPE) return null
+        const text = $from.parent.textBetween(
+            0,
+            $from.parentOffset,
+            undefined,
+            '\n',
+        )
+        const match = text.match(SLASH_TRIGGER)
+        if (!match) return null
+        const trigger = match[1]
+        const triggerStart = $from.pos - trigger.length
+        return {
+            query: trigger.slice(1).toLowerCase(),
+            from: triggerStart,
+            to: $from.pos,
+        }
+    }
+
+    refresh() {
+        const terms = this.query
+            .toLowerCase()
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean)
+
+        this.items = this.allBlocks.filter((b) => {
+            if (terms.length === 0) return true
+            return terms.every((t) => b.searchable.includes(t))
+        })
+        this.activeIndex = 0
+        this.render()
+    }
+
+    render() {
+        if (this.items.length === 0) {
+            this.popup.innerHTML =
+                '<div class="fi-cms-slash-empty">No matching blocks</div>'
+            return
+        }
+
+        this.popup.innerHTML = ''
+        this.items.forEach((item, index) => {
+            const el = document.createElement('button')
+            el.type = 'button'
+            el.className = 'fi-cms-slash-item'
+            if (index === this.activeIndex) el.classList.add('is-active')
+            el.dataset.index = String(index)
+            el.setAttribute('role', 'option')
+            el.innerHTML = `
+                <span class="fi-cms-slash-icon">${item.iconHtml || ''}</span>
+                <span class="fi-cms-slash-label">${item.label}</span>
+            `
+            el.addEventListener('mousedown', (event) => {
+                event.preventDefault()
+                this.activeIndex = index
+                this.select()
+            })
+            el.addEventListener('mousemove', () => {
+                if (this.activeIndex === index) return
+                this.activeIndex = index
+                this.render()
+            })
+            this.popup.appendChild(el)
+        })
+    }
+
+    open() {
+        this.isOpen = true
+        this.popup.style.display = 'block'
+        this.position()
+    }
+
+    close() {
+        this.isOpen = false
+        this.popup.style.display = 'none'
+        this.range = null
+        this.query = ''
+        this.items = []
+        this.activeIndex = 0
+    }
+
+    position() {
+        if (!this.range) return
+        const coords = this.view.coordsAtPos(this.range.from)
+        this.popup.style.position = 'fixed'
+        this.popup.style.left = `${coords.left}px`
+        this.popup.style.top = `${coords.bottom + 4}px`
+    }
+
+    handleKeyDown(event) {
+        if (event.key === 'Escape') {
+            this.close()
+            return true
+        }
+        if (event.key === 'ArrowDown') {
+            this.activeIndex = Math.min(
+                this.activeIndex + 1,
+                this.items.length - 1,
+            )
+            this.render()
+            return true
+        }
+        if (event.key === 'ArrowUp') {
+            this.activeIndex = Math.max(this.activeIndex - 1, 0)
+            this.render()
+            return true
+        }
+        if (event.key === 'Enter' || event.key === 'Tab') {
+            if (this.items.length === 0) {
+                this.close()
+                return false
+            }
+            this.select()
+            return true
+        }
+        return false
+    }
+
+    select() {
+        const item = this.items[this.activeIndex]
+        if (!item || !this.range) return
+
+        const { from, to } = this.range
+        const tr = this.view.state.tr.delete(from, to)
+        this.view.dispatch(tr)
+
+        const blockId = item.id
+        const view = this.view
+
+        // Defer dispatch so Filament's reactive editorSelection updates to
+        // the post-delete cursor before the panel reads it.
+        queueMicrotask(() => {
+            view.dom.dispatchEvent(
+                new CustomEvent(SLASH_INSERT_EVENT, {
+                    detail: { blockId },
+                    bubbles: true,
+                }),
+            )
+        })
+
+        this.close()
+    }
+
+    destroy() {
+        document.removeEventListener('mousedown', this.docClickHandler)
+        this.popup.remove()
+        delete this.view._cmsSlashView
     }
 }
