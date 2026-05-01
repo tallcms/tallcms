@@ -148,6 +148,17 @@
 }
 
 /**
+ * Filament's .fi-fo-rich-editor-panel is display: grid, and grid items
+ * default to min-width: auto (intrinsic minimum), so long content inside
+ * forces the panel wider than its container — defeating any truncate
+ * downstream. Explicit min-width: 0 lets the grid item respect the panel's
+ * own max-width and propagates the constraint down the flex chain.
+ */
+.fi-fo-rich-editor-custom-blocks-list {
+    min-width: 0;
+}
+
+/**
  * Side-panel tab strip (Blocks | Outline)
  *
  * Underlined active tab in Filament's primary color, muted resting state,
