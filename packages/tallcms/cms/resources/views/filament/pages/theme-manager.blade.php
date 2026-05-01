@@ -338,17 +338,18 @@
                                 || ($theme['supports']['search'] ?? false)
                                 || ($theme['supports']['language_switcher'] ?? false);
                         @endphp
-                        <div class="absolute top-2 right-2 flex flex-col items-end gap-1">
-                            <x-filament::badge color="success" size="sm">
+                        <div class="absolute top-2 right-2">
+                            <x-filament::badge
+                                color="success"
+                                size="sm"
+                                :tooltip="$hasConfigurableDisplayOptions ? 'Open Details to toggle header controls' : null"
+                            >
                                 <x-heroicon-s-check-circle class="w-3 h-3 mr-0.5" />
                                 Active
+                                @if($hasConfigurableDisplayOptions)
+                                    <x-heroicon-m-adjustments-horizontal class="w-3 h-3 ml-1 opacity-80" />
+                                @endif
                             </x-filament::badge>
-                            @if($hasConfigurableDisplayOptions)
-                                <x-filament::badge color="info" size="sm" title="Open Details to toggle header controls">
-                                    <x-heroicon-s-adjustments-horizontal class="w-3 h-3 mr-0.5" />
-                                    Configurable
-                                </x-filament::badge>
-                            @endif
                         </div>
                     @endif
 
