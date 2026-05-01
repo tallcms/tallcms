@@ -91,8 +91,10 @@
                 </div>
             @endif
 
-            {{-- Buttons (hidden for with-form layout) --}}
-            @if(($layout ?? 'centered') !== 'with-form' && BlockLinkResolver::shouldRenderButton(get_defined_vars()))
+            {{-- Buttons render alongside the form card in with-form layout
+                 so a hero can pair lead capture with secondary CTAs (WhatsApp,
+                 demo link, etc.) without forcing operators into separate blocks. --}}
+            @if(BlockLinkResolver::shouldRenderButton(get_defined_vars()))
                 <div class="flex flex-col sm:flex-row gap-4 {{ $buttonAlignClass }}">
                     <div class="flex flex-col items-center gap-2">
                         <a href="{{ e($button_url) }}" class="{{ $button_classes }}">
