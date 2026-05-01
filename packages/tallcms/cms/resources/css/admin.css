@@ -148,6 +148,19 @@
 }
 
 /**
+ * Collapsed block — hides the preview, leaves the header (with chrome,
+ * edit, label, delete) as a one-line summary card. State lives in this
+ * single class on [data-type="customBlock"]; resets on page reload.
+ */
+.fi-cms-block-collapsed .fi-fo-rich-editor-custom-block-preview {
+    display: none;
+}
+
+.fi-cms-block-collapsed .fi-fo-rich-editor-custom-block-header {
+    border-bottom: 0;
+}
+
+/**
  * Truncation chain for the side panel.
  *
  * Filament's .fi-fo-rich-editor-panel is display: grid with implicit
