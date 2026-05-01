@@ -947,6 +947,51 @@
                     </div>
                 @endif
 
+                {{-- Display Options (active theme only) --}}
+                @php
+                    $hasSearchSupport = (bool) ($themeDetails['supports']['search'] ?? false);
+                    $hasLangSupport = (bool) ($themeDetails['supports']['language_switcher'] ?? false);
+                    $hasAnyDisplayOption = $themeDetails['hasThemeController'] || $hasSearchSupport || $hasLangSupport;
+                @endphp
+                @if($themeDetails['isActive'] && $hasAnyDisplayOption)
+                    <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
+                        <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Display Options</h4>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Show or hide controls in the site header. Saved automatically.</p>
+                        <div class="space-y-2">
+                            @if($themeDetails['hasThemeController'])
+                                <label class="flex items-center justify-between gap-3 cursor-pointer">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Theme switcher</span>
+                                    <input
+                                        type="checkbox"
+                                        class="toggle toggle-sm toggle-primary"
+                                        wire:model.live="showThemeSwitcher"
+                                    />
+                                </label>
+                            @endif
+                            @if($hasSearchSupport)
+                                <label class="flex items-center justify-between gap-3 cursor-pointer">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Search box</span>
+                                    <input
+                                        type="checkbox"
+                                        class="toggle toggle-sm toggle-primary"
+                                        wire:model.live="showSearch"
+                                    />
+                                </label>
+                            @endif
+                            @if($hasLangSupport)
+                                <label class="flex items-center justify-between gap-3 cursor-pointer">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Language dropdown</span>
+                                    <input
+                                        type="checkbox"
+                                        class="toggle toggle-sm toggle-primary"
+                                        wire:model.live="showLanguageDropdown"
+                                    />
+                                </label>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Features Grid --}}
                 @if(!empty($themeDetails['supports']))
                     <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-3">

@@ -290,11 +290,24 @@ class Theme
     }
 
     /**
-     * Check if theme supports runtime theme switching (theme-controller)
+     * Check if theme supports runtime theme switching (theme-controller).
+     * Note: this is preset-count derived, not theme.json-driven, for legacy reasons —
+     * the supports.theme_controller key in theme.json is advisory metadata only.
+     * The two methods below honor theme.json directly because they have no runtime equivalent.
      */
     public function supportsThemeController(): bool
     {
         return count($this->getDaisyUIPresets()) > 1;
+    }
+
+    public function supportsSearch(): bool
+    {
+        return $this->supports('search');
+    }
+
+    public function supportsLanguageSwitcher(): bool
+    {
+        return $this->supports('language_switcher');
     }
 
     /**

@@ -61,6 +61,9 @@ class EditSite extends Page implements HasForms
         'logo' => 'file',
         'favicon' => 'file',
         'show_powered_by' => 'boolean',
+        'show_theme_switcher' => 'boolean',
+        'show_search' => 'boolean',
+        'show_language_dropdown' => 'boolean',
         // Publishing
         'review_workflow_enabled' => 'boolean',
         // Maintenance
@@ -89,7 +92,10 @@ class EditSite extends Page implements HasForms
         // Load all 20 settings from SiteSettingsService
         foreach ($this->settingKeys as $key => $type) {
             $default = match ($key) {
-                'show_powered_by' => true,
+                'show_powered_by',
+                'show_theme_switcher',
+                'show_search',
+                'show_language_dropdown' => true,
                 'site_type' => 'multi-page',
                 'maintenance_message' => "We're currently performing scheduled maintenance. Please check back soon!",
                 default => null,
