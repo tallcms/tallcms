@@ -8,17 +8,76 @@ order: 40
 
 # CMS Rich Editor Reference
 
-The CMS Rich Editor is an enhanced version of Filament's `RichEditor` component with improved block panel, search, category grouping, and icon display.
+The CMS Rich Editor is an enhanced version of Filament's `RichEditor` component, designed to make managing long structured pages with many blocks fast and discoverable.
 
 ## Features
 
-- **Search**: Instant client-side filtering by block name, description, and keywords
-- **Categories**: Blocks organized into collapsible panels
+### Block insertion
+- **Search**: Multi-word AND filtering across name, description, ID, and keywords
+- **Result ranking**: Matches sort by quality (exact label > startsWith > contains > id > keywords) within each category
+- **Recently used**: Last 5 inserted blocks pin to the top of the picker (per browser, persisted in `localStorage`)
+- **Slash commands**: Type `/` anywhere in the editor for a Notion-style floating block picker; arrow keys + Enter to insert
+- **Categories**: Blocks organized into collapsible groups
 - **Icons**: Each block displays its icon
+
+### Editor surface
+- **Sticky side panel**: Block panel docks to viewport on long pages (≥1024px); offset configurable via `--tallcms-editor-sticky-offset` for hosts with their own sticky topbar
+- **Outline tab**: Live, drag-reorderable list of every custom block in the document; click an entry to scroll-to, drag the handle to reorder
+- **Per-block hover chrome**: Floating mini-toolbar on every custom block — drag handle, ↑, ↓, duplicate, collapse — fades in on hover/focus, calm at rest
+- **Per-block collapse**: Fold any block's preview into a one-line summary card (header and chrome stay clickable)
+
+### Media + integration
 - **Media Library Browser**: Insert existing images without re-uploading
 - **Auto Media Saving**: Attached files are saved to the Media Library
 - **Dark Mode**: Full support via Filament-native styling
 - **Backwards Compatible**: Works with existing blocks and plugin blocks
+
+---
+
+## Editor Surface
+
+### Sticky panel
+
+The block panel stays docked to the viewport at `min-width: 1024px`, so long documents don't push the picker off-screen. The chosen offset can be customized:
+
+```css
+.fi-fo-rich-editor {
+    --tallcms-editor-sticky-offset: 4rem;  /* dock below your topbar */
+}
+```
+
+Standalone sets this default in `resources/css/filament/admin/theme.css`. Plugin-mode hosts set it themselves if they have a sticky topbar.
+
+### Side-panel tabs
+
+The side panel exposes two modes:
+
+| Tab | Use |
+|-----|-----|
+| **Blocks** | The picker (search, recently used, categories) |
+| **Outline** | Ordered list of every customBlock in the document |
+
+The Outline tab shows each block's icon, an extracted heading title (when the block's config has a `title` / `heading` / `headline` / `heading_text` / `name` field), and the block's type label. Click an entry to scroll the editor to that block; drag the handle to reorder.
+
+### Per-block chrome
+
+Hovering any custom block in the editor surfaces five buttons in the block header (in addition to Filament's existing edit / delete):
+
+| Button | Action |
+|--------|--------|
+| Drag handle | Visual affordance for native drag-to-reorder (small predictable hit target) |
+| ↑ | Move block up among customBlock siblings |
+| ↓ | Move block down among customBlock siblings |
+| Duplicate | Insert exact clone immediately after |
+| Collapse | Toggle preview visibility — folds tall blocks into one-line summaries |
+
+All reorder + duplicate operations transact in a single TipTap step, so undo (⌘Z) reverses them cleanly.
+
+### Slash commands
+
+Typing `/` after whitespace or at line start opens a floating block picker positioned at the cursor. As you type, results filter against the same `searchable` field used by the side panel. Arrow keys navigate, **Enter** or **Tab** inserts (the `/query` text is removed in the same transaction), **Escape** or click-away dismisses without inserting.
+
+A default placeholder hints at the trigger on a fresh editor: *"Type / for blocks, or use the side panel"*. Override per field via `->placeholder()`.
 
 ---
 
@@ -259,6 +318,7 @@ packages/tallcms/cms/
 │   │           ├── Actions/
 │   │           │   └── InsertMediaAction.php
 │   │           ├── Plugins/
+│   │           │   ├── BlockChromePlugin.php
 │   │           │   └── MediaLibraryPlugin.php
 │   │           ├── CmsRichEditor.php
 │   │           └── MediaLibraryFileAttachmentProvider.php
@@ -266,6 +326,13 @@ packages/tallcms/cms/
 │       ├── BlockCategoryRegistry.php
 │       └── CustomBlockDiscoveryService.php
 └── resources/
+    ├── css/
+    │   └── admin.css                   # editor surface styles (sticky, chrome, outline, slash)
+    ├── js/
+    │   └── block-chrome.js             # TipTap extension source
+    ├── dist/
+    │   ├── tallcms-admin.css           # built CSS shipped to plugin-mode installs
+    │   └── block-chrome.js             # built TipTap extension (loaded on-request)
     └── views/
         └── filament/
             └── forms/
@@ -285,6 +352,29 @@ Extends Filament's `RichEditor`:
 - `getBlockCategories()` — Returns category definitions
 - `getDefaultToolbarButtons()` — Adds `insertMedia` after `attachFiles`
 - `isFilamentCompatible()` — Version check for fallback
+- Registers `MediaLibraryPlugin` and `BlockChromePlugin` via `setUp()`
+- Sets the default placeholder hint for slash commands
+
+### BlockChromePlugin
+
+Filament `RichContentPlugin` that ships the editor-surface TipTap extension via `getTipTapJsExtensions()`. The bundled JS (loaded on-request via `Js::make()->loadedOnRequest()`) registers three ProseMirror plugins inside one TipTap extension:
+
+| Plugin | Role |
+|--------|------|
+| `BlockChromeView` | Injects per-block hover chrome (drag handle, ↑, ↓, duplicate, collapse) into each customBlock's header |
+| `OutlineSyncView` | Emits `cms-block-outline-changed` events on doc change so the Outline tab can render; listens for `cms-block-action` for outline-driven scroll/move requests |
+| `SlashCommandView` | Detects `/` triggers, renders the floating slash menu, dispatches `cms-slash-insert` on selection |
+
+Three TipTap commands are registered on top-level customBlock nodes:
+
+| Command | Signature | Purpose |
+|---------|-----------|---------|
+| `moveCustomBlockUp` | `(pos)` | Swap with previous top-level sibling |
+| `moveCustomBlockDown` | `(pos)` | Swap with next top-level sibling |
+| `moveCustomBlockTo` | `(fromPos, toIndex)` | Move to a specific slot among customBlock siblings (used by Outline drag-reorder) |
+| `duplicateCustomBlock` | `(pos)` | Insert exact attrs+content clone immediately after |
+
+All commands run in single transactions for clean undo, validate the node type at the position, and no-op cleanly at boundaries (top, bottom, non-customBlock positions).
 
 ### BlockCategoryRegistry
 
@@ -298,7 +388,7 @@ Enhanced discovery:
 - `getBlocksWithMetadata()` - Full metadata
 - `getBlocksGroupedByCategory()` - Grouped output
 - Icon validation
-- Precomputed search strings
+- Precomputed search strings (used by both the picker and slash menu)
 
 ---
 
