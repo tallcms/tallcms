@@ -66,3 +66,28 @@
   --color-error: oklch(71% .194 13.428);
   --color-error-content: oklch(27% .105 12.094);
 }
+
+/**
+ * RichEditor Sticky Side Panel
+ *
+ * Keeps the block panel visible while scrolling long editor content. Desktop
+ * only — sticky side panels on narrow admin layouts create trapped-scroll.
+ *
+ * Adopters can override --tallcms-editor-sticky-offset on .fi-fo-rich-editor
+ * to dock the panel below a sticky page header (e.g. Filament's topbar).
+ */
+@media (min-width: 1024px) {
+    .fi-fo-rich-editor {
+        & .fi-fo-rich-editor-main {
+            position: relative;
+        }
+
+        & .fi-fo-rich-editor-panels {
+            position: sticky;
+            top: var(--tallcms-editor-sticky-offset, 0px);
+            max-height: calc(100vh - var(--tallcms-editor-sticky-offset, 0px));
+            overflow-y: auto;
+            align-self: flex-start;
+        }
+    }
+}
