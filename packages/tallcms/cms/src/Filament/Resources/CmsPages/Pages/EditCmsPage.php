@@ -15,21 +15,43 @@ use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Schema;
 use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
 use LaraZeus\SpatieTranslatable\Resources\Pages\EditRecord\Concerns\Translatable;
+use TallCms\Cms\Filament\Concerns\HasFromSiteContext;
 use TallCms\Cms\Filament\Concerns\HasTranslationCopying;
 use TallCms\Cms\Filament\Resources\CmsPages\CmsPageResource;
 use TallCms\Cms\Services\PublishingWorkflowService;
 
 class EditCmsPage extends EditRecord
 {
+    use HasFromSiteContext;
     use HasTranslationCopying, Translatable {
         HasTranslationCopying::updatedActiveLocale insteadof Translatable;
     }
 
     protected static string $resource = CmsPageResource::class;
 
+    public function mount(int|string $record): void
+    {
+        parent::mount($record);
+        $this->captureFromSite();
+    }
+
+    public function getSubheading(): ?string
+    {
+        $name = $this->fromSiteName();
+
+        return $name ? "Editing within site: {$name}" : null;
+    }
+
+    protected function getRedirectUrl(): ?string
+    {
+        return $this->fromSiteUrl() ?? parent::getRedirectUrl();
+    }
+
     protected function getHeaderActions(): array
     {
-        return [
+        return array_values(array_filter([
+            $this->getBackToSiteAction(),
+
             // Locale Switcher for translations
             LocaleSwitcher::make(),
 
@@ -71,10 +93,12 @@ class EditCmsPage extends EditRecord
             $this->getSaveSnapshotAction(),
             $this->getMarkAsReviewedAction(),
 
-            DeleteAction::make(),
-            ForceDeleteAction::make(),
+            DeleteAction::make()
+                ->successRedirectUrl(fn () => $this->fromSiteUrl() ?? CmsPageResource::getUrl('index')),
+            ForceDeleteAction::make()
+                ->successRedirectUrl(fn () => $this->fromSiteUrl() ?? CmsPageResource::getUrl('index')),
             RestoreAction::make(),
-        ];
+        ]));
     }
 
     protected function getMarkAsReviewedAction(): Action
