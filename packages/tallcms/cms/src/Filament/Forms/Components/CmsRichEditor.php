@@ -34,6 +34,12 @@ class CmsRichEditor extends RichEditor
             BlockChromePlugin::make(),
         ]);
 
+        // Hint at slash commands on a fresh editor. TipTap's Placeholder
+        // shows on the first empty node only, so this greets newcomers
+        // without nagging anyone with content. Users can override by
+        // calling ->placeholder() on the field.
+        $this->placeholder('Type / for blocks, or use the side panel');
+
         // Use enhanced view for Filament v4.x/v5.x
         if (static::isFilamentCompatible()) {
             $this->view = 'tallcms::filament.forms.components.cms-rich-editor';
