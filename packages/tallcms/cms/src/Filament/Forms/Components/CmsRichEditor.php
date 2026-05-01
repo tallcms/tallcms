@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TallCms\Cms\Filament\Forms\Components;
 
 use Filament\Forms\Components\RichEditor;
+use TallCms\Cms\Filament\Forms\Components\Plugins\BlockChromePlugin;
 use TallCms\Cms\Filament\Forms\Components\Plugins\MediaLibraryPlugin;
 use TallCms\Cms\Services\BlockCategoryRegistry;
 use TallCms\Cms\Services\CustomBlockDiscoveryService;
@@ -28,7 +29,10 @@ class CmsRichEditor extends RichEditor
     {
         parent::setUp();
 
-        $this->plugins([MediaLibraryPlugin::make()]);
+        $this->plugins([
+            MediaLibraryPlugin::make(),
+            BlockChromePlugin::make(),
+        ]);
 
         // Use enhanced view for Filament v4.x/v5.x
         if (static::isFilamentCompatible()) {

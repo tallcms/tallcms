@@ -432,6 +432,16 @@ class TallCmsServiceProvider extends PackageServiceProvider
             ], 'tallcms/cms');
         }
 
+        // Block chrome (drag handle, reorder, duplicate) TipTap extension.
+        // Loaded on demand via getTipTapJsExtensions() in BlockChromePlugin —
+        // not as a global admin script.
+        $blockChromeJsPath = __DIR__.'/../resources/dist/block-chrome.js';
+        if (file_exists($blockChromeJsPath)) {
+            FilamentAsset::register([
+                Js::make('block-chrome', $blockChromeJsPath)->loadedOnRequest(),
+            ], 'tallcms/cms');
+        }
+
         // Block-preview daisyUI scoping (.cms-blocks). Standalone gets this
         // via @vite() in cms-rich-editor.blade.php; plugin-mode adopters
         // don't have the source file in their host vite.config.js, so the

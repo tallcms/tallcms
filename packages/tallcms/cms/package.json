@@ -6,12 +6,16 @@
     "build:admin": "npx @tailwindcss/cli@4 -i ./resources/css/admin.css -o ./resources/dist/tallcms-admin.css --minify",
     "build:preview": "npx @tailwindcss/cli@4 -i ./resources/css/preview.css -o ./resources/dist/tallcms-preview.css --minify",
     "build:frontend": "npx @tailwindcss/cli@4 -i ./resources/css/frontend.css -o ./resources/dist/tallcms.css --minify",
-    "build": "npm run build:admin && npm run build:preview && npm run build:frontend"
+    "build:block-chrome": "esbuild resources/js/block-chrome.js --bundle --format=esm --minify --target=es2020 --outfile=resources/dist/block-chrome.js",
+    "build": "npm run build:admin && npm run build:preview && npm run build:frontend && npm run build:block-chrome"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.0",
     "@tailwindcss/typography": "^0.5.16",
+    "@tiptap/core": "^3.0.0",
+    "@tiptap/pm": "^3.0.0",
     "daisyui": "^5.0.0",
+    "esbuild": "^0.24.0",
     "tailwindcss": "^4.1.0"
   }
 }
