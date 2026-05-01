@@ -551,9 +551,9 @@
                                                         class="fi-cms-block-outline-target flex flex-1 min-w-0 items-center gap-2 text-start text-sm"
                                                     >
                                                         <span class="fi-cms-block-icon h-4 w-4 shrink-0" x-html="iconHtmlForBlock(item.id)"></span>
-                                                        <span class="flex flex-col min-w-0 leading-tight">
-                                                            <span class="truncate" x-text="item.title || labelForBlock(item.id)"></span>
-                                                            <span x-show="item.title" x-text="labelForBlock(item.id)" class="text-xs opacity-60 truncate"></span>
+                                                        <span class="flex flex-1 flex-col min-w-0 leading-tight">
+                                                            <span class="block truncate" x-text="item.title || labelForBlock(item.id)"></span>
+                                                            <span x-show="item.title" x-text="labelForBlock(item.id)" class="block text-xs opacity-60 truncate"></span>
                                                         </span>
                                                     </button>
                                                 </li>
