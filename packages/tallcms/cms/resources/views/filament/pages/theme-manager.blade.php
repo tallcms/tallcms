@@ -333,11 +333,22 @@
 
                     {{-- Active Badge --}}
                     @if($theme['isActive'])
-                        <div class="absolute top-2 right-2">
+                        @php
+                            $hasConfigurableDisplayOptions = $theme['hasThemeController']
+                                || ($theme['supports']['search'] ?? false)
+                                || ($theme['supports']['language_switcher'] ?? false);
+                        @endphp
+                        <div class="absolute top-2 right-2 flex flex-col items-end gap-1">
                             <x-filament::badge color="success" size="sm">
                                 <x-heroicon-s-check-circle class="w-3 h-3 mr-0.5" />
                                 Active
                             </x-filament::badge>
+                            @if($hasConfigurableDisplayOptions)
+                                <x-filament::badge color="info" size="sm" title="Open Details to toggle header controls">
+                                    <x-heroicon-s-adjustments-horizontal class="w-3 h-3 mr-0.5" />
+                                    Configurable
+                                </x-filament::badge>
+                            @endif
                         </div>
                     @endif
 
