@@ -86,6 +86,7 @@ class CmsPage extends Model implements HasRichContent
     protected $casts = [
         'content' => TranslatableArray::class,
         'sidebar_widgets' => 'array',
+        'site_id' => 'integer',
         'published_at' => 'datetime',
         'is_homepage' => 'boolean',
         'show_breadcrumbs' => 'boolean',
@@ -94,6 +95,11 @@ class CmsPage extends Model implements HasRichContent
         'last_reviewed_at' => 'datetime',
         'sources' => 'array',
     ];
+
+    public function site(): BelongsTo
+    {
+        return $this->belongsTo(Site::class, 'site_id');
+    }
 
     protected function setUpRichContent(): void
     {
@@ -130,7 +136,7 @@ class CmsPage extends Model implements HasRichContent
      */
     protected static ?bool $hasSiteIdColumn = null;
 
-    protected static function hasSiteIdColumn(): bool
+    public static function hasSiteIdColumn(): bool
     {
         return static::$hasSiteIdColumn ??= Schema::hasColumn('tallcms_pages', 'site_id');
     }
@@ -187,8 +193,8 @@ class CmsPage extends Model implements HasRichContent
      * just the leaf slug stored in the database ("team"), preserving the
      * pre-hierarchical URL behavior for existing installs.
      *
-     * @param  string|null  $locale   Locale for translatable slugs (null = current app locale)
-     * @param  array<int>   $visited  Internal cycle guard — do not pass from call sites
+     * @param  string|null  $locale  Locale for translatable slugs (null = current app locale)
+     * @param  array<int>  $visited  Internal cycle guard — do not pass from call sites
      */
     public function getFullSlug(?string $locale = null, array $visited = []): string
     {

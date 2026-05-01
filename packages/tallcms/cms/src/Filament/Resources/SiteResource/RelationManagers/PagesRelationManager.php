@@ -54,19 +54,26 @@ class PagesRelationManager extends RelationManager
                 Action::make('create_page')
                     ->label('Create Page')
                     ->icon('heroicon-m-plus')
-                    ->action(function () {
-                        // Set admin context to this site before redirecting
-                        $siteId = $this->getOwnerRecord()->id;
-                        session(['multisite_admin_site_id' => $siteId]);
-
-                        $this->redirect(CmsPageResource::getUrl('create'));
-                    }),
+                    // ?site=<id> sets site_id explicitly on save; ?from_site=<id>
+                    // is the navigation breadcrumb that lands the user back on
+                    // this Site after save instead of the global Pages index.
+                    // Both query params are URL-explicit so the post-save
+                    // redirect survives the Livewire round trip — session
+                    // state alone wouldn't (mid-request session writes don't
+                    // always reach the redirect target reliably).
+                    ->url(fn () => CmsPageResource::getUrl('create', [
+                        'site' => $this->getOwnerRecord()->id,
+                        'from_site' => $this->getOwnerRecord()->id,
+                    ])),
             ])
             ->recordActions([
                 Action::make('edit')
                     ->label('Edit')
                     ->icon('heroicon-m-pencil-square')
-                    ->url(fn ($record) => CmsPageResource::getUrl('edit', ['record' => $record])),
+                    ->url(fn ($record) => CmsPageResource::getUrl('edit', [
+                        'record' => $record,
+                        'from_site' => $this->getOwnerRecord()->id,
+                    ])),
             ]);
     }
 }

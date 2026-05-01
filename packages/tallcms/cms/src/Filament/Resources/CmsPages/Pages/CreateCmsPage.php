@@ -5,10 +5,12 @@ namespace TallCms\Cms\Filament\Resources\CmsPages\Pages;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Schema;
 use LaraZeus\SpatieTranslatable\Resources\Pages\CreateRecord\Concerns\Translatable;
+use TallCms\Cms\Filament\Concerns\HasFromSiteContext;
 use TallCms\Cms\Filament\Resources\CmsPages\CmsPageResource;
 
 class CreateCmsPage extends CreateRecord
 {
+    use HasFromSiteContext;
     use Translatable;
 
     protected static string $resource = CmsPageResource::class;
@@ -30,6 +32,21 @@ class CreateCmsPage extends CreateRecord
         if ($siteParam !== null && is_numeric($siteParam)) {
             $this->ownerSiteId = (int) $siteParam;
         }
+
+        $this->captureFromSite();
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return array_filter([
+            $this->getBackToSiteAction(),
+            ...parent::getHeaderActions(),
+        ]);
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->fromSiteUrl() ?? parent::getRedirectUrl();
     }
 
     /**
