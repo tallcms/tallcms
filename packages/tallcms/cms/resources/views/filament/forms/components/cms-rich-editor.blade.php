@@ -218,21 +218,81 @@
                                         blocks: @js($groupedBlocks),
                                         categories: @js($blockCategories),
                                         componentKey: @js($key),
-                                        expandedCategories: Object.keys(@js($groupedBlocks)),
+                                        expandedCategories: ['recent', ...Object.keys(@js($groupedBlocks))],
                                         editorSelectionWarned: false,
+                                        recentBlockIds: [],
+                                        maxRecentBlocks: 5,
+                                        storageKey: 'tallcms.editor.recentBlocks',
+
+                                        init() {
+                                            try {
+                                                const stored = localStorage.getItem(this.storageKey);
+                                                if (stored) {
+                                                    const parsed = JSON.parse(stored);
+                                                    if (Array.isArray(parsed)) this.recentBlockIds = parsed;
+                                                }
+                                            } catch (e) { /* private mode or bad JSON: ignore */ }
+                                        },
+
+                                        get isSearching() {
+                                            return this.searchQuery.trim().length > 0;
+                                        },
+
+                                        get searchTerms() {
+                                            return this.searchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
+                                        },
+
+                                        rankBlock(block) {
+                                            const label = block.label.toLowerCase();
+                                            const id = block.id.toLowerCase();
+                                            const first = this.searchTerms[0] ?? '';
+                                            if (label === first) return 0;
+                                            if (label.startsWith(first)) return 1;
+                                            if (label.includes(first)) return 2;
+                                            if (id.includes(first)) return 3;
+                                            return 4;
+                                        },
 
                                         get filteredBlocks() {
-                                            const query = this.searchQuery.toLowerCase().trim().replace(/\s+/g, ' ');
-                                            if (!query) return this.blocks;
-
+                                            if (!this.isSearching) return this.blocks;
+                                            const terms = this.searchTerms;
                                             const result = {};
                                             for (const [cat, catBlocks] of Object.entries(this.blocks)) {
-                                                const filtered = catBlocks.filter(b => b.searchable.includes(query));
-                                                if (filtered.length > 0) {
-                                                    result[cat] = filtered;
-                                                }
+                                                const filtered = catBlocks
+                                                    .filter(b => terms.every(t => b.searchable.includes(t)))
+                                                    .sort((a, b) => this.rankBlock(a) - this.rankBlock(b));
+                                                if (filtered.length > 0) result[cat] = filtered;
                                             }
                                             return result;
+                                        },
+
+                                        get blockLookup() {
+                                            const lookup = {};
+                                            for (const catBlocks of Object.values(this.blocks)) {
+                                                for (const b of catBlocks) lookup[b.id] = b;
+                                            }
+                                            return lookup;
+                                        },
+
+                                        get recentBlocks() {
+                                            if (this.isSearching) return [];
+                                            const lookup = this.blockLookup;
+                                            return this.recentBlockIds
+                                                .map(id => lookup[id])
+                                                .filter(Boolean)
+                                                .slice(0, this.maxRecentBlocks);
+                                        },
+
+                                        get displayedBlocks() {
+                                            if (this.isSearching) return this.filteredBlocks;
+                                            const result = {};
+                                            if (this.recentBlocks.length > 0) result['recent'] = this.recentBlocks;
+                                            Object.assign(result, this.blocks);
+                                            return result;
+                                        },
+
+                                        get effectiveCategories() {
+                                            return { recent: { label: 'Recently used' }, ...this.categories };
                                         },
 
                                         get totalFilteredCount() {
@@ -240,7 +300,7 @@
                                         },
 
                                         get hasMultipleCategories() {
-                                            return Object.keys(this.filteredBlocks).length > 1;
+                                            return Object.keys(this.displayedBlocks).length > 1;
                                         },
 
                                         isExpanded(category) {
@@ -255,7 +315,17 @@
                                             }
                                         },
 
+                                        rememberBlock(blockId) {
+                                            const next = [blockId, ...this.recentBlockIds.filter(id => id !== blockId)]
+                                                .slice(0, this.maxRecentBlocks);
+                                            this.recentBlockIds = next;
+                                            try {
+                                                localStorage.setItem(this.storageKey, JSON.stringify(next));
+                                            } catch (e) { /* storage unavailable: in-memory only */ }
+                                        },
+
                                         insertBlock(blockId, selection) {
+                                            this.rememberBlock(blockId);
                                             $wire.mountAction(
                                                 'customBlock',
                                                 { editorSelection: selection, id: blockId, mode: 'insert' },
@@ -279,7 +349,7 @@
 
                                     {{-- Grouped Blocks --}}
                                     <div class="fi-cms-block-categories flex-1 overflow-y-auto">
-                                        <template x-for="(catBlocks, category) in filteredBlocks" :key="category">
+                                        <template x-for="(catBlocks, category) in displayedBlocks" :key="category">
                                             <div class="fi-cms-block-category" x-show="catBlocks.length > 0">
                                                 {{-- Collapsible Category Header --}}
                                                 <template x-if="hasMultipleCategories">
@@ -288,7 +358,7 @@
                                                         x-on:click="toggleCategory(category)"
                                                         class="fi-cms-block-category-heading sticky top-0 z-10 flex w-full items-center justify-between gap-2 px-3 py-2 text-start text-xs font-semibold uppercase tracking-wider transition-colors"
                                                     >
-                                                        <span x-text="categories[category]?.label ?? 'Other'"></span>
+                                                        <span x-text="effectiveCategories[category]?.label ?? 'Other'"></span>
                                                         <span class="transition-transform duration-200" :class="{ 'rotate-180': isExpanded(category) }">
                                                             {!! \Filament\Support\generate_icon_html('heroicon-m-chevron-down', 'h-4 w-4')->toHtml() !!}
                                                         </span>
@@ -323,7 +393,7 @@
                                                                 isLoading = true;
                                                                 insertBlock(block.id, editorSelection);
                                                             "
-                                                            x-on:dragstart="$event.dataTransfer.setData('customBlock', block.id)"
+                                                            x-on:dragstart="$event.dataTransfer.setData('customBlock', block.id); rememberBlock(block.id)"
                                                             x-on:open-modal.window="isLoading = false"
                                                             x-on:run-rich-editor-commands.window="isLoading = false"
                                                             class="fi-fo-rich-editor-custom-block-btn fi-cms-block-btn flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-start text-sm transition-colors hover:bg-gray-100 dark:hover:bg-white/5"
