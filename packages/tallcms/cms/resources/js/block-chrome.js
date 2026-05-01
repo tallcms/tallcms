@@ -1,9 +1,57 @@
 import { Extension } from '@tiptap/core'
 import { NodeSelection, Plugin, PluginKey } from '@tiptap/pm/state'
+import Sortable from 'sortablejs'
+
+// Expose Sortable for the inline Alpine outline tab — the Blade view has no
+// build step and can't import directly. Both bits of code load via the same
+// on-request asset, so timing works out.
+window.tallcmsSortable = Sortable
 
 const PLUGIN_KEY = new PluginKey('cmsBlockChrome')
+const OUTLINE_PLUGIN_KEY = new PluginKey('cmsBlockOutline')
 const INJECTED_FLAG = 'cmsChromeInjected'
 const NODE_TYPE = 'customBlock'
+const OUTLINE_EVENT = 'cms-block-outline-changed'
+const ACTION_EVENT = 'cms-block-action'
+
+const TITLE_KEYS = ['title', 'heading', 'headline', 'heading_text', 'name']
+
+// Block config fields can hold rich HTML (Hero's heading is a rich editor),
+// so a raw string can be "<p>Welcome</p>". DOMParser is the safe way to get
+// plain text out — it doesn't execute scripts or trigger image loads, unlike
+// innerHTML on a live element.
+function stripHtml(str) {
+    if (!str.includes('<')) return str
+    return (
+        new DOMParser().parseFromString(str, 'text/html').body.textContent ||
+        ''
+    )
+}
+
+function extractTitle(config) {
+    if (!config || typeof config !== 'object') return null
+    for (const key of TITLE_KEYS) {
+        const value = config[key]
+        if (typeof value !== 'string') continue
+        const text = stripHtml(value).trim()
+        if (text.length > 0) return text
+    }
+    return null
+}
+
+function collectOutlineItems(doc) {
+    const items = []
+    doc.forEach((node, pos) => {
+        if (node.type.name !== NODE_TYPE) return
+        items.push({
+            pos,
+            id: node.attrs.id,
+            label: node.attrs.label,
+            title: extractTitle(node.attrs.config),
+        })
+    })
+    return items
+}
 
 const ICONS = {
     grip: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM7 10a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM7 16a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM16 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM16 10a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM16 16a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/></svg>',
@@ -228,6 +276,63 @@ export default Extension.create({
                     }
                     return true
                 },
+
+            // Moves the customBlock at `fromPos` to slot `toIndex` in the
+            // ordered sequence of customBlock siblings (paragraphs and other
+            // top-level nodes are ignored for ordering purposes). Used by the
+            // Outline tab's drag-reorder — the user only sees customBlocks
+            // there and wouldn't expect intervening paragraphs to factor in.
+            moveCustomBlockTo:
+                (fromPos, toIndex) =>
+                ({ tr, state, dispatch }) => {
+                    const node = state.doc.nodeAt(fromPos)
+                    if (!node || node.type.name !== NODE_TYPE) return false
+
+                    const $pos = state.doc.resolve(fromPos)
+                    if ($pos.parent.type.name !== 'doc') return false
+
+                    const customBlocks = []
+                    state.doc.forEach((child, offset) => {
+                        if (child.type.name === NODE_TYPE) {
+                            customBlocks.push({
+                                pos: offset,
+                                size: child.nodeSize,
+                            })
+                        }
+                    })
+
+                    const fromIndex = customBlocks.findIndex(
+                        (b) => b.pos === fromPos,
+                    )
+                    if (fromIndex === -1) return false
+                    if (toIndex < 0 || toIndex >= customBlocks.length) {
+                        return false
+                    }
+                    if (fromIndex === toIndex) return false
+
+                    const target = customBlocks[toIndex]
+
+                    if (dispatch) {
+                        tr.delete(fromPos, fromPos + node.nodeSize)
+
+                        // After delete, positions > fromPos shift left by node.nodeSize.
+                        // Moving down: insert AFTER target (where target USED to end,
+                        //   adjusted for the delete). Moving up: insert AT target
+                        //   (target stayed put since it was before fromPos).
+                        const insertPos =
+                            toIndex > fromIndex
+                                ? target.pos - node.nodeSize + target.size
+                                : target.pos
+
+                        tr.insert(insertPos, node)
+                        tr.setSelection(
+                            NodeSelection.create(tr.doc, insertPos),
+                        )
+                        tr.scrollIntoView()
+                        dispatch(tr)
+                    }
+                    return true
+                },
         }
     },
 
@@ -241,6 +346,64 @@ export default Extension.create({
                     return new BlockChromeView(editorView, editor)
                 },
             }),
+            new Plugin({
+                key: OUTLINE_PLUGIN_KEY,
+                view(editorView) {
+                    return new OutlineSyncView(editorView, editor)
+                },
+            }),
         ]
     },
 })
+
+// Bridges the editor to the Outline tab in the side panel:
+//   - On every doc change, emits OUTLINE_EVENT with the current customBlock list
+//   - Listens for ACTION_EVENT and runs the requested editor command
+// Both events are scoped to the editor.dom so multiple editors on a page don't
+// cross-talk; the panel finds the editor.dom via its closest .fi-fo-rich-editor.
+class OutlineSyncView {
+    constructor(view, editor) {
+        this.view = view
+        this.editor = editor
+        this.actionHandler = (event) => this.handleAction(event)
+        view.dom.addEventListener(ACTION_EVENT, this.actionHandler)
+        // Defer initial emit by a tick so the panel's listener is wired first.
+        queueMicrotask(() => this.emit())
+    }
+
+    emit() {
+        const items = collectOutlineItems(this.view.state.doc)
+        this.view.dom.dispatchEvent(
+            new CustomEvent(OUTLINE_EVENT, {
+                detail: { items },
+                bubbles: true,
+            }),
+        )
+    }
+
+    handleAction(event) {
+        const { action, args } = event.detail || {}
+        if (action === 'scrollTo' && typeof args?.pos === 'number') {
+            this.editor
+                .chain()
+                .focus()
+                .setNodeSelection(args.pos)
+                .scrollIntoView()
+                .run()
+        } else if (
+            action === 'moveTo' &&
+            typeof args?.fromPos === 'number' &&
+            typeof args?.toIndex === 'number'
+        ) {
+            this.editor.commands.moveCustomBlockTo(args.fromPos, args.toIndex)
+        }
+    }
+
+    update(_view, prevState) {
+        if (this.view.state.doc !== prevState.doc) this.emit()
+    }
+
+    destroy() {
+        this.view.dom.removeEventListener(ACTION_EVENT, this.actionHandler)
+    }
+}

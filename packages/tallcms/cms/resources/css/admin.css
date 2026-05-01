@@ -146,3 +146,142 @@
     width: 1rem;
     height: 1rem;
 }
+
+/**
+ * Truncation chain for the side panel.
+ *
+ * Filament's .fi-fo-rich-editor-panel is display: grid with implicit
+ * auto-sized columns — the column grows to content, defeating any inner
+ * truncation. Forcing flex-column with min-width: 0 on the panel itself
+ * gives our outline a real width to truncate against. Direct rules on
+ * our own .fi-cms-block-outline-* classes sidestep cascade ambiguity
+ * with vendor utility @apply.
+ */
+.fi-fo-rich-editor-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.fi-fo-rich-editor-custom-blocks-list {
+    min-width: 0;
+}
+
+.fi-cms-block-outline {
+    min-width: 0;
+}
+
+.fi-cms-block-outline-list {
+    min-width: 0;
+    width: 100%;
+}
+
+.fi-cms-block-outline-item {
+    min-width: 0;
+    width: 100%;
+}
+
+.fi-cms-block-outline-target {
+    min-width: 0;
+    flex: 1 1 0%;
+    overflow: hidden;
+}
+
+.fi-cms-block-outline-target > span:not(.fi-cms-block-icon) {
+    min-width: 0;
+    flex: 1 1 0%;
+    overflow: hidden;
+}
+
+.fi-cms-block-outline-target > span:not(.fi-cms-block-icon) > span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+/**
+ * Side-panel tab strip (Blocks | Outline)
+ *
+ * Underlined active tab in Filament's primary color, muted resting state,
+ * uses Filament gray vars so it survives the daisyUI override on editor pages.
+ */
+.fi-cms-block-tabs {
+    border-color: var(--gray-200);
+}
+
+.fi-cms-block-tab {
+    color: var(--gray-500);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+
+    &:hover {
+        color: var(--gray-700);
+    }
+}
+
+.fi-cms-block-tab-active {
+    color: var(--primary-600);
+    border-bottom-color: var(--primary-600);
+
+    &:hover {
+        color: var(--primary-600);
+    }
+}
+
+:where(.dark, .dark *) {
+    & .fi-cms-block-tabs {
+        border-color: color-mix(in oklab, var(--color-white) 10%, transparent);
+    }
+
+    & .fi-cms-block-tab {
+        color: var(--gray-400);
+
+        &:hover {
+            color: var(--gray-200);
+        }
+    }
+
+    & .fi-cms-block-tab-active {
+        color: var(--primary-400);
+        border-bottom-color: var(--primary-400);
+    }
+}
+
+/**
+ * Outline list — drag-reorderable preview of customBlocks in the document.
+ */
+.fi-cms-block-outline-item {
+    cursor: default;
+    transition: background-color 100ms ease-out;
+
+    &:hover {
+        background-color: var(--gray-100);
+    }
+}
+
+:where(.dark, .dark *) .fi-cms-block-outline-item:hover {
+    background-color: color-mix(in oklab, var(--color-white) 5%, transparent);
+}
+
+.fi-cms-outline-handle {
+    color: var(--gray-400);
+    cursor: grab;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    &:active {
+        cursor: grabbing;
+    }
+}
+
+.fi-cms-outline-ghost {
+    opacity: 0.5;
+    background-color: var(--gray-100);
+}
+
+:where(.dark, .dark *) .fi-cms-outline-ghost {
+    background-color: color-mix(in oklab, var(--color-white) 8%, transparent);
+}
