@@ -223,6 +223,9 @@
                                         recentBlockIds: [],
                                         maxRecentBlocks: 5,
                                         storageKey: 'tallcms.editor.recentBlocks',
+                                        activeTab: 'blocks',
+                                        outlineItems: [],
+                                        sortableInstance: null,
 
                                         init() {
                                             try {
@@ -232,6 +235,88 @@
                                                     if (Array.isArray(parsed)) this.recentBlockIds = parsed;
                                                 }
                                             } catch (e) { /* private mode or bad JSON: ignore */ }
+
+                                            // Subscribe to outline updates emitted by the TipTap extension.
+                                            // Events bubble from .ProseMirror up to .fi-fo-rich-editor, which
+                                            // is a common ancestor of both the editor and this panel.
+                                            const wrapper = this.$el.closest('.fi-fo-rich-editor');
+                                            if (wrapper) {
+                                                wrapper.addEventListener('cms-block-outline-changed', (event) => {
+                                                    this.outlineItems = event.detail?.items ?? [];
+                                                });
+                                            }
+                                        },
+
+                                        iconHtmlForBlock(blockId) {
+                                            return this.blockLookup[blockId]?.iconHtml ?? '';
+                                        },
+
+                                        labelForBlock(blockId) {
+                                            return this.blockLookup[blockId]?.label ?? blockId;
+                                        },
+
+                                        dispatchOutlineAction(action, args) {
+                                            const wrapper = this.$el.closest('.fi-fo-rich-editor');
+                                            const proseMirror = wrapper?.querySelector('.ProseMirror');
+                                            if (!proseMirror) return;
+                                            proseMirror.dispatchEvent(new CustomEvent('cms-block-action', {
+                                                detail: { action, args },
+                                                bubbles: false,
+                                            }));
+                                        },
+
+                                        scrollToBlock(item) {
+                                            this.dispatchOutlineAction('scrollTo', { pos: item.pos });
+                                        },
+
+                                        async ensureSortable() {
+                                            if (this.sortableInstance) return;
+
+                                            // block-chrome.js sets window.tallcmsSortable on load; the TipTap
+                                            // extension loader is async, so it may not be ready when Alpine
+                                            // first runs. Poll briefly, then degrade to read-only outline.
+                                            let attempts = 0;
+                                            while (!window.tallcmsSortable && attempts < 40) {
+                                                await new Promise(r => setTimeout(r, 50));
+                                                attempts++;
+                                            }
+                                            if (!window.tallcmsSortable) {
+                                                console.warn('CMS Block Outline: Sortable failed to load; drag-reorder disabled');
+                                                return;
+                                            }
+
+                                            const list = this.$refs.outlineList;
+                                            if (!list) return;
+
+                                            this.sortableInstance = window.tallcmsSortable.create(list, {
+                                                animation: 150,
+                                                handle: '.fi-cms-outline-handle',
+                                                ghostClass: 'fi-cms-outline-ghost',
+                                                onEnd: (evt) => {
+                                                    if (evt.oldIndex === evt.newIndex) return;
+                                                    const fromPos = parseInt(evt.item.dataset.pos, 10);
+                                                    if (Number.isNaN(fromPos)) return;
+
+                                                    // Optimistic reorder so any re-render between now and the
+                                                    // editor's outline-changed echo matches Sortable's view.
+                                                    const moved = this.outlineItems.find(i => i.pos === fromPos);
+                                                    if (moved) {
+                                                        const next = this.outlineItems.filter(i => i.pos !== fromPos);
+                                                        next.splice(evt.newIndex, 0, moved);
+                                                        this.outlineItems = next;
+                                                    }
+
+                                                    this.dispatchOutlineAction('moveTo', {
+                                                        fromPos,
+                                                        toIndex: evt.newIndex,
+                                                    });
+                                                },
+                                            });
+                                        },
+
+                                        switchTab(name) {
+                                            this.activeTab = name;
+                                            if (name === 'outline') this.ensureSortable();
                                         },
 
                                         get isSearching() {
@@ -334,8 +419,33 @@
                                         }
                                     }"
                                 >
-                                    {{-- Search Input --}}
-                                    <div class="fi-cms-block-search flex items-center gap-2 border-b px-3 py-2">
+                                    {{-- Tab Strip: Blocks | Outline --}}
+                                    <div class="fi-cms-block-tabs flex border-b" role="tablist">
+                                        <button
+                                            type="button"
+                                            role="tab"
+                                            x-on:click="switchTab('blocks')"
+                                            :aria-selected="activeTab === 'blocks'"
+                                            :class="activeTab === 'blocks' ? 'fi-cms-block-tab-active' : ''"
+                                            class="fi-cms-block-tab flex-1 px-3 py-2 text-sm font-medium transition-colors"
+                                        >
+                                            Blocks
+                                        </button>
+                                        <button
+                                            type="button"
+                                            role="tab"
+                                            x-on:click="switchTab('outline')"
+                                            :aria-selected="activeTab === 'outline'"
+                                            :class="activeTab === 'outline' ? 'fi-cms-block-tab-active' : ''"
+                                            class="fi-cms-block-tab flex-1 px-3 py-2 text-sm font-medium transition-colors"
+                                        >
+                                            Outline
+                                            <span x-show="outlineItems.length > 0" x-text="`(${outlineItems.length})`" class="opacity-60 ms-1"></span>
+                                        </button>
+                                    </div>
+
+                                    {{-- Search Input (Blocks tab) --}}
+                                    <div x-show="activeTab === 'blocks'" class="fi-cms-block-search flex items-center gap-2 border-b px-3 py-2">
                                         <div class="shrink-0 text-gray-400 dark:text-gray-500">
                                             {!! \Filament\Support\generate_icon_html('heroicon-m-magnifying-glass', 'h-4 w-4')->toHtml() !!}
                                         </div>
@@ -347,8 +457,8 @@
                                         />
                                     </div>
 
-                                    {{-- Grouped Blocks --}}
-                                    <div class="fi-cms-block-categories flex-1 overflow-y-auto">
+                                    {{-- Grouped Blocks (Blocks tab) --}}
+                                    <div x-show="activeTab === 'blocks'" class="fi-cms-block-categories flex-1 overflow-y-auto">
                                         <template x-for="(catBlocks, category) in displayedBlocks" :key="category">
                                             <div class="fi-cms-block-category" x-show="catBlocks.length > 0">
                                                 {{-- Collapsible Category Header --}}
@@ -423,6 +533,36 @@
                                             class="fi-cms-block-no-results px-3 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
                                         >
                                             <p>No blocks match your search.</p>
+                                        </div>
+                                    </div>
+
+                                    {{-- Outline (Outline tab) --}}
+                                    <div x-show="activeTab === 'outline'" x-cloak class="fi-cms-block-outline flex-1 overflow-y-auto">
+                                        <ul x-ref="outlineList" class="fi-cms-block-outline-list flex flex-col gap-0.5 p-2" x-show="outlineItems.length > 0">
+                                            <template x-for="item in outlineItems" :key="`${item.pos}-${item.id}`">
+                                                <li class="fi-cms-block-outline-item flex items-center gap-2 rounded-lg px-2 py-1.5" :data-pos="item.pos">
+                                                    <span class="fi-cms-outline-handle shrink-0" aria-hidden="true" title="Drag to reorder">
+                                                        {!! \Filament\Support\generate_icon_html('heroicon-m-bars-3', 'h-4 w-4')->toHtml() !!}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        x-on:click="scrollToBlock(item)"
+                                                        class="fi-cms-block-outline-target flex flex-1 items-center gap-2 text-start text-sm"
+                                                    >
+                                                        <span class="fi-cms-block-icon h-4 w-4 shrink-0" x-html="iconHtmlForBlock(item.id)"></span>
+                                                        <span class="flex flex-col leading-tight overflow-hidden">
+                                                            <span class="truncate" x-text="item.title || labelForBlock(item.id)"></span>
+                                                            <span x-show="item.title" x-text="labelForBlock(item.id)" class="text-xs opacity-60 truncate"></span>
+                                                        </span>
+                                                    </button>
+                                                </li>
+                                            </template>
+                                        </ul>
+                                        <div
+                                            x-show="outlineItems.length === 0"
+                                            class="px-3 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
+                                        >
+                                            <p>No blocks yet. Add blocks from the Blocks tab to see them here.</p>
                                         </div>
                                     </div>
                                 </div>

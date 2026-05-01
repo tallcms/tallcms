@@ -16,6 +16,7 @@
     "@tiptap/pm": "^3.0.0",
     "daisyui": "^5.0.0",
     "esbuild": "^0.24.0",
+    "sortablejs": "^1.15.7",
     "tailwindcss": "^4.1.0"
   }
 }

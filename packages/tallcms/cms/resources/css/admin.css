@@ -146,3 +146,88 @@
     width: 1rem;
     height: 1rem;
 }
+
+/**
+ * Side-panel tab strip (Blocks | Outline)
+ *
+ * Underlined active tab in Filament's primary color, muted resting state,
+ * uses Filament gray vars so it survives the daisyUI override on editor pages.
+ */
+.fi-cms-block-tabs {
+    border-color: var(--gray-200);
+}
+
+.fi-cms-block-tab {
+    color: var(--gray-500);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+
+    &:hover {
+        color: var(--gray-700);
+    }
+}
+
+.fi-cms-block-tab-active {
+    color: var(--primary-600);
+    border-bottom-color: var(--primary-600);
+
+    &:hover {
+        color: var(--primary-600);
+    }
+}
+
+:where(.dark, .dark *) {
+    & .fi-cms-block-tabs {
+        border-color: color-mix(in oklab, var(--color-white) 10%, transparent);
+    }
+
+    & .fi-cms-block-tab {
+        color: var(--gray-400);
+
+        &:hover {
+            color: var(--gray-200);
+        }
+    }
+
+    & .fi-cms-block-tab-active {
+        color: var(--primary-400);
+        border-bottom-color: var(--primary-400);
+    }
+}
+
+/**
+ * Outline list — drag-reorderable preview of customBlocks in the document.
+ */
+.fi-cms-block-outline-item {
+    cursor: default;
+    transition: background-color 100ms ease-out;
+
+    &:hover {
+        background-color: var(--gray-100);
+    }
+}
+
+:where(.dark, .dark *) .fi-cms-block-outline-item:hover {
+    background-color: color-mix(in oklab, var(--color-white) 5%, transparent);
+}
+
+.fi-cms-outline-handle {
+    color: var(--gray-400);
+    cursor: grab;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    &:active {
+        cursor: grabbing;
+    }
+}
+
+.fi-cms-outline-ghost {
+    opacity: 0.5;
+    background-color: var(--gray-100);
+}
+
+:where(.dark, .dark *) .fi-cms-outline-ghost {
+    background-color: color-mix(in oklab, var(--color-white) 8%, transparent);
+}
