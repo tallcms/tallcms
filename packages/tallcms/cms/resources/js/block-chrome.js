@@ -1,5 +1,4 @@
 import { Extension } from '@tiptap/core'
-import { Fragment } from '@tiptap/pm/model'
 import { NodeSelection, Plugin, PluginKey } from '@tiptap/pm/state'
 
 const PLUGIN_KEY = new PluginKey('cmsBlockChrome')
@@ -153,14 +152,12 @@ export default Extension.create({
 
                     const prev = state.doc.child(index - 1)
                     const prevStart = pos - prev.nodeSize
-                    const currentEnd = pos + node.nodeSize
 
                     if (dispatch) {
-                        tr.replaceWith(
-                            prevStart,
-                            currentEnd,
-                            Fragment.fromArray([node, prev]),
-                        )
+                        // Cut current then re-insert before previous sibling.
+                        // Deleting at `pos` leaves `prevStart` unaffected.
+                        tr.delete(pos, pos + node.nodeSize)
+                        tr.insert(prevStart, node)
                         tr.setSelection(
                             NodeSelection.create(tr.doc, prevStart),
                         )
@@ -183,19 +180,20 @@ export default Extension.create({
                     if (index >= state.doc.childCount - 1) return false
 
                     const next = state.doc.child(index + 1)
-                    const currentStart = pos
-                    const nextEnd = pos + node.nodeSize + next.nodeSize
+                    const currentEnd = pos + node.nodeSize
+                    const nextEnd = currentEnd + next.nodeSize
 
                     if (dispatch) {
-                        tr.replaceWith(
-                            currentStart,
-                            nextEnd,
-                            Fragment.fromArray([next, node]),
-                        )
+                        // Cut the next sibling and re-insert it before current.
+                        // After the delete, current still occupies [pos, currentEnd];
+                        // inserting `next` at `pos` shifts current right by
+                        // next.nodeSize, landing it at pos + next.nodeSize.
+                        tr.delete(currentEnd, nextEnd)
+                        tr.insert(pos, next)
                         tr.setSelection(
                             NodeSelection.create(
                                 tr.doc,
-                                currentStart + next.nodeSize,
+                                pos + next.nodeSize,
                             ),
                         )
                         tr.scrollIntoView()
