@@ -389,6 +389,20 @@ class TallCmsServiceProvider extends PackageServiceProvider
             __DIR__.'/../config/scribe.php' => config_path('scribe.php'),
         ], 'tallcms-scribe-config');
 
+        // Also register the package's compiled assets under Laravel's
+        // conventional `laravel-assets` tag. The standalone scaffold's
+        // composer post-update-cmd runs `vendor:publish --tag=laravel-assets
+        // --force`, so any cms upgrade that ships a new tallcms.js / .css
+        // refreshes public/vendor/tallcms/ without operators having to
+        // remember the package-specific tag. Plugin-mode hosts that follow
+        // the standard Laravel scaffold get the same auto-republish for
+        // free. This was the path that broke push.sg's contact form when
+        // _pageUrl naming changed in the runtime but public/ still held
+        // the older _page_url copy.
+        $this->publishes([
+            __DIR__.'/../resources/dist' => public_path('vendor/tallcms'),
+        ], ['laravel-assets', 'tallcms-assets-laravel']);
+
         // Register Livewire components
         $this->registerLivewireComponents();
 

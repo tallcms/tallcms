@@ -869,9 +869,19 @@ class ThemeManager
         // contact-form / comments Alpine components never registered — the
         // frontend logged `Alpine Expression Error: contactForm is not defined`
         // and the form rendered as a hidden / broken shell.
+        //
+        // The mtime is appended as a cache-buster so a cms upgrade that
+        // refreshes the published bundle invalidates browser caches without
+        // operators having to clear them by hand. Without this, hosts that
+        // upgraded across the _page_url → _pageUrl rename kept serving the
+        // stale JS to anyone whose browser already had the URL cached, and
+        // every contact form submission failed with "Invalid form
+        // configuration" until the user manually hard-refreshed.
         $vendorPublishedJs = public_path('vendor/tallcms/tallcms.js');
         if (file_exists($vendorPublishedJs)) {
-            return '<script src="'.asset('vendor/tallcms/tallcms.js').'"></script>';
+            $version = filemtime($vendorPublishedJs);
+
+            return '<script src="'.asset('vendor/tallcms/tallcms.js').'?v='.$version.'"></script>';
         }
 
         return '';
