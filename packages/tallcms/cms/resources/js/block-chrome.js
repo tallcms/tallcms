@@ -16,13 +16,25 @@ const ACTION_EVENT = 'cms-block-action'
 
 const TITLE_KEYS = ['title', 'heading', 'headline', 'heading_text', 'name']
 
+// Block config fields can hold rich HTML (Hero's heading is a rich editor),
+// so a raw string can be "<p>Welcome</p>". DOMParser is the safe way to get
+// plain text out — it doesn't execute scripts or trigger image loads, unlike
+// innerHTML on a live element.
+function stripHtml(str) {
+    if (!str.includes('<')) return str
+    return (
+        new DOMParser().parseFromString(str, 'text/html').body.textContent ||
+        ''
+    )
+}
+
 function extractTitle(config) {
     if (!config || typeof config !== 'object') return null
     for (const key of TITLE_KEYS) {
         const value = config[key]
-        if (typeof value === 'string' && value.trim().length > 0) {
-            return value.trim()
-        }
+        if (typeof value !== 'string') continue
+        const text = stripHtml(value).trim()
+        if (text.length > 0) return text
     }
     return null
 }
