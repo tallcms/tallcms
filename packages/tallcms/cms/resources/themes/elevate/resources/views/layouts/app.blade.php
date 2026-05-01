@@ -110,7 +110,7 @@
                 </div>
 
                 <div class="navbar-end">
-                    @if(supports_theme_controller())
+                    @if(tallcms_show_theme_switcher())
                         <div class="dropdown dropdown-end">
                             <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-circle">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

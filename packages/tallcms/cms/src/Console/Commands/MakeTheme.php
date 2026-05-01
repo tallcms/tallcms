@@ -17,6 +17,8 @@ class MakeTheme extends Command
                             {--author= : Theme author name}
                             {--description= : Theme description}
                             {--theme-version= : Theme version}
+                            {--include-search : Scaffold a header search box component}
+                            {--include-language-switcher : Scaffold a language dropdown component}
                             {--interactive : Force interactive mode even with arguments}';
 
     protected $description = 'Create a new TallCMS theme with daisyUI integration';
@@ -174,6 +176,12 @@ class MakeTheme extends Command
             $prefersDark = 'dark';
         }
 
+        // Optional header controls — drives supports.* in theme.json and component scaffolding.
+        $this->newLine();
+        $this->line('Header controls (declare which optional UI controls this theme renders):');
+        $includeSearch = $this->confirm('Include a search box in the header?', false);
+        $includeLanguageSwitcher = $this->confirm('Include a language dropdown in the header?', false);
+
         return [
             'name' => $name,
             'slug' => Str::slug($name),
@@ -185,6 +193,8 @@ class MakeTheme extends Command
             'prefersDark' => $prefersDark,
             'allPresets' => $allPresets,
             'customColors' => $customColors,
+            'includeSearch' => $includeSearch,
+            'includeLanguageSwitcher' => $includeLanguageSwitcher,
         ];
     }
 
@@ -237,6 +247,8 @@ class MakeTheme extends Command
             'prefersDark' => $prefersDark,
             'allPresets' => $allPresets,
             'customColors' => $customColors,
+            'includeSearch' => (bool) $this->option('include-search'),
+            'includeLanguageSwitcher' => (bool) $this->option('include-language-switcher'),
         ];
     }
 
@@ -297,6 +309,8 @@ class MakeTheme extends Command
             $config['supports'] = [
                 'dark_mode' => false,
                 'theme_controller' => false,
+                'search' => (bool) ($themeInfo['includeSearch'] ?? false),
+                'language_switcher' => (bool) ($themeInfo['includeLanguageSwitcher'] ?? false),
                 'responsive' => true,
                 'animations' => true,
             ];
@@ -319,6 +333,8 @@ class MakeTheme extends Command
             $config['supports'] = [
                 'dark_mode' => $themeInfo['prefersDark'] !== null,
                 'theme_controller' => $themeInfo['allPresets'],
+                'search' => (bool) ($themeInfo['includeSearch'] ?? false),
+                'language_switcher' => (bool) ($themeInfo['includeLanguageSwitcher'] ?? false),
                 'responsive' => true,
                 'animations' => true,
             ];
@@ -551,6 +567,20 @@ JS;
             $this->line('Created: resources/views/components/theme-switcher.blade.php');
         }
 
+        // Optional: search component
+        if (! empty($themeInfo['includeSearch'])) {
+            $search = $this->getHeaderSearchTemplate();
+            File::put("{$themePath}/resources/views/components/header-search.blade.php", $search);
+            $this->line('Created: resources/views/components/header-search.blade.php');
+        }
+
+        // Optional: language switcher component
+        if (! empty($themeInfo['includeLanguageSwitcher'])) {
+            $langSwitcher = $this->getLanguageSwitcherTemplate();
+            File::put("{$themePath}/resources/views/components/language-switcher.blade.php", $langSwitcher);
+            $this->line('Created: resources/views/components/language-switcher.blade.php');
+        }
+
         // Create example template
         $exampleTemplate = $this->getExampleTemplateContent();
         File::put("{$themePath}/resources/views/templates/example.blade.php", $exampleTemplate);
@@ -601,9 +631,24 @@ GITIGNORE;
 
     protected function getLayoutTemplate(string $studlyName, array $themeInfo): string
     {
-        $themeSwitcher = $themeInfo['allPresets']
-            ? "@if(supports_theme_controller())\n                @include('theme.{$themeInfo['slug']}::components.theme-switcher')\n            @endif"
-            : '{{-- Theme switcher: enable "all presets" mode to add theme-controller --}}';
+        $slug = $themeInfo['slug'];
+        $navbarEndParts = [];
+
+        if (! empty($themeInfo['includeSearch'])) {
+            $navbarEndParts[] = "                <!-- Search -->\n                @if(tallcms_show_search())\n                    @include('theme.{$slug}::components.header-search')\n                @endif";
+        }
+
+        if (! empty($themeInfo['includeLanguageSwitcher'])) {
+            $navbarEndParts[] = "                <!-- Language Switcher -->\n                @if(tallcms_show_language_dropdown())\n                    @include('theme.{$slug}::components.language-switcher')\n                @endif";
+        }
+
+        if ($themeInfo['allPresets']) {
+            $navbarEndParts[] = "                <!-- Theme Switcher -->\n                @if(tallcms_show_theme_switcher())\n                    @include('theme.{$slug}::components.theme-switcher')\n                @endif";
+        } else {
+            $navbarEndParts[] = '                {{-- Theme switcher: enable "all presets" mode to add theme-controller --}}';
+        }
+
+        $themeSwitcher = ltrim(implode("\n\n", $navbarEndParts));
 
         return <<<BLADE
 <!DOCTYPE html>
@@ -697,8 +742,7 @@ GITIGNORE;
             </div>
 
             <div class="navbar-end gap-2">
-                <!-- Theme Switcher -->
-                {$themeSwitcher}
+{$themeSwitcher}
             </div>
         </div>
     @endif
@@ -765,6 +809,70 @@ BLADE;
         @endforeach
     </ul>
 </div>
+BLADE;
+    }
+
+    protected function getHeaderSearchTemplate(): string
+    {
+        return <<<'BLADE'
+{{-- Minimal header search component. The visibility gate
+     (theme support + admin toggle + global config) lives in tallcms_show_search();
+     this partial only renders the input. --}}
+<form action="{{ tallcms_search_url() }}" method="get" class="form-control">
+    <label class="input input-sm input-bordered flex items-center gap-2">
+        <svg class="w-4 h-4 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-4.35-4.35M16.65 16.65A7.5 7.5 0 105.25 5.25a7.5 7.5 0 0011.4 11.4z"/>
+        </svg>
+        <input
+            type="search"
+            name="q"
+            value="{{ request('q') }}"
+            placeholder="{{ __('Search') }}"
+            class="grow"
+        />
+    </label>
+</form>
+BLADE;
+    }
+
+    protected function getLanguageSwitcherTemplate(): string
+    {
+        return <<<'BLADE'
+{{-- Minimal language dropdown. Visibility (theme support + i18n_enabled + admin toggle)
+     is enforced by tallcms_show_language_dropdown() before this partial is included.
+     Uses tallcms_current_slug() to strip the existing locale/route prefixes from the
+     request path so tallcms_localized_url() builds a clean URL for the target locale. --}}
+@php
+    $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+    $current = app()->getLocale();
+    $locales = $registry->getLocales();
+    $cleanSlug = tallcms_current_slug();
+@endphp
+
+@if(count($locales) >= 2)
+    <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-sm gap-1" aria-label="{{ __('Change language') }}">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3.6 9h16.8M3.6 15h16.8M11.5 3a16 16 0 010 18M12.5 3a16 16 0 010 18"/>
+                <circle cx="12" cy="12" r="9" stroke-width="2"/>
+            </svg>
+            <span class="uppercase text-xs">{{ $current }}</span>
+        </div>
+        <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-50 w-40 p-2 shadow">
+            @foreach($locales as $code => $locale)
+                <li>
+                    <a href="{{ url(tallcms_localized_url($cleanSlug, $code)) }}"
+                       hreflang="{{ \TallCms\Cms\Services\LocaleRegistry::toBcp47($code) }}"
+                       @if($code === $current) class="active" aria-current="true" @endif>
+                        {{ $locale['native'] ?? strtoupper($code) }}
+                    </a>
+                </li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 BLADE;
     }
 }

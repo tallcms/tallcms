@@ -96,6 +96,9 @@ class GlobalDefaults extends Page implements HasForms
         'logo' => 'file',
         'favicon' => 'file',
         'show_powered_by' => 'boolean',
+        'show_theme_switcher' => 'boolean',
+        'show_search' => 'boolean',
+        'show_language_dropdown' => 'boolean',
         // Publishing
         'review_workflow_enabled' => 'boolean',
         // Maintenance
@@ -109,7 +112,10 @@ class GlobalDefaults extends Page implements HasForms
 
         foreach ($this->settingKeys as $key => $type) {
             $default = match ($key) {
-                'show_powered_by' => true,
+                'show_powered_by',
+                'show_theme_switcher',
+                'show_search',
+                'show_language_dropdown' => true,
                 'site_type' => 'multi-page',
                 'maintenance_message' => "We're currently performing scheduled maintenance. Please check back soon!",
                 default => null,
@@ -152,7 +158,8 @@ class GlobalDefaults extends Page implements HasForms
                 'contact_email', 'contact_phone', 'company_name', 'company_address' => 'contact',
                 'social_facebook', 'social_twitter', 'social_linkedin', 'social_instagram',
                 'social_youtube', 'social_tiktok', 'newsletter_signup_url' => 'social',
-                'logo', 'favicon', 'show_powered_by' => 'branding',
+                'logo', 'favicon', 'show_powered_by',
+                'show_theme_switcher', 'show_search', 'show_language_dropdown' => 'branding',
                 'review_workflow_enabled' => 'publishing',
                 'maintenance_mode', 'maintenance_message' => 'maintenance',
                 default => 'general',
@@ -280,6 +287,24 @@ class GlobalDefaults extends Page implements HasForms
                         Toggle::make('show_powered_by')
                             ->label('Show "Powered by TallCMS" Badge')
                             ->helperText('Displays a small badge in the site footer.')
+                            ->default(true)
+                            ->columnSpanFull(),
+
+                        Toggle::make('show_theme_switcher')
+                            ->label('Show theme switcher in header')
+                            ->helperText('Default for sites whose theme supports runtime theme switching. Per-site overrides win.')
+                            ->default(true)
+                            ->columnSpanFull(),
+
+                        Toggle::make('show_search')
+                            ->label('Show search box in header')
+                            ->helperText('Default for sites whose theme renders a search control. Per-site overrides win.')
+                            ->default(true)
+                            ->columnSpanFull(),
+
+                        Toggle::make('show_language_dropdown')
+                            ->label('Show language dropdown in header')
+                            ->helperText('Default for sites whose theme renders a locale switcher. Only effective when i18n is enabled.')
                             ->default(true)
                             ->columnSpanFull(),
                     ])

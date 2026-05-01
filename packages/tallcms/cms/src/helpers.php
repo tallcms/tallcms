@@ -254,6 +254,47 @@ if (! function_exists('supports_theme_controller')) {
     }
 }
 
+if (! function_exists('tallcms_show_theme_switcher')) {
+    function tallcms_show_theme_switcher(): bool
+    {
+        if (! (active_theme()?->supportsThemeController() ?? false)) {
+            return false;
+        }
+
+        return (bool) \TallCms\Cms\Models\SiteSetting::get('show_theme_switcher', true);
+    }
+}
+
+if (! function_exists('tallcms_show_search')) {
+    function tallcms_show_search(): bool
+    {
+        if (! (active_theme()?->supportsSearch() ?? false)) {
+            return false;
+        }
+
+        if (! config('tallcms.search.enabled', true)) {
+            return false;
+        }
+
+        return (bool) \TallCms\Cms\Models\SiteSetting::get('show_search', true);
+    }
+}
+
+if (! function_exists('tallcms_show_language_dropdown')) {
+    function tallcms_show_language_dropdown(): bool
+    {
+        if (! (active_theme()?->supportsLanguageSwitcher() ?? false)) {
+            return false;
+        }
+
+        if (! tallcms_i18n_enabled()) {
+            return false;
+        }
+
+        return (bool) \TallCms\Cms\Models\SiteSetting::get('show_language_dropdown', true);
+    }
+}
+
 if (! function_exists('theme_asset')) {
     /**
      * Get theme asset URL with fallback

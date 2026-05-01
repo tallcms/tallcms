@@ -78,9 +78,37 @@ class ThemeManager extends Page implements HasForms
 
     public array $licenseStatuses = [];
 
+    /**
+     * Display Options toggles, hydrated only when the slide-over is opened
+     * for the *active* theme. See showThemeDetails() and the updated* hooks below.
+     */
+    public bool $showThemeSwitcher = true;
+
+    public bool $showSearch = true;
+
+    public bool $showLanguageDropdown = true;
+
     public function mount(): void
     {
         $this->refreshLicenseStatuses();
+    }
+
+    public function updatedShowThemeSwitcher(bool $value): void
+    {
+        SiteSetting::set('show_theme_switcher', $value, 'boolean', 'branding');
+        SiteSetting::clearCache();
+    }
+
+    public function updatedShowSearch(bool $value): void
+    {
+        SiteSetting::set('show_search', $value, 'boolean', 'branding');
+        SiteSetting::clearCache();
+    }
+
+    public function updatedShowLanguageDropdown(bool $value): void
+    {
+        SiteSetting::set('show_language_dropdown', $value, 'boolean', 'branding');
+        SiteSetting::clearCache();
     }
 
     /**
@@ -755,6 +783,15 @@ class ThemeManager extends Page implements HasForms
             'hasAnimations' => $theme->supports('animations'),
             'purchaseUrl' => $theme->getPurchaseUrl(),
         ];
+
+        // Hydrate Display Options toggles only for the active theme — they edit
+        // site-wide SiteSetting values and would be misleading when shown for
+        // an inactive theme. The Blade also gates on isActive for the same reason.
+        if ($activeSlug === $theme->slug) {
+            $this->showThemeSwitcher = (bool) SiteSetting::get('show_theme_switcher', true);
+            $this->showSearch = (bool) SiteSetting::get('show_search', true);
+            $this->showLanguageDropdown = (bool) SiteSetting::get('show_language_dropdown', true);
+        }
 
         $this->dispatch('open-modal', id: 'theme-details-modal');
     }

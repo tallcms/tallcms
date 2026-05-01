@@ -139,13 +139,17 @@
 
                     <div class="navbar-end gap-2">
                         <!-- Search -->
-                        @include('theme.talldaisy::components.header-search')
+                        @if(tallcms_show_search())
+                            @include('theme.talldaisy::components.header-search')
+                        @endif
 
                         <!-- Language Switcher -->
-                        @include('theme.talldaisy::components.language-switcher')
+                        @if(tallcms_show_language_dropdown())
+                            @include('theme.talldaisy::components.language-switcher')
+                        @endif
 
                         <!-- Theme Switcher -->
-                        @if(supports_theme_controller())
+                        @if(tallcms_show_theme_switcher())
                             @include('theme.talldaisy::components.theme-switcher')
                         @endif
                     </div>
