@@ -24,7 +24,8 @@ class CmsPagesTable
                 ImageColumn::make('featured_image')
                     ->label('Image')
                     ->square()
-                    ->size(50),
+                    ->size(50)
+                    ->disk(\cms_media_disk()),
 
                 TextColumn::make('title')
                     ->searchable()

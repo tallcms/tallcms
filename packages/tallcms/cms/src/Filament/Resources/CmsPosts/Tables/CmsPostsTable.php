@@ -25,7 +25,8 @@ class CmsPostsTable
                 ImageColumn::make('featured_image')
                     ->label('Image')
                     ->square()
-                    ->size(50),
+                    ->imageSize(50)
+                    ->disk(cms_media_disk()),
 
                 TextColumn::make('title')
                     ->searchable()
