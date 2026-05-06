@@ -55,15 +55,12 @@ This is the only layer most installs need. After Part 1 you'll have multiple sit
 
 ## 1.1 Activate the Plugin
 
-1. Go to **Admin > Plugins** and install the **TallCMS Multisite** plugin (zip upload or marketplace).
+1. Go to **Admin > Plugins** and install the **TallCMS Multisite** plugin (zip upload or marketplace). The installer runs the plugin's migrations for you.
 2. Go to **Admin > Plugin Licenses**, paste your license key for **TallCMS Multisite**, and click **Activate**.
-3. Run the multisite migrations:
-
-   ```bash
-   php artisan migrate
-   ```
 
 A default site is created automatically from your current domain. The admin navigation reshapes itself: **Pages** and **Menus** disappear from the top level (you'll now reach them through each site's edit page), and a **Sites** group appears.
+
+> If you installed the plugin from the CLI with `--no-migrate`, run `php artisan plugin:migrate tallcms/multisite` to apply them manually.
 
 ## 1.2 Create a Site
 
