@@ -27,6 +27,7 @@ Welcome to TallCMS — a modern, block-based CMS built on Laravel and Filament.
 | [Mega Menu](mega-menu) | Advanced navigation with badges, CTAs, templates |
 | [Site Settings](site-settings) | Logo, contact info, SPA mode |
 | [Code Injection](code-injection) | Analytics, tracking scripts, chat widgets |
+| [Multisite Setup](multisite) | Run multiple sites — single-tenant up to full self-serve SaaS |
 
 ### Building Themes & Plugins
 
@@ -49,6 +50,8 @@ Welcome to TallCMS — a modern, block-based CMS built on Laravel and Filament.
 | [Redirects](redirects) | Manage 301/302 redirects for SEO and migrations |
 | [Filament Ecosystem](filament-ecosystem) | Use hundreds of Filament plugins with TallCMS |
 | [Architecture](architecture) | Internal developer reference |
+| [Multisite Architecture](multisite-architecture) | Site model, settings inheritance, scoping internals |
+| [Billing Plugin (Stripe)](billing) | Operator runbook for Cashier-backed paid plans |
 
 ---
 
