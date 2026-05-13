@@ -6,6 +6,7 @@ namespace TallCms\Cms\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 
 class TallcmsMenu extends Model
 {
@@ -22,6 +23,12 @@ class TallcmsMenu extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        static::saved(fn (): bool => Cache::tags(['cms', 'cms:menus'])->flush());
+        static::deleted(fn (): bool => Cache::tags(['cms', 'cms:menus'])->flush());
+    }
 
     public function items(): HasMany
     {

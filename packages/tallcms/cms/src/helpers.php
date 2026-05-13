@@ -1,6 +1,19 @@
 <?php
 
 declare(strict_types=1);
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use TallCms\Cms\Contracts\ThemeInterface;
+use TallCms\Cms\Models\CmsPage;
+use TallCms\Cms\Models\CmsPost;
+use TallCms\Cms\Models\SiteSetting;
+use TallCms\Cms\Models\TallcmsMenu;
+use TallCms\Cms\Models\Theme;
+use TallCms\Cms\Services\LocaleRegistry;
+use TallCms\Cms\Services\PluginLicenseService;
+use TallCms\Cms\Services\ThemeManager;
+use TallCms\Cms\Services\ThemeResolver;
 
 /**
  * TallCMS Helper Functions
@@ -14,7 +27,7 @@ declare(strict_types=1);
 
 // URL Helper Functions
 
-if (! function_exists('tallcms_routes_prefix')) {
+if (!function_exists('tallcms_routes_prefix')) {
     /**
      * Get the configured routes prefix for CMS frontend routes
      *
@@ -29,7 +42,7 @@ if (! function_exists('tallcms_routes_prefix')) {
     }
 }
 
-if (! function_exists('tallcms_home_url')) {
+if (!function_exists('tallcms_home_url')) {
     /**
      * Get the CMS homepage URL, respecting routes prefix
      *
@@ -43,11 +56,11 @@ if (! function_exists('tallcms_home_url')) {
     }
 }
 
-if (! function_exists('tallcms_page_url')) {
+if (!function_exists('tallcms_page_url')) {
     /**
      * Get a CMS page URL by slug, respecting routes prefix
      *
-     * @param  string  $slug  The page slug (with or without leading slash)
+     * @param string $slug The page slug (with or without leading slash)
      * @return string The full URL to the page
      */
     function tallcms_page_url(string $slug): string
@@ -64,11 +77,11 @@ if (! function_exists('tallcms_page_url')) {
 
 // Filament Panel Helper Functions
 
-if (! function_exists('tallcms_panel_url')) {
+if (!function_exists('tallcms_panel_url')) {
     /**
      * Get the full URL to the Filament admin panel, optionally with a sub-path.
      *
-     * @param  string  $path  Optional sub-path to append (e.g., 'cms-pages/create')
+     * @param string $path Optional sub-path to append (e.g., 'cms-pages/create')
      * @return string The full URL to the panel
      */
     function tallcms_panel_url(string $path = ''): string
@@ -85,12 +98,12 @@ if (! function_exists('tallcms_panel_url')) {
     }
 }
 
-if (! function_exists('tallcms_panel_route')) {
+if (!function_exists('tallcms_panel_route')) {
     /**
      * Build a Filament route name dynamically using the configured panel ID.
      *
-     * @param  string  $suffix  The route suffix (e.g., 'pages.plugin-licenses')
-     * @param  mixed  $parameters  Optional route parameters
+     * @param string $suffix The route suffix (e.g., 'pages.plugin-licenses')
+     * @param mixed $parameters Optional route parameters
      * @return string The resolved route URL
      */
     function tallcms_panel_route(string $suffix, mixed $parameters = []): string
@@ -103,17 +116,17 @@ if (! function_exists('tallcms_panel_route')) {
 
 // Theme Helper Functions
 
-if (! function_exists('theme')) {
+if (!function_exists('theme')) {
     /**
      * Get the current active theme instance
      */
-    function theme(): \TallCms\Cms\Contracts\ThemeInterface
+    function theme(): ThemeInterface
     {
-        return \TallCms\Cms\Services\ThemeResolver::getCurrentTheme();
+        return ThemeResolver::getCurrentTheme();
     }
 }
 
-if (! function_exists('theme_colors')) {
+if (!function_exists('theme_colors')) {
     /**
      * Get the current theme's color palette
      *
@@ -125,7 +138,7 @@ if (! function_exists('theme_colors')) {
     }
 }
 
-if (! function_exists('theme_button_presets')) {
+if (!function_exists('theme_button_presets')) {
     /**
      * Get the current theme's button presets
      *
@@ -137,7 +150,7 @@ if (! function_exists('theme_button_presets')) {
     }
 }
 
-if (! function_exists('theme_text_presets')) {
+if (!function_exists('theme_text_presets')) {
     /**
      * Get the current theme's text presets
      *
@@ -148,8 +161,8 @@ if (! function_exists('theme_text_presets')) {
     function theme_text_presets(): array
     {
         // Graceful degradation for plugin mode without themes enabled
-        if (! app()->bound('theme.manager') ||
-            ! config('tallcms.plugin_mode.themes_enabled', true)) {
+        if (!app()->bound('theme.manager') ||
+            !config('tallcms.plugin_mode.themes_enabled', true)) {
             return [
                 'primary' => [
                     'heading' => '#111827',
@@ -164,7 +177,7 @@ if (! function_exists('theme_text_presets')) {
     }
 }
 
-if (! function_exists('theme_padding_presets')) {
+if (!function_exists('theme_padding_presets')) {
     /**
      * Get the current theme's padding presets
      *
@@ -178,27 +191,27 @@ if (! function_exists('theme_padding_presets')) {
 
 // Multi-Theme System Helper Functions
 
-if (! function_exists('theme_manager')) {
+if (!function_exists('theme_manager')) {
     /**
      * Get the theme manager instance
      */
-    function theme_manager(): \TallCms\Cms\Services\ThemeManager
+    function theme_manager(): ThemeManager
     {
-        return app(\TallCms\Cms\Services\ThemeManager::class);
+        return app(ThemeManager::class);
     }
 }
 
-if (! function_exists('active_theme')) {
+if (!function_exists('active_theme')) {
     /**
      * Get the active theme instance
      */
-    function active_theme(): ?\TallCms\Cms\Models\Theme
+    function active_theme(): ?Theme
     {
         return theme_manager()->getActiveTheme();
     }
 }
 
-if (! function_exists('daisyui_dark_preset')) {
+if (!function_exists('daisyui_dark_preset')) {
     /**
      * Get the DaisyUI preset that represents the "dark" option
      */
@@ -208,7 +221,7 @@ if (! function_exists('daisyui_dark_preset')) {
     }
 }
 
-if (! function_exists('daisyui_presets')) {
+if (!function_exists('daisyui_presets')) {
     /**
      * Get all available presets for theme-controller
      *
@@ -220,7 +233,7 @@ if (! function_exists('daisyui_presets')) {
     }
 }
 
-if (! function_exists('daisyui_default_preset')) {
+if (!function_exists('daisyui_default_preset')) {
     /**
      * Get the admin-configured default daisyUI preset for the active theme
      *
@@ -232,7 +245,7 @@ if (! function_exists('daisyui_default_preset')) {
         $theme = active_theme();
         $fallback = $theme?->getDaisyUIPreset() ?? 'light';
 
-        $stored = \TallCms\Cms\Models\SiteSetting::get('theme_default_preset');
+        $stored = SiteSetting::get('theme_default_preset');
         if ($stored && $stored !== '') {
             $available = $theme?->getDaisyUIPresets() ?? [];
             if (in_array($stored, $available, true)) {
@@ -244,7 +257,7 @@ if (! function_exists('daisyui_default_preset')) {
     }
 }
 
-if (! function_exists('supports_theme_controller')) {
+if (!function_exists('supports_theme_controller')) {
     /**
      * Check if theme supports runtime theme switching
      */
@@ -254,52 +267,52 @@ if (! function_exists('supports_theme_controller')) {
     }
 }
 
-if (! function_exists('tallcms_show_theme_switcher')) {
+if (!function_exists('tallcms_show_theme_switcher')) {
     function tallcms_show_theme_switcher(): bool
     {
-        if (! (active_theme()?->supportsThemeController() ?? false)) {
+        if (!(active_theme()?->supportsThemeController() ?? false)) {
             return false;
         }
 
-        return (bool) \TallCms\Cms\Models\SiteSetting::get('show_theme_switcher', true);
+        return (bool) SiteSetting::get('show_theme_switcher', true);
     }
 }
 
-if (! function_exists('tallcms_show_search')) {
+if (!function_exists('tallcms_show_search')) {
     function tallcms_show_search(): bool
     {
-        if (! (active_theme()?->supportsSearch() ?? false)) {
+        if (!(active_theme()?->supportsSearch() ?? false)) {
             return false;
         }
 
-        if (! config('tallcms.search.enabled', true)) {
+        if (!config('tallcms.search.enabled', true)) {
             return false;
         }
 
-        return (bool) \TallCms\Cms\Models\SiteSetting::get('show_search', true);
+        return (bool) SiteSetting::get('show_search', true);
     }
 }
 
-if (! function_exists('tallcms_show_language_dropdown')) {
+if (!function_exists('tallcms_show_language_dropdown')) {
     function tallcms_show_language_dropdown(): bool
     {
-        if (! (active_theme()?->supportsLanguageSwitcher() ?? false)) {
+        if (!(active_theme()?->supportsLanguageSwitcher() ?? false)) {
             return false;
         }
 
-        if (! tallcms_i18n_enabled()) {
+        if (!tallcms_i18n_enabled()) {
             return false;
         }
 
-        return (bool) \TallCms\Cms\Models\SiteSetting::get('show_language_dropdown', true);
+        return (bool) SiteSetting::get('show_language_dropdown', true);
     }
 }
 
-if (! function_exists('theme_asset')) {
+if (!function_exists('theme_asset')) {
     /**
      * Get theme asset URL with fallback
      *
-     * @param  string  $path  Path to the asset relative to theme's public directory
+     * @param string $path Path to the asset relative to theme's public directory
      * @return string The URL to the asset
      */
     function theme_asset(string $path): string
@@ -308,11 +321,11 @@ if (! function_exists('theme_asset')) {
     }
 }
 
-if (! function_exists('theme_vite_assets')) {
+if (!function_exists('theme_vite_assets')) {
     /**
      * Get theme Vite assets from manifest
      *
-     * @param  array<string>  $entrypoints  List of Vite entrypoints
+     * @param array<string> $entrypoints List of Vite entrypoints
      * @return array<string, string> Resolved asset URLs
      */
     function theme_vite_assets(array $entrypoints): array
@@ -321,11 +334,11 @@ if (! function_exists('theme_vite_assets')) {
     }
 }
 
-if (! function_exists('has_theme_override')) {
+if (!function_exists('has_theme_override')) {
     /**
      * Check if current theme has override for specific view
      *
-     * @param  string  $viewPath  Path to the view to check
+     * @param string $viewPath Path to the view to check
      * @return bool True if theme has an override
      */
     function has_theme_override(string $viewPath): bool
@@ -336,7 +349,7 @@ if (! function_exists('has_theme_override')) {
 
 // AWS / Storage Helper Functions
 
-if (! function_exists('cms_media_disk')) {
+if (!function_exists('cms_media_disk')) {
     /**
      * Get the disk name for CMS media uploads
      *
@@ -353,7 +366,7 @@ if (! function_exists('cms_media_disk')) {
     {
         // Explicit package-level override takes highest priority
         $configured = config('tallcms.media.disk');
-        if (! empty($configured)) {
+        if (!empty($configured)) {
             return $configured;
         }
 
@@ -365,7 +378,7 @@ if (! function_exists('cms_media_disk')) {
 
         // Fallback: check if S3 bucket is configured (supports IAM roles)
         $bucket = config('filesystems.disks.s3.bucket');
-        if (! empty($bucket)) {
+        if (!empty($bucket)) {
             return 's3';
         }
 
@@ -373,7 +386,7 @@ if (! function_exists('cms_media_disk')) {
     }
 }
 
-if (! function_exists('cms_media_visibility')) {
+if (!function_exists('cms_media_visibility')) {
     /**
      * Get the visibility setting for CMS media uploads
      *
@@ -385,7 +398,7 @@ if (! function_exists('cms_media_visibility')) {
     }
 }
 
-if (! function_exists('cms_uses_s3')) {
+if (!function_exists('cms_uses_s3')) {
     /**
      * Check if CMS is configured to use S3 for media storage
      *
@@ -402,7 +415,7 @@ if (! function_exists('cms_uses_s3')) {
 
 // Menu Helper Functions
 
-if (! function_exists('isMenuItemActive')) {
+if (!function_exists('isMenuItemActive')) {
     /**
      * Check if a menu item URL matches the current request
      */
@@ -444,24 +457,26 @@ if (! function_exists('isMenuItemActive')) {
     }
 }
 
-if (! function_exists('buildMenuItemArray')) {
+if (!function_exists('buildMenuItemArray')) {
     /**
      * Recursively build menu item array with children
      */
-    function buildMenuItemArray($item): array
+    function buildMenuItemArray($item, bool $resolveActiveState = true): array
     {
         $url = $item->getResolvedUrl();
-        $children = $item->children->map(function ($child) {
-            return buildMenuItemArray($child);
+        $children = $item->children->map(function ($child) use ($resolveActiveState) {
+            return buildMenuItemArray($child, $resolveActiveState);
         })->toArray();
 
         // Check if this item is active
-        $isActive = isMenuItemActive($url);
+        $isActive = $resolveActiveState ? isMenuItemActive($url) : false;
 
         // Check if any child is active (for parent highlighting)
-        $hasActiveChild = collect($children)->contains(function ($child) {
-            return $child['is_active'] || $child['has_active_child'];
-        });
+        $hasActiveChild = $resolveActiveState
+            ? collect($children)->contains(function ($child) {
+                return $child['is_active'] || $child['has_active_child'];
+            })
+            : false;
 
         return [
             'id' => $item->id,
@@ -478,33 +493,90 @@ if (! function_exists('buildMenuItemArray')) {
     }
 }
 
-if (! function_exists('menu')) {
+if (!function_exists('applyMenuActiveState')) {
+    /**
+     * Apply request-specific active state to a cached menu item array.
+     *
+     * @param array<string, mixed> $item
+     * @return array<string, mixed>
+     */
+    function applyMenuActiveState(array $item): array
+    {
+        $children = array_map(
+            fn (array $child): array => applyMenuActiveState($child),
+            $item['children'] ?? [],
+        );
+
+        $item['is_active'] = isMenuItemActive($item['url'] ?? null);
+        $item['has_active_child'] = collect($children)->contains(function (array $child): bool {
+            return ($child['is_active'] ?? false) || ($child['has_active_child'] ?? false);
+        });
+        $item['children'] = $children;
+
+        return $item;
+    }
+}
+
+if (!function_exists('menu')) {
     /**
      * Get a menu by location with resolved URLs
      */
     function menu(string $location): ?array
     {
-        $menu = \TallCms\Cms\Models\TallcmsMenu::byLocation($location);
+        $request = request();
 
-        if (! $menu) {
-            return null;
+        $cacheKey = implode('|', [
+            $location,
+            app()->getLocale(),
+            $request->getHost(),
+            $request->path(),
+        ]);
+
+        $resolvedMenus = $request->attributes->get('tallcms.resolved_menus', []);
+
+        if (array_key_exists($cacheKey, $resolvedMenus)) {
+            return $resolvedMenus[$cacheKey];
         }
 
-        // Get all menu items for this menu and build the tree structure
-        $items = $menu->allItems()
-            ->where('is_active', true)
-            ->with('page')
-            ->defaultOrder()
-            ->get()
-            ->toTree();
+        $persistentCacheKey = implode('|', [
+            'tallcms.menu',
+            $location,
+            app()->getLocale(),
+            $request->getHost(),
+        ]);
 
-        return $items->map(function ($item) {
-            return buildMenuItemArray($item);
-        })->toArray();
+        $cachedMenu = Cache::tags(['cms', 'cms:menus'])
+            ->remember($persistentCacheKey, now()->addHour(), function () use ($location): ?array {
+                $menu = TallcmsMenu::byLocation($location);
+
+                if (!$menu) {
+                    return null;
+                }
+
+                // Get all menu items for this menu and build the tree structure
+                $items = $menu->allItems()
+                    ->where('is_active', true)
+                    ->with('page')
+                    ->defaultOrder()
+                    ->get()
+                    ->toTree();
+
+                return $items->map(function ($item) {
+                    return buildMenuItemArray($item, false);
+                })->toArray();
+            });
+
+        $resolvedMenus[$cacheKey] = $cachedMenu === null
+            ? null
+            : array_map(fn (array $item): array => applyMenuActiveState($item), $cachedMenu);
+
+        $request->attributes->set('tallcms.resolved_menus', $resolvedMenus);
+
+        return $resolvedMenus[$cacheKey];
     }
 }
 
-if (! function_exists('render_menu')) {
+if (!function_exists('render_menu')) {
     /**
      * Render a menu as HTML
      */
@@ -512,7 +584,7 @@ if (! function_exists('render_menu')) {
     {
         $menu = menu($location);
 
-        if (! $menu) {
+        if (!$menu) {
             return '';
         }
 
@@ -532,13 +604,13 @@ if (! function_exists('render_menu')) {
     }
 }
 
-if (! function_exists('render_menu_item')) {
+if (!function_exists('render_menu_item')) {
     /**
      * Render a single menu item
      */
     function render_menu_item(array $item, string $liClass = '', string $linkClass = ''): string
     {
-        $hasChildren = ! empty($item['children']);
+        $hasChildren = !empty($item['children']);
         $liClass = trim($liClass.($hasChildren ? ' has-children' : ''));
 
         if ($item['css_class']) {
@@ -575,29 +647,29 @@ if (! function_exists('render_menu_item')) {
 
 // Plugin License Helper Functions
 
-if (! function_exists('plugin_is_licensed')) {
+if (!function_exists('plugin_is_licensed')) {
     /**
      * Check if a plugin has a valid license
      *
      * This performs the full license validation check (database + API if needed).
      * Use this for gating premium features.
      *
-     * @param  string  $pluginSlug  The plugin's license slug (e.g., 'tallcms-pro')
+     * @param string $pluginSlug The plugin's license slug (e.g., 'tallcms-pro')
      * @return bool True if the plugin has a valid license
      */
     function plugin_is_licensed(string $pluginSlug): bool
     {
         try {
-            $licenseService = app(\TallCms\Cms\Services\PluginLicenseService::class);
+            $licenseService = app(PluginLicenseService::class);
 
             return $licenseService->isValid($pluginSlug);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return false;
         }
     }
 }
 
-if (! function_exists('plugin_has_been_licensed')) {
+if (!function_exists('plugin_has_been_licensed')) {
     /**
      * Check if a plugin has ever been licensed (for watermark logic)
      *
@@ -607,16 +679,16 @@ if (! function_exists('plugin_has_been_licensed')) {
      *
      * Note: Returns false after license deactivation (user transferred license).
      *
-     * @param  string  $pluginSlug  The plugin's license slug (e.g., 'tallcms-pro')
+     * @param string $pluginSlug The plugin's license slug (e.g., 'tallcms-pro')
      * @return bool True if the plugin has ever been licensed
      */
     function plugin_has_been_licensed(string $pluginSlug): bool
     {
         try {
-            $licenseService = app(\TallCms\Cms\Services\PluginLicenseService::class);
+            $licenseService = app(PluginLicenseService::class);
 
             return $licenseService->hasEverBeenLicensed($pluginSlug);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return false;
         }
     }
@@ -624,7 +696,7 @@ if (! function_exists('plugin_has_been_licensed')) {
 
 // CMS Content Helper Functions
 
-if (! function_exists('cms_post_url')) {
+if (!function_exists('cms_post_url')) {
     /**
      * Generate URL for a post within a parent page context
      *
@@ -633,11 +705,11 @@ if (! function_exists('cms_post_url')) {
      * - Routes prefix in plugin mode
      * - Locale prefix when url_strategy is 'prefix'
      *
-     * @param  \TallCms\Cms\Models\CmsPost  $post  The post to generate URL for
-     * @param  string  $parentSlug  The parent page slug (e.g., 'blog')
+     * @param CmsPost $post The post to generate URL for
+     * @param string $parentSlug The parent page slug (e.g., 'blog')
      * @return string The full URL to the post
      */
-    function cms_post_url(\TallCms\Cms\Models\CmsPost $post, string $parentSlug): string
+    function cms_post_url(CmsPost $post, string $parentSlug): string
     {
         // Get the localized post slug
         $postSlug = tallcms_i18n_enabled()
@@ -652,7 +724,7 @@ if (! function_exists('cms_post_url')) {
 
 // SPA Mode Helper Functions
 
-if (! function_exists('tallcms_slug_to_anchor')) {
+if (!function_exists('tallcms_slug_to_anchor')) {
     /**
      * Convert a page slug to a valid HTML anchor ID for SPA mode.
      * Replaces slashes with hyphens and appends page ID for uniqueness.
@@ -666,8 +738,8 @@ if (! function_exists('tallcms_slug_to_anchor')) {
      * pages have similar slugs (e.g., 'services' and 'about/services').
      * Any manually created anchor links in content must use this format.
      *
-     * @param  string  $slug  The page slug (e.g., 'about/team')
-     * @param  int  $pageId  The page ID for collision prevention
+     * @param string $slug The page slug (e.g., 'about/team')
+     * @param int $pageId The page ID for collision prevention
      * @return string Valid anchor ID (e.g., 'about-team-42')
      */
     function tallcms_slug_to_anchor(string $slug, int $pageId): string
@@ -678,13 +750,13 @@ if (! function_exists('tallcms_slug_to_anchor')) {
 
 // Internationalization (i18n) Helper Functions
 
-if (! function_exists('tallcms_i18n_config')) {
+if (!function_exists('tallcms_i18n_config')) {
     /**
      * Get i18n config value, checking SiteSetting first, then config.
      * This bridges admin UI settings to runtime configuration.
      *
-     * @param  string  $key  Config key (e.g., 'enabled', 'default_locale')
-     * @param  mixed  $default  Default value if not found
+     * @param string $key Config key (e.g., 'enabled', 'default_locale')
+     * @param mixed $default Default value if not found
      * @return mixed The config value
      */
     function tallcms_i18n_config(string $key, mixed $default = null): mixed
@@ -700,12 +772,12 @@ if (! function_exists('tallcms_i18n_config')) {
             $settingKey = $settingMap[$key];
             // Wrap in try-catch for when table doesn't exist (e.g., during tests)
             try {
-                $dbValue = \TallCms\Cms\Models\SiteSetting::get($settingKey);
+                $dbValue = SiteSetting::get($settingKey);
 
                 if ($dbValue !== null) {
                     return $dbValue;
                 }
-            } catch (\Throwable) {
+            } catch (Throwable) {
                 // Table doesn't exist yet, fall through to config
             }
         }
@@ -715,7 +787,7 @@ if (! function_exists('tallcms_i18n_config')) {
     }
 }
 
-if (! function_exists('tallcms_localized_url')) {
+if (!function_exists('tallcms_localized_url')) {
     /**
      * Generate a locale-aware URL.
      * - prefix strategy: /es-MX/about (BCP-47 format in path)
@@ -729,13 +801,13 @@ if (! function_exists('tallcms_localized_url')) {
      * will result in double-prefixing. Use validation rules (UniqueTranslatableSlug, reserved
      * slugs) to prevent slugs that conflict with locale codes.
      *
-     * @param  string  $slug  The page/post slug (clean, without prefixes)
-     * @param  string|null  $locale  Internal locale code (es_mx). Uses current if null.
+     * @param string $slug The page/post slug (clean, without prefixes)
+     * @param string|null $locale Internal locale code (es_mx). Uses current if null.
      * @return string Full URL with locale indicator
      */
     function tallcms_localized_url(string $slug, ?string $locale = null): string
     {
-        $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+        $registry = app(LocaleRegistry::class);
         $locale = $locale ?? app()->getLocale();
         $default = $registry->getDefaultLocale();
         $hideDefault = tallcms_i18n_config('hide_default_locale', true);
@@ -750,7 +822,7 @@ if (! function_exists('tallcms_localized_url')) {
         $baseSlug = $slug === '' ? '' : '/'.$slug;
 
         // If i18n disabled, return simple URL with routes prefix
-        if (! tallcms_i18n_config('enabled', false)) {
+        if (!tallcms_i18n_config('enabled', false)) {
             return $routesPrefix.($baseSlug ?: '/');
         }
 
@@ -762,16 +834,16 @@ if (! function_exists('tallcms_localized_url')) {
                 return $baseUrl;
             }
             // Append ?lang= with BCP-47 format
-            $bcp47 = \TallCms\Cms\Services\LocaleRegistry::toBcp47($locale);
+            $bcp47 = LocaleRegistry::toBcp47($locale);
 
             return $baseUrl.'?lang='.$bcp47;
         }
 
         // Strategy: 'prefix' - use path prefix
         $localePrefix = '';
-        if (! $hideDefault || $locale !== $default) {
+        if (!$hideDefault || $locale !== $default) {
             // Convert internal format (es_mx) to BCP-47 (es-MX) for URL
-            $localePrefix = '/'.\TallCms\Cms\Services\LocaleRegistry::toBcp47($locale);
+            $localePrefix = '/'.LocaleRegistry::toBcp47($locale);
         }
 
         // Build URL: routes_prefix + locale_prefix + slug
@@ -781,7 +853,7 @@ if (! function_exists('tallcms_localized_url')) {
     }
 }
 
-if (! function_exists('tallcms_resolve_custom_url')) {
+if (!function_exists('tallcms_resolve_custom_url')) {
     /**
      * Resolve a custom URL, handling both clean slugs and already-prefixed paths.
      *
@@ -795,7 +867,7 @@ if (! function_exists('tallcms_resolve_custom_url')) {
      *
      * Paths missing required prefixes are normalized through tallcms_localized_url().
      *
-     * @param  string  $url  The custom URL or slug
+     * @param string $url The custom URL or slug
      * @return string Resolved URL
      */
     function tallcms_resolve_custom_url(string $url): string
@@ -833,16 +905,16 @@ if (! function_exists('tallcms_resolve_custom_url')) {
 
             // Step 2: Check for locale prefix (after routes_prefix if present, or at start)
             if ($i18nEnabled && $urlStrategy === 'prefix') {
-                $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+                $registry = app(LocaleRegistry::class);
                 $pathToCheck = $slugAfterPrefixes;
 
                 // Also check original path for locale-only URLs like /zh-CN/page
-                if (! $hasRoutesPrefix) {
+                if (!$hasRoutesPrefix) {
                     $pathToCheck = $pathWithoutSlash;
                 }
 
                 foreach ($registry->getLocaleCodes() as $localeCode) {
-                    $bcp47 = \TallCms\Cms\Services\LocaleRegistry::toBcp47($localeCode);
+                    $bcp47 = LocaleRegistry::toBcp47($localeCode);
                     if (str_starts_with($pathToCheck, $bcp47.'/')) {
                         $hasLocalePrefix = true;
                         $foundLocale = $localeCode;
@@ -858,8 +930,8 @@ if (! function_exists('tallcms_resolve_custom_url')) {
             }
 
             // Determine what's required
-            $needsRoutesPrefix = ! empty($routesPrefix);
-            $registry = $i18nEnabled ? app(\TallCms\Cms\Services\LocaleRegistry::class) : null;
+            $needsRoutesPrefix = !empty($routesPrefix);
+            $registry = $i18nEnabled ? app(LocaleRegistry::class) : null;
             $defaultLocale = $registry?->getDefaultLocale();
 
             // Special case: hide_default_locale=true and URL has default locale prefix
@@ -870,13 +942,13 @@ if (! function_exists('tallcms_resolve_custom_url')) {
             }
 
             // For non-default locales, locale prefix is always needed when i18n prefix strategy is active
-            $needsLocalePrefix = $i18nEnabled && $urlStrategy === 'prefix' && ! $hideDefault;
+            $needsLocalePrefix = $i18nEnabled && $urlStrategy === 'prefix' && !$hideDefault;
 
             // Case 1: Fully qualified (has all required prefixes)
             // For non-default locales with hide_default_locale=true, having locale prefix is correct
             if ($hasLocalePrefix && $foundLocale !== $defaultLocale) {
                 // Non-default locale with prefix - check routes_prefix requirement
-                if ($hasRoutesPrefix || ! $needsRoutesPrefix) {
+                if ($hasRoutesPrefix || !$needsRoutesPrefix) {
                     return $url;
                 }
 
@@ -885,18 +957,18 @@ if (! function_exists('tallcms_resolve_custom_url')) {
             }
 
             // Case 2: No locale prefix and no routes prefix requirement issue
-            if ((! $hasLocalePrefix || ! $needsLocalePrefix) &&
-                ($hasRoutesPrefix || ! $needsRoutesPrefix)) {
+            if ((!$hasLocalePrefix || !$needsLocalePrefix) &&
+                ($hasRoutesPrefix || !$needsRoutesPrefix)) {
                 return $url;
             }
 
             // Case 3: Has locale but missing routes_prefix
-            if ($hasLocalePrefix && $needsRoutesPrefix && ! $hasRoutesPrefix) {
+            if ($hasLocalePrefix && $needsRoutesPrefix && !$hasRoutesPrefix) {
                 return tallcms_localized_url($slugAfterPrefixes, $foundLocale);
             }
 
             // Case 4: Has routes_prefix but missing required locale
-            if ($hasRoutesPrefix && $needsLocalePrefix && ! $hasLocalePrefix) {
+            if ($hasRoutesPrefix && $needsLocalePrefix && !$hasLocalePrefix) {
                 return tallcms_localized_url($slugAfterPrefixes);
             }
 
@@ -909,17 +981,17 @@ if (! function_exists('tallcms_resolve_custom_url')) {
     }
 }
 
-if (! function_exists('tallcms_alternate_urls')) {
+if (!function_exists('tallcms_alternate_urls')) {
     /**
      * Get alternate URLs for all translations of a model.
      * Returns array keyed by internal locale code with BCP-47 formatted URLs.
      *
-     * @param  \Illuminate\Database\Eloquent\Model  $model  Model with HasTranslatableContent
+     * @param Model $model Model with HasTranslatableContent
      * @return array<string, string> [locale => url]
      */
     function tallcms_alternate_urls($model): array
     {
-        $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+        $registry = app(LocaleRegistry::class);
         $urls = [];
 
         foreach ($registry->getLocaleCodes() as $locale) {
@@ -934,7 +1006,7 @@ if (! function_exists('tallcms_alternate_urls')) {
     }
 }
 
-if (! function_exists('tallcms_current_locale')) {
+if (!function_exists('tallcms_current_locale')) {
     /**
      * Get current locale with i18n awareness.
      * Returns the app locale, which is set by SetLocaleMiddleware.
@@ -947,7 +1019,7 @@ if (! function_exists('tallcms_current_locale')) {
     }
 }
 
-if (! function_exists('tallcms_i18n_enabled')) {
+if (!function_exists('tallcms_i18n_enabled')) {
     /**
      * Check if i18n is enabled.
      *
@@ -959,7 +1031,7 @@ if (! function_exists('tallcms_i18n_enabled')) {
     }
 }
 
-if (! function_exists('tallcms_search_url')) {
+if (!function_exists('tallcms_search_url')) {
     /**
      * Get the search page URL respecting i18n and plugin mode prefixes.
      *
@@ -985,14 +1057,14 @@ if (! function_exists('tallcms_search_url')) {
 
         // Add locale prefix if i18n is enabled with prefix strategy
         if (tallcms_i18n_enabled() && $urlStrategy === 'prefix') {
-            $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+            $registry = app(LocaleRegistry::class);
             $currentLocale = tallcms_current_locale();
             $defaultLocale = $registry->getDefaultLocale();
             $hideDefault = config('tallcms.i18n.hide_default_locale', true);
 
             // Add locale prefix unless it's hidden default
-            if (! ($hideDefault && $currentLocale === $defaultLocale)) {
-                $segments[] = \TallCms\Cms\Services\LocaleRegistry::toBcp47($currentLocale);
+            if (!($hideDefault && $currentLocale === $defaultLocale)) {
+                $segments[] = LocaleRegistry::toBcp47($currentLocale);
             }
         }
 
@@ -1002,14 +1074,14 @@ if (! function_exists('tallcms_search_url')) {
 
         // For 'none' strategy, append ?lang= query parameter
         if (tallcms_i18n_enabled() && $urlStrategy === 'none') {
-            $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+            $registry = app(LocaleRegistry::class);
             $currentLocale = tallcms_current_locale();
             $defaultLocale = $registry->getDefaultLocale();
             $hideDefault = config('tallcms.i18n.hide_default_locale', true);
 
             // Append ?lang= unless it's hidden default
-            if (! ($hideDefault && $currentLocale === $defaultLocale)) {
-                $bcp47 = \TallCms\Cms\Services\LocaleRegistry::toBcp47($currentLocale);
+            if (!($hideDefault && $currentLocale === $defaultLocale)) {
+                $bcp47 = LocaleRegistry::toBcp47($currentLocale);
 
                 return $baseUrl.'?lang='.$bcp47;
             }
@@ -1019,7 +1091,7 @@ if (! function_exists('tallcms_search_url')) {
     }
 }
 
-if (! function_exists('tallcms_current_slug')) {
+if (!function_exists('tallcms_current_slug')) {
     /**
      * Extract the clean content slug from the current request path.
      *
@@ -1053,9 +1125,9 @@ if (! function_exists('tallcms_current_slug')) {
 
         // Strip locale prefix if i18n is enabled with prefix strategy
         if (tallcms_i18n_config('enabled', false) && config('tallcms.i18n.url_strategy', 'prefix') === 'prefix') {
-            $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
+            $registry = app(LocaleRegistry::class);
             foreach ($registry->getLocaleCodes() as $localeCode) {
-                $bcp47 = \TallCms\Cms\Services\LocaleRegistry::toBcp47($localeCode);
+                $bcp47 = LocaleRegistry::toBcp47($localeCode);
                 if (str_starts_with($path, $bcp47.'/')) {
                     $path = substr($path, strlen($bcp47) + 1);
                     break;
@@ -1069,18 +1141,18 @@ if (! function_exists('tallcms_current_slug')) {
     }
 }
 
-if (! function_exists('tallcms_locale_label')) {
+if (!function_exists('tallcms_locale_label')) {
     /**
      * Get the display label (native name) for a locale code.
      *
-     * @param  string  $localeCode  The locale code (internal or BCP-47 format)
-     * @param  bool  $native  Whether to return native name (true) or English label (false)
+     * @param string $localeCode The locale code (internal or BCP-47 format)
+     * @param bool $native Whether to return native name (true) or English label (false)
      * @return string The locale label, or the code itself if not found
      */
     function tallcms_locale_label(string $localeCode, bool $native = true): string
     {
-        $registry = app(\TallCms\Cms\Services\LocaleRegistry::class);
-        $normalized = \TallCms\Cms\Services\LocaleRegistry::normalizeLocaleCode($localeCode);
+        $registry = app(LocaleRegistry::class);
+        $normalized = LocaleRegistry::normalizeLocaleCode($localeCode);
         $locales = $registry->getLocales();
 
         if (isset($locales[$normalized])) {
@@ -1093,7 +1165,7 @@ if (! function_exists('tallcms_locale_label')) {
     }
 }
 
-if (! function_exists('tallcms_review_workflow_enabled')) {
+if (!function_exists('tallcms_review_workflow_enabled')) {
     /**
      * Check if the review workflow is enabled for the current site.
      *
@@ -1113,14 +1185,14 @@ if (! function_exists('tallcms_review_workflow_enabled')) {
         $multisiteActive = false;
         try {
             if (class_exists('Tallcms\Multisite\Scopes\SiteScope')) {
-                $multisiteActive = \TallCms\Cms\Models\CmsPage::hasGlobalScope('Tallcms\Multisite\Scopes\SiteScope');
+                $multisiteActive = CmsPage::hasGlobalScope('Tallcms\Multisite\Scopes\SiteScope');
             }
-        } catch (\Throwable) {
+        } catch (Throwable) {
         }
-        $default = ! $multisiteActive;
+        $default = !$multisiteActive;
 
         try {
-            $value = \TallCms\Cms\Models\SiteSetting::get('review_workflow_enabled');
+            $value = SiteSetting::get('review_workflow_enabled');
 
             // If not explicitly set, use the default
             if ($value === null || $value === '') {
@@ -1128,13 +1200,13 @@ if (! function_exists('tallcms_review_workflow_enabled')) {
             }
 
             return filter_var($value, FILTER_VALIDATE_BOOLEAN);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return $default;
         }
     }
 }
 
-if (! function_exists('tallcms_base_url')) {
+if (!function_exists('tallcms_base_url')) {
     /**
      * Get the canonical base URL for the current site context.
      *
@@ -1147,7 +1219,7 @@ if (! function_exists('tallcms_base_url')) {
         // Explicit site_id: look up the domain directly
         if ($siteId !== null) {
             try {
-                $domain = \Illuminate\Support\Facades\DB::table('tallcms_sites')
+                $domain = DB::table('tallcms_sites')
                     ->where('id', $siteId)
                     ->value('domain');
 
@@ -1157,7 +1229,7 @@ if (! function_exists('tallcms_base_url')) {
 
                     return "{$scheme}://{$domain}";
                 }
-            } catch (\Throwable) {
+            } catch (Throwable) {
             }
         }
 
@@ -1171,7 +1243,7 @@ if (! function_exists('tallcms_base_url')) {
     }
 }
 
-if (! function_exists('tallcms_multisite_active')) {
+if (!function_exists('tallcms_multisite_active')) {
     /**
      * Check if the multisite plugin is actively running.
      *
@@ -1183,9 +1255,9 @@ if (! function_exists('tallcms_multisite_active')) {
     {
         try {
             if (class_exists('Tallcms\Multisite\Scopes\SiteScope')) {
-                return \TallCms\Cms\Models\CmsPage::hasGlobalScope('Tallcms\Multisite\Scopes\SiteScope');
+                return CmsPage::hasGlobalScope('Tallcms\Multisite\Scopes\SiteScope');
             }
-        } catch (\Throwable) {
+        } catch (Throwable) {
         }
 
         return false;
