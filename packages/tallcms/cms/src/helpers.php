@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use TallCms\Cms\Contracts\ThemeInterface;
 use TallCms\Cms\Models\CmsPage;
@@ -14,6 +13,7 @@ use TallCms\Cms\Services\LocaleRegistry;
 use TallCms\Cms\Services\PluginLicenseService;
 use TallCms\Cms\Services\ThemeManager;
 use TallCms\Cms\Services\ThemeResolver;
+use TallCms\Cms\Support\MenuCache;
 
 /**
  * TallCMS Helper Functions
@@ -545,26 +545,25 @@ if (!function_exists('menu')) {
             $request->getHost(),
         ]);
 
-        $cachedMenu = Cache::tags(['cms', 'cms:menus'])
-            ->remember($persistentCacheKey, now()->addHour(), function () use ($location): ?array {
-                $menu = TallcmsMenu::byLocation($location);
+        $cachedMenu = MenuCache::remember($persistentCacheKey, now()->addHour(), function () use ($location): ?array {
+            $menu = TallcmsMenu::byLocation($location);
 
-                if (!$menu) {
-                    return null;
-                }
+            if (!$menu) {
+                return null;
+            }
 
-                // Get all menu items for this menu and build the tree structure
-                $items = $menu->allItems()
-                    ->where('is_active', true)
-                    ->with('page')
-                    ->defaultOrder()
-                    ->get()
-                    ->toTree();
+            // Get all menu items for this menu and build the tree structure
+            $items = $menu->allItems()
+                ->where('is_active', true)
+                ->with('page')
+                ->defaultOrder()
+                ->get()
+                ->toTree();
 
-                return $items->map(function ($item) {
-                    return buildMenuItemArray($item, false);
-                })->toArray();
-            });
+            return $items->map(function ($item) {
+                return buildMenuItemArray($item, false);
+            })->toArray();
+        });
 
         $resolvedMenus[$cacheKey] = $cachedMenu === null
             ? null

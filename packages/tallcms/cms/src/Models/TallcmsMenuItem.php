@@ -7,9 +7,9 @@ namespace TallCms\Cms\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Cache;
 use Kalnoy\Nestedset\NodeTrait;
 use TallCms\Cms\Models\Concerns\HasTranslatableContent;
+use TallCms\Cms\Support\MenuCache;
 
 class TallcmsMenuItem extends Model
 {
@@ -44,8 +44,8 @@ class TallcmsMenuItem extends Model
 
     protected static function booted(): void
     {
-        static::saved(fn (): bool => Cache::tags(['cms', 'cms:menus'])->flush());
-        static::deleted(fn (): bool => Cache::tags(['cms', 'cms:menus'])->flush());
+        static::saved(fn (): bool => MenuCache::flush());
+        static::deleted(fn (): bool => MenuCache::flush());
     }
 
     public function menu(): BelongsTo
