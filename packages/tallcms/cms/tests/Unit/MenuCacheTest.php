@@ -3,12 +3,29 @@
 namespace TallCms\Cms\Tests\Unit;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use TallCms\Cms\Support\MenuCache;
 use TallCms\Cms\Tests\TestCase;
 
 class MenuCacheTest extends TestCase
 {
+    private string $fileCachePath;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->fileCachePath = storage_path('framework/cache/menu-cache-test');
+    }
+
+    protected function tearDown(): void
+    {
+        File::deleteDirectory($this->fileCachePath);
+
+        parent::tearDown();
+    }
+
     public function test_it_uses_tagged_cache_when_the_store_supports_tags(): void
     {
         Cache::setDefaultDriver('array');
@@ -49,7 +66,7 @@ class MenuCacheTest extends TestCase
         config()->set('cache.default', 'file');
         config()->set('cache.stores.file', [
             'driver' => 'file',
-            'path' => storage_path('framework/cache/data'),
+            'path' => $this->fileCachePath,
         ]);
         Cache::setDefaultDriver('file');
         Cache::purge('file');

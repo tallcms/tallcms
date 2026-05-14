@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use TallCms\Cms\Support\MenuCache;
 
 class SiteSetting extends Model
 {
@@ -20,6 +21,14 @@ class SiteSetting extends Model
     protected const CURRENT_SITE_ID_MEMOIZED_ATTRIBUTE = 'tallcms.current_site_id_memoized';
 
     protected const CURRENT_SITE_ID_ATTRIBUTE = 'tallcms.current_site_id';
+
+    protected const MENU_URL_SETTING_KEYS = [
+        'site_type',
+        'i18n_enabled',
+        'default_locale',
+        'hide_default_locale',
+        'i18n_locale_overrides',
+    ];
 
     protected $table = 'tallcms_site_settings';
 
@@ -110,7 +119,7 @@ class SiteSetting extends Model
                             ->where('key', $key)
                             ->first();
 
-                        if (!$override) {
+                        if (! $override) {
                             return static::missingCachePayload();
                         }
 
@@ -154,7 +163,7 @@ class SiteSetting extends Model
                 try {
                     $setting = static::where('key', $key)->first();
 
-                    if (!$setting) {
+                    if (! $setting) {
                         return static::missingCachePayload();
                     }
 
@@ -182,7 +191,7 @@ class SiteSetting extends Model
     /**
      * Cache payload wrapper used so missing/null settings are cached as real values.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     protected static function cachePayload(array $data): array
@@ -207,6 +216,7 @@ class SiteSetting extends Model
 
     protected static function isCachePayload(mixed $value): bool
     {
+        // Only arrays with the private marker are treated as cache payloads.
         return is_array($value) && ($value[static::CACHE_PAYLOAD_MARKER] ?? false) === true;
     }
 
@@ -339,6 +349,13 @@ class SiteSetting extends Model
         $request->attributes->remove(static::CURRENT_SITE_ID_MEMOIZED_ATTRIBUTE);
     }
 
+    public static function flushMenuCacheIfSettingAffectsMenuUrls(string $key): void
+    {
+        if (in_array($key, static::MENU_URL_SETTING_KEYS, true)) {
+            MenuCache::flush();
+        }
+    }
+
     /**
      * Resolve site_name from the Site model's name field.
      *
@@ -385,7 +402,7 @@ class SiteSetting extends Model
 
     protected static function memoizedDefaultSiteName(int $siteId): ?string
     {
-        if (!static::$defaultSiteIdMemoized || static::$memoizedDefaultSiteId !== $siteId) {
+        if (! static::$defaultSiteIdMemoized || static::$memoizedDefaultSiteId !== $siteId) {
             return null;
         }
 
@@ -426,11 +443,14 @@ class SiteSetting extends Model
                     ->where('id', $siteId)
                     ->update(['name' => $value]);
 
+                static::forgetMemoizedDefaultSiteId();
+
                 return;
             }
 
             // No site context: write to global setting (standalone behavior)
             static::setGlobal('site_name', $value, 'text', 'general');
+            static::forgetMemoizedDefaultSiteId();
         } catch (\Throwable) {
         }
     }
@@ -492,6 +512,7 @@ class SiteSetting extends Model
                 );
                 Cache::forget("site_setting_{$siteId}_{$key}");
                 static::forgetRequestMemoizedSettings();
+                static::flushMenuCacheIfSettingAffectsMenuUrls($key);
 
                 return;
             } catch (\Throwable) {
@@ -526,6 +547,7 @@ class SiteSetting extends Model
 
         Cache::forget("site_setting_{$key}");
         static::forgetRequestMemoizedSettings();
+        static::flushMenuCacheIfSettingAffectsMenuUrls($key);
     }
 
     /**
@@ -537,7 +559,7 @@ class SiteSetting extends Model
     public static function resetToGlobal(string $key): void
     {
         $siteId = static::resolveCurrentSiteId();
-        if (!$siteId) {
+        if (! $siteId) {
             return;
         }
 
@@ -548,6 +570,7 @@ class SiteSetting extends Model
                 ->delete();
             Cache::forget("site_setting_{$siteId}_{$key}");
             static::forgetRequestMemoizedSettings();
+            static::flushMenuCacheIfSettingAffectsMenuUrls($key);
         } catch (\Throwable) {
             // Ignore — table may not exist
         }

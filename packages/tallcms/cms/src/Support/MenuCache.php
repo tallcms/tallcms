@@ -14,7 +14,7 @@ class MenuCache
     /**
      * @template TCacheValue
      *
-     * @param Closure(): TCacheValue $callback
+     * @param  Closure(): TCacheValue  $callback
      * @return TCacheValue
      */
     public static function remember(string $key, mixed $ttl, Closure $callback): mixed
@@ -32,7 +32,7 @@ class MenuCache
     {
         self::incrementVersion();
 
-        if (!self::supportsTags()) {
+        if (! self::supportsTags()) {
             return true;
         }
 
@@ -46,7 +46,11 @@ class MenuCache
 
     private static function incrementVersion(): void
     {
-        Cache::forever(self::VersionKey, self::version() + 1);
+        Cache::add(self::VersionKey, 1, now()->addYears(10));
+
+        if (Cache::increment(self::VersionKey) === false) {
+            Cache::forever(self::VersionKey, self::version() + 1);
+        }
     }
 
     private static function supportsTags(): bool
