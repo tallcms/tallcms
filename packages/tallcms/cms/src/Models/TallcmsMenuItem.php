@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TallCms\Cms\Models;
 
+use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -46,6 +47,20 @@ class TallcmsMenuItem extends Model
     {
         static::saved(fn (): bool => MenuCache::flush());
         static::deleted(fn (): bool => MenuCache::flush());
+    }
+
+    /**
+     * Compatibility for kalnoy/nestedset v7 on Laravel 11.
+     */
+    protected static function whenBooted(Closure $callback)
+    {
+        if (method_exists(Model::class, 'whenBooted')) {
+            parent::whenBooted($callback);
+
+            return;
+        }
+
+        $callback();
     }
 
     public function menu(): BelongsTo
