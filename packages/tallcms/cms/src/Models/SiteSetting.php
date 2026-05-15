@@ -8,9 +8,28 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use TallCms\Cms\Support\MenuCache;
 
 class SiteSetting extends Model
 {
+    protected const CACHE_PAYLOAD_MARKER = '__tallcms_site_setting_cache';
+
+    protected const GLOBAL_SETTINGS_MEMO_ATTRIBUTE = 'tallcms.site_setting_globals';
+
+    protected const SITE_OVERRIDES_MEMO_ATTRIBUTE = 'tallcms.site_setting_overrides';
+
+    protected const CURRENT_SITE_ID_MEMOIZED_ATTRIBUTE = 'tallcms.current_site_id_memoized';
+
+    protected const CURRENT_SITE_ID_ATTRIBUTE = 'tallcms.current_site_id';
+
+    protected const MENU_URL_SETTING_KEYS = [
+        'site_type',
+        'i18n_enabled',
+        'default_locale',
+        'hide_default_locale',
+        'i18n_locale_overrides',
+    ];
+
     protected $table = 'tallcms_site_settings';
 
     protected $fillable = [
@@ -90,18 +109,35 @@ class SiteSetting extends Model
         if ($siteId) {
             $siteCacheKey = "site_setting_{$siteId}_{$key}";
 
-            $override = Cache::remember($siteCacheKey, 3600, function () use ($siteId, $key) {
-                try {
-                    return DB::table('tallcms_site_setting_overrides')
-                        ->where('site_id', $siteId)
-                        ->where('key', $key)
-                        ->first();
-                } catch (QueryException) {
-                    return null;
-                }
-            });
+            $override = static::memoizedSettingPayload(
+                static::SITE_OVERRIDES_MEMO_ATTRIBUTE,
+                $siteCacheKey,
+                fn (): mixed => Cache::remember($siteCacheKey, 3600, function () use ($siteId, $key) {
+                    try {
+                        $override = DB::table('tallcms_site_setting_overrides')
+                            ->where('site_id', $siteId)
+                            ->where('key', $key)
+                            ->first();
 
-            if ($override) {
+                        if (! $override) {
+                            return static::missingCachePayload();
+                        }
+
+                        return static::cachePayload([
+                            'value' => $override->value,
+                            'type' => $override->type,
+                        ]);
+                    } catch (QueryException) {
+                        return static::missingCachePayload();
+                    }
+                })
+            );
+
+            if (static::isCachePayload($override)) {
+                if ($override['exists'] ?? false) {
+                    return static::castOverrideValue($override['value'], $override['type']);
+                }
+            } elseif ($override) {
                 return static::castOverrideValue($override->value, $override->type);
             }
         }
@@ -120,24 +156,83 @@ class SiteSetting extends Model
     {
         $cacheKey = "site_setting_{$key}";
 
-        return Cache::remember($cacheKey, 3600, function () use ($key, $default) {
-            try {
-                $setting = static::where('key', $key)->first();
+        $setting = static::memoizedSettingPayload(
+            static::GLOBAL_SETTINGS_MEMO_ATTRIBUTE,
+            $cacheKey,
+            fn (): mixed => Cache::remember($cacheKey, 3600, function () use ($key) {
+                try {
+                    $setting = static::where('key', $key)->first();
 
-                if (! $setting) {
-                    return $default;
+                    if (! $setting) {
+                        return static::missingCachePayload();
+                    }
+
+                    return static::cachePayload([
+                        'value' => match ($setting->type) {
+                            'boolean' => filter_var($setting->value, FILTER_VALIDATE_BOOLEAN),
+                            'json' => json_decode($setting->value, true),
+                            'file' => $setting->value,
+                            default => $setting->value,
+                        },
+                    ]);
+                } catch (QueryException) {
+                    return static::missingCachePayload();
                 }
+            })
+        );
 
-                return match ($setting->type) {
-                    'boolean' => filter_var($setting->value, FILTER_VALIDATE_BOOLEAN),
-                    'json' => json_decode($setting->value, true),
-                    'file' => $setting->value,
-                    default => $setting->value,
-                };
-            } catch (QueryException) {
-                return $default;
-            }
-        });
+        if (static::isCachePayload($setting)) {
+            return ($setting['exists'] ?? false) ? $setting['value'] : $default;
+        }
+
+        return $setting;
+    }
+
+    /**
+     * Cache payload wrapper used so missing/null settings are cached as real values.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected static function cachePayload(array $data): array
+    {
+        return [
+            static::CACHE_PAYLOAD_MARKER => true,
+            'exists' => true,
+            ...$data,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected static function missingCachePayload(): array
+    {
+        return [
+            static::CACHE_PAYLOAD_MARKER => true,
+            'exists' => false,
+        ];
+    }
+
+    protected static function isCachePayload(mixed $value): bool
+    {
+        // Only arrays with the private marker are treated as cache payloads.
+        return is_array($value) && ($value[static::CACHE_PAYLOAD_MARKER] ?? false) === true;
+    }
+
+    protected static function memoizedSettingPayload(string $attribute, string $key, callable $resolver): mixed
+    {
+        $request = request();
+        $memoizedSettings = $request->attributes->get($attribute, []);
+
+        if (array_key_exists($key, $memoizedSettings)) {
+            return $memoizedSettings[$key];
+        }
+
+        $memoizedSettings[$key] = $resolver();
+        $request->attributes->set($attribute, $memoizedSettings);
+
+        return $memoizedSettings[$key];
     }
 
     /**
@@ -156,34 +251,40 @@ class SiteSetting extends Model
      */
     protected static function resolveCurrentSiteId(): ?int
     {
+        $request = request();
+
+        if ($request->attributes->get(static::CURRENT_SITE_ID_MEMOIZED_ATTRIBUTE, false)) {
+            return $request->attributes->get(static::CURRENT_SITE_ID_ATTRIBUTE);
+        }
+
+        $siteId = null;
         $isAdminContext = request()?->attributes->get('tallcms.admin_context', false);
 
         if ($isAdminContext) {
             // Admin: session is the source of truth (immune to stale resolver)
             $sessionValue = session('multisite_admin_site_id');
             if ($sessionValue && $sessionValue !== '__all_sites__' && is_numeric($sessionValue)) {
-                return (int) $sessionValue;
+                $siteId = (int) $sessionValue;
             }
-
-            return null; // "All Sites" or no selection
-        }
-
-        // Frontend / non-admin with multisite plugin: resolver is authoritative (domain-based)
-        if (app()->bound('tallcms.multisite.resolver')) {
+        } elseif (app()->bound('tallcms.multisite.resolver')) {
+            // Frontend / non-admin with multisite plugin: resolver is authoritative (domain-based)
             try {
                 $resolver = app('tallcms.multisite.resolver');
                 if ($resolver->isResolved() && $resolver->id()) {
-                    return $resolver->id();
+                    $siteId = $resolver->id();
                 }
             } catch (\Throwable) {
                 // Resolver not functional
             }
-
-            return null;
+        } else {
+            // Single-site install: default site is always the current site.
+            $siteId = static::defaultSiteId();
         }
 
-        // Single-site install: default site is always the current site.
-        return static::defaultSiteId();
+        $request->attributes->set(static::CURRENT_SITE_ID_ATTRIBUTE, $siteId);
+        $request->attributes->set(static::CURRENT_SITE_ID_MEMOIZED_ATTRIBUTE, true);
+
+        return $siteId;
     }
 
     /**
@@ -194,6 +295,8 @@ class SiteSetting extends Model
      */
     protected static ?int $memoizedDefaultSiteId = null;
 
+    protected static ?string $memoizedDefaultSiteName = null;
+
     protected static bool $defaultSiteIdMemoized = false;
 
     protected static function defaultSiteId(): ?int
@@ -203,11 +306,19 @@ class SiteSetting extends Model
         }
 
         try {
-            $id = DB::table('tallcms_sites')->where('is_default', true)->value('id')
-                ?? DB::table('tallcms_sites')->orderBy('id')->value('id');
-            static::$memoizedDefaultSiteId = $id ? (int) $id : null;
+            $site = DB::table('tallcms_sites')
+                ->where('is_default', true)
+                ->select(['id', 'name'])
+                ->first() ?? DB::table('tallcms_sites')
+                ->orderBy('id')
+                ->select(['id', 'name'])
+                ->first();
+
+            static::$memoizedDefaultSiteId = $site?->id ? (int) $site->id : null;
+            static::$memoizedDefaultSiteName = is_string($site?->name) && $site->name !== '' ? $site->name : null;
         } catch (\Throwable) {
             static::$memoizedDefaultSiteId = null;
+            static::$memoizedDefaultSiteName = null;
         }
 
         static::$defaultSiteIdMemoized = true;
@@ -221,7 +332,28 @@ class SiteSetting extends Model
     public static function forgetMemoizedDefaultSiteId(): void
     {
         static::$memoizedDefaultSiteId = null;
+        static::$memoizedDefaultSiteName = null;
         static::$defaultSiteIdMemoized = false;
+
+        request()?->attributes->remove('tallcms.site_names');
+        static::forgetRequestMemoizedSettings();
+    }
+
+    protected static function forgetRequestMemoizedSettings(): void
+    {
+        $request = request();
+
+        $request->attributes->remove(static::GLOBAL_SETTINGS_MEMO_ATTRIBUTE);
+        $request->attributes->remove(static::SITE_OVERRIDES_MEMO_ATTRIBUTE);
+        $request->attributes->remove(static::CURRENT_SITE_ID_ATTRIBUTE);
+        $request->attributes->remove(static::CURRENT_SITE_ID_MEMOIZED_ATTRIBUTE);
+    }
+
+    public static function flushMenuCacheIfSettingAffectsMenuUrls(string $key): void
+    {
+        if (in_array($key, static::MENU_URL_SETTING_KEYS, true)) {
+            MenuCache::flush();
+        }
     }
 
     /**
@@ -243,7 +375,9 @@ class SiteSetting extends Model
             $siteId = static::resolveCurrentSiteId();
 
             if ($siteId) {
-                $name = DB::table('tallcms_sites')->where('id', $siteId)->value('name');
+                $name = static::memoizedDefaultSiteName($siteId)
+                    ?? static::memoizedSiteName("site:{$siteId}", fn (): ?string => DB::table('tallcms_sites')->where('id', $siteId)->value('name'));
+
                 if ($name) {
                     return $name;
                 }
@@ -256,7 +390,7 @@ class SiteSetting extends Model
             }
 
             // Fallback: default site's name
-            $name = DB::table('tallcms_sites')->where('is_default', true)->value('name');
+            $name = static::memoizedSiteName('default', fn (): ?string => DB::table('tallcms_sites')->where('is_default', true)->value('name'));
             if ($name) {
                 return $name;
             }
@@ -264,6 +398,31 @@ class SiteSetting extends Model
         }
 
         return $default ?? config('app.name', 'My Site');
+    }
+
+    protected static function memoizedDefaultSiteName(int $siteId): ?string
+    {
+        if (! static::$defaultSiteIdMemoized || static::$memoizedDefaultSiteId !== $siteId) {
+            return null;
+        }
+
+        return static::$memoizedDefaultSiteName;
+    }
+
+    protected static function memoizedSiteName(string $key, callable $resolver): ?string
+    {
+        $request = request();
+        $names = $request->attributes->get('tallcms.site_names', []);
+
+        if (array_key_exists($key, $names)) {
+            return $names[$key];
+        }
+
+        $name = $resolver();
+        $names[$key] = is_string($name) && $name !== '' ? $name : null;
+        $request->attributes->set('tallcms.site_names', $names);
+
+        return $names[$key];
     }
 
     /**
@@ -284,11 +443,14 @@ class SiteSetting extends Model
                     ->where('id', $siteId)
                     ->update(['name' => $value]);
 
+                static::forgetMemoizedDefaultSiteId();
+
                 return;
             }
 
             // No site context: write to global setting (standalone behavior)
             static::setGlobal('site_name', $value, 'text', 'general');
+            static::forgetMemoizedDefaultSiteId();
         } catch (\Throwable) {
         }
     }
@@ -349,6 +511,8 @@ class SiteSetting extends Model
                     ]
                 );
                 Cache::forget("site_setting_{$siteId}_{$key}");
+                static::forgetRequestMemoizedSettings();
+                static::flushMenuCacheIfSettingAffectsMenuUrls($key);
 
                 return;
             } catch (\Throwable) {
@@ -382,6 +546,8 @@ class SiteSetting extends Model
         );
 
         Cache::forget("site_setting_{$key}");
+        static::forgetRequestMemoizedSettings();
+        static::flushMenuCacheIfSettingAffectsMenuUrls($key);
     }
 
     /**
@@ -403,6 +569,8 @@ class SiteSetting extends Model
                 ->where('key', $key)
                 ->delete();
             Cache::forget("site_setting_{$siteId}_{$key}");
+            static::forgetRequestMemoizedSettings();
+            static::flushMenuCacheIfSettingAffectsMenuUrls($key);
         } catch (\Throwable) {
             // Ignore — table may not exist
         }
@@ -437,6 +605,7 @@ class SiteSetting extends Model
     public static function clearCache(): void
     {
         static::forgetMemoizedDefaultSiteId();
+        static::forgetRequestMemoizedSettings();
 
         try {
             $settings = static::all();

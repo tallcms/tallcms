@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace TallCms\Cms\Models;
 
+use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Kalnoy\Nestedset\NodeTrait;
 use TallCms\Cms\Models\Concerns\HasTranslatableContent;
+use TallCms\Cms\Support\MenuCache;
 
 class TallcmsMenuItem extends Model
 {
@@ -40,6 +42,26 @@ class TallcmsMenuItem extends Model
         'meta' => 'array',
         'is_active' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        static::saved(fn (): bool => MenuCache::flush());
+        static::deleted(fn (): bool => MenuCache::flush());
+    }
+
+    /**
+     * Compatibility for kalnoy/nestedset v7 on Laravel 11.
+     */
+    protected static function whenBooted(Closure $callback)
+    {
+        if (method_exists(Model::class, 'whenBooted')) {
+            parent::whenBooted($callback);
+
+            return;
+        }
+
+        $callback();
+    }
 
     public function menu(): BelongsTo
     {

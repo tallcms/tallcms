@@ -448,20 +448,22 @@ if (! function_exists('buildMenuItemArray')) {
     /**
      * Recursively build menu item array with children
      */
-    function buildMenuItemArray($item): array
+    function buildMenuItemArray($item, bool $resolveActiveState = true): array
     {
         $url = $item->getResolvedUrl();
-        $children = $item->children->map(function ($child) {
-            return buildMenuItemArray($child);
+        $children = $item->children->map(function ($child) use ($resolveActiveState) {
+            return buildMenuItemArray($child, $resolveActiveState);
         })->toArray();
 
         // Check if this item is active
-        $isActive = isMenuItemActive($url);
+        $isActive = $resolveActiveState ? isMenuItemActive($url) : false;
 
         // Check if any child is active (for parent highlighting)
-        $hasActiveChild = collect($children)->contains(function ($child) {
-            return $child['is_active'] || $child['has_active_child'];
-        });
+        $hasActiveChild = $resolveActiveState
+            ? collect($children)->contains(function ($child) {
+                return $child['is_active'] || $child['has_active_child'];
+            })
+            : false;
 
         return [
             'id' => $item->id,
@@ -478,29 +480,85 @@ if (! function_exists('buildMenuItemArray')) {
     }
 }
 
+if (! function_exists('applyMenuActiveState')) {
+    /**
+     * Apply request-specific active state to a cached menu item array.
+     *
+     * @param  array<string, mixed>  $item
+     * @return array<string, mixed>
+     */
+    function applyMenuActiveState(array $item): array
+    {
+        $children = array_map(
+            fn (array $child): array => applyMenuActiveState($child),
+            $item['children'] ?? [],
+        );
+
+        $item['is_active'] = isMenuItemActive($item['url'] ?? null);
+        $item['has_active_child'] = collect($children)->contains(function (array $child): bool {
+            return ($child['is_active'] ?? false) || ($child['has_active_child'] ?? false);
+        });
+        $item['children'] = $children;
+
+        return $item;
+    }
+}
+
 if (! function_exists('menu')) {
     /**
      * Get a menu by location with resolved URLs
      */
     function menu(string $location): ?array
     {
-        $menu = \TallCms\Cms\Models\TallcmsMenu::byLocation($location);
+        $request = request();
 
-        if (! $menu) {
-            return null;
+        $cacheKey = implode('|', [
+            $location,
+            app()->getLocale(),
+            $request->getHost(),
+            $request->path(),
+        ]);
+
+        $resolvedMenus = $request->attributes->get('tallcms.resolved_menus', []);
+
+        if (array_key_exists($cacheKey, $resolvedMenus)) {
+            return $resolvedMenus[$cacheKey];
         }
 
-        // Get all menu items for this menu and build the tree structure
-        $items = $menu->allItems()
-            ->where('is_active', true)
-            ->with('page')
-            ->defaultOrder()
-            ->get()
-            ->toTree();
+        $persistentCacheKey = implode('|', [
+            'tallcms.menu',
+            $location,
+            app()->getLocale(),
+            $request->getHost(),
+        ]);
 
-        return $items->map(function ($item) {
-            return buildMenuItemArray($item);
-        })->toArray();
+        $cachedMenu = \TallCms\Cms\Support\MenuCache::remember($persistentCacheKey, now()->addHour(), function () use ($location): ?array {
+            $menu = \TallCms\Cms\Models\TallcmsMenu::byLocation($location);
+
+            if (! $menu) {
+                return null;
+            }
+
+            // Get all menu items for this menu and build the tree structure
+            $items = $menu->allItems()
+                ->where('is_active', true)
+                ->with('page')
+                ->defaultOrder()
+                ->get()
+                ->toTree();
+
+            return $items->map(function ($item) {
+                return buildMenuItemArray($item, false);
+            })->toArray();
+        });
+
+        $resolvedMenus[$cacheKey] = $cachedMenu === null
+            ? null
+            : array_map(fn (array $item): array => applyMenuActiveState($item), $cachedMenu);
+
+        $request->attributes->set('tallcms.resolved_menus', $resolvedMenus);
+
+        return $resolvedMenus[$cacheKey];
     }
 }
 

@@ -22,6 +22,7 @@ use TallCms\Cms\Models\Concerns\HasRevisions;
 use TallCms\Cms\Models\Concerns\HasSearchableContent;
 use TallCms\Cms\Models\Concerns\HasTranslatableContent;
 use TallCms\Cms\Services\CustomBlockDiscoveryService;
+use TallCms\Cms\Support\MenuCache;
 
 class CmsPage extends Model implements HasRichContent
 {
@@ -176,8 +177,15 @@ class CmsPage extends Model implements HasRichContent
         });
 
         static::saved(function ($page) {
+            if ($page->wasRecentlyCreated || $page->wasChanged(['slug', 'parent_id', 'is_homepage'])) {
+                MenuCache::flush();
+            }
+
             MediaLibraryFileAttachmentProvider::syncAltTextFromContent($page->content);
         });
+
+        static::deleted(fn (): bool => MenuCache::flush());
+        static::restored(fn (): bool => MenuCache::flush());
     }
 
     public function parent(): BelongsTo

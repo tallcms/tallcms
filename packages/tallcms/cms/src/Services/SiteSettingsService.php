@@ -6,6 +6,7 @@ namespace TallCms\Cms\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use TallCms\Cms\Models\SiteSetting;
 use TallCms\Cms\Models\SiteSettingOverride;
 
 /**
@@ -58,6 +59,7 @@ class SiteSettingsService
         );
 
         Cache::forget("site_setting_{$siteId}_{$key}");
+        SiteSetting::flushMenuCacheIfSettingAffectsMenuUrls($key);
     }
 
     /**
@@ -71,6 +73,7 @@ class SiteSettingsService
             ->delete();
 
         Cache::forget("site_setting_{$siteId}_{$key}");
+        SiteSetting::flushMenuCacheIfSettingAffectsMenuUrls($key);
     }
 
     /**
