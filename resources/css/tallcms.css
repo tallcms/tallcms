@@ -199,3 +199,22 @@
         @apply my-8 border-base-300;
     }
 }
+
+/* ============================================
+   Parallax - Mobile/Accessibility Fallbacks
+   Disable background-attachment: fixed on iOS
+   Safari (which renders it incorrectly), touch
+   devices, and reduced-motion users.
+   Applied to Hero and Parallax blocks.
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+    .parallax-block .parallax-bg {
+        background-attachment: scroll !important;
+    }
+}
+
+@media (max-width: 768px), (hover: none) {
+    .parallax-block .parallax-bg {
+        background-attachment: scroll !important;
+    }
+}
