@@ -50,8 +50,14 @@
         $secondary_button_classes = "btn btn-ghost {$buttonSize}";
     }
 
+    // Parallax: iOS Safari renders background-attachment: fixed incorrectly
+    // (image is sized to viewport, not element — appears zoomed/cropped).
+    // The .parallax-block .parallax-bg rule in tallcms.css disables it on
+    // touch/mobile/reduced-motion; opt the hero into that rule.
+    $parallaxEnabled = $hasBackgroundImage && ($parallax_effect ?? true);
+
     // Section classes - keep -mt-20 for non-preview (tucks under nav)
-    $sectionClasses = "hero {$height} " . ($isPreview ? '' : '-mt-20') . " relative overflow-hidden " . ($css_classes ?? '');
+    $sectionClasses = "hero {$height} " . ($isPreview ? '' : '-mt-20') . " relative overflow-hidden " . ($parallaxEnabled ? 'parallax-block ' : '') . ($css_classes ?? '');
 
     // Animation config
     $animationType = $animation_type ?? '';
@@ -67,10 +73,10 @@
 >
     {{-- Background (custom overlay div for opacity control, NOT .hero-overlay) --}}
     @if($hasBackgroundImage)
-        <div class="absolute inset-0 z-0"
+        <div class="absolute inset-0 z-0 {{ $parallaxEnabled ? 'parallax-bg' : '' }}"
              style="background-image: url('{{ Storage::disk(cms_media_disk())->url($background_image) }}');
                     background-size: cover; background-position: center;
-                    @if($parallax_effect ?? true) background-attachment: fixed; @endif">
+                    @if($parallaxEnabled) background-attachment: fixed; @endif">
             <div class="absolute inset-0" style="background-color: rgba(0, 0, 0, {{ $overlayOpacity }});"></div>
         </div>
     @else
