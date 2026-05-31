@@ -38,15 +38,10 @@ Full guide: [Installation](https://github.com/tallcms/tallcms/blob/main/docs/gs-
 
 ## Requirements
 
-- PHP 8.2+
-- Laravel 11 or 12, Filament 5
+- PHP 8.2+ (Laravel 13 requires PHP 8.3+)
+- Laravel 11, 12, or 13, Filament 5
 - MySQL 8 / MariaDB 10.3 / SQLite
 - Node 20+ (host app needs to build its Vite manifest for the admin to render)
-
-> **Laravel 13 is not yet supported.** Blocked upstream on
-> [`lazychaser/laravel-nestedset`](https://github.com/lazychaser/laravel-nestedset)
-> (caps at `illuminate/support <=12.0`). Tracking in
-> [tallcms/tallcms#61](https://github.com/tallcms/tallcms/issues/61).
 
 ## Documentation
 

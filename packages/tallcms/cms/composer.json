@@ -42,15 +42,15 @@
         "lara-zeus/spatie-translatable": "^1.0 || ^2.0",   
         "spatie/laravel-package-tools": "^1.16",
         "bezhansalleh/filament-shield": "^4.0",
-        "spatie/laravel-permission": "^6.0",
+        "spatie/laravel-permission": "^6.0 || ^7.0",
         "ext-sodium": "*",
         "ezyang/htmlpurifier": "^4.19",
-        "wsmallnews/filament-nestedset": "^2.0",
-        "laravel/scout": "^10.0",
+        "wsmallnews/filament-nestedset": "^2.2",
+        "laravel/scout": "^10.0 || ^11.0",
         "laravel/sanctum": "^4.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^9.0 || ^10.0",
+        "orchestra/testbench": "^9.0 || ^10.0 || ^11.0",
         "phpunit/phpunit": "^10.5 || ^11.0",
         "spatie/laravel-translatable": "^6.0",
         "knuckleswtf/scribe": "^4.0 || ^5.0"

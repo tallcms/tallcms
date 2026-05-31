@@ -37,14 +37,16 @@ Full guide: [Installation](https://github.com/tallcms/tallcms/blob/main/docs/gs-
 
 ## System Requirements
 
-- PHP 8.2+
-- Laravel 12, Filament 5
+- PHP 8.2+ (Laravel 13 requires PHP 8.3+)
+- Laravel 12 or 13, Filament 5
 - MySQL 8 / MariaDB 10.3 / SQLite
 - Node 20+ (for building assets)
 
-> **Laravel 13 is not yet supported.** Blocked upstream on
-> [`lazychaser/laravel-nestedset`](https://github.com/lazychaser/laravel-nestedset)
-> (caps at `illuminate/support <=12.0`). Tracking in
+> **Laravel 13:** the core CMS (`tallcms/cms`) supports Laravel 13. The
+> standalone skeleton currently resolves on Laravel 12 until
+> [`tallcms/filament-registration`](https://packagist.org/packages/tallcms/filament-registration)
+> ships a Laravel 13–compatible release, after which `composer update` picks
+> up Laravel 13 automatically. Tracking in
 > [#61](https://github.com/tallcms/tallcms/issues/61).
 
 ## Documentation
