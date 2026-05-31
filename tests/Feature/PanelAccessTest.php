@@ -98,8 +98,14 @@ class PanelAccessTest extends TestCase
     // Email Verification Gate (REGISTRATION_EMAIL_VERIFICATION)
     // -------------------------------------------------------
 
-    public function test_unverified_user_is_rejected_when_flag_on(): void
+    public function test_unverified_user_still_passes_can_access_panel_gate_handled_by_middleware(): void
     {
+        // canAccessPanel() intentionally does NOT gate on email verification.
+        // Filament's `verified` middleware (added by ->emailVerification(isRequired: true))
+        // redirects unverified users to the verification prompt — which itself is a
+        // panel route, so the user must pass canAccessPanel() to reach it. Rejecting
+        // here would lock newly-registered users out of the page that verifies them.
+        // See the NOTE in App\Models\User::canAccessPanel().
         config()->set('registration.email_verification.enabled', true);
 
         User::factory()->create(); // ensure not first user
@@ -107,7 +113,7 @@ class PanelAccessTest extends TestCase
         Role::findOrCreate('editor');
         $user->assignRole('editor');
 
-        $this->assertFalse($user->canAccessPanel($this->getPanel()));
+        $this->assertTrue($user->canAccessPanel($this->getPanel()));
     }
 
     public function test_unverified_user_is_allowed_when_flag_off(): void

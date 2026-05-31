@@ -19,6 +19,13 @@ class RegistrationPluginTest extends TestCase
     {
         parent::setUp();
 
+        // Registration ships as the optional tallcms/filament-registration plugin
+        // (wired by the tallcms/registration bridge). When it isn't installed the
+        // /register routes don't exist, so skip rather than fail.
+        if (! class_exists(\Tallcms\FilamentRegistration\Filament\Pages\Register::class)) {
+            $this->markTestSkipped('Registration plugin (tallcms/filament-registration) not installed.');
+        }
+
         config(['registration.enabled' => true]);
         config(['registration.default_role' => 'author']);
         // These tests cover registration mechanics, not the post-registration
