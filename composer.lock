@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3cfcf27fa06106297084b3ee7ec21779",
+    "content-hash": "86258c02103ca470fa4866b3d858d094",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -8993,11 +8993,11 @@
         },
         {
             "name": "tallcms/cms",
-            "version": "4.5.2",
+            "version": "4.6.0",
             "dist": {
                 "type": "path",
                 "url": "./packages/tallcms/cms",
-                "reference": "3d4813924b2df6b1c2d70aa50922bf7eecffe0dd"
+                "reference": "9f416db82b82fa8b56195a11beee81a8a6529e87"
             },
             "require": {
                 "bezhansalleh/filament-shield": "^4.0",
@@ -9007,15 +9007,15 @@
                 "intervention/image": "^3.0",
                 "lara-zeus/spatie-translatable": "^1.0 || ^2.0",
                 "laravel/sanctum": "^4.0",
-                "laravel/scout": "^10.0",
+                "laravel/scout": "^10.0 || ^11.0",
                 "php": "^8.2",
                 "spatie/laravel-package-tools": "^1.16",
-                "spatie/laravel-permission": "^6.0",
-                "wsmallnews/filament-nestedset": "^2.0"
+                "spatie/laravel-permission": "^6.0 || ^7.0",
+                "wsmallnews/filament-nestedset": "^2.2"
             },
             "require-dev": {
                 "knuckleswtf/scribe": "^4.0 || ^5.0",
-                "orchestra/testbench": "^9.0 || ^10.0",
+                "orchestra/testbench": "^9.0 || ^10.0 || ^11.0",
                 "phpunit/phpunit": "^10.5 || ^11.0",
                 "spatie/laravel-translatable": "^6.0"
             },
@@ -9434,22 +9434,22 @@
         },
         {
             "name": "wsmallnews/filament-nestedset",
-            "version": "v2.1.0",
+            "version": "v2.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Wsmallnews/filament-nestedset.git",
-                "reference": "df8eb3f7ea8c751382a8592fca5277e390fded60"
+                "reference": "d3ef45eff2708a91c3868fac8e777e4f73c00af5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Wsmallnews/filament-nestedset/zipball/df8eb3f7ea8c751382a8592fca5277e390fded60",
-                "reference": "df8eb3f7ea8c751382a8592fca5277e390fded60",
+                "url": "https://api.github.com/repos/Wsmallnews/filament-nestedset/zipball/d3ef45eff2708a91c3868fac8e777e4f73c00af5",
+                "reference": "d3ef45eff2708a91c3868fac8e777e4f73c00af5",
                 "shasum": ""
             },
             "require": {
                 "codewithdennis/filament-select-tree": "^4.0",
                 "filament/filament": "^4.0 || ^5.0",
-                "kalnoy/nestedset": "^6.0",
+                "kalnoy/nestedset": "^6.0 || ^7.0",
                 "php": "^8.2",
                 "spatie/laravel-package-tools": "^1.15.0"
             },
@@ -9494,12 +9494,14 @@
             "description": "Filament nestedset tree builder powered by kalnoy/nestedset with Filament v4 and v5 support",
             "homepage": "https://github.com/wsmallnews/filament-nestedset",
             "keywords": [
+                "AI Guidelines",
                 "Wsmallnews",
                 "filament",
                 "filament-nestedset",
                 "filament-plugin",
                 "filament-tree",
                 "laravel",
+                "laravel-boost",
                 "nestedset",
                 "smallnews",
                 "tree"
@@ -9514,7 +9516,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-01-31T10:50:54+00:00"
+            "time": "2026-05-29T07:28:02+00:00"
         }
     ],
     "packages-dev": [
