@@ -422,7 +422,7 @@ trait HasRevisions
             if ($autoRevisionCount > $autoLimit) {
                 $this->revisions()
                     ->where('is_manual', false)
-                    ->orderBy('revision_number')
+                    ->reorder('revision_number', 'asc')
                     ->limit($autoRevisionCount - $autoLimit)
                     ->delete();
             }
@@ -436,7 +436,7 @@ trait HasRevisions
             if ($manualRevisionCount > $manualLimit) {
                 $this->revisions()
                     ->where('is_manual', true)
-                    ->orderBy('revision_number')
+                    ->reorder('revision_number', 'asc')
                     ->limit($manualRevisionCount - $manualLimit)
                     ->delete();
             }
