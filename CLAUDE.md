@@ -29,7 +29,7 @@ php artisan test --filter=SomeTest             # Filter by test name
 
 Tests use SQLite in-memory database, array cache, and sync queue (configured in `phpunit.xml`).
 
-**Package tests** (CI runs these across PHP 8.2-8.4 + Laravel 11-12):
+**Package tests** (CI runs these across PHP 8.2-8.4 + Laravel 12-13):
 ```bash
 cd packages/tallcms/cms && vendor/bin/phpunit
 ```
