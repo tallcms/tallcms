@@ -10,48 +10,48 @@ Welcome to TallCMS — a modern, block-based CMS built on Laravel and Filament.
 
 | Guide | Time | What You'll Do |
 |-------|------|----------------|
-| [Installation](installation) | 10 min | Get TallCMS running |
-| [Create Your First Page](first-page) | 5 min | Build a page with blocks |
-| [Publish Your First Post](first-post) | 5 min | Write and publish a blog post |
-| [Set Up Navigation](quick-menus) | 5 min | Create site menus |
+| [Installation](gs-installation.md) | 10 min | Get TallCMS running |
+| [Create Your First Page](gs-first-page.md) | 5 min | Build a page with blocks |
+| [Publish Your First Post](gs-first-post.md) | 5 min | Write and publish a blog post |
+| [Set Up Navigation](gs-menus.md) | 5 min | Create site menus |
 
 ### Managing Your Site
 
 | Guide | Description |
 |-------|-------------|
-| [Pages & Posts](pages-posts) | Organize your content |
-| [Content Blocks](blocks) | Use Hero, Pricing, Gallery, and more |
-| [Media Library](media) | Upload and manage images |
-| [SEO](seo) | Sitemaps, meta tags, structured data |
-| [Menus](menus) | Full navigation guide |
-| [Mega Menu](mega-menu) | Advanced navigation with badges, CTAs, templates |
-| [Site Settings](site-settings) | Logo, contact info, SPA mode |
-| [Code Injection](code-injection) | Analytics, tracking scripts, chat widgets |
-| [Multisite Setup](multisite) | Run multiple sites — single-tenant up to full self-serve SaaS |
+| [Pages & Posts](site-pages-posts.md) | Organize your content |
+| [Content Blocks](site-blocks.md) | Use Hero, Pricing, Gallery, and more |
+| [Media Library](site-media.md) | Upload and manage images |
+| [SEO](site-seo.md) | Sitemaps, meta tags, structured data |
+| [Menus](site-menus.md) | Full navigation guide |
+| [Mega Menu](site-mega-menu.md) | Advanced navigation with badges, CTAs, templates |
+| [Site Settings](site-settings.md) | Logo, contact info, SPA mode |
+| [Code Injection](site-code-injection.md) | Analytics, tracking scripts, chat widgets |
+| [Multisite Setup](site-multisite.md) | Run multiple sites — single-tenant up to full self-serve SaaS |
 
 ### Building Themes & Plugins
 
 | Guide | Description |
 |-------|-------------|
-| [Theme Development](themes) | Create custom themes |
-| [Theme Switcher](theme-switcher) | Enable runtime theme switching |
-| [Plugin Development](plugins) | Extend TallCMS functionality |
-| [Block Development](block-development) | Build custom content blocks |
-| [Block Styling](block-styling) | daisyUI styling patterns |
+| [Theme Development](dev-themes.md) | Create custom themes |
+| [Theme Switcher](dev-theme-switcher.md) | Enable runtime theme switching |
+| [Plugin Development](dev-plugins.md) | Extend TallCMS functionality |
+| [Block Development](dev-blocks.md) | Build custom content blocks |
+| [Block Styling](dev-block-styling.md) | daisyUI styling patterns |
 
 ### Reference
 
 | Guide | Description |
 |-------|-------------|
-| [Page Settings](page-settings) | All page configuration options |
-| [Publishing Workflow](publishing) | Draft, review, schedule, publish |
-| [Internationalization](i18n) | Multi-language support |
-| [Rich Editor](rich-editor) | Block categories and search |
-| [Redirects](redirects) | Manage 301/302 redirects for SEO and migrations |
-| [Filament Ecosystem](filament-ecosystem) | Use hundreds of Filament plugins with TallCMS |
-| [Architecture](architecture) | Internal developer reference |
-| [Multisite Architecture](multisite-architecture) | Site model, settings inheritance, scoping internals |
-| [Billing Plugin (Stripe)](billing) | Operator runbook for Cashier-backed paid plans |
+| [Page Settings](ref-page-settings.md) | All page configuration options |
+| [Publishing Workflow](ref-publishing.md) | Draft, review, schedule, publish |
+| [Internationalization](ref-i18n.md) | Multi-language support |
+| [Rich Editor](ref-rich-editor.md) | Block categories and search |
+| [Redirects](ref-redirects.md) | Manage 301/302 redirects for SEO and migrations |
+| [Filament Ecosystem](ref-filament-ecosystem.md) | Use hundreds of Filament plugins with TallCMS |
+| [Architecture](ref-architecture.md) | Internal developer reference |
+| [Multisite Architecture](dev-multisite.md) | Site model, settings inheritance, scoping internals |
+| [Billing Plugin (Stripe)](dev-billing.md) | Operator runbook for Cashier-backed paid plans |
 
 ---
 
