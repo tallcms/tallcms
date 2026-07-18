@@ -85,6 +85,7 @@ All settings in `config/tallcms.php` under `i18n`:
     'default_locale' => env('TALLCMS_DEFAULT_LOCALE', 'en'),
     'url_strategy' => 'prefix',
     'hide_default_locale' => env('TALLCMS_HIDE_DEFAULT_LOCALE', true),
+    'redirect_root_to_locale' => env('TALLCMS_REDIRECT_ROOT_TO_LOCALE', false),
 ],
 ```
 
@@ -181,6 +182,18 @@ URLs include locale prefix:
 When `hide_default_locale = true`:
 - Default locale: `/about`
 - Other locales: `/zh-CN/about`
+
+### Redirect `/` to Default Locale
+
+When `hide_default_locale = false`, no unprefixed `/` CMS route is registered. Optionally enable `redirect_root_to_locale` (Global Defaults → Languages, or per-site on the Languages tab) to **301** redirect `/` to the default locale prefix (e.g. `/en/`).
+
+| Setting | Scope | Default |
+|---------|-------|---------|
+| `redirect_root_to_locale` | Global default + per-site override | `false` |
+
+Redirect target locale: site locale if set, otherwise global `default_locale`. Query strings are preserved.
+
+Requires: `i18n_enabled`, `url_strategy = prefix`, and `hide_default_locale = false`.
 
 ### Query Parameter Strategy
 

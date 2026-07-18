@@ -13,6 +13,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
 use TallCms\Cms\Models\Site;
+use TallCms\Cms\Models\SiteSetting;
 use TallCms\Cms\Services\LocaleRegistry;
 
 class SiteForm
@@ -40,6 +41,7 @@ class SiteForm
                     static::embedCodeTab(),
                     static::publishingTab(),
                     static::maintenanceTab(),
+                    static::languagesTab(includeSiteLocaleField: true),
                 ])
                 ->persistTabInQueryString()
                 ->columnSpanFull(),
@@ -84,7 +86,7 @@ class SiteForm
                     ->columns(2),
 
                 Section::make('Technical')
-                    ->description('Domain, theme, and locale configuration')
+                    ->description('Domain and theme configuration')
                     ->schema([
                         TextInput::make('domain')
                             ->label('Domain')
@@ -98,12 +100,6 @@ class SiteForm
                             ->label('Theme')
                             ->options(fn () => static::getThemeOptions())
                             ->helperText('Visual theme for this site'),
-
-                        Select::make('locale')
-                            ->label('Default Locale')
-                            ->options(fn () => static::getLocaleOptions())
-                            ->searchable()
-                            ->helperText('Primary language for this site'),
                     ])
                     ->columns(2),
             ]);
@@ -331,6 +327,77 @@ class SiteForm
                             ->columnSpanFull(),
                     ]),
             ]);
+    }
+
+    public static function languagesTab(bool $includeSiteLocaleField = false): Tabs\Tab
+    {
+        $schema = [];
+
+        if ($includeSiteLocaleField) {
+            $schema[] = Section::make('Site Language')
+                ->description('Primary language for this site')
+                ->schema([
+                    Select::make('locale')
+                        ->label('Locale')
+                        ->options(fn () => static::getLocaleOptions())
+                        ->searchable()
+                        ->helperText('Used for content and as the redirect target when / redirect is enabled.'),
+                ])
+                ->columns(2);
+        }
+
+        $schema[] = Section::make('URL Routing')
+            ->description('Locale URL behaviour for this site')
+            ->schema(static::languagesRedirectSchema());
+
+        return Tabs\Tab::make('Languages')
+            ->icon('heroicon-o-language')
+            ->schema($schema);
+    }
+
+    /**
+     * Shared redirect toggle schema for standalone and multisite site edit forms.
+     *
+     * @return array<int, \Filament\Forms\Components\Component>
+     */
+    public static function languagesRedirectSchema(): array
+    {
+        return [
+            Toggle::make('redirect_root_to_locale')
+                ->label('Redirect / to the default locale')
+                ->helperText('When enabled, visitors to / are redirected to this site\'s language prefix. Requires multilingual URLs with visible default locale (Global Defaults → Languages → Hide Default Language in URLs off).')
+                ->default(false)
+                ->disabled(fn () => ! static::isRedirectRootToLocaleApplicable())
+                ->dehydrated(fn () => static::isRedirectRootToLocaleApplicable())
+                ->columnSpanFull(),
+        ];
+    }
+
+    /**
+     * Whether the root-to-locale redirect can apply (requires global i18n + visible default locale).
+     */
+    public static function isRedirectRootToLocaleApplicable(): bool
+    {
+        if (! (bool) SiteSetting::getGlobal('i18n_enabled', config('tallcms.i18n.enabled', false))) {
+            return false;
+        }
+
+        return ! (bool) SiteSetting::getGlobal(
+            'hide_default_locale',
+            config('tallcms.i18n.hide_default_locale', true)
+        );
+    }
+
+    /**
+     * Normalize redirect toggle for forms when global URL strategy makes it inapplicable.
+     */
+    public static function normalizeRedirectRootToLocaleFormValue(mixed $value): bool
+    {
+        if (! static::isRedirectRootToLocaleApplicable()) {
+            return false;
+        }
+
+        return (bool) $value;
     }
 
     /**

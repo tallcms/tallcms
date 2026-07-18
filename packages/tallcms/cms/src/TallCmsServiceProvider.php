@@ -408,6 +408,7 @@ class TallCmsServiceProvider extends PackageServiceProvider
 
         // Register middleware aliases before loading routes
         $this->registerMiddlewareAliases();
+        $this->registerRootLocaleRedirectMiddleware();
 
         // Register Blade component aliases for theme compatibility
         $this->registerBladeComponentAliases();
@@ -620,11 +621,22 @@ class TallCmsServiceProvider extends PackageServiceProvider
         $router->aliasMiddleware('tallcms.theme-preview', Http\Middleware\ThemePreviewMiddleware::class);
         $router->aliasMiddleware('tallcms.preview-auth', Http\Middleware\PreviewAuthMiddleware::class);
         $router->aliasMiddleware('tallcms.set-locale', Http\Middleware\SetLocaleMiddleware::class);
+        $router->aliasMiddleware('tallcms.redirect-root-locale', Http\Middleware\RedirectRootToLocaleMiddleware::class);
 
         // API middleware
         $router->aliasMiddleware('tallcms.api-enabled', Http\Middleware\EnsureApiEnabled::class);
         $router->aliasMiddleware('tallcms.token-expiry', Http\Middleware\CheckTokenExpiry::class);
         $router->aliasMiddleware('tallcms.abilities', Http\Middleware\CheckTokenAbilities::class);
+    }
+
+    /**
+     * Register root-to-locale redirect as global middleware so it runs even
+     * when no unprefixed / route exists (hide_default_locale=false).
+     */
+    protected function registerRootLocaleRedirectMiddleware(): void
+    {
+        $kernel = $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
+        $kernel->pushMiddleware(Http\Middleware\RedirectRootToLocaleMiddleware::class);
     }
 
     /**

@@ -99,6 +99,27 @@ class SiteSettingsService
     }
 
     /**
+     * Remove a site-specific override for all sites.
+     */
+    public function resetAllSitesForKey(string $key): void
+    {
+        $siteIds = DB::table('tallcms_site_setting_overrides')
+            ->where('key', $key)
+            ->pluck('site_id')
+            ->unique();
+
+        DB::table('tallcms_site_setting_overrides')
+            ->where('key', $key)
+            ->delete();
+
+        foreach ($siteIds as $siteId) {
+            Cache::forget("site_setting_{$siteId}_{$key}");
+        }
+
+        SiteSetting::flushMenuCacheIfSettingAffectsMenuUrls($key);
+    }
+
+    /**
      * Get a global setting value (not site-specific).
      */
     public function getGlobal(string $key, mixed $default = null): mixed

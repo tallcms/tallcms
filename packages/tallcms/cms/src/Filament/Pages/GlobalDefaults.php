@@ -17,6 +17,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use TallCms\Cms\Models\SiteSetting;
 use TallCms\Cms\Services\LocaleRegistry;
+use TallCms\Cms\Services\SiteSettingsService;
 
 /**
  * Global defaults for all site-scoped settings.
@@ -128,6 +129,14 @@ class GlobalDefaults extends Page implements HasForms
         $formData['i18n_enabled'] = SiteSetting::getGlobal('i18n_enabled', config('tallcms.i18n.enabled', false));
         $formData['default_locale'] = SiteSetting::getGlobal('default_locale', config('tallcms.i18n.default_locale', 'en'));
         $formData['hide_default_locale'] = SiteSetting::getGlobal('hide_default_locale', config('tallcms.i18n.hide_default_locale', true));
+        $formData['redirect_root_to_locale'] = SiteSetting::getGlobal(
+            'redirect_root_to_locale',
+            config('tallcms.i18n.redirect_root_to_locale', false)
+        );
+
+        if (! $formData['i18n_enabled'] || $formData['hide_default_locale']) {
+            $formData['redirect_root_to_locale'] = false;
+        }
 
         $this->form->fill($formData);
     }
@@ -177,6 +186,17 @@ class GlobalDefaults extends Page implements HasForms
         }
         if (array_key_exists('hide_default_locale', $data)) {
             SiteSetting::setGlobal('hide_default_locale', $data['hide_default_locale'], 'boolean', 'i18n');
+        }
+
+        $i18nEnabled = (bool) ($data['i18n_enabled'] ?? false);
+        $hideDefault = (bool) ($data['hide_default_locale'] ?? true);
+        $redirectApplicable = $i18nEnabled && ! $hideDefault;
+
+        if ($redirectApplicable && array_key_exists('redirect_root_to_locale', $data)) {
+            SiteSetting::setGlobal('redirect_root_to_locale', $data['redirect_root_to_locale'], 'boolean', 'i18n');
+        } else {
+            SiteSetting::setGlobal('redirect_root_to_locale', false, 'boolean', 'i18n');
+            app(SiteSettingsService::class)->resetAllSitesForKey('redirect_root_to_locale');
         }
 
         SiteSetting::clearCache();
@@ -418,7 +438,12 @@ class GlobalDefaults extends Page implements HasForms
                             ->label('Enable Multilingual Support')
                             ->helperText('When enabled, content can be translated into multiple languages.')
                             ->live()
-                            ->columnSpanFull(),
+                            ->columnSpanFull()
+                            ->afterStateUpdated(function ($state, callable $set): void {
+                                if (! $state) {
+                                    $set('redirect_root_to_locale', false);
+                                }
+                            }),
 
                         Select::make('default_locale')
                             ->label('Default Language')
@@ -432,6 +457,20 @@ class GlobalDefaults extends Page implements HasForms
                             ->label('Hide Default Language in URLs')
                             ->helperText('Default language accessed at / instead of /en/.')
                             ->default(true)
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set): void {
+                                if ($state) {
+                                    $set('redirect_root_to_locale', false);
+                                }
+                            })
+                            ->visible(fn ($get) => $get('i18n_enabled')),
+
+                        Toggle::make('redirect_root_to_locale')
+                            ->label('Redirect / to the default locale')
+                            ->helperText('When enabled, visitors to / are redirected to the default language prefix (e.g. /en/). Only applies when Hide Default Language in URLs is off.')
+                            ->default(false)
+                            ->disabled(fn ($get) => ! $get('i18n_enabled') || $get('hide_default_locale'))
+                            ->dehydrated(fn ($get) => $get('i18n_enabled') && ! $get('hide_default_locale'))
                             ->visible(fn ($get) => $get('i18n_enabled')),
                     ])
                     ->columns(2),

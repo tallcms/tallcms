@@ -501,6 +501,9 @@ return [
         // Hide default locale from URL (/ instead of /en/)
         'hide_default_locale' => env('TALLCMS_HIDE_DEFAULT_LOCALE', true),
 
+        // Redirect bare / to the default locale prefix (e.g. /en/) when hide_default_locale=false
+        'redirect_root_to_locale' => env('TALLCMS_REDIRECT_ROOT_TO_LOCALE', false),
+
         // Fallback when translation missing: 'default', 'empty', 'key'
         'fallback_behavior' => 'default',
 

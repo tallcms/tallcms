@@ -9,6 +9,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use TallCms\Cms\Filament\Resources\SiteResource\SiteResource;
+use TallCms\Cms\Filament\Resources\SiteResource\SiteForm;
 use TallCms\Cms\Models\Site;
 use TallCms\Cms\Services\SiteSettingsService;
 
@@ -69,6 +70,8 @@ class EditSite extends Page implements HasForms
         // Maintenance
         'maintenance_mode' => 'boolean',
         'maintenance_message' => 'text',
+        // Languages
+        'redirect_root_to_locale' => 'boolean',
         // Embed code (per-site overrides; global default writable in single-site EditSite)
         'code_head' => 'text',
         'code_body_start' => 'text',
@@ -102,6 +105,10 @@ class EditSite extends Page implements HasForms
             };
 
             $formData[$key] = $service->getForSite($siteId, $key, $default);
+
+            if ($key === 'redirect_root_to_locale') {
+                $formData[$key] = SiteForm::normalizeRedirectRootToLocaleFormValue($formData[$key]);
+            }
         }
 
         $this->form->fill($formData);
@@ -160,6 +167,11 @@ class EditSite extends Page implements HasForms
 
             // Value differs from global — create or update override
             $service->setForSite($site->id, $key, $value, $type);
+        }
+
+        if (! SiteForm::isRedirectRootToLocaleApplicable()
+            && $service->hasOverride($site->id, 'redirect_root_to_locale')) {
+            $service->resetForSite($site->id, 'redirect_root_to_locale');
         }
 
         // Clear caches
