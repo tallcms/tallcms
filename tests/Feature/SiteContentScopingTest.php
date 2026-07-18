@@ -591,7 +591,7 @@ class SiteContentScopingTest extends TestCase
 
         // Site-dependent pages should redirect to template gallery
         $this->get("/{$panelPath}/cms-pages")->assertRedirect("/{$panelPath}/template-gallery");
-        $this->get("/{$panelPath}/site-settings")->assertRedirect("/{$panelPath}/template-gallery");
+        $this->get("/{$panelPath}/multisite-settings")->assertRedirect("/{$panelPath}/template-gallery");
     }
 
     public function test_user_with_no_sites_can_access_non_site_pages(): void
@@ -627,7 +627,7 @@ class SiteContentScopingTest extends TestCase
 
         // Super-admin should access everything without redirect
         $this->get("/{$panelPath}/cms-pages")->assertOk();
-        $this->get("/{$panelPath}/site-settings")->assertOk();
+        $this->get("/{$panelPath}/multisite-settings")->assertOk();
         $this->get("/{$panelPath}/cms-posts")->assertOk();
     }
 
