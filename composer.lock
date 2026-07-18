@@ -9248,11 +9248,11 @@
         },
         {
             "name": "tallcms/cms",
-            "version": "4.6.4",
+            "version": "4.7.0",
             "dist": {
                 "type": "path",
                 "url": "./packages/tallcms/cms",
-                "reference": "2ad7e7d33f2c4e180998d2b9abc0ba0b0383ddac"
+                "reference": "5705e098350521b3fcb801e009b55d4ce91196a7"
             },
             "require": {
                 "bezhansalleh/filament-shield": "^4.0",
@@ -9270,7 +9270,7 @@
             },
             "require-dev": {
                 "knuckleswtf/scribe": "^4.0 || ^5.0",
-                "orchestra/testbench": "^9.0 || ^10.0 || ^11.0",
+                "orchestra/testbench": "^10.0 || ^11.0",
                 "phpunit/phpunit": "^10.5 || ^11.0",
                 "spatie/laravel-translatable": "^6.0"
             },
