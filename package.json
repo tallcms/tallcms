@@ -9,7 +9,7 @@
     "devDependencies": {
         "@alpinejs/intersect": "^3.15.5",
         "@tailwindcss/typography": "^0.5.19",
-        "@tailwindcss/vite": "^4.3.1",
+        "@tailwindcss/vite": "^4.3.3",
         "axios": "^1.18.0",
         "concurrently": "^9.2.3",
         "daisyui": "^5.5.14",
