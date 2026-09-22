@@ -51,7 +51,7 @@ class RssFeedController extends Controller
             abort(404);
         }
 
-        $category = CmsCategory::where('slug', $slug)->firstOrFail();
+        $category = CmsCategory::query()->withSlug($slug)->firstOrFail();
 
         $limit = (int) SiteSetting::get('seo_rss_limit', 20);
         $includeFullContent = (bool) SiteSetting::get('seo_rss_full_content', false);

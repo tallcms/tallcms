@@ -89,7 +89,9 @@ class PostsBlock extends RichContentCustomBlock
                                                     $query->where('user_id', auth()->id());
                                                 }
 
-                                                return $query->pluck('name', 'id')->toArray();
+                                                return $query->orderBy('sort_order')->get()->mapWithKeys(
+                                                    fn (\TallCms\Cms\Models\CmsCategory $category): array => [$category->getKey() => (string) $category->name]
+                                                )->all();
                                             })
                                             ->placeholder(__('tallcms::ui.t_all_categories'))
                                             ->helperText(__('tallcms::ui.t_leave_empty_to_show_posts_from_all_categories')),
@@ -143,7 +145,9 @@ class PostsBlock extends RichContentCustomBlock
                                                     $query->where('user_id', auth()->id());
                                                 }
 
-                                                return $query->pluck('title', 'id')->toArray();
+                                                return $query->orderByDesc('published_at')->orderBy('id')->get()->mapWithKeys(
+                                                    fn (\TallCms\Cms\Models\CmsPost $post): array => [$post->getKey() => (string) $post->title]
+                                                )->all();
                                             })
                                             ->visible(fn (Get $get) => $get('sort_by') === 'manual')
                                             ->helperText(__('tallcms::ui.t_select_and_order_posts_manually')),

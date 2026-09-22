@@ -23,7 +23,6 @@ class CmsCategoriesTable
 
                 TextColumn::make('name')->label(__('tallcms::fields.name'))
                     ->searchable()
-                    ->sortable()
                     ->weight('medium'),
 
                 TextColumn::make('slug')->label(__('tallcms::fields.slug'))

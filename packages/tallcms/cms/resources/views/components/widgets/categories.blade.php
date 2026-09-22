@@ -9,7 +9,7 @@
     } else {
         $categories = \TallCms\Cms\Models\CmsCategory::query()
             ->when($showCount, fn($q) => $q->withCount(['posts' => fn($q) => $q->published()]))
-            ->orderBy('name')
+            ->orderBy('sort_order')
             ->get();
     }
 

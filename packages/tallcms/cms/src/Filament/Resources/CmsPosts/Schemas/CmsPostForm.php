@@ -202,15 +202,22 @@ class CmsPostForm
                                     ->schema([
                                         Select::make('categories')->label(tallcms_label('categories', 'plural'))
                                             ->multiple()
-                                            ->relationship('categories', 'name')
+                                            ->relationship(
+                                                name: 'categories',
+                                                titleAttribute: 'name',
+                                                modifyQueryUsing: fn (Builder $query) => $query->orderBy('sort_order'),
+                                            )
+                                            ->getOptionLabelFromRecordUsing(fn (CmsCategory $record): string => (string) $record->name)
                                             ->options(function () {
-                                                $query = CmsCategory::query();
+                                                $query = CmsCategory::query()->orderBy('sort_order');
                                                 if (auth()->check() && ! auth()->user()->hasRole('super_admin')
                                                     && DbSchema::hasColumn('tallcms_categories', 'user_id')) {
                                                     $query->where('user_id', auth()->id());
                                                 }
 
-                                                return $query->pluck('name', 'id');
+                                                return $query->get()->mapWithKeys(
+                                                    fn (CmsCategory $category): array => [$category->getKey() => (string) $category->name]
+                                                );
                                             })
                                             ->searchable()
                                             ->preload()

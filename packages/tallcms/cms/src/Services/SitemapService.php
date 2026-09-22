@@ -212,7 +212,7 @@ class SitemapService
             return CmsCategory::whereHas('posts', function ($q) {
                 $q->published();
             })
-                ->orderBy('name')
+                ->orderBy('sort_order')
                 ->get()
                 ->map(function ($category) use ($baseUrl, $prefix) {
                     return [

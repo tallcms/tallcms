@@ -15,6 +15,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use TallCms\Cms\Enums\ContentStatus;
+use TallCms\Cms\Models\CmsCategory;
 
 class CmsPostsTable
 {
@@ -30,7 +31,6 @@ class CmsPostsTable
 
                 TextColumn::make('title')->label(__('tallcms::fields.title'))
                     ->searchable()
-                    ->sortable()
                     ->limit(50),
 
                 TextColumn::make('excerpt')->label(__('tallcms::fields.excerpt'))
@@ -90,7 +90,12 @@ class CmsPostsTable
 
                 SelectFilter::make('categories')
                     ->label(tallcms_label('categories', 'plural'))
-                    ->relationship('categories', 'name')
+                    ->relationship(
+                        'categories',
+                        'name',
+                        fn ($query) => $query->orderBy('sort_order'),
+                    )
+                    ->getOptionLabelFromRecordUsing(fn (CmsCategory $record): string => (string) $record->name)
                     ->multiple(),
 
                 SelectFilter::make('author')
