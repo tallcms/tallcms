@@ -77,9 +77,6 @@ return new class extends Migration
         $defaultLocale = config('tallcms.i18n.default_locale', 'en');
         $driver = DB::getDriverName();
 
-        // Restore unique constraints first
-        $this->restoreUniqueConstraints();
-
         // Reverse conversions (extract default locale value from JSON)
         $this->revertTable('tallcms_pages', [
             'title' => 'string',
@@ -111,6 +108,9 @@ return new class extends Migration
         $this->revertTable('tallcms_menu_items', [
             'label' => 'string',
         ], $defaultLocale, $driver);
+
+        // Slug is a string again. A unique index cannot be created while it is still JSON.
+        $this->restoreUniqueConstraints();
     }
 
     /**
