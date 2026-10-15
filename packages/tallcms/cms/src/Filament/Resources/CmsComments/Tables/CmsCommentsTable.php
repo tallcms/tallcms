@@ -60,7 +60,6 @@ class CmsCommentsTable
                 TextColumn::make('post.title')
                     ->label(__('tallcms::fields.post'))
                     ->limit(40)
-                    ->sortable()
                     ->url(fn ($record) => $record->post ? route(
                         'filament.'.config('tallcms.filament.panel_id', 'admin').'.resources.cms-posts.edit',
                         $record->post

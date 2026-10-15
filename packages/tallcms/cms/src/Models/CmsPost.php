@@ -192,16 +192,8 @@ class CmsPost extends Model implements HasRichContent
 
     public function scopeInCategory($query, $categorySlug)
     {
-        return $query->whereHas('categories', function ($q) use ($categorySlug) {
-            // Category slug is stored as JSON (translatable)
-            $locale = config('app.locale', 'en');
-            $driver = $q->getConnection()->getDriverName();
-
-            match ($driver) {
-                'sqlite' => $q->whereRaw("JSON_EXTRACT(slug, '$.{$locale}') = ?", [$categorySlug]),
-                'pgsql' => $q->whereRaw('slug::jsonb ->> ? = ?', [$locale, $categorySlug]),
-                default => $q->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(slug, '$.\"".$locale."\"')) = ?", [$categorySlug]),
-            };
+        return $query->whereHas('categories', function ($categories) use ($categorySlug) {
+            $categories->forPublicSlug($categorySlug);
         });
     }
 

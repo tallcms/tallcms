@@ -28,8 +28,7 @@ class CmsPagesTable
                     ->disk(cms_media_disk()),
 
                 TextColumn::make('title')->label(__('tallcms::fields.title'))
-                    ->searchable()
-                    ->sortable(),
+                    ->searchable(),
 
                 TextColumn::make('slug')->label(__('tallcms::fields.slug'))
                     ->searchable()

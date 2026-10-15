@@ -14,7 +14,9 @@ use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use TallCms\Cms\Enums\ContentStatus;
+use TallCms\Cms\Models\CmsCategory;
 
 class CmsPostsTable
 {
@@ -30,7 +32,6 @@ class CmsPostsTable
 
                 TextColumn::make('title')->label(__('tallcms::fields.title'))
                     ->searchable()
-                    ->sortable()
                     ->limit(50),
 
                 TextColumn::make('excerpt')->label(__('tallcms::fields.excerpt'))
@@ -88,10 +89,7 @@ class CmsPostsTable
                         '0' => __('tallcms::fields.not_featured'),
                     ]),
 
-                SelectFilter::make('categories')
-                    ->label(tallcms_label('categories', 'plural'))
-                    ->relationship('categories', 'name')
-                    ->multiple(),
+                self::categoryFilter(),
 
                 SelectFilter::make('author')
                     ->relationship('author', 'name'),
@@ -109,5 +107,30 @@ class CmsPostsTable
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
+    }
+
+    public static function categoryFilter(): SelectFilter
+    {
+        return SelectFilter::make('categories')
+            ->label(tallcms_label('categories', 'plural'))
+            ->multiple()
+            ->options(fn (): array => CmsCategory::translatedSelectOptions())
+            ->getSearchResultsUsing(fn (?string $search): array => CmsCategory::translatedSelectOptions(search: $search))
+            ->getOptionLabelsUsing(fn (array $values): array => CmsCategory::translatedSelectOptions(ids: $values))
+            ->query(function (Builder $query, array $data): Builder {
+                $values = array_values(array_filter(
+                    (array) ($data['values'] ?? []),
+                    fn (mixed $value): bool => filled($value),
+                ));
+
+                if ($values === []) {
+                    return $query;
+                }
+
+                return $query->whereHas(
+                    'categories',
+                    fn (Builder $categories): Builder => $categories->whereKey($values),
+                );
+            });
     }
 }

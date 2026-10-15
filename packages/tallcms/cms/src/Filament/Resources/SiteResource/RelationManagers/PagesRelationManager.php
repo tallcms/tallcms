@@ -29,12 +29,11 @@ class PagesRelationManager extends RelationManager
         return $table
             ->columns([
                 TextColumn::make('title')->label(__('tallcms::fields.title'))
-                    ->searchable()
-                    ->sortable()
+                    ->searchable(query: fn ($query, string $search) => $query->whereTranslatableContains('title', $search))
                     ->limit(40),
 
                 TextColumn::make('slug')->label(__('tallcms::fields.slug'))
-                    ->searchable()
+                    ->searchable(query: fn ($query, string $search) => $query->whereTranslatableContains('slug', $search))
                     ->limit(30)
                     ->color('gray'),
 

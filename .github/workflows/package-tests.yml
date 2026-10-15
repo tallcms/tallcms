@@ -70,3 +70,62 @@ jobs:
       - name: Run tests
         working-directory: packages/tallcms/cms
         run: vendor/bin/phpunit
+
+  test-pgsql:
+    runs-on: ubuntu-latest
+    name: PHP 8.4 - Laravel 12.* - PostgreSQL
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: tallcms
+          POSTGRES_PASSWORD: tallcms
+          POSTGRES_DB: tallcms_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, xml, ctype, json, bcmath, curl, zip, gd, sqlite3, sodium, pdo_sqlite, pdo_pgsql
+          coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        working-directory: packages/tallcms/cms
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-8.4-laravel-12.*-pgsql-composer-${{ hashFiles('packages/tallcms/cms/composer.json') }}
+          restore-keys: ${{ runner.os }}-php-8.4-laravel-12.*-composer-
+
+      - name: Install dependencies
+        working-directory: packages/tallcms/cms
+        run: |
+          composer require "laravel/framework:12.*" --no-interaction --no-update
+          composer update --with-all-dependencies --prefer-dist --no-interaction --no-progress
+
+      - name: Run translatable JSON tests
+        working-directory: packages/tallcms/cms
+        env:
+          TALLCMS_TEST_DB: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: tallcms_test
+          DB_USERNAME: tallcms
+          DB_PASSWORD: tallcms
+        run: vendor/bin/phpunit tests/Feature/TranslatableJsonSqlTest.php

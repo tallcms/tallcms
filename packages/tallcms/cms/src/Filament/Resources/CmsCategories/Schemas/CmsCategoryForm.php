@@ -85,7 +85,9 @@ class CmsCategoryForm
                             $query->where('user_id', auth()->id());
                         }
 
-                        return $query->pluck('name', 'id');
+                        return $query->orderBy('sort_order')->get()->mapWithKeys(
+                            fn (CmsCategory $category): array => [$category->getKey() => (string) $category->name]
+                        );
                     })
                     ->searchable()
                     ->nullable(),

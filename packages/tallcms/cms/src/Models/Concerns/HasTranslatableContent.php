@@ -7,6 +7,9 @@ namespace TallCms\Cms\Models\Concerns;
 use Spatie\Translatable\HasTranslations;
 use TallCms\Cms\Services\LocaleRegistry;
 
+use function Filament\Support\generate_search_column_expression;
+use function Filament\Support\generate_search_term_expression;
+
 /**
  * Trait for models with translatable content.
  *
@@ -31,8 +34,6 @@ trait HasTranslatableContent
      * Scope to find by localized slug with fallback.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  string  $slug
-     * @param  string|null  $locale
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeWithLocalizedSlug($query, string $slug, ?string $locale = null)
@@ -61,9 +62,6 @@ trait HasTranslatableContent
      * Database-agnostic JSON locale query.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  string  $column
-     * @param  string  $locale
-     * @param  string  $value
      */
     protected function whereJsonLocale($query, string $column, string $locale, string $value): void
     {
@@ -82,8 +80,36 @@ trait HasTranslatableContent
 
             default:
                 // MySQL/MariaDB use JSON_UNQUOTE + JSON_EXTRACT
-                $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT({$column}, '$.\"" . $locale . "\"')) = ?", [$value]);
+                $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT({$column}, '$.\"".$locale."\"')) = ?", [$value]);
         }
+    }
+
+    /**
+     * Match a translatable JSON column against the current locale's text.
+     *
+     * Uses Filament's search expressions so MySQL's utf8mb4_bin JSON text is
+     * compared case-insensitively, the same way the main resource tables search.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeWhereTranslatableContains($query, string $column, string $term, ?string $locale = null)
+    {
+        $locale = $locale ?? app()->getLocale();
+        $connection = $query->getConnection();
+
+        $jsonColumn = match ($connection->getDriverName()) {
+            'pgsql' => "{$column}->>'{$locale}'",
+            default => "json_extract({$column}, '$.\"{$locale}\"')",
+        };
+
+        $search = generate_search_term_expression($term, true, $connection);
+
+        return $query->where(
+            generate_search_column_expression($jsonColumn, true, $connection),
+            'like',
+            '%'.$search.'%',
+        );
     }
 
     /**
@@ -114,11 +140,11 @@ trait HasTranslatableContent
         // Check reserved slugs (locale codes)
         $reserved = app(LocaleRegistry::class)->getReservedSlugs();
         if (in_array($slug, $reserved)) {
-            $slug = $baseSlug . '-page';
+            $slug = $baseSlug.'-page';
         }
 
         while ($this->localizedSlugExists($slug, $locale)) {
-            $slug = $baseSlug . '-' . $counter;
+            $slug = $baseSlug.'-'.$counter;
             $counter++;
         }
 

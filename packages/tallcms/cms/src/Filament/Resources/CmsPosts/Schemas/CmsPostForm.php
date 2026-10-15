@@ -200,20 +200,7 @@ class CmsPostForm
 
                                 Section::make(tallcms_label('categories', 'plural'))
                                     ->schema([
-                                        Select::make('categories')->label(tallcms_label('categories', 'plural'))
-                                            ->multiple()
-                                            ->relationship('categories', 'name')
-                                            ->options(function () {
-                                                $query = CmsCategory::query();
-                                                if (auth()->check() && ! auth()->user()->hasRole('super_admin')
-                                                    && DbSchema::hasColumn('tallcms_categories', 'user_id')) {
-                                                    $query->where('user_id', auth()->id());
-                                                }
-
-                                                return $query->pluck('name', 'id');
-                                            })
-                                            ->searchable()
-                                            ->preload()
+                                        self::categorySelect()
                                             ->createOptionForm([
                                                 TextInput::make('name')->label(__('tallcms::fields.name'))
                                                     ->required()
@@ -370,5 +357,65 @@ class CmsPostForm
                     ->persistTabInQueryString()
                     ->columnSpanFull(),
             ]);
+    }
+
+    public static function categorySelect(): Select
+    {
+        return Select::make('categories')->label(tallcms_label('categories', 'plural'))
+            ->multiple()
+            ->options(fn (): array => self::categorySelectOptions())
+            ->getSearchResultsUsing(fn (?string $search): array => self::categorySelectOptions(search: $search))
+            ->getOptionLabelsUsing(fn (array $values): array => CmsCategory::translatedSelectOptions(ids: $values))
+            ->loadStateFromRelationshipsUsing(function (Select $component): void {
+                $record = $component->getRecord();
+
+                if (! $record instanceof CmsPost || ! $record->exists) {
+                    return;
+                }
+
+                $component->state(
+                    $record->categories()->pluck('tallcms_categories.id')->all(),
+                );
+            })
+            ->saveRelationshipsUsing(function (Select $component): void {
+                $record = $component->getRecord();
+
+                if (! $record instanceof CmsPost || ! $record->exists) {
+                    return;
+                }
+
+                $ids = array_values(array_filter(
+                    (array) $component->getState(),
+                    fn (mixed $id): bool => filled($id),
+                ));
+
+                $record->categories()->sync($ids);
+            })
+            ->dehydrated(false)
+            ->createOptionUsing(function (array $data): int|string {
+                $category = new CmsCategory;
+                $category->fill($data);
+                $category->save();
+
+                return $category->getKey();
+            })
+            ->searchable()
+            ->preload();
+    }
+
+    /**
+     * @return array<int|string, string>
+     */
+    private static function categorySelectOptions(?string $search = null): array
+    {
+        return CmsCategory::translatedSelectOptions(
+            search: $search,
+            constrain: function (Builder $query): void {
+                if (auth()->check() && ! auth()->user()->hasRole('super_admin')
+                    && DbSchema::hasColumn('tallcms_categories', 'user_id')) {
+                    $query->where('user_id', auth()->id());
+                }
+            },
+        );
     }
 }
