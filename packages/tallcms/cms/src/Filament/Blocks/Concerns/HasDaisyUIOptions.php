@@ -76,6 +76,7 @@ trait HasDaisyUIOptions
             'bg-success' => __('tallcms::blocks.options.success'),
             'bg-warning' => __('tallcms::blocks.options.warning'),
             'bg-error' => __('tallcms::blocks.options.error'),
+            'bg-transparent' => __('tallcms::blocks.options.transparent'),
         ];
     }
 

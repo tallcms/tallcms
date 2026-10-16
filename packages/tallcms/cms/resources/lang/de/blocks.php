@@ -72,6 +72,7 @@ return [
         'small' => 'Klein',
         'medium' => 'Mittel',
         'large' => 'Groß',
+        'transparent' => 'Transparent',
         'base_default' => 'Basis (Standard)',
         'base_subtle' => 'Basis dezent',
         'base_strong' => 'Basis stark',

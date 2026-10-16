@@ -22,7 +22,6 @@ use TallCms\Cms\Filament\Blocks\Concerns\HasAnimationOptions;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockIdentifiers;
 use TallCms\Cms\Filament\Blocks\Concerns\HasBlockMetadata;
 use TallCms\Cms\Filament\Blocks\Concerns\HasDaisyUIOptions;
-use TallCms\Cms\Models\CmsPage;
 use TallCms\Cms\Services\BlockLinkResolver;
 
 class HeroBlock extends RichContentCustomBlock
@@ -133,6 +132,7 @@ class HeroBlock extends RichContentCustomBlock
             'bg-secondary' => 'Secondary',
             'bg-accent' => 'Accent',
             'bg-neutral' => 'Neutral',
+            'bg-transparent' => 'Transparent',
         ];
     }
 

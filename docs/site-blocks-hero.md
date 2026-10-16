@@ -25,7 +25,7 @@ The Hero block creates impactful, attention-grabbing sections at the top of your
 | **Headline** | Main title text |
 | **Description** | Supporting text below the headline |
 | **Background Image** | Full-width background image |
-| **Background Color** | Solid color alternative to image |
+| **Background Color** | Solid color, gradient, or **Transparent** (no fill — page/theme background shows through). Used when no background image is set |
 | **Overlay** | Darken or gradient overlay for text readability |
 | **Primary Button** | Main CTA with text, link, and style |
 | **Secondary Button** | Optional second CTA |
